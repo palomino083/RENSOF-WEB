@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import Dict, Final, Union
+from typing import Dict, Final
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 
@@ -66,8 +66,8 @@ def home() -> FileResponse:
     return page_response("")
 
 
-@app.get("/{page_name}", response_class=HTMLResponse)
-def clean_page(page_name: str) -> Union[FileResponse, RedirectResponse]:
+@app.get("/{page_name}", response_class=HTMLResponse, response_model=None)
+def clean_page(page_name: str) -> Response:
     if page_name.endswith(".html"):
         clean_name = page_name[:-5]
         clean_path = "/" if clean_name == "index" else f"/{clean_name}"
