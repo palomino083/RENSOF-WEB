@@ -1,6 +1,6 @@
 # RENSOF WEB
 
-Version actualizada para presentar RENSOF como plataforma de aplicativos: ALVENT Finanzas, Gestion de Proyectos, Proyectos de Inversion, Prospectiva, Analitica Ejecutiva y Valoracion Economica de Servicios Ecosistemicos.
+Version actualizada para presentar RENSOF como plataforma de aplicativos: ALVENT Comercio digital, Gestion de Proyectos, Proyectos de Inversion, Prospectiva, Analitica Ejecutiva y Valoracion Economica de Servicios Ecosistemicos.
 
 ## Ejecutar
 

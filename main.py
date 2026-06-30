@@ -9,7 +9,7 @@ BASE_DIR: Final = Path(__file__).resolve().parent
 ASSETS_DIR: Final = BASE_DIR / "assets"
 PAGES: Final = {"": "index.html", "index": "index.html", "nosotros": "nosotros.html", "servicios": "servicios.html", "proyectos": "proyectos.html", "publicaciones": "publicaciones.html", "contacto": "contacto.html"}
 SECURITY_HEADERS: Final = {"X-Content-Type-Options": "nosniff", "X-Frame-Options": "SAMEORIGIN", "Referrer-Policy": "strict-origin-when-cross-origin", "Permissions-Policy": "camera=(), microphone=(), geolocation=()"}
-app = FastAPI(title="RENSOF Web", description="Aplicativos RENSOF para finanzas, inversion y sostenibilidad.", version="1.2.0")
+app = FastAPI(title="RENSOF Web", description="Aplicativos RENSOF para comercio digital, inversion y sostenibilidad.", version="1.2.0")
 app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
 @app.middleware("http")
