@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { productosService } from "@/services/productosService";
 import { API_URL } from "@/services/api";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { appPath } from "@/utils/appPath";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
 import Toolbar from "@/components/ui/Toolbar";
 import DataTable from "@/components/ui/DataTable";
@@ -112,7 +113,7 @@ export default function Productos() {
       setError(msg);
 
       if (msg.includes("asociado con un negocio")) {
-        window.location.href = "/registro";
+        window.location.href = appPath("registro");
       }
     } finally {
       setLoading(false);

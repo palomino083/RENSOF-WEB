@@ -20,6 +20,7 @@ import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
 import DataTable from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
 import Toolbar from "@/components/ui/Toolbar";
+import { appPath } from "@/utils/appPath";
 import styles from "./page.module.css";
 
 import { dashboardService } from "../../src/services/dashboardService";
@@ -296,7 +297,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => {
-                  window.location.href = "/registro";
+                  window.location.href = appPath("registro");
                 }}
                 className={`${styles.onboardingBtn} focus-ring`}
               >

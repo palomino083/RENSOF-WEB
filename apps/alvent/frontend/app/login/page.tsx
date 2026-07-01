@@ -5,6 +5,7 @@ import { useState } from "react";
 import { api } from "@/services/api";
 import { forgotPassword } from "@/services/authService";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { appPath } from "@/utils/appPath";
 import ModalCard from "@/components/ui/ModalCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import styles from "./page.module.css";
@@ -81,14 +82,14 @@ export default function LoginPage() {
       const tieneNegocio = !!res.data.negocio_id;
 
       if (tieneNegocio || esSuperAdmin) {
-        window.location.href = "/dashboard";
+        window.location.href = appPath("dashboard");
       } else {
-        window.location.href = "/registro";
+        window.location.href = appPath("registro");
       }
     } catch (err: any) {
       console.error("LOGIN ERROR:", err);
       if (!err?.response) {
-        setError("No hay conexion con el backend (http://127.0.0.1:8000). Inicia el servidor e intenta de nuevo.");
+        setError("No hay conexion con la API de ALVENT. Verifica el proxy interno e intenta de nuevo.");
       } else {
         setError(getApiErrorMessage(err, "Usuario o contraseña incorrectos"));
       }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api } from "@/services/api";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { appPath } from "@/utils/appPath";
 
 export default function RegisterPage() {
   // Estado Usuario
@@ -100,7 +101,7 @@ export default function RegisterPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        window.location.href = "/onboarding/configuracion";
+        window.location.href = appPath("onboarding/configuracion");
       }, 1500);
     } catch (err: any) {
       console.error("REGISTRO ERROR:", err);
@@ -360,7 +361,7 @@ export default function RegisterPage() {
 
         {/* FOOTER */}
         <p style={{ textAlign: "center", fontSize: "14px", color: "#718096", marginTop: "30px", marginBottom: 0 }}>
-          ¿Ya tienes cuenta? <a href="/login" style={{ color: "#667eea", textDecoration: "none" }}>Inicia sesión</a>
+          ¿Ya tienes cuenta? <a href={appPath("login")} style={{ color: "#667eea", textDecoration: "none" }}>Inicia sesión</a>
         </p>
       </div>
     </main>

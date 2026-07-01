@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
+import { appPath } from "@/utils/appPath";
 
 export interface CurrentUser {
   id: number;
@@ -53,7 +54,7 @@ export function useAuth() {
     localStorage.removeItem("negocio_id");
     localStorage.removeItem("usuario");
     setUser(null);
-    window.location.href = "/login";
+    window.location.href = appPath("login");
   };
 
   return { user, loading, error, logout };

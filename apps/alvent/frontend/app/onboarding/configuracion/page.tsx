@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { appPath } from "@/utils/appPath";
 
 export default function ConfiguracionNegocioPage() {
   const [negocioId, setNegocioId] = useState<number | null>(null);
@@ -418,7 +419,7 @@ export default function ConfiguracionNegocioPage() {
         {/* BOTÓN CONTINUAR */}
         <div style={{ marginTop: "40px", textAlign: "center" }}>
           <a
-            href="/dashboard"
+            href={appPath("dashboard")}
             style={{
               display: "inline-block",
               padding: "14px 40px",

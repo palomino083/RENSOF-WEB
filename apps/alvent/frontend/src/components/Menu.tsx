@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
+import { appPath } from "@/utils/appPath";
+
 /* =========================
    🔐 TIPOS ERP
 ========================= */
@@ -291,7 +293,7 @@ const menuFiltrado = useMemo(() => {
             localStorage.removeItem("usuario_id");
             localStorage.removeItem("negocio_id");
             localStorage.removeItem("usuario");
-            window.location.href = "/login";
+            window.location.href = appPath("login");
           }}
           style={{
             width: "100%",

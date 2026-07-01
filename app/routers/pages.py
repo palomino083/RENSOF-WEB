@@ -94,15 +94,6 @@ def _alvent_fallback_auth_payload(usuario: str) -> dict[str, object]:
         "usuario": usuario,
     }
 
-
-def _alvent_frontend_url(path: str = "", query: str = "") -> str:
-    base = ALVENT_FRONTEND_ORIGIN.rstrip("/")
-    normalized_path = f"/{path.lstrip('/')}" if path else ""
-    target = f"{base}{normalized_path}"
-    if query:
-        target = f"{target}?{query}"
-    return target
-
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request, sent: int = Query(default=0)):
     with SessionLocal() as session:
@@ -157,7 +148,18 @@ def alven(request: Request):
 
 @router.get("/alven/app/login", response_class=HTMLResponse, response_model=None)
 async def alven_app_login(request: Request) -> Response:
-    return RedirectResponse(_alvent_frontend_url("login", request.url.query), status_code=307)
+    try:
+        return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, "login")
+    except httpx.RequestError:
+        return templates.TemplateResponse(
+            request,
+            "alvent_login_fallback.html",
+            {
+                "active_page": "servicios",
+                "page_title": "Login ALVENT ERP PRO | RENSOF",
+                "page_description": "Acceso de contingencia a ALVENT ERP PRO cuando el frontend dedicado no esta disponible.",
+            },
+        )
 
 
 @router.get("/alvent", response_model=None)
@@ -171,8 +173,6 @@ def alvent_legacy_redirect() -> Response:
     response_model=None,
 )
 async def alven_app_root_proxy(request: Request) -> Response:
-    if request.method in {"GET", "HEAD"}:
-        return RedirectResponse(_alvent_frontend_url(query=request.url.query), status_code=307)
     return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN)
 
 
@@ -182,8 +182,6 @@ async def alven_app_root_proxy(request: Request) -> Response:
     response_model=None,
 )
 async def alven_app_proxy(full_path: str, request: Request) -> Response:
-    if request.method in {"GET", "HEAD"}:
-        return RedirectResponse(_alvent_frontend_url(full_path, request.url.query), status_code=307)
     return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, full_path)
 
 

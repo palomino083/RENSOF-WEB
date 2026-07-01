@@ -1,7 +1,9 @@
 import axios from "axios";
 
+import { appPath } from "@/utils/appPath";
+
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_API_URL ?? "/alven/api";
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -12,6 +14,9 @@ export const api = axios.create({
 
 function getLocalFallbackBaseUrls(currentBaseURL?: string): string[] {
   const candidates = [
+    "/alven/api",
+    "http://127.0.0.1:8000/alven/api",
+    "http://localhost:8000/alven/api",
     "http://127.0.0.1:8000",
     "http://localhost:8000",
   ];
@@ -117,7 +122,7 @@ api.interceptors.response.use(
               processQueue(err, null);
               
               if (typeof window !== "undefined") {
-                window.location.href = "/login";
+                window.location.href = appPath("login");
               }
               
               return Promise.reject(err);
@@ -128,7 +133,7 @@ api.interceptors.response.use(
           processQueue(error, null);
           
           if (typeof window !== "undefined") {
-            window.location.href = "/login";
+            window.location.href = appPath("login");
           }
         }
       }
@@ -155,7 +160,7 @@ api.interceptors.response.use(
       localStorage.removeItem("negocio_id");
 
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        window.location.href = appPath("login");
       }
     }
 
@@ -169,7 +174,7 @@ api.interceptors.response.use(
         typeof window !== "undefined" &&
         !window.location.pathname.startsWith("/registro")
       ) {
-        window.location.href = "/registro";
+        window.location.href = appPath("registro");
       }
     }
 
