@@ -173,7 +173,10 @@ def alvent_legacy_redirect() -> Response:
     response_model=None,
 )
 async def alven_app_root_proxy(request: Request) -> Response:
-    return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN)
+    try:
+        return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN)
+    except httpx.RequestError:
+        return RedirectResponse("/alven/app/login", status_code=307)
 
 
 @router.api_route(
@@ -182,7 +185,10 @@ async def alven_app_root_proxy(request: Request) -> Response:
     response_model=None,
 )
 async def alven_app_proxy(full_path: str, request: Request) -> Response:
-    return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, full_path)
+    try:
+        return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, full_path)
+    except httpx.RequestError:
+        return RedirectResponse("/alven/app/login", status_code=307)
 
 
 @router.api_route(
