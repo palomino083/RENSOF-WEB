@@ -1,0 +1,1 @@
+.dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}.dashboard-title{font-size:32px;font-weight:700}

@@ -1,0 +1,169 @@
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toolbarTitle {
+  color: #0f172a;
+  font-size: 1.03rem;
+  font-weight: 800;
+}
+
+.tableWrap {
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+  padding: 8px;
+  color: #1e293b;
+}
+
+.table th {
+  color: #475569;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  background: #f8fafc;
+}
+
+.tableCompact th,
+.tableCompact td {
+  padding: 6px 7px;
+  font-size: 0.78rem;
+}
+
+.tableComfy th,
+.tableComfy td {
+  padding: 9px 8px;
+}
+
+.tableExecutive th,
+.tableExecutive td {
+  padding: 11px 10px;
+}
+
+.tableExecutive th {
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+  font-size: 0.82rem;
+}
+
+.badge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.neutral {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.modalCard {
+  width: min(460px, 100%);
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: #fff;
+  padding: 14px;
+  display: grid;
+  gap: 9px;
+}
+
+.modalHeader h3 {
+  color: #0f172a;
+}
+
+.modalHeader p {
+  color: #64748b;
+  font-size: 0.84rem;
+}
+
+.modalBody {
+  display: grid;
+  gap: 8px;
+}
+
+.modalBody input,
+.modalBody select,
+.modalBody textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 10px;
+  width: 100%;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.uiEnter {
+  animation: uiRise 0.45s ease-out both;
+}
+
+.uiEnter[data-stagger="2"] {
+  animation-delay: 0.06s;
+}
+
+.uiEnter[data-stagger="3"] {
+  animation-delay: 0.12s;
+}
+
+.uiEnter[data-stagger="4"] {
+  animation-delay: 0.18s;
+}
+
+@keyframes uiRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

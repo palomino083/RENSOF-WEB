@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+
+<title>Alvent</title>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    margin:20px;
+    background:#f5f5f5;
+}
+
+h1{
+    color:#0d6efd;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+
+th{
+    background:#0d6efd;
+    color:white;
+}
+
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
+}
+
+</style>
+
+</head>
+<body>
+
+<h1>Productos Alvent</h1>
+
+<table>
+
+<tr>
+    <th>ID</th>
+    <th>Código</th>
+    <th>Producto</th>
+    <th>Categoría</th>
+    <th>Precio</th>
+    <th>Stock</th>
+</tr>
+
+{% for p in productos %}
+
+<tr>
+    <td>{{ p.id }}</td>
+    <td>{{ p.codigo }}</td>
+    <td>{{ p.nombre }}</td>
+    <td>{{ p.categoria }}</td>
+    <td>S/ {{ p.precio }}</td>
+    <td>{{ p.stock }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+</html>

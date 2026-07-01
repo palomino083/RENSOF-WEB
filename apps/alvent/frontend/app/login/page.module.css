@@ -1,0 +1,270 @@
+.shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 0% 20%, rgba(14, 165, 233, 0.26), transparent 34%),
+    radial-gradient(circle at 100% 80%, rgba(245, 158, 11, 0.2), transparent 36%),
+    linear-gradient(135deg, #082f49 0%, #0f172a 42%, #1f2937 100%);
+}
+
+.orbOne,
+.orbTwo {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(16px);
+  pointer-events: none;
+}
+
+.orbOne {
+  width: 360px;
+  height: 360px;
+  background: rgba(56, 189, 248, 0.28);
+  top: -80px;
+  right: -90px;
+}
+
+.orbTwo {
+  width: 320px;
+  height: 320px;
+  background: rgba(251, 191, 36, 0.22);
+  left: -70px;
+  bottom: -110px;
+}
+
+.panel {
+  width: min(1050px, 100%);
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.35);
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 1.2fr 0.95fr;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.brand {
+  border-radius: 16px;
+  border: 1px solid rgba(125, 211, 252, 0.42);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(103, 232, 249, 0.2), transparent 46%),
+    linear-gradient(145deg, #0e7490 0%, #0b1120 100%);
+  color: #ecfeff;
+  padding: 24px;
+  display: grid;
+  gap: 14px;
+}
+
+.logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+  box-shadow: 0 10px 22px rgba(6, 182, 212, 0.42);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  border: 1px solid rgba(103, 232, 249, 0.4);
+  background: rgba(8, 47, 73, 0.6);
+  color: #67e8f9;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+}
+
+.brand h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 2.8vw, 2.4rem);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.subtitle {
+  color: #bae6fd;
+  max-width: 42ch;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.featureGrid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.feature {
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  background: rgba(8, 47, 73, 0.58);
+  color: #dbeafe;
+  font-size: 0.83rem;
+  padding: 8px;
+}
+
+.formCard {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: #ffffff;
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+  align-content: center;
+}
+
+.formHead h2 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.formHead p {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.errorBox {
+  border: 1px solid rgba(248, 113, 113, 0.48);
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #7f1d1d;
+  padding: 10px 12px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.85rem;
+  color: #334155;
+  font-weight: 700;
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #0f172a;
+}
+
+.inputPassword {
+  padding-right: 44px;
+}
+
+.toggleBtn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 0.92rem;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+
+.submitBtn {
+  border: none;
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-weight: 800;
+  color: #ecfeff;
+  background: linear-gradient(135deg, #0e7490, #0369a1);
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(14, 116, 144, 0.36);
+}
+
+.submitBtn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.secondaryLink {
+  border: none;
+  background: transparent;
+  color: #0369a1;
+  font-weight: 700;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cancelRecoveryBtn {
+  border: none;
+  border-radius: 10px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 11px 14px;
+  cursor: pointer;
+}
+
+.errorText {
+  color: #b91c1c;
+  font-size: 0.84rem;
+}
+
+.successText {
+  color: #166534;
+  font-size: 0.84rem;
+}
+
+.footer {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.link {
+  color: #0369a1;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.copy {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+@media (max-width: 980px) {
+  .panel {
+    grid-template-columns: 1fr;
+  }
+
+  .featureGrid {
+    grid-template-columns: 1fr;
+  }
+}

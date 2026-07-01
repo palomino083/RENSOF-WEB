@@ -1,0 +1,842 @@
+.shell {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  min-height: 100%;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(249, 115, 22, 0.18), transparent 34%),
+    radial-gradient(circle at 0% 100%, rgba(239, 68, 68, 0.12), transparent 30%),
+    linear-gradient(160deg, #f8fafc 0%, #fff7ed 45%, #f8fafc 100%);
+}
+
+.hero {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(194, 65, 12, 0.95), rgba(15, 23, 42, 0.94));
+  color: #ffedd5;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: 0.72rem;
+  color: #fdba74;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  margin-bottom: 8px;
+}
+
+.errorBox {
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 12px;
+  background: #fee2e2;
+  color: #7f1d1d;
+  padding: 10px 12px;
+}
+
+.successBox {
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  border-radius: 12px;
+  background: #dcfce7;
+  color: #14532d;
+  padding: 10px 12px;
+}
+
+.overviewGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.overviewCard {
+   .planHistoryBox {
+     margin-top: 8px;
+     border: 1px solid var(--line);
+     border-radius: 14px;
+     padding: 14px;
+     background: var(--panel-soft);
+   }
+ 
+   .planHistoryBox h4 {
+     margin: 0 0 10px;
+   }
+ 
+   .planHistoryTableWrap {
+     overflow-x: auto;
+   }
+ 
+   .planHistoryTable {
+     width: 100%;
+     border-collapse: collapse;
+     min-width: 720px;
+   }
+ 
+   .planHistoryTable th,
+   .planHistoryTable td {
+     text-align: left;
+     padding: 10px 8px;
+     border-bottom: 1px solid var(--line);
+     font-size: 0.93rem;
+   }
+ 
+   .planHistoryTable thead th {
+     font-weight: 700;
+     color: var(--text-primary);
+   }
+  border: 1px solid rgba(203, 213, 225, 0.75);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+  display: grid;
+  gap: 5px;
+}
+
+.overviewCard span {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.overviewCard strong {
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.actionBar {
+  border: 1px solid rgba(203, 213, 225, 0.75);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.actionGroup {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.actionBtn {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.negocioSelect {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 8px 12px;
+  min-width: 220px;
+}
+
+.card {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+  max-width: 100%;
+}
+
+.companyCard {
+  max-width: 100%;
+}
+
+.operationsGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dangerCard {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.94), rgba(254, 242, 242, 0.9));
+}
+
+.card h2 {
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.card p {
+  color: #334155;
+}
+
+.resetBtn {
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #dc2626, #b91c1c);
+  color: #fff1f2;
+  font-weight: 700;
+  padding: 10px 12px;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.card select,
+.card input {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+
+.confirmBtn,
+.cancelBtn {
+  border: none;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirmBtn {
+  background: #dc2626;
+  color: #fff;
+}
+
+.cancelBtn {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.identityGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 220px 1fr;
+  align-items: start;
+}
+
+.logoFrame {
+  width: 220px;
+  height: 160px;
+  border: 1px dashed #94a3b8;
+  border-radius: 12px;
+  background: #f8fafc;
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.logoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.identityForm {
+  display: grid;
+  gap: 8px;
+}
+
+.identityForm label {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.identityForm input {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.identityForm small {
+  color: #475569;
+}
+
+.saveLogoBtn {
+  width: fit-content;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #0284c7, #0ea5e9);
+  color: #ecfeff;
+  font-weight: 700;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.saveLogoBtn:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.businessGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.companyPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.companyTabsLayout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.companyTabs {
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  border-radius: 12px;
+  padding: 8px;
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+  display: grid;
+  gap: 8px;
+  position: sticky;
+  top: 12px;
+}
+
+.tabBtn {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  text-align: left;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.tabBtnActive {
+  border-color: #0f766e;
+  background: linear-gradient(130deg, #0f766e, #115e59);
+  color: #ecfeff;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.22);
+}
+
+.companyBlock {
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 12px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.92));
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.companyBlock h3 {
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.formRow {
+  display: grid;
+  gap: 6px;
+}
+
+.formRow label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.helperText {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.formRow input,
+.formRow select {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: #fff;
+}
+
+.formRow textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: #fff;
+  resize: vertical;
+  min-height: 78px;
+}
+
+.fullRow {
+  grid-column: 1 / -1;
+}
+
+.saveBusinessBtn {
+  width: fit-content;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #0f766e, #0d9488);
+  color: #ecfeff;
+  font-weight: 700;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.saveBusinessBtn:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.backupBtn {
+  width: fit-content;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #4338ca, #6366f1);
+  color: #eef2ff;
+  font-weight: 700;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.backupBtn:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.planGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.planItem {
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  padding: 10px;
+  background: #f8fafc;
+  display: grid;
+  gap: 4px;
+}
+
+.planItem h4 {
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.planItem p {
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.catalogTitle {
+  margin-top: 8px;
+  color: #0f172a;
+}
+
+.catalogText {
+  color: #334155;
+}
+
+.simulatorBox {
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  border-radius: 14px;
+  padding: 12px;
+  background: linear-gradient(140deg, rgba(255, 247, 237, 0.88), rgba(255, 255, 255, 0.95));
+  display: grid;
+  gap: 10px;
+}
+
+.simulatorHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.simulatorHead h4 {
+  color: #0f172a;
+}
+
+.simulatorHead p {
+  color: #475569;
+  font-size: 0.88rem;
+}
+
+.planApplyMainBtn {
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #c2410c, #ea580c);
+  color: #fff7ed;
+  font-weight: 800;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.planApplyMainBtn:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.moduleGrid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.moduleCard {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px;
+  background: #ffffff;
+}
+
+.moduleCard h5 {
+  color: #0f172a;
+  font-size: 0.84rem;
+}
+
+.moduleCard p {
+  font-size: 0.78rem;
+}
+
+.moduleCardOn {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.moduleCardOff {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.simulatorKpis {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.simulatorKpis p {
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  background: #fff7ed;
+  padding: 8px;
+  font-size: 0.85rem;
+}
+
+.diffBox {
+  border: 1px dashed #fdba74;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.diffBox h5 {
+  color: #9a3412;
+}
+
+.diffSubtitle {
+  color: #475569;
+  font-size: 0.84rem;
+}
+
+.diffGrid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.diffLimits {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.diffItem {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 8px;
+  display: grid;
+  gap: 3px;
+}
+
+.diffItem strong {
+  color: #0f172a;
+  font-size: 0.82rem;
+}
+
+.diffItem span {
+  color: #334155;
+  font-size: 0.78rem;
+}
+
+.diffItem small {
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.diffSame {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.diffUp,
+.mejora {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.diffDown,
+.recorte {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.igual {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.catalogGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.catalogCard {
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.catalogCard h4 {
+  color: #0f172a;
+}
+
+.cardState {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.catalogCardActive {
+  border-color: #0f766e;
+  box-shadow: 0 10px 20px rgba(15, 118, 110, 0.16);
+  background: #f0fdfa;
+}
+
+.planPickBtn {
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #0f766e, #0d9488);
+  color: #ecfeff;
+  font-weight: 700;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.planPickBtn:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.cardActions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.planSimBtn {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.planSimBtn:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.clientPlanRequestBox {
+  border: 1px solid rgba(15, 118, 110, 0.32);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(240, 253, 250, 0.8), rgba(255, 255, 255, 0.95));
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.clientPlanRequestBox h3 {
+  color: #0f172a;
+}
+
+.clientPlanRequestGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.userPlanGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.requestPlanBtn {
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #0f766e, #0d9488);
+  color: #ecfeff;
+  font-weight: 800;
+  padding: 10px 14px;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.requestPlanBtn:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+@media (max-width: 980px) {
+  .shell {
+    padding: 16px;
+  }
+
+  .hero {
+    flex-direction: column;
+  }
+
+  .overviewGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actionBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actionGroup {
+    width: 100%;
+  }
+
+  .actionBtn {
+    flex: 1;
+  }
+
+  .operationsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .identityGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .businessGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .clientPlanRequestGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .userPlanGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .companyTabsLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .companyTabs {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .planGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .moduleGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .diffGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .diffLimits {
+    grid-template-columns: 1fr;
+  }
+
+  .simulatorKpis {
+    grid-template-columns: 1fr;
+  }
+
+  .simulatorHead {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .logoFrame {
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+@media (max-width: 640px) {
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .moduleGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .userPlanGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .diffGrid {
+    grid-template-columns: 1fr;
+  }
+}

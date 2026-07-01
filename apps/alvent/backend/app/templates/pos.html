@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Alvent POS</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="container py-3">
+
+    <!-- 🔍 BUSCADOR -->
+    <input id="buscar" class="form-control mb-3" placeholder="Buscar producto...">
+
+    <!-- 📦 PRODUCTOS -->
+    <div id="productos" class="row mb-3"></div>
+
+    <!-- 🛒 CARRITO -->
+    <div id="carrito" class="border p-2 mb-3"></div>
+
+    <!-- 💰 TOTAL -->
+    <h2>Total: S/ <span id="total">0.00</span></h2>
+
+    <!-- 💳 BOTÓN PAGAR -->
+    <button class="btn btn-success w-100 mt-3" onclick="pagar()">
+        F2 - COBRAR
+    </button>
+
+<script>
+
+/* =========================
+   ESTADO GLOBAL
+========================= */
+let carrito = [];
+let productosDB = [];
+
+/* =========================
+   CARGAR PRODUCTOS
+========================= */
+async function cargarProductos() {
+    const res = await fetch("/productos/");
+    productosDB = await res.json();
+    renderProductos(productosDB);
+}
+
+/* =========================
+   RENDER PRODUCTOS
+========================= */
+function renderProductos(lista) {
+
+    const cont = document.getElementById("productos");
+    cont.innerHTML = "";
+
+    lista.forEach(p => {
+
+        cont.innerHTML += `
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm" onclick='agregarProducto(${JSON.stringify(p)})'>
+                <div class="card-body text-center">
+                    <h6>${p.nombre}</h6>
+                    <p class="text-muted">S/ ${p.precio}</p>
+                    <button class="btn btn-sm btn-primary">Agregar</button>
+                </div>
+            </div>
+        </div>
+        `;
+    });
+}
+
+/* =========================
+   BUSCADOR LOCAL (RÁPIDO)
+========================= */
+document.getElementById("buscar").addEventListener("input", (e) => {
+
+    const texto = e.target.value.toLowerCase();
+
+    const filtrados = productosDB.filter(p =>
+        p.nombre.toLowerCase().includes(texto) ||
+        p.codigo.toLowerCase().includes(texto)
+    );
+
+    renderProductos(filtrados);
+});
+
+/* =========================
+   AGREGAR AL CARRITO
+========================= */
+function agregarProducto(producto) {
+
+    const item = carrito.find(p => p.id === producto.id);
+
+    if (item) {
+        item.cantidad++;
+    } else {
+        carrito.push({
+            id: producto.id,
+            nombre: producto.nombre,
+            precio: producto.precio,
+            cantidad: 1
+        });
+    }
+
+    renderCarrito();
+}
+
+/* =========================
+   CONTROL CANTIDADES
+========================= */
+function sumar(id) {
+    const item = carrito.find(p => p.id === id);
+    if (item) item.cantidad++;
+    renderCarrito();
+}
+
+function restar(id) {
+    const item = carrito.find(p => p.id === id);
+    if (!item) return;
+
+    item.cantidad--;
+
+    if (item.cantidad <= 0) {
+        carrito = carrito.filter(p => p.id !== id);
+    }
+
+    renderCarrito();
+}
+
+function eliminar(id) {
+    carrito = carrito.filter(p => p.id !== id);
+    renderCarrito();
+}
+
+/* =========================
+   TOTAL
+========================= */
+function calcularTotal() {
+    return carrito.reduce((acc, p) =>
+        acc + (p.precio * p.cantidad), 0
+    );
+}
+
+/* =========================
+   RENDER CARRITO
+========================= */
+function renderCarrito() {
+
+    const cont = document.getElementById("carrito");
+    cont.innerHTML = "";
+
+    carrito.forEach(p => {
+
+        cont.innerHTML += `
+        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+
+            <div>
+                <strong>${p.nombre}</strong><br>
+                <small>S/ ${p.precio}</small>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+
+                <button class="btn btn-sm btn-danger" onclick="restar(${p.id})">-</button>
+
+                <span>${p.cantidad}</span>
+
+                <button class="btn btn-sm btn-success" onclick="sumar(${p.id})">+</button>
+
+                <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${p.id})">x</button>
+
+            </div>
+
+            <strong>S/ ${(p.precio * p.cantidad).toFixed(2)}</strong>
+
+        </div>
+        `;
+    });
+
+    document.getElementById("total").innerText =
+        calcularTotal().toFixed(2);
+}
+
+/* =========================
+   PAGAR (BACKEND POS)
+========================= */
+async function pagar() {
+
+    if (carrito.length === 0) {
+        alert("Carrito vacío");
+        return;
+    }
+
+    const data = {
+        cliente_id: 1,
+        usuario_id: 1,
+        items: carrito.map(p => ({
+            producto_id: p.id,
+            cantidad: p.cantidad
+        }))
+    };
+
+    const res = await fetch("/pos/vender", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    alert("Venta #" + result.venta_id);
+
+    window.open(`/pos/ticket/${result.venta_id}`, "_blank");
+
+    carrito = [];
+    renderCarrito();
+}
+
+/* =========================
+   TECLAS RAPIDAS POS
+========================= */
+document.addEventListener("keydown", (e) => {
+
+    if (e.key === "F2") pagar();
+
+    if (e.key === "F1") {
+        document.getElementById("buscar").focus();
+    }
+});
+
+/* =========================
+   INICIO
+========================= */
+cargarProductos();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+- Apertura de caja
+- Venta con caja abierta
+- Bloqueo sin caja
+- Movimiento ingreso
+- Movimiento egreso
+- Cierre y arqueo

@@ -3,3 +3,8 @@ uvicorn
 gunicorn
 sqlalchemy
 pydantic
+jinja2
+python-multipart
+alembic
+itsdangerous
+httpx

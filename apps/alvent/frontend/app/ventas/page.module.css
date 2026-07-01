@@ -1,0 +1,183 @@
+.shell {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  min-height: 100%;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.17), transparent 34%),
+    radial-gradient(circle at 0% 100%, rgba(16, 185, 129, 0.16), transparent 30%),
+    linear-gradient(160deg, #f8fafc 0%, #f0f9ff 45%, #f8fafc 100%);
+}
+
+.hero {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 18px;
+  padding: 18px;
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.94), rgba(8, 47, 73, 0.94));
+  color: #dbeafe;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  color: #93c5fd;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  margin-bottom: 8px;
+}
+
+.kpiGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.kpiCard {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
+  padding: 13px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+}
+
+.kpiCard p {
+  font-weight: 700;
+  color: #334155;
+}
+
+.kpiCard h3 {
+  margin-top: 6px;
+  color: #0f172a;
+  font-size: 1.22rem;
+  font-family: var(--font-display);
+}
+
+.kpiCard small {
+  color: #64748b;
+}
+
+.totalCard {
+  background: linear-gradient(140deg, #082f49, #0f172a);
+}
+
+.totalCard p,
+.totalCard h3,
+.totalCard small {
+  color: #e0f2fe;
+}
+
+.panel {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.search {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  max-width: 420px;
+}
+
+.list {
+  display: grid;
+  gap: 9px;
+  max-height: 560px;
+  overflow: auto;
+}
+
+.saleCard {
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.saleHeader {
+  width: 100%;
+  border: none;
+  background: #f8fafc;
+  color: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.saleHeader strong {
+  color: #0369a1;
+}
+
+.saleBody {
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.saleBody p {
+  color: #334155;
+}
+
+.saleBody ul {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.saleBody li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 7px 9px;
+  color: #1e293b;
+}
+
+.detailBtn {
+  border: none;
+  border-radius: 8px;
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-weight: 700;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.empty {
+  color: #64748b;
+}
+
+@media (max-width: 980px) {
+  .shell {
+    padding: 16px;
+  }
+
+  .hero {
+    flex-direction: column;
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+}

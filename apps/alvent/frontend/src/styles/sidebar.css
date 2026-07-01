@@ -1,0 +1,1 @@
+.sidebar{width:260px;min-height:100vh;background:#0f172a;color:#fff;display:flex;flex-direction:column;padding:20px}.sidebar-item{display:flex;padding:12px;border-radius:10px;text-decoration:none;color:#fff}.sidebar-item.active{background:var(--primary)}

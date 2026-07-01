@@ -1,0 +1,32 @@
+from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy.orm import relationship
+from app.database.database import Base
+import enum
+
+
+class TipoNegocio(str, enum.Enum):
+    TIENDA = "tienda"
+    RESTAURANTE = "restaurante"
+    FARMACIA = "farmacia"
+    SUPERMERCADO = "supermercado"
+    BOUTIQUE = "boutique"
+    KIOSKO = "kiosko"
+    OTRO = "otro"
+
+
+class Negocio(Base):
+    __tablename__ = "negocios"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    nombre = Column(String(255), nullable=False, index=True)
+    tipo = Column(String(50), nullable=False)
+    plan = Column(String(20), nullable=False, default="BASICO")
+    descripcion = Column(Text, nullable=True)
+    logo_url = Column(String(500), nullable=True)
+
+    sucursales = relationship(
+        "Sucursal",
+        back_populates="negocio",
+        cascade="all, delete-orphan"
+    )

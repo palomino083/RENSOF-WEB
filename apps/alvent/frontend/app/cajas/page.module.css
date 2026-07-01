@@ -1,0 +1,261 @@
+.shell {
+  display: grid;
+  gap: 22px;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 85% -20%, rgba(251, 191, 36, 0.22), transparent 45%),
+    radial-gradient(circle at -10% 10%, rgba(45, 212, 191, 0.2), transparent 40%),
+    linear-gradient(165deg, #f7fafc 0%, #eef2ff 52%, #f9fafb 100%);
+  min-height: 100%;
+  border-radius: 24px;
+}
+
+.hero {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(22, 78, 99, 0.9));
+  color: #f8fafc;
+  padding: 24px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.2);
+  animation: revealUp 0.45s ease-out;
+}
+
+.hero h1 {
+  font-family: "Sora", "Segoe UI", sans-serif;
+  font-size: clamp(1.5rem, 2vw, 2.2rem);
+  letter-spacing: 0.02em;
+  margin-bottom: 8px;
+}
+
+.hero p {
+  color: rgba(226, 232, 240, 0.96);
+  max-width: 70ch;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fde68a;
+  margin-bottom: 10px;
+}
+
+.heroMeta {
+  margin-top: 14px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.badgeOpen,
+.badgeClosed {
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 700;
+}
+
+.badgeOpen {
+  background: rgba(74, 222, 128, 0.18);
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  color: #dcfce7;
+}
+
+.badgeClosed {
+  background: rgba(248, 113, 113, 0.16);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #fee2e2;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.metricCard {
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  animation: revealUp 0.55s ease-out;
+}
+
+.metricCard p {
+  color: #475569;
+  font-weight: 600;
+}
+
+.metricCard h3 {
+  margin-top: 6px;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  font-size: 1.5rem;
+  color: #0f172a;
+}
+
+.metricCard small {
+  color: #64748b;
+}
+
+.actionPanel {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 20px;
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.9));
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+  box-shadow: 0 14px 34px rgba(30, 64, 175, 0.09);
+  animation: revealUp 0.65s ease-out;
+}
+
+.actionPanel h2 {
+  color: #0f172a;
+  font-size: 1.3rem;
+}
+
+.actionPanel p {
+  color: #475569;
+}
+
+.fieldLabel {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.moneyInput {
+  max-width: 260px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  padding: 12px 14px;
+  font-size: 1rem;
+  outline: none;
+}
+
+.moneyInput:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+}
+
+.actionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  border: none;
+  border-radius: 12px;
+  padding: 11px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primaryBtn {
+  background: linear-gradient(140deg, #0ea5e9, #2563eb);
+  color: #eff6ff;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.28);
+}
+
+.secondaryBtn {
+  background: linear-gradient(140deg, #ef4444, #b91c1c);
+  color: #fee2e2;
+  box-shadow: 0 10px 22px rgba(185, 28, 28, 0.25);
+}
+
+.primaryBtn:hover,
+.secondaryBtn:hover {
+  transform: translateY(-1px);
+}
+
+.primaryBtn:disabled,
+.secondaryBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.helperText {
+  color: #334155;
+  font-size: 0.95rem;
+  border-left: 4px solid #38bdf8;
+  padding-left: 10px;
+}
+
+.movementsCard {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 14px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 10px;
+}
+
+.errorBox {
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-radius: 12px;
+  background: rgba(254, 226, 226, 0.9);
+  color: #7f1d1d;
+  padding: 12px 14px;
+  font-weight: 600;
+}
+
+.loaderCard {
+  border-radius: 16px;
+  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+}
+
+.loaderDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.5);
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(14, 165, 233, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
+  }
+}
+
+@media (max-width: 980px) {
+  .shell {
+    padding: 18px;
+  }
+
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+}
