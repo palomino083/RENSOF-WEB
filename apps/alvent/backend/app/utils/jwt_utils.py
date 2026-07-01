@@ -4,6 +4,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 import secrets
 import hashlib
+import bcrypt
 
 # Configuración
 SECRET_KEY = "alvent-erp-pos-pro-secret-key-2026"  # En producción, usar variable de entorno
@@ -11,8 +12,8 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15  # 15 minutos (corta expiración)
 REFRESH_TOKEN_EXPIRE_DAYS = 30  # 30 días
 
-# Contexto para hash de contraseñas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Use PBKDF2 for new hashes to avoid passlib+bcrypt backend issues on Python 3.14.
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
@@ -22,6 +23,15 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verificar contraseña contra hash"""
+    if not hashed_password:
+        return False
+
+    if hashed_password.startswith("$2"):
+        try:
+            return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+        except ValueError:
+            return False
+
     return pwd_context.verify(plain_password, hashed_password)
 
 
