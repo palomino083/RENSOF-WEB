@@ -94,6 +94,18 @@ def _alvent_fallback_auth_payload(usuario: str) -> dict[str, object]:
         "usuario": usuario,
     }
 
+
+def _render_alvent_dashboard_fallback(request: Request) -> Response:
+    return templates.TemplateResponse(
+        request,
+        "alvent_dashboard_fallback.html",
+        {
+            "active_page": "servicios",
+            "page_title": "Dashboard ALVENT ERP PRO | RENSOF",
+            "page_description": "Panel de contingencia de ALVENT ERP PRO cuando el frontend dedicado no esta disponible.",
+        },
+    )
+
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request, sent: int = Query(default=0)):
     with SessionLocal() as session:
@@ -176,7 +188,7 @@ async def alven_app_root_proxy(request: Request) -> Response:
     try:
         return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN)
     except httpx.RequestError:
-        return RedirectResponse("/alven/app/login", status_code=307)
+        return RedirectResponse("/alven/app/dashboard", status_code=307)
 
 
 @router.api_route(
@@ -188,6 +200,8 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
     try:
         return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, full_path)
     except httpx.RequestError:
+        if request.method == "GET" and full_path.strip("/") == "dashboard":
+            return _render_alvent_dashboard_fallback(request)
         return RedirectResponse("/alven/app/login", status_code=307)
 
 
