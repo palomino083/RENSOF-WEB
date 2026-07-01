@@ -1,12 +1,14 @@
 from datetime import datetime
 from pathlib import Path
+import sqlite3
 import shutil
+import tempfile
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.database.database import DATABASE_URL, get_db
+from app.database.database import DATABASE_URL, SessionLocal, get_db, engine
 from app.models.venta import Venta
 from app.models.venta_detalle import VentaDetalle
 from app.models.producto import Producto
@@ -24,6 +26,12 @@ router = APIRouter()
 class ResetRequest(BaseModel):
     modo: str  # "parcial" | "completo"
     password: str
+
+
+class RestoreResponse(BaseModel):
+    ok: bool
+    mensaje: str
+    archivo: str
 
 
 @router.delete("/system/reset")
@@ -85,6 +93,84 @@ def reset_system(
             status_code=500,
             detail=str(e)
         )
+
+
+@router.post("/system/restore", response_model=RestoreResponse)
+def restore_system(
+    archivo: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user_with_negocio),
+    db: Session = Depends(get_db),
+):
+    if not DATABASE_URL.startswith("sqlite:///"):
+        raise HTTPException(status_code=400, detail="Restauración automática soportada solo para SQLite")
+
+    actor_id = int(current_user.get("usuario_id") or 0)
+    actor = db.query(Usuario).filter(Usuario.id == actor_id).first()
+    actor_rol = str(getattr(actor, "rol", "") or "").upper()
+    if not current_user.get("is_superadmin") and actor_rol != "ADMINISTRADOR":
+        raise HTTPException(status_code=403, detail="Solo administrador puede restaurar")
+
+    if not archivo.filename:
+        raise HTTPException(status_code=400, detail="Archivo inválido")
+
+    db_path = Path(DATABASE_URL.replace("sqlite:///", ""))
+    if not db_path.parent.exists():
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    contenido = archivo.file.read()
+    if not contenido:
+        raise HTTPException(status_code=400, detail="El archivo está vacío")
+
+    backup_path = db_path.with_suffix(f"{db_path.suffix}.pre_restore_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}")
+    temp_path: Path | None = None
+
+    try:
+        with Path(backup_path).open("wb") as destino_backup:
+            if db_path.exists():
+                with db_path.open("rb") as origen_actual:
+                    shutil.copyfileobj(origen_actual, destino_backup)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".db", dir=str(db_path.parent)) as temporal:
+            temporal.write(contenido)
+            temp_path = Path(temporal.name)
+
+        try:
+            with sqlite3.connect(str(temp_path)) as conexion:
+                conexion.execute("PRAGMA integrity_check;")
+        except sqlite3.DatabaseError as exc:
+            raise HTTPException(status_code=400, detail=f"El archivo no es una base SQLite válida: {exc}")
+
+        db.close()
+        engine.dispose()
+        shutil.copy2(str(temp_path), db_path)
+
+        try:
+            with SessionLocal() as audit_db:
+                registrar_auditoria(
+                    db=audit_db,
+                    modulo="Backups",
+                    accion="Restaurar backup",
+                    descripcion=f"Restore {archivo.filename}",
+                    usuario=str(current_user.get("usuario_id") or "Sistema"),
+                )
+        except Exception:
+            pass
+
+        return RestoreResponse(
+            ok=True,
+            mensaje="Base de datos restaurada correctamente",
+            archivo=archivo.filename,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    finally:
+        if temp_path and temp_path.exists():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
 
 
 @router.get("/system/backup")
