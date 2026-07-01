@@ -5,7 +5,13 @@ from fastapi import APIRouter, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.core.config import ALVENT_APP_URL, ALVENT_BACKEND_ORIGIN, ALVENT_FRONTEND_ORIGIN, TEMPLATES_DIR
+from app.core.config import (
+    ALVENT_APP_URL,
+    ALVENT_BACKEND_ORIGIN,
+    ALVENT_FRONTEND_BASE_PATH,
+    ALVENT_FRONTEND_ORIGIN,
+    TEMPLATES_DIR,
+)
 from app.db.database import SessionLocal
 from app.services.content_service import add_contact_message, get_email_accounts, get_home_content, get_primary_email_account, get_publications
 
@@ -79,6 +85,28 @@ async def _proxy_request(request: Request, origin: str, full_path: str = "") -> 
         headers=_proxy_response_headers(proxied.headers, ALVENT_FRONTEND_ORIGIN, ALVENT_BACKEND_ORIGIN),
         media_type=proxied.headers.get("content-type"),
     )
+
+
+async def _proxy_alvent_frontend_request(request: Request, full_path: str = "") -> Response:
+    requested_path = full_path.strip("/")
+    base_path = ALVENT_FRONTEND_BASE_PATH.strip("/")
+
+    candidates: list[str] = [requested_path] if requested_path else [""]
+    prefixed_path = "/".join(part for part in (base_path, requested_path) if part)
+    if prefixed_path and prefixed_path not in candidates:
+        candidates.append(prefixed_path)
+
+    last_response: Response | None = None
+    for candidate in candidates:
+        response = await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, candidate)
+        body_preview = response.body[:4096].decode("utf-8", errors="ignore").lower()
+        looks_like_not_found = "this page could not be found" in body_preview
+
+        if response.status_code != 404 and not looks_like_not_found:
+            return response
+        last_response = response
+
+    return last_response if last_response is not None else await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, requested_path)
 
 
 def _alvent_fallback_auth_payload(usuario: str) -> dict[str, object]:
@@ -161,7 +189,7 @@ def alven(request: Request):
 @router.get("/alven/app/login", response_class=HTMLResponse, response_model=None)
 async def alven_app_login(request: Request) -> Response:
     try:
-        return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, "login")
+        return await _proxy_alvent_frontend_request(request, "login")
     except httpx.RequestError:
         return templates.TemplateResponse(
             request,
@@ -186,7 +214,7 @@ def alvent_legacy_redirect() -> Response:
 )
 async def alven_app_root_proxy(request: Request) -> Response:
     try:
-        return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN)
+        return await _proxy_alvent_frontend_request(request)
     except httpx.RequestError:
         return RedirectResponse("/alven/app/dashboard", status_code=307)
 
@@ -198,7 +226,7 @@ async def alven_app_root_proxy(request: Request) -> Response:
 )
 async def alven_app_proxy(full_path: str, request: Request) -> Response:
     try:
-        return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, full_path)
+        return await _proxy_alvent_frontend_request(request, full_path)
     except httpx.RequestError:
         if request.method == "GET" and full_path.strip("/") == "dashboard":
             return _render_alvent_dashboard_fallback(request)
