@@ -8,6 +8,7 @@ python-multipart
 alembic
 itsdangerous
 httpx
+slowapi
 passlib[bcrypt]
 python-jose[cryptography]
 reportlab
