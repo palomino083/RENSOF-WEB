@@ -93,9 +93,9 @@
           negocio_id: payload.negocio_id
         }));
 
-        status.textContent = "Sesion iniciada. Frontend dedicado no disponible; te redirigimos a la vista de ALVENT.";
+        status.textContent = "Sesion iniciada. Te redirigimos al aplicativo ALVENT.";
         window.setTimeout(function () {
-          window.location.href = "/alven";
+          window.location.href = "/alven/app/dashboard";
         }, 900);
       } catch (error) {
         status.textContent = error && error.message ? error.message : "Error inesperado al iniciar sesion";
