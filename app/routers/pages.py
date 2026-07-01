@@ -127,6 +127,22 @@ def alven(request: Request):
     )
 
 
+@router.get("/alven/app/login", response_class=HTMLResponse, response_model=None)
+async def alven_app_login(request: Request) -> Response:
+    try:
+        return await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, "login")
+    except httpx.RequestError:
+        return templates.TemplateResponse(
+            request,
+            "alvent_login_fallback.html",
+            {
+                "active_page": "servicios",
+                "page_title": "Login ALVENT ERP PRO | RENSOF",
+                "page_description": "Acceso de contingencia a ALVENT ERP PRO cuando el frontend dedicado no esta disponible.",
+            },
+        )
+
+
 @router.get("/alvent", response_model=None)
 def alvent_legacy_redirect() -> Response:
     return RedirectResponse("/alven", status_code=308)

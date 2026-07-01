@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="page-main" style="padding-top: 84px;">
+  <section class="story-block">
+    <div class="r2030-grid reveal" style="display:grid; gap:28px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); align-items:start;">
+      <article class="hero-panel" style="padding:28px;">
+        <span class="story-kicker">Acceso de contingencia</span>
+        <h1 class="story-title" style="font-size:clamp(2rem,5vw,3.4rem);">Login ALVENT ERP PRO</h1>
+        <p class="story-text">El frontend dedicado de ALVENT no esta disponible en este momento. Este acceso temporal usa directamente la API publicada para que el ingreso no falle con error interno.</p>
+        <div class="data-tiles" style="margin-top:22px;">
+          <article class="data-tile"><span>Canal</span><strong>API directa</strong></article>
+          <article class="data-tile"><span>Estado</span><strong>Contingencia</strong></article>
+          <article class="data-tile"><span>Ruta</span><strong>/alven/api/auth/login</strong></article>
+        </div>
+      </article>
+
+      <article class="hero-panel" style="padding:28px;">
+        <h2 class="story-title" style="font-size:clamp(1.4rem,3vw,2rem); margin-top:0;">Ingresar</h2>
+        <form id="alventFallbackLogin" style="display:grid; gap:14px; margin-top:18px;">
+          <label style="display:grid; gap:6px; color:var(--r-text-soft);">
+            <span>Usuario</span>
+            <input id="usuario" type="text" required style="padding:12px 14px; border-radius:12px; border:1px solid rgba(126,214,255,.22); background:rgba(7,19,31,.55); color:var(--r-text);">
+          </label>
+          <label style="display:grid; gap:6px; color:var(--r-text-soft);">
+            <span>Contrasena</span>
+            <input id="password" type="password" required style="padding:12px 14px; border-radius:12px; border:1px solid rgba(126,214,255,.22); background:rgba(7,19,31,.55); color:var(--r-text);">
+          </label>
+          <button id="submitBtn" type="submit" class="r-btn r-btn-primary">Iniciar sesion</button>
+        </form>
+        <p id="loginStatus" class="story-text" style="margin-top:14px; min-height:24px;"></p>
+        <div class="hero-actions" style="margin-top:18px;">
+          <a href="/alven" class="r-btn r-btn-ghost">Volver a ALVENT</a>
+          <a href="/contacto" class="r-btn r-btn-ghost">Soporte</a>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<script>
+  (function () {
+    const form = document.getElementById("alventFallbackLogin");
+    const status = document.getElementById("loginStatus");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function normalizarRol(rol) {
+      const raw = String(rol || "").toUpperCase().trim();
+      const compact = raw.replace(/[^A-Z0-9]/g, "");
+      if (compact === "SUPERADMIN" || compact === "SUPERADMINISTRADOR") return "SUPERADMIN";
+      if (compact === "ADMIN" || compact === "ADMINISTRADOR") return "ADMINISTRADOR";
+      return raw;
+    }
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      status.textContent = "Validando acceso...";
+      submitBtn.disabled = true;
+
+      const usuario = document.getElementById("usuario").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const response = await fetch("/alven/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ usuario, password })
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.detail || "No se pudo iniciar sesion");
+        }
+
+        const rol = normalizarRol(payload.rol || "");
+        const roles = Array.isArray(payload.roles)
+          ? payload.roles.map(function (item) { return normalizarRol(item); })
+          : [rol];
+
+        localStorage.setItem("token", payload.access_token);
+        localStorage.setItem("refreshToken", payload.refresh_token || "");
+        localStorage.setItem("usuario_id", String(payload.usuario_id || ""));
+        localStorage.setItem("negocio_id", String(payload.negocio_id || ""));
+        localStorage.setItem("usuario", JSON.stringify({
+          id: payload.usuario_id,
+          usuario: usuario,
+          nombres: payload.nombres,
+          rol: rol,
+          roles: roles,
+          negocio_id: payload.negocio_id
+        }));
+
+        status.textContent = "Sesion iniciada. Frontend dedicado no disponible; te redirigimos a la vista de ALVENT.";
+        window.setTimeout(function () {
+          window.location.href = "/alven";
+        }, 900);
+      } catch (error) {
+        status.textContent = error && error.message ? error.message : "Error inesperado al iniciar sesion";
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }());
+</script>
+{% endblock %}
