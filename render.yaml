@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: rensof-web
+    runtime: python
+    rootDir: .
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT main:app
+    envVars:
+      - key: RENSOF_SESSION_SECRET
+        generateValue: true
+      - key: RENSOF_ADMIN_USER
+        value: admin
+      - key: RENSOF_ADMIN_PASSWORD
+        value: admin123
+      - key: ALVENT_FRONTEND_ORIGIN
+        value: https://alvent-frontend.onrender.com
+      - key: ALVENT_BACKEND_ORIGIN
+        value: https://alvent-backend.onrender.com
+      - key: ALVENT_APP_URL
+        value: /alven/app/login
+
+  - type: web
+    name: alvent-frontend
+    runtime: node
+    rootDir: apps/alvent/frontend
+    buildCommand: npm install; npm run build
+    startCommand: npx next start -H 0.0.0.0 -p $PORT
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://rensof-web.onrender.com/alven/api
+      - key: NEXT_PUBLIC_APP_BASE_PATH
+        value: /alven/app
+      - key: NODE_VERSION
+        value: 20.18.0
+
+  - type: web
+    name: alvent-backend
+    runtime: python
+    rootDir: apps/alvent/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT app.main:app

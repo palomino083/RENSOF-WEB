@@ -19,6 +19,22 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
+## Despliegue en Render
+
+El acceso real a ALVENT dentro de RENSOF requiere tres servicios activos:
+
+- RENSOF web: FastAPI principal de este repositorio.
+- ALVENT frontend: Next.js en apps/alvent/frontend.
+- ALVENT backend: FastAPI en apps/alvent/backend.
+
+El archivo [render.yaml](render.yaml) deja preparada una blueprint base para publicar los tres servicios desde el monorepo.
+
+Notas importantes:
+
+- Si ALVENT_FRONTEND_ORIGIN apunta a localhost o a una URL caída, RENSOF mostrará el modo de contingencia.
+- El frontend ALVENT debe estar desplegado y responder para que /alven/app/login y /alven/app/dashboard abran el aplicativo completo.
+- El backend ALVENT debe estar desplegado para que el login y los módulos operen sin fallback.
+
 ## Endpoints clave
 
 - Home dinamico: /
