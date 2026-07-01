@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Base de datos
+*.db
+
+# VSCode
+.vscode/
+
+# Uploads
+uploads/
+backend/app/uploads/
+
+# Node
+node_modules/
+
+# Next
+.next/
+out/
+
+# Logs
+*.log
+
+# Env
+.env
+.env.*
