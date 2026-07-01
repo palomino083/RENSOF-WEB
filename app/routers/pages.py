@@ -19,7 +19,7 @@ router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 ALVENT_FALLBACK_USER = os.getenv("ALVENT_FALLBACK_USER", "Admin")
-ALVENT_FALLBACK_PASSWORD = os.getenv("ALVENT_FALLBACK_PASSWORD", "123456")
+ALVENT_FALLBACK_PASSWORD = os.getenv("ALVENT_FALLBACK_PASSWORD", "12345")
 
 
 def _build_proxy_target(origin: str, full_path: str, query: str) -> str:

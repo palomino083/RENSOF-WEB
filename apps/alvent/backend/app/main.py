@@ -71,7 +71,7 @@ for carpeta in [
 limiter = Limiter(key_func=get_remote_address)
 
 SUPERADMIN_USERNAME = "Admin"
-SUPERADMIN_PASSWORD = "123456"
+SUPERADMIN_PASSWORD = "12345"
 
 
 def _normalizar_rol(valor: str | None) -> str:
