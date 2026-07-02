@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
+from pydantic import BaseModel, Field
 
 from app.database.database import get_db
 
@@ -34,6 +35,74 @@ from app.utils.dependencies import get_current_user
 from app.utils.planes import obtener_catalogo_planes, obtener_plan_config, normalizar_plan
 
 router = APIRouter(prefix="/negocios", tags=["Negocios"])
+
+
+class PlanGratuitoBondadesUpdate(BaseModel):
+    usuarios_source_plan: str = Field(default="GRATUITO", min_length=3, max_length=20)
+    habilitar_reportes: bool = False
+    reportes_source_plan: str = Field(default="LITE", min_length=3, max_length=20)
+    habilitar_backups: bool = False
+    backups_source_plan: str = Field(default="PRO", min_length=3, max_length=20)
+
+
+def _normalizar_source_plan(plan: str, fallback: str) -> str:
+    valor = str(plan or fallback).upper().strip()
+    if valor == "FREE":
+        valor = "GRATUITO"
+    if valor not in {"GRATUITO", "PRUEBA", "BASICO", "LITE", "PRO", "PREMIUM"}:
+        raise HTTPException(status_code=400, detail="Plan fuente no valido")
+    return valor
+
+
+def _aplicar_bondades_gratuito(negocio: Negocio, base_config):
+    usuarios_limite = (
+        negocio.plan_gratuito_usuarios_limite
+        if negocio.plan_gratuito_usuarios_limite is not None
+        else base_config.usuarios_limite
+    )
+
+    reportes_habilitado = bool(
+        negocio.plan_gratuito_reportes_habilitado or base_config.reportes_habilitado
+    )
+    reportes_limite = (
+        negocio.plan_gratuito_reportes_limite
+        if reportes_habilitado
+        else 0
+    )
+    if reportes_habilitado and reportes_limite is None:
+        reportes_limite = base_config.reportes_limite
+
+    backups_habilitado = bool(
+        negocio.plan_gratuito_backups_habilitado or base_config.backups_habilitado
+    )
+    backups_limite = (
+        negocio.plan_gratuito_backups_limite
+        if backups_habilitado
+        else 0
+    )
+    if backups_habilitado and backups_limite is None:
+        backups_limite = base_config.backups_limite
+
+    return {
+        "usuarios_limite": usuarios_limite,
+        "reportes_habilitado": reportes_habilitado,
+        "reportes_limite": reportes_limite,
+        "backups_habilitado": backups_habilitado,
+        "backups_limite": backups_limite,
+    }
+
+
+def _resolver_config_plan_para_negocio(negocio: Negocio, plan: str):
+    base = obtener_plan_config(plan)
+    if plan != "GRATUITO":
+        return {
+            "usuarios_limite": base.usuarios_limite,
+            "reportes_habilitado": base.reportes_habilitado,
+            "reportes_limite": base.reportes_limite,
+            "backups_habilitado": base.backups_habilitado,
+            "backups_limite": base.backups_limite,
+        }
+    return _aplicar_bondades_gratuito(negocio, base)
 
 
 def _normalizar_plan(plan: str | None) -> str:
@@ -208,6 +277,87 @@ def obtener_catalogo_planes_endpoint(
     }
 
 
+@router.get("/{negocio_id}/plan-gratuito-bondades")
+def obtener_bondades_plan_gratuito(
+    negocio_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin:
+        raise HTTPException(status_code=403, detail="Solo superadministrador")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    base = obtener_plan_config("GRATUITO")
+    config = _aplicar_bondades_gratuito(negocio, base)
+
+    return {
+        "usuarios_limite": config["usuarios_limite"],
+        "reportes_habilitado": config["reportes_habilitado"],
+        "reportes_limite": config["reportes_limite"],
+        "backups_habilitado": config["backups_habilitado"],
+        "backups_limite": config["backups_limite"],
+        "custom": {
+            "usuarios_limite": negocio.plan_gratuito_usuarios_limite,
+            "reportes_habilitado": bool(negocio.plan_gratuito_reportes_habilitado),
+            "reportes_limite": negocio.plan_gratuito_reportes_limite,
+            "backups_habilitado": bool(negocio.plan_gratuito_backups_habilitado),
+            "backups_limite": negocio.plan_gratuito_backups_limite,
+        },
+    }
+
+
+@router.put("/{negocio_id}/plan-gratuito-bondades")
+def actualizar_bondades_plan_gratuito(
+    negocio_id: int,
+    data: PlanGratuitoBondadesUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin:
+        raise HTTPException(status_code=403, detail="Solo superadministrador")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    usuarios_source = _normalizar_source_plan(data.usuarios_source_plan, "GRATUITO")
+    reportes_source = _normalizar_source_plan(data.reportes_source_plan, "LITE")
+    backups_source = _normalizar_source_plan(data.backups_source_plan, "PRO")
+
+    usuarios_cfg = obtener_plan_config(usuarios_source)
+    reportes_cfg = obtener_plan_config(reportes_source)
+    backups_cfg = obtener_plan_config(backups_source)
+
+    negocio.plan_gratuito_usuarios_limite = usuarios_cfg.usuarios_limite
+    negocio.plan_gratuito_reportes_habilitado = bool(data.habilitar_reportes and reportes_cfg.reportes_habilitado)
+    negocio.plan_gratuito_reportes_limite = (
+        reportes_cfg.reportes_limite if negocio.plan_gratuito_reportes_habilitado else 0
+    )
+    negocio.plan_gratuito_backups_habilitado = bool(data.habilitar_backups and backups_cfg.backups_habilitado)
+    negocio.plan_gratuito_backups_limite = (
+        backups_cfg.backups_limite if negocio.plan_gratuito_backups_habilitado else 0
+    )
+
+    db.commit()
+    db.refresh(negocio)
+
+    config = _resolver_config_plan_para_negocio(negocio, "GRATUITO")
+    return {
+        "ok": True,
+        "mensaje": "Bondades del plan gratuito actualizadas",
+        "usuarios_limite": config["usuarios_limite"],
+        "reportes_habilitado": config["reportes_habilitado"],
+        "reportes_limite": config["reportes_limite"],
+        "backups_habilitado": config["backups_habilitado"],
+        "backups_limite": config["backups_limite"],
+    }
+
+
 @router.get("/{negocio_id}/plan-limites")
 def obtener_resumen_plan(
     negocio_id: int,
@@ -223,7 +373,7 @@ def obtener_resumen_plan(
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
 
     plan = _normalizar_plan(getattr(negocio, "plan", "BASICO"))
-    config = obtener_plan_config(plan)
+    config = _resolver_config_plan_para_negocio(negocio, plan)
 
     usuarios_consumidos = (
         db.query(Usuario)
@@ -242,9 +392,9 @@ def obtener_resumen_plan(
     backup_dir.mkdir(parents=True, exist_ok=True)
     backups_consumidos = len(list(backup_dir.glob(f"backup_negocio_{negocio_id}_*.db")))
 
-    usuarios_limite = config.usuarios_limite
-    reportes_limite = config.reportes_limite
-    backups_limite = config.backups_limite
+    usuarios_limite = config["usuarios_limite"]
+    reportes_limite = config["reportes_limite"]
+    backups_limite = config["backups_limite"]
 
     def _disponibles(limite: int | None, consumidos: int) -> int | None:
         if limite is None:
@@ -264,13 +414,13 @@ def obtener_resumen_plan(
             "consumidos": int(reportes_consumidos),
             "limite": reportes_limite,
             "disponibles": _disponibles(reportes_limite, int(reportes_consumidos)),
-            "habilitado": config.reportes_habilitado,
+            "habilitado": config["reportes_habilitado"],
         },
         "backups": {
             "consumidos": backups_consumidos,
             "limite": backups_limite,
             "disponibles": _disponibles(backups_limite, backups_consumidos),
-            "habilitado": config.backups_habilitado,
+            "habilitado": config["backups_habilitado"],
         },
     }
 

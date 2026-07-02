@@ -188,9 +188,25 @@ def _ensure_multitenant_columns() -> None:
             conn.exec_driver_sql(
                 "ALTER TABLE negocios ADD COLUMN plan VARCHAR(20) DEFAULT 'BASICO'"
             )
-        else:
+        if "plan_gratuito_usuarios_limite" not in negocio_columns:
             conn.exec_driver_sql(
-                "UPDATE negocios SET plan = 'BASICO' WHERE UPPER(COALESCE(plan, '')) IN ('GRATUITO', 'FREE', '')"
+                "ALTER TABLE negocios ADD COLUMN plan_gratuito_usuarios_limite INTEGER"
+            )
+        if "plan_gratuito_reportes_habilitado" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_gratuito_reportes_habilitado BOOLEAN DEFAULT 0"
+            )
+        if "plan_gratuito_reportes_limite" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_gratuito_reportes_limite INTEGER"
+            )
+        if "plan_gratuito_backups_habilitado" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_gratuito_backups_habilitado BOOLEAN DEFAULT 0"
+            )
+        if "plan_gratuito_backups_limite" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_gratuito_backups_limite INTEGER"
             )
 
 # ==========================================

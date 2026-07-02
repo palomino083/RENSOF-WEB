@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/services/api";
 import { forgotPassword } from "@/services/authService";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -19,6 +19,7 @@ function normalizarRol(rol: string) {
 }
 
 export default function LoginPage() {
+  const usuarioInputRef = useRef<HTMLInputElement>(null);
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,14 +31,38 @@ export default function LoginPage() {
   const [recoveryError, setRecoveryError] = useState("");
   const [recoveryMessage, setRecoveryMessage] = useState("");
 
+  useEffect(() => {
+    usuarioInputRef.current?.focus();
+  }, []);
+
+  const mapLoginError = (err: any) => {
+    if (!err?.response) {
+      return "No hay conexion con la API de ALVENT. Verifica el proxy interno e intenta de nuevo.";
+    }
+
+    const status = Number(err?.response?.status || 0);
+    const detail = String(err?.response?.data?.detail || "").toLowerCase();
+
+    if (status === 429) return "Demasiados intentos. Espera un momento y vuelve a intentar.";
+    if (status >= 500) return "El servicio esta temporalmente no disponible. Intenta nuevamente en unos minutos.";
+    if (status === 401 && detail.includes("usuario")) return "El usuario no existe o no esta habilitado.";
+    if (status === 401 && detail.includes("contrasena")) return "La contrasena es incorrecta. Revisa y vuelve a intentar.";
+
+    return getApiErrorMessage(err, "Usuario o contrasena incorrectos");
+  };
+
   /* =========================
      🔐 LOGIN ERP
   ========================= */
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError("");
+
+    const usuarioLimpio = usuario.trim();
+    const passwordLimpio = password.trim();
     
-    if (!usuario.trim() || !password.trim()) {
+    if (!usuarioLimpio || !passwordLimpio) {
       setError("Por favor completa todos los campos");
       return;
     }
@@ -45,8 +70,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await api.post("/auth/login", {
-        usuario,
-        password,
+        usuario: usuarioLimpio,
+        password: passwordLimpio,
       });
 
       const rolServidor = normalizarRol(res.data.rol || "");
@@ -70,7 +95,7 @@ export default function LoginPage() {
         "usuario",
         JSON.stringify({
           id: res.data.usuario_id,
-          usuario,
+          usuario: usuarioLimpio,
           nombres: res.data.nombres,
           rol: rolSesion,
           roles: rolesServidor.length > 0 ? rolesServidor : [rolSesion],
@@ -88,18 +113,17 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error("LOGIN ERROR:", err);
-      if (!err?.response) {
-        setError("No hay conexion con la API de ALVENT. Verifica el proxy interno e intenta de nuevo.");
-      } else {
-        setError(getApiErrorMessage(err, "Usuario o contraseña incorrectos"));
-      }
+      setError(mapLoginError(err));
     } finally {
       setLoading(false);
     }
   };
 
   const solicitarRecuperacion = async () => {
-    if (!recoveryEmail.trim()) {
+    if (recoveryLoading) return;
+
+    const emailLimpio = recoveryEmail.trim();
+    if (!emailLimpio) {
       setRecoveryError("Ingresa un correo valido");
       return;
     }
@@ -107,7 +131,7 @@ export default function LoginPage() {
     try {
       setRecoveryLoading(true);
       setRecoveryError("");
-      const res = await forgotPassword({ email: recoveryEmail.trim() });
+      const res = await forgotPassword({ email: emailLimpio });
       setRecoveryMessage(res.mensaje || "Revisa tu correo para continuar");
     } catch (err: any) {
       setRecoveryError(getApiErrorMessage(err, "No se pudo enviar el enlace"));
@@ -151,11 +175,14 @@ export default function LoginPage() {
             <div className={styles.field}>
               <label className={styles.label}>Usuario</label>
               <input
+                ref={usuarioInputRef}
                 type="text"
                 placeholder="Ingresa tu usuario"
                 value={usuario}
                 onChange={(e) => setUsuario(e.target.value)}
                 disabled={loading}
+                autoComplete="username"
+                aria-invalid={Boolean(error)}
                 className={`${styles.input} focus-ring`}
               />
             </div>
@@ -169,6 +196,8 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
+                  autoComplete="current-password"
+                  aria-invalid={Boolean(error)}
                   className={`${styles.input} ${styles.inputPassword} focus-ring`}
                 />
                 <button
@@ -183,12 +212,13 @@ export default function LoginPage() {
             </div>
 
             <button type="submit" disabled={loading} className={styles.submitBtn}>
-              {loading ? "Iniciando sesion..." : "Iniciar sesion"}
+              {loading ? "Validando credenciales..." : "Iniciar sesion"}
             </button>
 
             <button
               type="button"
               className={styles.secondaryLink}
+              disabled={loading}
               onClick={() => {
                 setOpenRecovery(true);
                 setRecoveryMessage("");
@@ -241,6 +271,14 @@ export default function LoginPage() {
           placeholder="Correo de tu cuenta"
           value={recoveryEmail}
           onChange={(e) => setRecoveryEmail(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void solicitarRecuperacion();
+            }
+          }}
+          disabled={recoveryLoading}
+          autoComplete="email"
           className="focus-ring"
         />
         {recoveryError ? <p className={styles.errorText}>{recoveryError}</p> : null}

@@ -1,0 +1,39 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">RENSOF Plataforma de Inteligencia Estrategica</title>
+  <desc id="desc">Imagen social oficial de RENSOF para compartir en redes.</desc>
+  <defs>
+    <linearGradient id="bg" x1="70" y1="52" x2="1130" y2="578" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#051427"/>
+      <stop offset="1" stop-color="#0A2E4E"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0F7EA6"/>
+      <stop offset="1" stop-color="#1FA878"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" rx="30" fill="url(#bg)"/>
+  <circle cx="1040" cy="120" r="180" fill="#1FA878" fill-opacity="0.12"/>
+  <circle cx="190" cy="540" r="240" fill="#0F7EA6" fill-opacity="0.16"/>
+
+  <rect x="70" y="86" width="82" height="82" rx="18" fill="url(#accent)"/>
+  <text x="96" y="138" fill="#EAF7FF" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700">R</text>
+  <text x="176" y="142" fill="#EAF7FF" font-family="Segoe UI, Arial, sans-serif" font-size="52" font-weight="700">RENSOF</text>
+
+  <text x="72" y="248" fill="#EAF7FF" font-family="Segoe UI, Arial, sans-serif" font-size="58" font-weight="700">Plataforma de Inteligencia</text>
+  <text x="72" y="320" fill="#EAF7FF" font-family="Segoe UI, Arial, sans-serif" font-size="58" font-weight="700">Estrategica</text>
+
+  <text x="72" y="392" fill="#BBD4E5" font-family="Segoe UI, Arial, sans-serif" font-size="30">Transformamos datos en decisiones con impacto real.</text>
+
+  <rect x="72" y="454" width="404" height="56" rx="14" fill="url(#accent)"/>
+  <text x="100" y="491" fill="#EAF7FF" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">www.rensof.pe</text>
+
+  <g opacity="0.74">
+    <rect x="746" y="226" width="370" height="236" rx="20" fill="#0B2238" stroke="#2C5D80"/>
+    <text x="776" y="268" fill="#BBD4E5" font-family="Segoe UI, Arial, sans-serif" font-size="20">Panel estrategico</text>
+    <rect x="776" y="294" width="98" height="58" rx="10" fill="#0F3658"/>
+    <rect x="886" y="294" width="98" height="58" rx="10" fill="#0F3658"/>
+    <rect x="996" y="294" width="98" height="58" rx="10" fill="#0F3658"/>
+    <path d="M780 428L828 404L876 416L924 388L972 402L1020 372L1082 388" stroke="url(#accent)" stroke-width="5" stroke-linecap="round"/>
+  </g>
+</svg>

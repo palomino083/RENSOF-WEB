@@ -170,6 +170,7 @@ def home(request: Request, sent: int = Query(default=0)):
     with SessionLocal() as session:
         content = get_home_content(session)
         primary_email = get_primary_email_account(session)
+    base_url = str(request.base_url).rstrip("/")
     return templates.TemplateResponse(
         request,
         "home.html",
@@ -183,6 +184,10 @@ def home(request: Request, sent: int = Query(default=0)):
                 "RENSOF es una plataforma de inteligencia estrategica que transforma datos "
                 "en decisiones estrategicas para organizaciones de Latinoamerica."
             ),
+            "page_og_title": "RENSOF | Plataforma de Inteligencia Estrategica",
+            "page_og_description": "Tecnologia, analitica y aplicaciones especializadas para transformar informacion en decisiones con impacto real.",
+            "page_og_url": f"{base_url}/",
+            "page_og_image": f"{base_url}/assets/img/og-rensof-social.svg?v=20260702b",
         },
     )
 
@@ -194,6 +199,7 @@ def servicios(request: Request):
 
 @router.get("/alven", response_class=HTMLResponse)
 def alven(request: Request):
+    base_url = str(request.base_url).rstrip("/")
     return templates.TemplateResponse(
         request,
         "alvent.html",
@@ -201,6 +207,10 @@ def alven(request: Request):
             "active_page": "servicios",
             "page_title": "ALVENT ERP PRO | RENSOF",
             "page_description": "Acceso y vista previa de ALVENT ERP PRO dentro del ecosistema RENSOF.",
+            "page_og_title": "ALVENT ERP PRO | Producto principal de RENSOF",
+            "page_og_description": "Opera ventas, inventario, caja y reportes desde una misma plataforma con velocidad, control y escalabilidad.",
+            "page_og_url": f"{base_url}/alven",
+            "page_og_image": f"{base_url}/assets/img/og-alvent-social.svg?v=20260702b",
             "alvent_app_url": ALVENT_APP_URL,
         },
     )

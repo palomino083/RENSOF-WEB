@@ -14,6 +14,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import styles from "./page.module.css";
 
 const PLAN_OPTIONS = [
+  { value: "GRATUITO", label: "Gratuito" },
   { value: "PRUEBA", label: "Prueba" },
   { value: "BASICO", label: "Basico" },
   { value: "LITE", label: "Lite" },
@@ -22,11 +23,11 @@ const PLAN_OPTIONS = [
 ] as const;
 
 const LEGACY_PLAN_ALIAS: Record<string, string> = {
-  GRATUITO: "BASICO",
+  FREE: "GRATUITO",
 };
 
 const normalizarPlan = (plan?: string | null) => {
-  const raw = String(plan || "BASICO").toUpperCase();
+  const raw = String(plan || "GRATUITO").toUpperCase();
   return LEGACY_PLAN_ALIAS[raw] || raw;
 };
 
@@ -60,6 +61,111 @@ const MODULOS_BASE = [
   "Reportes",
   "Backups",
 ] as const;
+
+const PLAN_BONDAD_SOURCES = ["GRATUITO", "PRUEBA", "BASICO", "LITE", "PRO", "PREMIUM"] as const;
+
+const PLAN_VISUAL_PROPUESTA = [
+  {
+    key: "GRATUITO",
+    titulo: "Plan Gratuito",
+    precio: "S/0",
+    subtitulo: "Entrada sin costo",
+    lema: "Ideal para primera implementacion",
+    beneficios: [
+      { icon: "check", text: "Consultas basicas" },
+      { icon: "spark", text: "Tareas operativas" },
+      { icon: "chart", text: "Control inicial" },
+      { icon: "user", text: "Uso personal" },
+    ],
+    accentClass: "free",
+  },
+  {
+    key: "PRO",
+    titulo: "Plan Pro",
+    precio: "S/45",
+    subtitulo: "Escala comercial",
+    lema: "Mayor velocidad y analitica",
+    beneficios: [
+      { icon: "check", text: "Todo lo del gratuito" },
+      { icon: "spark", text: "Mayor velocidad" },
+      { icon: "chart", text: "Reportes avanzados" },
+      { icon: "rocket", text: "Apoyo a negocio" },
+    ],
+    accentClass: "pro",
+  },
+  {
+    key: "PREMIUM",
+    titulo: "Plan Premium",
+    precio: "S/65",
+    subtitulo: "Maximo rendimiento",
+    lema: "Operacion con prioridad total",
+    beneficios: [
+      { icon: "crown", text: "Rendimiento maximo" },
+      { icon: "shield", text: "Acceso prioritario" },
+      { icon: "chart", text: "Marketing y ventas" },
+      { icon: "briefcase", text: "Uso profesional" },
+    ],
+    accentClass: "premium",
+  },
+] as const;
+
+const renderBenefitIcon = (icon: string) => {
+  if (icon === "spark") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3l1.9 4.8L19 10l-5.1 2.2L12 17l-1.9-4.8L5 10l5.1-2.2L12 3z" />
+      </svg>
+    );
+  }
+  if (icon === "chart") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 20h16M7 16V9m5 7V5m5 11v-4" />
+      </svg>
+    );
+  }
+  if (icon === "user") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 9a7 7 0 0114 0" />
+      </svg>
+    );
+  }
+  if (icon === "rocket") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 19l4-1 7-7a6 6 0 001-8 6 6 0 00-8 1l-7 7-1 4 4-1zM9 15l-2 2" />
+      </svg>
+    );
+  }
+  if (icon === "crown") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 18h18l-2-10-5 4-2-4-2 4-5-4-2 10z" />
+      </svg>
+    );
+  }
+  if (icon === "shield") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z" />
+      </svg>
+    );
+  }
+  if (icon === "briefcase") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 8h18v11H3V8zm6-3h6v3H9V5zM3 12h18" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 12l4 4L19 6" />
+    </svg>
+  );
+};
 
 
 export default function ConfiguracionPage() {
@@ -122,6 +228,17 @@ export default function ConfiguracionPage() {
     observaciones: "",
   });
   const [sendingSolicitudPlan, setSendingSolicitudPlan] = useState(false);
+  const [savingFreePlanBoost, setSavingFreePlanBoost] = useState(false);
+  const [freePlanBoost, setFreePlanBoost] = useState({
+    usuarios_source_plan: "BASICO",
+    habilitar_reportes: false,
+    reportes_source_plan: "LITE",
+    habilitar_backups: false,
+    backups_source_plan: "PRO",
+    usuarios_limite: 1 as number | null,
+    reportes_limite: 0 as number | null,
+    backups_limite: 0 as number | null,
+  });
   const [businessForm, setBusinessForm] = useState({
     nombre: "",
     tipo: "tienda",
@@ -346,6 +463,71 @@ export default function ConfiguracionPage() {
     }
   };
 
+  const cargarBondadesPlanGratuito = async (negocioIdArg?: number) => {
+    const negocioId = negocioIdArg || getNegocioIdActivo();
+    if (!isSuperadmin || !negocioId) return;
+
+    try {
+      const data = await negocioService.getFreePlanPerks(negocioId);
+
+      const inferirSourcePorLimite = (limite: number | null, habilitado: boolean, tipo: "reportes" | "backups" | "usuarios") => {
+        const candidatos = planCatalogo.length > 0 ? planCatalogo : [];
+        const match = candidatos.find((plan) => {
+          if (tipo === "usuarios") return plan.usuarios_limite === limite;
+          if (tipo === "reportes") return plan.reportes_habilitado === habilitado && plan.reportes_limite === limite;
+          return plan.backups_habilitado === habilitado && plan.backups_limite === limite;
+        });
+        return match?.codigo || (tipo === "reportes" ? "LITE" : tipo === "backups" ? "PRO" : "BASICO");
+      };
+
+      setFreePlanBoost((prev) => ({
+        ...prev,
+        usuarios_source_plan: inferirSourcePorLimite(data.custom.usuarios_limite, true, "usuarios"),
+        habilitar_reportes: Boolean(data.custom.reportes_habilitado),
+        reportes_source_plan: inferirSourcePorLimite(data.custom.reportes_limite, Boolean(data.custom.reportes_habilitado), "reportes"),
+        habilitar_backups: Boolean(data.custom.backups_habilitado),
+        backups_source_plan: inferirSourcePorLimite(data.custom.backups_limite, Boolean(data.custom.backups_habilitado), "backups"),
+        usuarios_limite: data.usuarios_limite,
+        reportes_limite: data.reportes_limite,
+        backups_limite: data.backups_limite,
+      }));
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo cargar bondades del plan gratuito"));
+    }
+  };
+
+  const guardarBondadesPlanGratuito = async () => {
+    const negocioId = getNegocioIdActivo();
+    if (!isSuperadmin || !negocioId) return;
+
+    try {
+      setSavingFreePlanBoost(true);
+      setError("");
+      setSuccess("");
+      const data = await negocioService.updateFreePlanPerks(negocioId, {
+        usuarios_source_plan: freePlanBoost.usuarios_source_plan,
+        habilitar_reportes: freePlanBoost.habilitar_reportes,
+        reportes_source_plan: freePlanBoost.reportes_source_plan,
+        habilitar_backups: freePlanBoost.habilitar_backups,
+        backups_source_plan: freePlanBoost.backups_source_plan,
+      });
+
+      setFreePlanBoost((prev) => ({
+        ...prev,
+        usuarios_limite: data.usuarios_limite,
+        reportes_limite: data.reportes_limite,
+        backups_limite: data.backups_limite,
+      }));
+      setSuccess(data.mensaje);
+      await cargarPlanStats();
+      await cargarCatalogoPlanes();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo actualizar bondades del plan gratuito"));
+    } finally {
+      setSavingFreePlanBoost(false);
+    }
+  };
+
   const cambiarPlanNegocio = async (planCodigo: string) => {
     const negocioId = getNegocioIdActivo();
     if (!isSuperadmin || !negocioId) return;
@@ -369,18 +551,36 @@ export default function ConfiguracionPage() {
 
   const datosPlanSimulado = planCatalogo.find((p) => p.codigo === normalizarPlan(planSimulado)) || null;
   const datosPlanActual = planCatalogo.find((p) => p.codigo === normalizarPlan(businessForm.plan)) || null;
+  const datosPlanBaseGratuito = planCatalogo.find((p) => p.codigo === "GRATUITO") || null;
+
+  const datosPlanGratuitoPromocional = {
+    codigo: "GRATUITO",
+    nombre: "Gratuito",
+    usuarios_limite: freePlanBoost.usuarios_limite ?? datosPlanBaseGratuito?.usuarios_limite ?? 1,
+    reportes_habilitado: freePlanBoost.habilitar_reportes,
+    reportes_limite: freePlanBoost.habilitar_reportes ? (freePlanBoost.reportes_limite ?? 0) : 0,
+    backups_habilitado: freePlanBoost.habilitar_backups,
+    backups_limite: freePlanBoost.habilitar_backups ? (freePlanBoost.backups_limite ?? 0) : 0,
+  };
+
+  const datosPlanSimuladoEfectivo = normalizarPlan(planSimulado) === "GRATUITO"
+    ? datosPlanGratuitoPromocional
+    : datosPlanSimulado;
+  const datosPlanActualEfectivo = normalizarPlan(businessForm.plan) === "GRATUITO"
+    ? datosPlanGratuitoPromocional
+    : datosPlanActual;
 
   const estadoModuloSimulado = (modulo: typeof MODULOS_BASE[number]) => {
-    if (!datosPlanSimulado) return false;
-    if (modulo === "Reportes") return datosPlanSimulado.reportes_habilitado;
-    if (modulo === "Backups") return datosPlanSimulado.backups_habilitado;
+    if (!datosPlanSimuladoEfectivo) return false;
+    if (modulo === "Reportes") return datosPlanSimuladoEfectivo.reportes_habilitado;
+    if (modulo === "Backups") return datosPlanSimuladoEfectivo.backups_habilitado;
     return true;
   };
 
   const estadoModuloActual = (modulo: typeof MODULOS_BASE[number]) => {
-    if (!datosPlanActual) return false;
-    if (modulo === "Reportes") return datosPlanActual.reportes_habilitado;
-    if (modulo === "Backups") return datosPlanActual.backups_habilitado;
+    if (!datosPlanActualEfectivo) return false;
+    if (modulo === "Reportes") return datosPlanActualEfectivo.reportes_habilitado;
+    if (modulo === "Backups") return datosPlanActualEfectivo.backups_habilitado;
     return true;
   };
 
@@ -427,6 +627,7 @@ export default function ConfiguracionPage() {
     void cargarBranding(negocioSeleccionadoId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioSeleccionadoId);
+    void cargarBondadesPlanGratuito(negocioSeleccionadoId);
   }, [negocioSeleccionadoId, isSuperadmin]);
 
   useEffect(() => {
@@ -1006,6 +1207,58 @@ export default function ConfiguracionPage() {
               Resumen en tiempo real de límites consumidos para usuarios, reportes y backups.
             </p>
 
+            <div className={styles.planVisualBoard}>
+              <header className={styles.planVisualHero}>
+                <p className={styles.planVisualEyebrow}>ALVENT PREMIUM 2026</p>
+                <h3 className={styles.planVisualHeadline}>Activa tu plan segun el ritmo de crecimiento</h3>
+                <p className={styles.planVisualSubhead}>Version comercial para captar nuevos clientes con una lectura rapida de valor.</p>
+              </header>
+              <div className={styles.planVisualGrid}>
+                {PLAN_VISUAL_PROPUESTA.map((plan, index) => (
+                  <article
+                    key={`visual-${plan.key}`}
+                    className={`${styles.planVisualCard} ${styles[`planVisualCard_${plan.accentClass}`]} ${index === 0 ? styles.planVisualCardFree : ""}`}
+                  >
+                    <div className={styles.planVisualCardHead}>
+                      <span className={styles.planVisualPill}>{plan.titulo}</span>
+                      <small>{plan.subtitulo}</small>
+                    </div>
+                    <div className={styles.planVisualPriceWrap}>
+                      <strong>{plan.precio}</strong>
+                      <span>por mes</span>
+                    </div>
+                    <p className={styles.planVisualLema}>{plan.lema}</p>
+                    <ul className={styles.planVisualList}>
+                      {plan.beneficios.map((item) => (
+                        <li key={`${plan.key}-${item.text}`}>
+                          <span className={styles.planVisualIcon}>{renderBenefitIcon(item.icon)}</span>
+                          <span>{item.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+
+              <div className={styles.planVisualCallout}>
+                <div>
+                  <strong>Activa ALVENT segun tu etapa comercial</strong>
+                  <p>Empieza con el gratuito y escala a Pro o Premium cuando tu operacion lo requiera.</p>
+                </div>
+                <button
+                  type="button"
+                  className={`${styles.planVisualCtaBtn} focus-ring`}
+                  onClick={() => {
+                    setPlanSimulado("GRATUITO");
+                    const nodo = document.getElementById("cfg-plan");
+                    if (nodo) nodo.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  Activar simulacion gratuita
+                </button>
+              </div>
+            </div>
+
             <div className={styles.planGrid}>
               <article className={styles.planItem}>
                 <h4>Usuarios</h4>
@@ -1033,6 +1286,114 @@ export default function ConfiguracionPage() {
               <>
                 <h3 className={styles.catalogTitle}>Catalogo de planes</h3>
                 <p className={styles.catalogText}>Selecciona un plan para aplicar al negocio activo y visualizar sus funcionalidades.</p>
+
+                <div className={styles.freePlanBoostBox}>
+                  <h4>Plan Gratuito promocional (solo superadministrador)</h4>
+                  <p>
+                    Mezcla bondades de planes superiores para captar nuevos clientes sin costo inicial.
+                  </p>
+
+                  <div className={styles.freePlanBoostGrid}>
+                    <div className={styles.formRow}>
+                      <label htmlFor="free-usuarios-source">Usuarios desde plan</label>
+                      <select
+                        id="free-usuarios-source"
+                        className="focus-ring"
+                        value={freePlanBoost.usuarios_source_plan}
+                        onChange={(e) => {
+                          const source = e.target.value;
+                          const sourcePlan = planCatalogo.find((p) => p.codigo === source);
+                          setFreePlanBoost((prev) => ({
+                            ...prev,
+                            usuarios_source_plan: source,
+                            usuarios_limite: sourcePlan?.usuarios_limite ?? prev.usuarios_limite,
+                          }));
+                        }}
+                      >
+                        {PLAN_BONDAD_SOURCES.map((source) => (
+                          <option key={`usuarios-${source}`} value={source}>{nombrePlan(source)}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className={styles.formRow}>
+                      <label htmlFor="free-reportes-source">Reportes desde plan</label>
+                      <select
+                        id="free-reportes-source"
+                        className="focus-ring"
+                        value={freePlanBoost.reportes_source_plan}
+                        disabled={!freePlanBoost.habilitar_reportes}
+                        onChange={(e) => {
+                          const source = e.target.value;
+                          const sourcePlan = planCatalogo.find((p) => p.codigo === source);
+                          setFreePlanBoost((prev) => ({
+                            ...prev,
+                            reportes_source_plan: source,
+                            reportes_limite: sourcePlan?.reportes_limite ?? prev.reportes_limite,
+                          }));
+                        }}
+                      >
+                        {PLAN_BONDAD_SOURCES.map((source) => (
+                          <option key={`reportes-${source}`} value={source}>{nombrePlan(source)}</option>
+                        ))}
+                      </select>
+                      <label className={styles.inlineCheck}>
+                        <input
+                          type="checkbox"
+                          checked={freePlanBoost.habilitar_reportes}
+                          onChange={(e) => setFreePlanBoost((prev) => ({ ...prev, habilitar_reportes: e.target.checked }))}
+                        />
+                        Habilitar reportes en gratuito
+                      </label>
+                    </div>
+
+                    <div className={styles.formRow}>
+                      <label htmlFor="free-backups-source">Backups desde plan</label>
+                      <select
+                        id="free-backups-source"
+                        className="focus-ring"
+                        value={freePlanBoost.backups_source_plan}
+                        disabled={!freePlanBoost.habilitar_backups}
+                        onChange={(e) => {
+                          const source = e.target.value;
+                          const sourcePlan = planCatalogo.find((p) => p.codigo === source);
+                          setFreePlanBoost((prev) => ({
+                            ...prev,
+                            backups_source_plan: source,
+                            backups_limite: sourcePlan?.backups_limite ?? prev.backups_limite,
+                          }));
+                        }}
+                      >
+                        {PLAN_BONDAD_SOURCES.map((source) => (
+                          <option key={`backups-${source}`} value={source}>{nombrePlan(source)}</option>
+                        ))}
+                      </select>
+                      <label className={styles.inlineCheck}>
+                        <input
+                          type="checkbox"
+                          checked={freePlanBoost.habilitar_backups}
+                          onChange={(e) => setFreePlanBoost((prev) => ({ ...prev, habilitar_backups: e.target.checked }))}
+                        />
+                        Habilitar backups en gratuito
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className={styles.freePlanBoostStats}>
+                    <span>Usuarios gratuitos: <strong>{freePlanBoost.usuarios_limite ?? "Ilimitado"}</strong></span>
+                    <span>Reportes gratis: <strong>{freePlanBoost.habilitar_reportes ? (freePlanBoost.reportes_limite ?? "Ilimitado") : "No"}</strong></span>
+                    <span>Backups gratis: <strong>{freePlanBoost.habilitar_backups ? (freePlanBoost.backups_limite ?? "Ilimitado") : "No"}</strong></span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={`${styles.planApplyMainBtn} focus-ring`}
+                    onClick={guardarBondadesPlanGratuito}
+                    disabled={savingFreePlanBoost || !negocioSeleccionadoId}
+                  >
+                    {savingFreePlanBoost ? "Guardando bondades..." : "Guardar bondades promocionales"}
+                  </button>
+                </div>
 
                 <div className={styles.simulatorBox}>
                   <div className={styles.simulatorHead}>
@@ -1069,9 +1430,9 @@ export default function ConfiguracionPage() {
                   </div>
 
                   <div className={styles.simulatorKpis}>
-                    <p>Usuarios permitidos: <strong>{datosPlanSimulado?.usuarios_limite ?? "Ilimitado"}</strong></p>
-                    <p>Reportes permitidos: <strong>{datosPlanSimulado?.reportes_habilitado ? (datosPlanSimulado.reportes_limite ?? "Ilimitado") : "No"}</strong></p>
-                    <p>Backups permitidos: <strong>{datosPlanSimulado?.backups_habilitado ? (datosPlanSimulado.backups_limite ?? "Ilimitado") : "No"}</strong></p>
+                    <p>Usuarios permitidos: <strong>{datosPlanSimuladoEfectivo?.usuarios_limite ?? "Ilimitado"}</strong></p>
+                    <p>Reportes permitidos: <strong>{datosPlanSimuladoEfectivo?.reportes_habilitado ? (datosPlanSimuladoEfectivo.reportes_limite ?? "Ilimitado") : "No"}</strong></p>
+                    <p>Backups permitidos: <strong>{datosPlanSimuladoEfectivo?.backups_habilitado ? (datosPlanSimuladoEfectivo.backups_limite ?? "Ilimitado") : "No"}</strong></p>
                   </div>
 
                   <div className={styles.diffBox}>
@@ -1097,22 +1458,22 @@ export default function ConfiguracionPage() {
                     </div>
 
                     <div className={styles.diffLimits}>
-                      <article className={`${styles.diffItem} ${styles[compararLimite(datosPlanActual?.usuarios_limite, datosPlanSimulado?.usuarios_limite)]}`}>
+                      <article className={`${styles.diffItem} ${styles[compararLimite(datosPlanActualEfectivo?.usuarios_limite, datosPlanSimuladoEfectivo?.usuarios_limite)]}`}>
                         <strong>Usuarios</strong>
-                        <span>{formatLimite(datosPlanActual?.usuarios_limite)} → {formatLimite(datosPlanSimulado?.usuarios_limite)}</span>
+                        <span>{formatLimite(datosPlanActualEfectivo?.usuarios_limite)} → {formatLimite(datosPlanSimuladoEfectivo?.usuarios_limite)}</span>
                       </article>
 
-                      <article className={`${styles.diffItem} ${(datosPlanActual?.reportes_habilitado === datosPlanSimulado?.reportes_habilitado && compararLimite(datosPlanActual?.reportes_limite, datosPlanSimulado?.reportes_limite) === "igual") ? styles.diffSame : ((datosPlanSimulado?.reportes_habilitado ? 1 : 0) >= (datosPlanActual?.reportes_habilitado ? 1 : 0) ? styles.diffUp : styles.diffDown)}`}>
+                      <article className={`${styles.diffItem} ${(datosPlanActualEfectivo?.reportes_habilitado === datosPlanSimuladoEfectivo?.reportes_habilitado && compararLimite(datosPlanActualEfectivo?.reportes_limite, datosPlanSimuladoEfectivo?.reportes_limite) === "igual") ? styles.diffSame : ((datosPlanSimuladoEfectivo?.reportes_habilitado ? 1 : 0) >= (datosPlanActualEfectivo?.reportes_habilitado ? 1 : 0) ? styles.diffUp : styles.diffDown)}`}>
                         <strong>Reportes</strong>
                         <span>
-                          {datosPlanActual?.reportes_habilitado ? formatLimite(datosPlanActual?.reportes_limite) : "No"} → {datosPlanSimulado?.reportes_habilitado ? formatLimite(datosPlanSimulado?.reportes_limite) : "No"}
+                          {datosPlanActualEfectivo?.reportes_habilitado ? formatLimite(datosPlanActualEfectivo?.reportes_limite) : "No"} → {datosPlanSimuladoEfectivo?.reportes_habilitado ? formatLimite(datosPlanSimuladoEfectivo?.reportes_limite) : "No"}
                         </span>
                       </article>
 
-                      <article className={`${styles.diffItem} ${(datosPlanActual?.backups_habilitado === datosPlanSimulado?.backups_habilitado && compararLimite(datosPlanActual?.backups_limite, datosPlanSimulado?.backups_limite) === "igual") ? styles.diffSame : ((datosPlanSimulado?.backups_habilitado ? 1 : 0) >= (datosPlanActual?.backups_habilitado ? 1 : 0) ? styles.diffUp : styles.diffDown)}`}>
+                      <article className={`${styles.diffItem} ${(datosPlanActualEfectivo?.backups_habilitado === datosPlanSimuladoEfectivo?.backups_habilitado && compararLimite(datosPlanActualEfectivo?.backups_limite, datosPlanSimuladoEfectivo?.backups_limite) === "igual") ? styles.diffSame : ((datosPlanSimuladoEfectivo?.backups_habilitado ? 1 : 0) >= (datosPlanActualEfectivo?.backups_habilitado ? 1 : 0) ? styles.diffUp : styles.diffDown)}`}>
                         <strong>Backups</strong>
                         <span>
-                          {datosPlanActual?.backups_habilitado ? formatLimite(datosPlanActual?.backups_limite) : "No"} → {datosPlanSimulado?.backups_habilitado ? formatLimite(datosPlanSimulado?.backups_limite) : "No"}
+                          {datosPlanActualEfectivo?.backups_habilitado ? formatLimite(datosPlanActualEfectivo?.backups_limite) : "No"} → {datosPlanSimuladoEfectivo?.backups_habilitado ? formatLimite(datosPlanSimuladoEfectivo?.backups_limite) : "No"}
                         </span>
                       </article>
                     </div>

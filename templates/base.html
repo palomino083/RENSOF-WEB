@@ -5,10 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="{{ page_description }}">
   <title>{{ page_title }}</title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ page_og_title if page_og_title is defined else page_title }}">
+  <meta property="og:description" content="{{ page_og_description if page_og_description is defined else page_description }}">
+  <meta property="og:url" content="{{ page_og_url if page_og_url is defined else request.url }}">
+  <meta property="og:image" content="{{ page_og_image if page_og_image is defined else '/assets/img/og-rensof-social.svg?v=20260702b' }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ page_og_title if page_og_title is defined else page_title }}">
+  <meta name="twitter:description" content="{{ page_og_description if page_og_description is defined else page_description }}">
+  <meta name="twitter:image" content="{{ page_og_image if page_og_image is defined else '/assets/img/og-rensof-social.svg?v=20260702b' }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="/assets/css/style.css?v=20260702a">
-  <link rel="stylesheet" href="/assets/css/r2030.css?v=20260702a">
+  <link rel="stylesheet" href="/assets/css/r2030.css?v=20260702b">
 </head>
 <body class="r2030-page">
   <header class="site-header">

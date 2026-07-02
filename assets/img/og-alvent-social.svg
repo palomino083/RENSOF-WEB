@@ -1,0 +1,39 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">ALVENT ERP PRO</title>
+  <desc id="desc">Imagen social oficial de ALVENT ERP PRO para compartir en redes.</desc>
+  <defs>
+    <linearGradient id="bg" x1="72" y1="62" x2="1134" y2="572" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#061528"/>
+      <stop offset="1" stop-color="#0A2A47"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0F7EA6"/>
+      <stop offset="1" stop-color="#1FA878"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" rx="30" fill="url(#bg)"/>
+  <circle cx="1020" cy="150" r="190" fill="#0F7EA6" fill-opacity="0.16"/>
+  <circle cx="180" cy="560" r="230" fill="#1FA878" fill-opacity="0.12"/>
+
+  <rect x="70" y="86" width="86" height="86" rx="18" fill="url(#accent)"/>
+  <text x="97" y="142" fill="#EAF7FF" font-family="Segoe UI, Arial, sans-serif" font-size="44" font-weight="700">A</text>
+  <text x="180" y="142" fill="#EAF7FF" font-family="Segoe UI, Arial, sans-serif" font-size="52" font-weight="700">ALVENT ERP PRO</text>
+
+  <text x="72" y="244" fill="#EAF7FF" font-family="Segoe UI, Arial, sans-serif" font-size="56" font-weight="700">Control comercial en</text>
+  <text x="72" y="314" fill="#EAF7FF" font-family="Segoe UI, Arial, sans-serif" font-size="56" font-weight="700">tiempo real</text>
+
+  <text x="72" y="390" fill="#BBD4E5" font-family="Segoe UI, Arial, sans-serif" font-size="30">Ventas, inventario, caja y reportes en una sola plataforma.</text>
+
+  <rect x="72" y="454" width="460" height="56" rx="14" fill="url(#accent)"/>
+  <text x="100" y="491" fill="#EAF7FF" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">Producto principal de RENSOF</text>
+
+  <g opacity="0.78">
+    <rect x="740" y="214" width="380" height="256" rx="22" fill="#0B2238" stroke="#2C5D80"/>
+    <text x="770" y="254" fill="#BBD4E5" font-family="Segoe UI, Arial, sans-serif" font-size="20">Commerce Live Board</text>
+    <rect x="770" y="280" width="110" height="66" rx="11" fill="#0F3658"/>
+    <rect x="894" y="280" width="110" height="66" rx="11" fill="#0F3658"/>
+    <rect x="1018" y="280" width="72" height="66" rx="11" fill="#0F3658"/>
+    <path d="M772 434L828 406L884 418L940 386L996 404L1052 372L1092 384" stroke="url(#accent)" stroke-width="5" stroke-linecap="round"/>
+  </g>
+</svg>

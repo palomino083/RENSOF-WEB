@@ -8,6 +8,11 @@ class NegocioBase(BaseModel):
     nombre: str = Field(..., min_length=3, max_length=255)
     tipo: str
     plan: str = "BASICO"
+    plan_gratuito_usuarios_limite: Optional[int] = None
+    plan_gratuito_reportes_habilitado: bool = False
+    plan_gratuito_reportes_limite: Optional[int] = None
+    plan_gratuito_backups_habilitado: bool = False
+    plan_gratuito_backups_limite: Optional[int] = None
     descripcion: Optional[str] = None
     logo_url: Optional[str] = None
     
@@ -41,6 +46,11 @@ class NegocioUpdate(BaseModel):
     nombre: Optional[str] = None
     tipo: Optional[str] = None
     plan: Optional[str] = None
+    plan_gratuito_usuarios_limite: Optional[int] = None
+    plan_gratuito_reportes_habilitado: Optional[bool] = None
+    plan_gratuito_reportes_limite: Optional[int] = None
+    plan_gratuito_backups_habilitado: Optional[bool] = None
+    plan_gratuito_backups_limite: Optional[int] = None
     descripcion: Optional[str] = None
     logo_url: Optional[str] = None
     ruc: Optional[str] = None

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Boolean, Column, Integer, String, Text
 from sqlalchemy.orm import relationship
 from app.database.database import Base
 import enum
@@ -22,6 +22,11 @@ class Negocio(Base):
     nombre = Column(String(255), nullable=False, index=True)
     tipo = Column(String(50), nullable=False)
     plan = Column(String(20), nullable=False, default="BASICO")
+    plan_gratuito_usuarios_limite = Column(Integer, nullable=True)
+    plan_gratuito_reportes_habilitado = Column(Boolean, nullable=False, default=False)
+    plan_gratuito_reportes_limite = Column(Integer, nullable=True)
+    plan_gratuito_backups_habilitado = Column(Boolean, nullable=False, default=False)
+    plan_gratuito_backups_limite = Column(Integer, nullable=True)
     descripcion = Column(Text, nullable=True)
     logo_url = Column(String(500), nullable=True)
 

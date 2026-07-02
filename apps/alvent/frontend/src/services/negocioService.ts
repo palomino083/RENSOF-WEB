@@ -4,7 +4,7 @@ export type Negocio = {
   id: number;
   nombre: string;
   tipo: string;
-  plan?: "PRUEBA" | "BASICO" | "LITE" | "PRO" | "PREMIUM" | "GRATUITO" | string;
+  plan?: "GRATUITO" | "PRUEBA" | "BASICO" | "LITE" | "PRO" | "PREMIUM" | string;
   descripcion?: string | null;
   logo_url?: string | null;
   ruc?: string | null;
@@ -76,6 +76,46 @@ export const negocioService = {
         backups_habilitado: boolean;
         backups_limite: number | null;
       }>;
+    };
+  },
+
+  getFreePlanPerks: async (negocioId: number) => {
+    const res = await api.get(`/negocios/${negocioId}/plan-gratuito-bondades`);
+    return res.data as {
+      usuarios_limite: number | null;
+      reportes_habilitado: boolean;
+      reportes_limite: number | null;
+      backups_habilitado: boolean;
+      backups_limite: number | null;
+      custom: {
+        usuarios_limite: number | null;
+        reportes_habilitado: boolean;
+        reportes_limite: number | null;
+        backups_habilitado: boolean;
+        backups_limite: number | null;
+      };
+    };
+  },
+
+  updateFreePlanPerks: async (
+    negocioId: number,
+    data: {
+      usuarios_source_plan: string;
+      habilitar_reportes: boolean;
+      reportes_source_plan: string;
+      habilitar_backups: boolean;
+      backups_source_plan: string;
+    }
+  ) => {
+    const res = await api.put(`/negocios/${negocioId}/plan-gratuito-bondades`, data);
+    return res.data as {
+      ok: boolean;
+      mensaje: string;
+      usuarios_limite: number | null;
+      reportes_habilitado: boolean;
+      reportes_limite: number | null;
+      backups_habilitado: boolean;
+      backups_limite: number | null;
     };
   },
 

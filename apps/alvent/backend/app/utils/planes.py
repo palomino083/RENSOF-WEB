@@ -13,6 +13,13 @@ class PlanConfig:
 
 
 PLANES: dict[str, PlanConfig] = {
+    "GRATUITO": PlanConfig(
+        usuarios_limite=1,
+        reportes_habilitado=False,
+        reportes_limite=0,
+        backups_habilitado=False,
+        backups_limite=0,
+    ),
     "PRUEBA": PlanConfig(
         usuarios_limite=1,
         reportes_habilitado=True,
@@ -50,9 +57,10 @@ PLANES: dict[str, PlanConfig] = {
     ),
 }
 
-PLAN_ORDEN = ["PRUEBA", "BASICO", "LITE", "PRO", "PREMIUM"]
+PLAN_ORDEN = ["GRATUITO", "PRUEBA", "BASICO", "LITE", "PRO", "PREMIUM"]
 
 PLAN_LABELS = {
+    "GRATUITO": "Gratuito",
     "PRUEBA": "Prueba",
     "BASICO": "Basico",
     "LITE": "Lite",
@@ -62,7 +70,6 @@ PLAN_LABELS = {
 
 
 LEGACY_PLAN_ALIAS = {
-    "GRATUITO": "BASICO",
     "FREE": "BASICO",
 }
 

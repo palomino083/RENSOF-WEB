@@ -751,6 +751,54 @@
   box-shadow: 0 10px 20px rgba(0, 182, 200, 0.18);
 }
 
+.alvent-sticky-cta {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(640px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(126, 214, 255, 0.2);
+  background: linear-gradient(160deg, rgba(7, 19, 31, 0.96), rgba(10, 29, 46, 0.94));
+  box-shadow: 0 20px 40px rgba(3, 12, 21, 0.42);
+  backdrop-filter: blur(10px);
+}
+
+.alvent-sticky-cta-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.alvent-sticky-cta-copy strong {
+  color: var(--r-text);
+  font-size: 0.92rem;
+}
+
+.alvent-sticky-cta-copy span {
+  color: var(--r-text-soft);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.alvent-sticky-cta-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.alvent-sticky-cta .r-btn {
+  min-height: 40px;
+  padding: 9px 12px;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
 .alvent-flow {
   margin-top: 18px;
 }
@@ -1088,6 +1136,15 @@
   .data-tiles {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .alvent-sticky-cta {
+    width: min(560px, calc(100vw - 28px));
+    gap: 12px;
+  }
+
+  .alvent-sticky-cta-copy span {
+    display: none;
+  }
 }
 
 @media (max-width: 920px) {
@@ -1175,6 +1232,28 @@
 
   .inicio-solutions {
     padding: 16px;
+  }
+
+  .alvent-sticky-cta {
+    width: auto;
+    left: 10px;
+    right: 10px;
+    bottom: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .alvent-sticky-cta-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .alvent-sticky-cta .r-btn {
+    min-height: 42px;
+    width: 100%;
   }
 
   .inicio-solution-card {
