@@ -8,19 +8,15 @@
       <h1 class="story-title" style="font-size:clamp(1.9rem,4.8vw,3.4rem)">Productos que convierten datos en decisiones operativas</h1>
       <p class="story-text">No vendemos paginas planas: desplegamos componentes vivos de inteligencia para direccion, equipos tecnicos y operaciones.</p>
       <div class="product-grid" style="margin-top:20px;">
-        {% for product in products %}
         <article class="product-card">
-          <h3>{{ product.name }}</h3>
-          <p>{{ product.subtitle }}</p>
-          {% if product.name == 'ALVENT' %}
+          <h3>ALVENT</h3>
+          <p>Digital Business Platform</p>
           <p style="margin-top:10px; color:var(--r-text-soft);">Acceso operativo a ALVENT ERP PRO para iniciar sesion en la plataforma comercial.</p>
           <div class="product-card-actions">
             <a href="/alven#preview" class="r-btn r-btn-ghost">Vista previa</a>
             <a href="/alven" class="r-btn r-btn-primary">Entrar</a>
           </div>
-          {% endif %}
         </article>
-        {% endfor %}
       </div>
     </div>
   </section>

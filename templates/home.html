@@ -3,141 +3,107 @@
 {% block content %}
 <main class="r2030-main">
   <section class="hero-2030 story-block" id="inicio">
-    <div class="r2030-grid hero-content reveal">
-      <div>
-        <span class="story-kicker">Vision RENSOF 2030</span>
-        <h1 class="story-title">{{ content.slogan }}</h1>
-        <p class="story-text">Somos una Plataforma de Inteligencia Estrategica que integra IA, analitica avanzada, economia, sostenibilidad y GIS para resolver desafios complejos del sector publico, privado y academico.</p>
+    <div class="r2030-grid inicio-hero reveal">
+      <article class="inicio-copy">
+        <h1 class="story-title">Tecnologia que impulsa decisiones <span class="inicio-highlight">inteligentes</span></h1>
+        <p class="story-text">Desarrollamos aplicaciones especializadas que integran datos, modelos y tecnologia para transformar informacion en decisiones con impacto real.</p>
         <div class="hero-actions">
-          <a href="#plataforma" class="r-btn r-btn-primary">Explorar plataforma</a>
-          <a href="#contacto" class="r-btn r-btn-ghost">Solicitar demo</a>
-        </div>
-      </div>
-
-      <article class="hero-panel" aria-label="Panel de inteligencia estrategica">
-        <div class="panel-head">
-          <span>RENSOF Intelligence Platform</span>
-          <span>Latam Signal Live</span>
-        </div>
-        <div class="signal-grid">
-          {% for metric in content.metrics %}
-          <div><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong></div>
-          {% endfor %}
-        </div>
-        <div class="world-map">
-          <svg viewBox="0 0 680 200" role="img" aria-label="Mapa de operaciones estrategicas">
-            <g fill="none" stroke="rgba(110, 197, 242, 0.35)" stroke-width="1.2">
-              <path d="M20 32H660"/><path d="M20 74H660"/><path d="M20 116H660"/><path d="M20 158H660"/>
-              <path d="M94 20V180"/><path d="M178 20V180"/><path d="M262 20V180"/><path d="M346 20V180"/><path d="M430 20V180"/><path d="M514 20V180"/><path d="M598 20V180"/>
-            </g>
-            <path fill="rgba(0, 182, 200, 0.22)" d="M78 120L144 104L210 112L270 88L336 94L404 74L484 90L548 78L602 68L634 88L600 118L518 132L420 122L336 138L248 130L180 142L116 132Z"/>
-            <path fill="none" stroke="#39ca7f" stroke-width="2.4" d="M80 118L144 104L208 112L270 88L336 94L404 74L486 90L548 78L600 68"/>
-            <circle cx="270" cy="88" r="6" fill="#f0b34a"/>
-            <circle cx="404" cy="74" r="6" fill="#00b6c8"/>
-            <circle cx="548" cy="78" r="6" fill="#39ca7f"/>
-          </svg>
+          <a href="/servicios" class="r-btn r-btn-primary">Conoce nuestras aplicaciones</a>
+          <a href="#contacto" class="r-btn r-btn-ghost">Solicita una demo</a>
         </div>
       </article>
-    </div>
-  </section>
 
-  <section class="story-block mission-band" id="proposito">
-    <div class="r2030-grid split-2 reveal">
-      <article class="contact-panel">
-        <span class="story-kicker">Por que existe RENSOF</span>
-        <h2 class="story-title" style="font-size:clamp(1.6rem, 4.3vw, 3rem)">Impulsar organizaciones inteligentes</h2>
-        <p class="story-text">{{ content.mission }}</p>
-      </article>
-      <article class="contact-panel">
-        <span class="story-kicker">Vision</span>
-        <p class="story-text">{{ content.vision }}</p>
-        <div class="data-tiles" style="margin-top:16px;">
-          <div class="data-tile"><span>Sector publico</span><strong>Decision</strong></div>
-          <div class="data-tile"><span>Sector privado</span><strong>Crecimiento</strong></div>
-          <div class="data-tile"><span>Academia</span><strong>Conocimiento</strong></div>
-          <div class="data-tile"><span>Territorio</span><strong>Impacto</strong></div>
-        </div>
+      <article class="inicio-visual" aria-label="Vista principal de RENSOF">
+        <img src="/assets/img/rensof-home-ejecutivo.png" alt="Panel ejecutivo de RENSOF" loading="lazy" onerror="this.src='/assets/img/hero.jpg'; this.alt='Vista principal RENSOF';">
       </article>
     </div>
-  </section>
 
-  <section class="story-block" id="plataforma">
-    <div class="r2030-grid reveal">
-      <span class="story-kicker">Nuestra plataforma</span>
-      <h2 class="story-title" style="font-size:clamp(1.8rem,4.2vw,3.2rem)">Un ecosistema de inteligencia conectada</h2>
-      <p class="story-text">Cada modulo se integra en una sola arquitectura para acelerar decisiones estrategicas de alto impacto.</p>
-      <div class="intel-pillars">
-        {% for pillar in content.pillars %}
-        <article class="pillar-card">{{ pillar.title }}<span>{{ pillar.description }}</span></article>
-        {% endfor %}
+    <div class="r2030-grid inicio-badges reveal" aria-label="Ventajas de la plataforma">
+      <p>Tecnologia 100% en la nube</p>
+      <p>Seguridad y cumplimiento</p>
+      <p>Escalables y modulares</p>
+      <p>Soporte especializado</p>
+    </div>
+
+    <div class="r2030-grid inicio-solutions reveal" aria-label="Nuestras soluciones">
+      <div class="inicio-solutions-head">
+        <span>Nuestras soluciones</span>
+        <h2>Soluciones especializadas para cada necesidad</h2>
+        <p>Plataforma integrada de aplicaciones disenadas para maximizar el valor de tus proyectos y operaciones.</p>
       </div>
-    </div>
-  </section>
 
-  <section class="story-block" id="productos">
-    <div class="r2030-grid reveal">
-      <span class="story-kicker">Productos</span>
-      <h2 class="story-title" style="font-size:clamp(1.8rem,4.2vw,3rem)">Brand Architecture RENSOF</h2>
-      <div class="product-grid">
-        {% for product in content.products %}
-        <article class="product-card"><h3>{{ product.name }}</h3><p>{{ product.subtitle }}</p></article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-
-  <section class="story-block" id="sectores">
-    <div class="r2030-grid reveal">
-      <span class="story-kicker">Sectores</span>
-      <h2 class="story-title" style="font-size:clamp(1.8rem,4vw,3rem)">Una plataforma, multiples realidades</h2>
-      <div class="sector-flow">
-        {% for sector in content.sectors %}
-        <article class="sector-item"><h3>{{ sector.title }}</h3><p>{{ sector.description }}</p></article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-
-  <section class="story-block" id="observatorio">
-    <div class="r2030-grid reveal">
-      <span class="story-kicker">Observatorio</span>
-      <h2 class="story-title" style="font-size:clamp(1.8rem,4vw,3rem)">Del dato al tablero estrategico</h2>
-      <div class="data-tiles">
-        {% for metric in content.observatory %}
-        <article class="data-tile"><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong></article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-
-  <section class="story-block" id="publicaciones">
-    <div class="r2030-grid knowledge-grid reveal">
-      <article class="contact-panel">
-        <span class="story-kicker">Publicaciones</span>
-        <h2 style="margin:14px 0 10px; font-family:'Sora', sans-serif;">Centro de conocimiento estrategico</h2>
-        <p class="story-text">Informes, papers, notas tecnicas y visualizaciones para directivos, equipos tecnicos y tomadores de decision.</p>
-        <a href="/publicaciones" class="r-btn r-btn-primary" style="margin-top:18px;">Ver publicaciones</a>
-      </article>
-      <article class="contact-panel">
-        <h3>Ultimos enfoques</h3>
-        {% for insight in content.insights %}
-        <p>{{ insight.title }}</p>
-        {% endfor %}
-      </article>
-    </div>
-  </section>
-
-  <section class="story-block" id="casos">
-    <div class="r2030-grid reveal">
-      <span class="story-kicker">Casos de exito</span>
-      <h2 class="story-title" style="font-size:clamp(1.8rem,4vw,3rem)">Resultados que se pueden medir</h2>
-      <div class="case-grid">
-        {% for case in content.case_studies %}
-        <article class="case-card">
-          <div class="case-media" style="background-image:linear-gradient(150deg, rgba(11,31,50,0.35), {{ case.overlay }}), url('{{ case.media }}');"></div>
-          <div class="case-body"><h3>{{ case.title }}</h3><p>{{ case.description }}</p></div>
+      <div class="inicio-solutions-grid">
+        <article class="inicio-solution-card">
+          <span class="app-icon app-icon-commerce" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation"><path d="M3 5h2l2 10h10l2-7H8"/><circle cx="10" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>
+          </span>
+          <h3>Comercio electronico</h3>
+          <p>Analisis de mercados, ventas online y comportamiento del consumidor.</p>
+          <a href="/servicios#alvent">Ver aplicacion</a>
         </article>
-        {% endfor %}
+        <article class="inicio-solution-card">
+          <span class="app-icon app-icon-public" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation"><path d="M4 10h16M6 10v8M12 10v8M18 10v8M4 18h16M12 4l8 4H4z"/></svg>
+          </span>
+          <h3>Gestion Publica</h3>
+          <p>Monitoreo de indicadores, presupuestos, programas y servicios publicos.</p>
+          <a href="/servicios#gestion">Ver aplicacion</a>
+        </article>
+        <article class="inicio-solution-card">
+          <span class="app-icon app-icon-invest" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M16 4v5"/></svg>
+          </span>
+          <h3>Proyectos de inversion</h3>
+          <p>Evaluacion financiera de proyectos, VAN, TIR, sensibilidad y gestion de portafolio.</p>
+          <a href="/servicios#inversion">Ver aplicacion</a>
+        </article>
+        <article class="inicio-solution-card">
+          <span class="app-icon app-icon-agro" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation"><path d="M12 20c-4-2-6-6-5-11 5-1 9 1 11 5-1 3-3 5-6 6z"/><path d="M8 16c2-2 5-4 8-5"/></svg>
+          </span>
+          <h3>Agricultura digital</h3>
+          <p>Monitoreo inteligente de cultivos con sensores, IoT e imagenes satelitales.</p>
+          <a href="/servicios#desarrollo-agricola">Ver aplicacion</a>
+        </article>
+        <article class="inicio-solution-card">
+          <span class="app-icon app-icon-future" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation"><path d="M4 18l4-4 3 2 5-6 4 2"/><path d="M18 8h2v2"/></svg>
+          </span>
+          <h3>Prospectiva</h3>
+          <p>Modelos de escenarios, analisis de tendencias y construccion de futuros posibles.</p>
+          <a href="/servicios#prospectiva">Ver aplicacion</a>
+        </article>
+        <article class="inicio-solution-card">
+          <span class="app-icon app-icon-value" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation"><path d="M12 3v18M5 8c0-2 2-3 4-3h6c2 0 4 1 4 3s-2 3-4 3H9c-2 0-4 1-4 3s2 3 4 3h6c2 0 4-1 4-3"/></svg>
+          </span>
+          <h3>Valoracion economica</h3>
+          <p>Valoracion de servicios ecosistemicos e impacto ambiental y social.</p>
+          <a href="/servicios#valoracion">Ver aplicacion</a>
+        </article>
+      </div>
+    </div>
+
+    <div class="r2030-grid inicio-why reveal" aria-label="Por que RENSOF">
+      <span class="inicio-why-kicker">Por que RENSOF?</span>
+      <h3>Plataforma disenada para generar impacto</h3>
+      <div class="inicio-why-grid">
+        <article>
+          <h4>Tecnologia en la nube</h4>
+          <p>Accede a tus aplicaciones desde cualquier lugar, con disponibilidad y rendimiento garantizados.</p>
+        </article>
+        <article>
+          <h4>Seguridad de datos</h4>
+          <p>Protegemos tu informacion con los mas altos estandares de seguridad y privacidad.</p>
+        </article>
+        <article>
+          <h4>Integracion total</h4>
+          <p>Nuestras aplicaciones se integran entre si para ofrecerte una vision completa y consistente.</p>
+        </article>
+        <article>
+          <h4>Soporte experto</h4>
+          <p>Nuestro equipo te acompana en cada etapa para asegurar tu exito y el de tus proyectos.</p>
+        </article>
       </div>
     </div>
   </section>
