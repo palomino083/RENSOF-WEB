@@ -1,0 +1,111 @@
+<svg width="1400" height="840" viewBox="0 0 1400 840" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Panel futurista RENSOF version 2</title>
+  <desc id="desc">Composicion tecnologica minimal con tablero de KPIs, red neural y visualizacion de datos de RENSOF.</desc>
+  <defs>
+    <linearGradient id="bg2" x1="80" y1="76" x2="1320" y2="770" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#040F1D"/>
+      <stop offset="0.55" stop-color="#0A2340"/>
+      <stop offset="1" stop-color="#071423"/>
+    </linearGradient>
+    <radialGradient id="g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(290 220) rotate(35) scale(380 250)">
+      <stop stop-color="#1AC8E1" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#1AC8E1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1080 160) rotate(155) scale(340 230)">
+      <stop stop-color="#35D580" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#35D580" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="chip" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0F3B66"/>
+      <stop offset="1" stop-color="#0A2745"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#10C8E4"/>
+      <stop offset="1" stop-color="#37D584"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1400" height="840" rx="30" fill="url(#bg2)"/>
+  <rect width="1400" height="840" rx="30" fill="url(#g1)"/>
+  <rect width="1400" height="840" rx="30" fill="url(#g2)"/>
+
+  <g opacity="0.16" stroke="#8CD3F5" stroke-width="1">
+    <path d="M72 122H1328"/>
+    <path d="M72 202H1328"/>
+    <path d="M72 282H1328"/>
+    <path d="M72 362H1328"/>
+    <path d="M72 442H1328"/>
+    <path d="M72 522H1328"/>
+    <path d="M72 602H1328"/>
+    <path d="M72 682H1328"/>
+    <path d="M72 762H1328"/>
+    <path d="M160 72V770"/>
+    <path d="M300 72V770"/>
+    <path d="M440 72V770"/>
+    <path d="M580 72V770"/>
+    <path d="M720 72V770"/>
+    <path d="M860 72V770"/>
+    <path d="M1000 72V770"/>
+    <path d="M1140 72V770"/>
+    <path d="M1280 72V770"/>
+  </g>
+
+  <rect x="130" y="96" width="1140" height="648" rx="24" fill="#06172B" stroke="#1D4D78" stroke-width="2"/>
+
+  <rect x="168" y="132" width="1064" height="52" rx="12" fill="#0A2139" stroke="#1D4D78"/>
+  <rect x="188" y="146" width="94" height="24" rx="8" fill="#0E3D67"/>
+  <text x="210" y="163" fill="#D8F5FF" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700">RENSOF</text>
+  <circle cx="1168" cy="158" r="6" fill="#35D580"/>
+  <circle cx="1194" cy="158" r="6" fill="#10C8E4"/>
+
+  <rect x="168" y="208" width="338" height="148" rx="14" fill="url(#chip)" stroke="#1F5E92"/>
+  <text x="192" y="238" fill="#B2D5ED" font-family="Segoe UI, Arial, sans-serif" font-size="16">Indice estrategico</text>
+  <text x="192" y="296" fill="#EDF8FF" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="700">+18.4%</text>
+  <text x="192" y="326" fill="#35D580" font-family="Segoe UI, Arial, sans-serif" font-size="16">tendencia positiva</text>
+
+  <rect x="530" y="208" width="338" height="148" rx="14" fill="url(#chip)" stroke="#1F5E92"/>
+  <text x="554" y="238" fill="#B2D5ED" font-family="Segoe UI, Arial, sans-serif" font-size="16">Riesgo territorial</text>
+  <text x="554" y="296" fill="#EDF8FF" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="700">-11.2%</text>
+  <text x="554" y="326" fill="#35D580" font-family="Segoe UI, Arial, sans-serif" font-size="16">mitigacion activa</text>
+
+  <rect x="892" y="208" width="340" height="148" rx="14" fill="url(#chip)" stroke="#1F5E92"/>
+  <text x="916" y="238" fill="#B2D5ED" font-family="Segoe UI, Arial, sans-serif" font-size="16">Valor proyectado</text>
+  <text x="916" y="296" fill="#EDF8FF" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="700">$ 2.4M</text>
+  <text x="916" y="326" fill="#35D580" font-family="Segoe UI, Arial, sans-serif" font-size="16">escenario optimista</text>
+
+  <rect x="168" y="384" width="706" height="326" rx="14" fill="#071E34" stroke="#1F5E92"/>
+  <text x="192" y="414" fill="#B2D5ED" font-family="Segoe UI, Arial, sans-serif" font-size="16">Red de decisiones inteligentes</text>
+
+  <path d="M220 638L302 592L390 614L474 556L560 578L640 520L730 548L820 498" stroke="url(#line)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="302" cy="592" r="6" fill="#10C8E4"/>
+  <circle cx="474" cy="556" r="6" fill="#10C8E4"/>
+  <circle cx="640" cy="520" r="6" fill="#35D580"/>
+  <circle cx="820" cy="498" r="6" fill="#35D580"/>
+
+  <g stroke="#2B6E9F" stroke-width="2" opacity="0.95">
+    <circle cx="246" cy="484" r="18"/>
+    <circle cx="370" cy="448" r="18"/>
+    <circle cx="516" cy="468" r="18"/>
+    <circle cx="664" cy="440" r="18"/>
+    <circle cx="790" cy="456" r="18"/>
+    <path d="M264 484H352"/>
+    <path d="M388 448H498"/>
+    <path d="M534 468H646"/>
+    <path d="M682 440H772"/>
+  </g>
+
+  <rect x="898" y="384" width="334" height="326" rx="14" fill="#071E34" stroke="#1F5E92"/>
+  <text x="922" y="414" fill="#B2D5ED" font-family="Segoe UI, Arial, sans-serif" font-size="16">Matriz de impacto</text>
+
+  <rect x="930" y="448" width="118" height="26" rx="8" fill="#0E3558"/>
+  <rect x="930" y="488" width="174" height="26" rx="8" fill="#0E3558"/>
+  <rect x="930" y="528" width="214" height="26" rx="8" fill="#0E3558"/>
+  <rect x="930" y="568" width="156" height="26" rx="8" fill="#0E3558"/>
+  <rect x="930" y="608" width="242" height="26" rx="8" fill="#0E3558"/>
+
+  <rect x="930" y="448" width="86" height="26" rx="8" fill="url(#line)"/>
+  <rect x="930" y="488" width="132" height="26" rx="8" fill="url(#line)"/>
+  <rect x="930" y="528" width="176" height="26" rx="8" fill="url(#line)"/>
+  <rect x="930" y="568" width="112" height="26" rx="8" fill="url(#line)"/>
+  <rect x="930" y="608" width="202" height="26" rx="8" fill="url(#line)"/>
+</svg>

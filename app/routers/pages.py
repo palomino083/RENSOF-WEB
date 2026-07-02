@@ -189,18 +189,7 @@ def home(request: Request, sent: int = Query(default=0)):
 
 @router.get("/servicios", response_class=HTMLResponse)
 def servicios(request: Request):
-    with SessionLocal() as session:
-        content = get_home_content(session)
-    return templates.TemplateResponse(
-        request,
-        "servicios.html",
-        {
-            "products": content.products,
-            "active_page": "servicios",
-            "page_title": "Plataforma | RENSOF",
-            "page_description": "Productos y modulos de RENSOF para decisiones estrategicas.",
-        },
-    )
+    return RedirectResponse(url="/alven", status_code=307)
 
 
 @router.get("/alven", response_class=HTMLResponse)

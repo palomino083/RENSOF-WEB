@@ -1,0 +1,125 @@
+<svg width="1400" height="840" viewBox="0 0 1400 840" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">RENSOF IA Dashboard v3</title>
+  <desc id="desc">Panel de inteligencia artificial con multiples graficos, indicadores y sello visual RENSOF.</desc>
+  <defs>
+    <linearGradient id="bg" x1="70" y1="60" x2="1330" y2="790" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#031224"/>
+      <stop offset="0.52" stop-color="#0A2A4B"/>
+      <stop offset="1" stop-color="#041526"/>
+    </linearGradient>
+    <radialGradient id="halo1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(300 200) rotate(35) scale(400 270)">
+      <stop stop-color="#10C9E3" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#10C9E3" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="halo2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1080 170) rotate(158) scale(360 260)">
+      <stop stop-color="#35D781" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#35D781" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0D355B" stop-opacity="0.86"/>
+      <stop offset="1" stop-color="#081F38" stop-opacity="0.88"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#10C9E3"/>
+      <stop offset="1" stop-color="#35D781"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#F4B64A"/>
+      <stop offset="1" stop-color="#FF8A4C"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1400" height="840" rx="32" fill="url(#bg)"/>
+  <rect width="1400" height="840" rx="32" fill="url(#halo1)"/>
+  <rect width="1400" height="840" rx="32" fill="url(#halo2)"/>
+
+  <g opacity="0.14" stroke="#8FD6F7" stroke-width="1">
+    <path d="M72 116H1328"/><path d="M72 196H1328"/><path d="M72 276H1328"/><path d="M72 356H1328"/>
+    <path d="M72 436H1328"/><path d="M72 516H1328"/><path d="M72 596H1328"/><path d="M72 676H1328"/><path d="M72 756H1328"/>
+    <path d="M150 72V770"/><path d="M290 72V770"/><path d="M430 72V770"/><path d="M570 72V770"/>
+    <path d="M710 72V770"/><path d="M850 72V770"/><path d="M990 72V770"/><path d="M1130 72V770"/><path d="M1270 72V770"/>
+  </g>
+
+  <rect x="120" y="92" width="1160" height="656" rx="26" fill="#06182C" stroke="#1D527F" stroke-width="2"/>
+
+  <rect x="154" y="126" width="1092" height="56" rx="13" fill="#0A223B" stroke="#1D527F"/>
+  <rect x="178" y="140" width="124" height="28" rx="9" fill="#0F3F69"/>
+  <path d="M191 154L201 144H222L212 154L222 164H201L191 154Z" fill="#35D781"/>
+  <text x="228" y="160" fill="#E3F8FF" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700">RENSOF</text>
+  <text x="334" y="160" fill="#9DC7E2" font-family="Segoe UI, Arial, sans-serif" font-size="12">AI Dashboard</text>
+  <circle cx="1186" cy="154" r="6" fill="#35D781"/>
+  <circle cx="1212" cy="154" r="6" fill="#10C9E3"/>
+
+  <!-- KPI ROW -->
+  <rect x="154" y="204" width="256" height="138" rx="14" fill="url(#glass)" stroke="#1E6398"/>
+  <text x="178" y="234" fill="#B6D9EE" font-family="Segoe UI, Arial, sans-serif" font-size="15">Precision IA</text>
+  <text x="178" y="288" fill="#EDF9FF" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="700">96.2%</text>
+  <text x="178" y="316" fill="#35D781" font-family="Segoe UI, Arial, sans-serif" font-size="15">+3.4 pts</text>
+
+  <rect x="428" y="204" width="256" height="138" rx="14" fill="url(#glass)" stroke="#1E6398"/>
+  <text x="452" y="234" fill="#B6D9EE" font-family="Segoe UI, Arial, sans-serif" font-size="15">Alertas activas</text>
+  <text x="452" y="288" fill="#EDF9FF" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="700">1,842</text>
+  <text x="452" y="316" fill="#35D781" font-family="Segoe UI, Arial, sans-serif" font-size="15">+12% semanal</text>
+
+  <rect x="702" y="204" width="256" height="138" rx="14" fill="url(#glass)" stroke="#1E6398"/>
+  <text x="726" y="234" fill="#B6D9EE" font-family="Segoe UI, Arial, sans-serif" font-size="15">Valor proyectado</text>
+  <text x="726" y="288" fill="#EDF9FF" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="700">$ 3.8M</text>
+  <text x="726" y="316" fill="#35D781" font-family="Segoe UI, Arial, sans-serif" font-size="15">Q3 2026</text>
+
+  <rect x="976" y="204" width="270" height="138" rx="14" fill="url(#glass)" stroke="#1E6398"/>
+  <text x="1000" y="234" fill="#B6D9EE" font-family="Segoe UI, Arial, sans-serif" font-size="15">Riesgo agregado</text>
+  <text x="1000" y="288" fill="#EDF9FF" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="700">-14.1%</text>
+  <text x="1000" y="316" fill="#35D781" font-family="Segoe UI, Arial, sans-serif" font-size="15">Mitigacion en curso</text>
+
+  <!-- MAIN CHART -->
+  <rect x="154" y="362" width="560" height="354" rx="14" fill="#07203A" stroke="#1E6398"/>
+  <text x="178" y="394" fill="#B6D9EE" font-family="Segoe UI, Arial, sans-serif" font-size="15">Prediccion multivariable</text>
+  <g opacity="0.28" stroke="#6DBDE8" stroke-width="1">
+    <path d="M178 422H688"/><path d="M178 466H688"/><path d="M178 510H688"/><path d="M178 554H688"/><path d="M178 598H688"/><path d="M178 642H688"/>
+  </g>
+  <path d="M190 640L250 604L304 618L360 560L414 582L472 524L528 548L584 492L650 518" stroke="url(#accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <path d="M190 660L252 632L304 640L360 620L414 628L472 602L528 612L584 586L650 596" stroke="#F4B64A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+  <!-- BAR CHART -->
+  <rect x="732" y="362" width="252" height="354" rx="14" fill="#07203A" stroke="#1E6398"/>
+  <text x="756" y="394" fill="#B6D9EE" font-family="Segoe UI, Arial, sans-serif" font-size="15">Performance por unidad</text>
+  <rect x="764" y="628" width="24" height="58" rx="8" fill="url(#accent)"/>
+  <rect x="804" y="592" width="24" height="94" rx="8" fill="url(#accent)"/>
+  <rect x="844" y="550" width="24" height="136" rx="8" fill="url(#accent)"/>
+  <rect x="884" y="512" width="24" height="174" rx="8" fill="url(#accent)"/>
+  <rect x="924" y="570" width="24" height="116" rx="8" fill="url(#amber)"/>
+
+  <!-- DONUT + MINI CHARTS -->
+  <rect x="1002" y="362" width="244" height="170" rx="14" fill="#07203A" stroke="#1E6398"/>
+  <text x="1026" y="394" fill="#B6D9EE" font-family="Segoe UI, Arial, sans-serif" font-size="15">Distribucion IA</text>
+  <circle cx="1118" cy="455" r="56" stroke="#133B60" stroke-width="24"/>
+  <path d="M1118 399A56 56 0 0 1 1166 430" stroke="#10C9E3" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <path d="M1166 430A56 56 0 0 1 1130 506" stroke="#35D781" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <path d="M1130 506A56 56 0 0 1 1068 436" stroke="#F4B64A" stroke-width="24" fill="none" stroke-linecap="round"/>
+
+  <rect x="1002" y="546" width="244" height="170" rx="14" fill="#07203A" stroke="#1E6398"/>
+  <text x="1026" y="578" fill="#B6D9EE" font-family="Segoe UI, Arial, sans-serif" font-size="15">Heatmap de decisiones</text>
+  <g>
+    <rect x="1028" y="598" width="38" height="24" rx="6" fill="#0D355A"/>
+    <rect x="1072" y="598" width="38" height="24" rx="6" fill="#145178"/>
+    <rect x="1116" y="598" width="38" height="24" rx="6" fill="#1A6C95"/>
+    <rect x="1160" y="598" width="38" height="24" rx="6" fill="#2191B4"/>
+
+    <rect x="1028" y="628" width="38" height="24" rx="6" fill="#145178"/>
+    <rect x="1072" y="628" width="38" height="24" rx="6" fill="#1A6C95"/>
+    <rect x="1116" y="628" width="38" height="24" rx="6" fill="#2191B4"/>
+    <rect x="1160" y="628" width="38" height="24" rx="6" fill="#28B2C8"/>
+
+    <rect x="1028" y="658" width="38" height="24" rx="6" fill="#1A6C95"/>
+    <rect x="1072" y="658" width="38" height="24" rx="6" fill="#2191B4"/>
+    <rect x="1116" y="658" width="38" height="24" rx="6" fill="#28B2C8"/>
+    <rect x="1160" y="658" width="38" height="24" rx="6" fill="#35D781"/>
+  </g>
+</svg>
