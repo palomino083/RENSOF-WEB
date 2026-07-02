@@ -162,6 +162,23 @@ def _ensure_multitenant_columns() -> None:
                     f"ALTER TABLE {table_name} ADD COLUMN negocio_id INTEGER"
                 )
 
+        producto_columns = {
+            row[1]
+            for row in conn.exec_driver_sql("PRAGMA table_info(productos)")
+        }
+        if "talla" not in producto_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE productos ADD COLUMN talla VARCHAR(50)"
+            )
+        if "color" not in producto_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE productos ADD COLUMN color VARCHAR(50)"
+            )
+        if "sexo" not in producto_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE productos ADD COLUMN sexo VARCHAR(20)"
+            )
+
         negocio_columns = {
             row[1]
             for row in conn.exec_driver_sql("PRAGMA table_info(negocios)")

@@ -10,6 +10,9 @@ class ProductoCreate(BaseModel):
 
     categoria: Optional[str] = None
     marca: Optional[str] = None
+    talla: Optional[str] = None
+    color: Optional[str] = None
+    sexo: Optional[str] = None
     foto: Optional[str] = None
 
 
@@ -17,6 +20,11 @@ class ProductoOut(BaseModel):
     id: int
     codigo: str
     nombre: str
+    categoria: Optional[str] = None
+    marca: Optional[str] = None
+    talla: Optional[str] = None
+    color: Optional[str] = None
+    sexo: Optional[str] = None
     precio: float
     costo: float
     stock: int

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { ventasService } from "@/services/ventasService";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
 import Toolbar from "@/components/ui/Toolbar";
@@ -45,11 +45,7 @@ export default function VentasPage() {
   // ==========================
   // CARGA INICIAL
   // ==========================
-  useEffect(() => {
-    cargarDatos();
-  }, []);
-
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     try {
       setLoading(true);
       const [lista, resumenData] = await Promise.all([
@@ -67,7 +63,11 @@ export default function VentasPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fechaInicio, fechaFin]);
+
+  useEffect(() => {
+    void cargarDatos();
+  }, [cargarDatos]);
 
   // ==========================
   // FILTRO

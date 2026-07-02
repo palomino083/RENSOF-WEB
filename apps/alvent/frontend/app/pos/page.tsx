@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 import { productosService } from "@/services/productosService";
 import { ventasService } from "@/services/ventasService";
@@ -652,7 +653,15 @@ export default function PosPage() {
               <div className={styles.productItem} key={p.id}>
                 <div className={styles.productInfo}>
                   {p.foto ? (
-                    <img src={getImageUrl(p.foto)} alt={p.nombre} className={styles.productThumb} onError={fallbackImage} />
+                    <Image
+                      src={getImageUrl(p.foto)}
+                      alt={p.nombre}
+                      width={64}
+                      height={64}
+                      unoptimized
+                      className={styles.productThumb}
+                      onError={fallbackImage}
+                    />
                   ) : (
                     <div className={styles.productThumbFallback}>IMG</div>
                   )}

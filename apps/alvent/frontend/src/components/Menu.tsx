@@ -184,7 +184,7 @@ const menuFiltrado = useMemo(() => {
 
     return items.length > 0 ? { ...block, items } : null;
   }).filter(Boolean);
-}, [rol, permisos]);
+}, [permisos]);
 
   return (
     <aside

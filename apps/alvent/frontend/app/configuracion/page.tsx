@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
@@ -45,6 +46,19 @@ const normalizarRol = (rol: string) => {
 const parseNumero = (value: string | null | undefined) => {
   const num = Number(value || 0);
   return Number.isFinite(num) ? num : 0;
+};
+
+const getStorageItem = (key: string) => {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(key);
+};
+
+const normalizarApiUrl = (baseUrl: string) => baseUrl.replace(/\/$/, "");
+
+const toAbsoluteUrl = (url?: string | null) => {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${normalizarApiUrl(API_URL)}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
 const MODULOS_BASE = [
@@ -292,25 +306,19 @@ export default function ConfiguracionPage() {
     idioma: "es",
   });
 
-  const normalizarApiUrl = (baseUrl: string) => baseUrl.replace(/\/$/, "");
   const irASeccion = (id: string) => {
     const node = document.getElementById(id);
     if (node) node.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-  const toAbsoluteUrl = (url?: string | null) => {
-    if (!url) return "";
-    if (/^https?:\/\//i.test(url)) return url;
-    return `${normalizarApiUrl(API_URL)}${url.startsWith("/") ? "" : "/"}${url}`;
-  };
 
-  const getNegocioIdActivo = () => {
+  const getNegocioIdActivo = useCallback(() => {
     if (isSuperadmin) {
-      return negocioSeleccionadoId || parseNumero(localStorage.getItem("negocio_id"));
+      return negocioSeleccionadoId || parseNumero(getStorageItem("negocio_id"));
     }
-    return parseNumero(localStorage.getItem("negocio_id"));
-  };
+    return parseNumero(getStorageItem("negocio_id"));
+  }, [isSuperadmin, negocioSeleccionadoId]);
 
-  const cargarBranding = async (negocioIdArg?: number) => {
+  const cargarBranding = useCallback(async (negocioIdArg?: number) => {
     try {
       setLoadingBranding(true);
       const negocioId = negocioIdArg || getNegocioIdActivo();
@@ -349,7 +357,7 @@ export default function ConfiguracionPage() {
     } finally {
       setLoadingBranding(false);
     }
-  };
+  }, [getNegocioIdActivo]);
 
   const seleccionarLogo = (file: File | null) => {
     setLogoFile(file);
@@ -357,7 +365,7 @@ export default function ConfiguracionPage() {
     setLogoPreviewUrl(URL.createObjectURL(file));
   };
 
-  const cargarPlanStats = async () => {
+  const cargarPlanStats = useCallback(async () => {
     const negocioId = getNegocioIdActivo();
     if (!negocioId) {
       setPlanStats(null);
@@ -370,7 +378,7 @@ export default function ConfiguracionPage() {
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar consumo del plan"));
     }
-  };
+  }, [getNegocioIdActivo]);
 
   const guardarLogo = async () => {
     if (!logoFile) {
@@ -451,29 +459,29 @@ export default function ConfiguracionPage() {
     }
   };
 
-  const cargarCatalogoPlanes = async () => {
+  const cargarCatalogoPlanes = useCallback(async () => {
     try {
       const data = await negocioService.getPlanCatalog();
       setPlanCatalogo(Array.isArray(data.planes) ? data.planes : []);
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar el catalogo de planes"));
     }
-  };
+  }, []);
 
-  const cargarNegociosSuperadmin = async () => {
+  const cargarNegociosSuperadmin = useCallback(async () => {
     if (!isSuperadmin) return;
     try {
       const items = await negocioService.list();
       setNegociosDisponibles(items || []);
       const primerNegocio = items?.[0]?.id || 0;
-      const negocioSesion = parseNumero(localStorage.getItem("negocio_id"));
+      const negocioSesion = parseNumero(getStorageItem("negocio_id"));
       setNegocioSeleccionadoId((prev) => prev || negocioSesion || primerNegocio);
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar negocios"));
     }
-  };
+  }, [isSuperadmin]);
 
-  const cargarHistorialPlanes = async (negocioIdArg?: number) => {
+  const cargarHistorialPlanes = useCallback(async (negocioIdArg?: number) => {
     const negocioId = negocioIdArg || getNegocioIdActivo();
     if (!negocioId) {
       setHistorialPlanes([]);
@@ -495,9 +503,9 @@ export default function ConfiguracionPage() {
     } finally {
       setLoadingHistorialPlanes(false);
     }
-  };
+  }, [getNegocioIdActivo]);
 
-  const cargarBondadesPlanGratuito = async (negocioIdArg?: number) => {
+  const cargarBondadesPlanGratuito = useCallback(async (negocioIdArg?: number) => {
     const negocioId = negocioIdArg || getNegocioIdActivo();
     if (!isSuperadmin || !negocioId) return;
 
@@ -528,9 +536,9 @@ export default function ConfiguracionPage() {
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar bondades del plan gratuito"));
     }
-  };
+  }, [getNegocioIdActivo, isSuperadmin, planCatalogo]);
 
-  const cargarMontosPlanes = async (negocioIdArg?: number) => {
+  const cargarMontosPlanes = useCallback(async (negocioIdArg?: number) => {
     const negocioId = negocioIdArg || getNegocioIdActivo();
     if (!negocioId) return;
     try {
@@ -539,7 +547,7 @@ export default function ConfiguracionPage() {
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar montos de planes"));
     }
-  };
+  }, [getNegocioIdActivo]);
 
   const guardarMontosPlanes = async () => {
     const negocioId = getNegocioIdActivo();
@@ -658,7 +666,7 @@ export default function ConfiguracionPage() {
   };
 
   useEffect(() => {
-    const rawUsuario = localStorage.getItem("usuario");
+    const rawUsuario = getStorageItem("usuario");
     if (!rawUsuario) return;
     try {
       const parsed = JSON.parse(rawUsuario);
@@ -666,16 +674,16 @@ export default function ConfiguracionPage() {
       const roles = Array.isArray(parsed?.roles)
         ? parsed.roles.map((r: string) => normalizarRol(String(r || "")))
         : [];
-      const esSuper = rol === "SUPERADMIN" || roles.includes("SUPERADMIN") || parseNumero(localStorage.getItem("usuario_id")) === 1;
+      const esSuper = rol === "SUPERADMIN" || roles.includes("SUPERADMIN") || parseNumero(getStorageItem("usuario_id")) === 1;
       setIsSuperadmin(esSuper);
 
       if (!esSuper) {
-        const negocioIdLocal = parseNumero(localStorage.getItem("negocio_id"));
+        const negocioIdLocal = parseNumero(getStorageItem("negocio_id"));
         setNegocioSeleccionadoId(negocioIdLocal);
       }
     } catch {
       setIsSuperadmin(false);
-      setNegocioSeleccionadoId(parseNumero(localStorage.getItem("negocio_id")));
+      setNegocioSeleccionadoId(parseNumero(getStorageItem("negocio_id")));
     }
   }, []);
 
@@ -684,7 +692,7 @@ export default function ConfiguracionPage() {
       void cargarNegociosSuperadmin();
     }
     void cargarCatalogoPlanes();
-  }, [isSuperadmin]);
+  }, [isSuperadmin, cargarNegociosSuperadmin, cargarCatalogoPlanes]);
 
   useEffect(() => {
     const negocioId = getNegocioIdActivo();
@@ -694,7 +702,16 @@ export default function ConfiguracionPage() {
     void cargarHistorialPlanes(negocioId);
     void cargarBondadesPlanGratuito(negocioId);
     void cargarMontosPlanes(negocioId);
-  }, [negocioSeleccionadoId, isSuperadmin]);
+  }, [
+    negocioSeleccionadoId,
+    isSuperadmin,
+    getNegocioIdActivo,
+    cargarBranding,
+    cargarPlanStats,
+    cargarHistorialPlanes,
+    cargarBondadesPlanGratuito,
+    cargarMontosPlanes,
+  ]);
 
   useEffect(() => {
     setPlanSimulado(normalizarPlan(businessForm.plan));
@@ -702,13 +719,13 @@ export default function ConfiguracionPage() {
 
   useEffect(() => {
     if (isSuperadmin) return;
-    const negocioId = parseNumero(localStorage.getItem("negocio_id"));
+    const negocioId = parseNumero(getStorageItem("negocio_id"));
     if (!negocioId) return;
     void cargarBranding(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
     void cargarMontosPlanes(negocioId);
-  }, [isSuperadmin]);
+  }, [isSuperadmin, cargarBranding, cargarPlanStats, cargarHistorialPlanes, cargarMontosPlanes]);
 
   
 
@@ -1178,7 +1195,14 @@ export default function ConfiguracionPage() {
                     <div className={styles.identityGrid}>
                       <div className={styles.logoFrame}>
                         {logoPreviewUrl ? (
-                          <img src={logoPreviewUrl} alt="Logotipo de empresa" className={styles.logoImage} />
+                          <Image
+                            src={logoPreviewUrl}
+                            alt="Logotipo de empresa"
+                            width={240}
+                            height={120}
+                            unoptimized
+                            className={styles.logoImage}
+                          />
                         ) : (
                           <span>Sin logotipo</span>
                         )}

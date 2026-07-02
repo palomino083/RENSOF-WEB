@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { productosService } from "@/services/productosService";
 import { API_URL } from "@/services/api";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -21,6 +22,9 @@ type Producto = {
   nombre: string;
   categoria: string;
   marca: string;
+  talla?: string;
+  color?: string;
+  sexo?: string;
   costo: number;
   precio: number;
   stock: number;
@@ -32,6 +36,9 @@ type FormProducto = {
   nombre: string;
   categoria: string;
   marca: string;
+  talla: string;
+  color: string;
+  sexo: string;
   costo: string;
   precio: string;
   stock: string;
@@ -53,6 +60,9 @@ export default function Productos() {
     nombre: "",
     categoria: "",
     marca: "",
+    talla: "",
+    color: "",
+    sexo: "UNISEX",
     costo: "",
     precio: "",
     stock: "",
@@ -134,6 +144,9 @@ export default function Productos() {
         nombre: form.nombre,
         categoria: form.categoria,
         marca: form.marca,
+        talla: form.talla.trim() || undefined,
+        color: form.color.trim() || undefined,
+        sexo: form.sexo.trim() || undefined,
         costo: Number(form.costo),
         precio: Number(form.precio),
         stock: Number(form.stock),
@@ -175,6 +188,9 @@ export default function Productos() {
       nombre: p.nombre,
       categoria: p.categoria,
       marca: p.marca,
+      talla: p.talla || "",
+      color: p.color || "",
+      sexo: p.sexo || "UNISEX",
       costo: String(p.costo),
       precio: String(p.precio),
       stock: String(p.stock),
@@ -205,7 +221,10 @@ export default function Productos() {
   const productosFiltrados = productos.filter(
     (p) =>
       p.nombre.toLowerCase().includes(search.toLowerCase()) ||
-      p.codigo.toLowerCase().includes(search.toLowerCase())
+      p.codigo.toLowerCase().includes(search.toLowerCase()) ||
+      String(p.color || "").toLowerCase().includes(search.toLowerCase()) ||
+      String(p.talla || "").toLowerCase().includes(search.toLowerCase()) ||
+      String(p.sexo || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const formatMoney = (value: number) =>
@@ -264,6 +283,9 @@ export default function Productos() {
                     nombre: "",
                     categoria: "",
                     marca: "",
+                    talla: "",
+                    color: "",
+                    sexo: "UNISEX",
                     costo: "",
                     precio: "",
                     stock: "",
@@ -321,6 +343,29 @@ export default function Productos() {
           className="focus-ring"
         />
         <input
+          placeholder="Talla (ej. 38, M, L, 40)"
+          value={form.talla}
+          onChange={(e) => setForm({ ...form, talla: e.target.value })}
+          className="focus-ring"
+        />
+        <input
+          placeholder="Color"
+          value={form.color}
+          onChange={(e) => setForm({ ...form, color: e.target.value })}
+          className="focus-ring"
+        />
+        <select
+          value={form.sexo}
+          onChange={(e) => setForm({ ...form, sexo: e.target.value })}
+          className="focus-ring"
+        >
+          <option value="UNISEX">Unisex</option>
+          <option value="MUJER">Mujer</option>
+          <option value="HOMBRE">Hombre</option>
+          <option value="NINA">Nina</option>
+          <option value="NINO">Nino</option>
+        </select>
+        <input
           type="number"
           placeholder="Costo"
           value={form.costo}
@@ -376,14 +421,24 @@ export default function Productos() {
           onChange={(e) => void manejarArchivoFoto(e.target.files?.[0])}
         />
 
-        {form.foto ? <img src={getImageUrl(form.foto)} alt="preview" className={styles.preview} onError={fallbackImage} /> : null}
+        {form.foto ? (
+          <Image
+            src={getImageUrl(form.foto)}
+            alt="preview"
+            width={120}
+            height={80}
+            unoptimized
+            className={styles.preview}
+            onError={fallbackImage}
+          />
+        ) : null}
       </ModalCard>
 
       <section className={`${styles.tableCard} uiEnter`} data-stagger="3">
         {loading ? <p>Cargando productos...</p> : null}
         <DataTable
-          headers={["Foto", "Codigo", "Nombre", "Costo", "Precio", "Utilidad", "Margen", "Stock", "Estado", "Acciones"]}
-          minWidth={980}
+          headers={["Foto", "Codigo", "Nombre", "Talla", "Color", "Sexo", "Costo", "Precio", "Utilidad", "Margen", "Stock", "Estado", "Acciones"]}
+          minWidth={1180}
           density="executive"
         >
           {productosFiltrados.map((p) => {
@@ -396,13 +451,24 @@ export default function Productos() {
               <tr key={p.codigo}>
                 <td>
                   {p.foto ? (
-                    <img src={getImageUrl(p.foto)} alt={p.nombre} className={styles.tableImage} onError={fallbackImage} />
+                    <Image
+                      src={getImageUrl(p.foto)}
+                      alt={p.nombre}
+                      width={120}
+                      height={80}
+                      unoptimized
+                      className={styles.tableImage}
+                      onError={fallbackImage}
+                    />
                   ) : (
                     <span className={styles.fallback}>IMG</span>
                   )}
                 </td>
                 <td>{p.codigo}</td>
                 <td>{p.nombre}</td>
+                <td>{p.talla || "-"}</td>
+                <td>{p.color || "-"}</td>
+                <td>{p.sexo || "-"}</td>
                 <td>{formatMoney(Number(p.costo ?? 0))}</td>
                 <td>{formatMoney(Number(p.precio ?? 0))}</td>
                 <td className={utilidad >= 0 ? styles.up : styles.down}>{formatMoney(utilidad)}</td>

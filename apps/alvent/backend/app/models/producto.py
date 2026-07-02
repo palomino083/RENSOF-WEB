@@ -16,6 +16,9 @@ class Producto(Base):
     nombre = Column(String(255), index=True, nullable=False)
     categoria = Column(String(100), nullable=True)
     marca = Column(String(100), nullable=True)
+    talla = Column(String(50), nullable=True)
+    color = Column(String(50), nullable=True)
+    sexo = Column(String(20), nullable=True)
 
     precio = Column(Float, nullable=False)
     costo = Column(Float, default=0)

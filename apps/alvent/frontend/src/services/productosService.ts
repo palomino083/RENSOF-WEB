@@ -9,6 +9,9 @@ export interface Producto {
   nombre: string;
   categoria: string;
   marca: string;
+  talla?: string;
+  color?: string;
+  sexo?: string;
   costo: number;
   precio: number;
   stock: number;
@@ -21,6 +24,9 @@ export interface ProductoCreate {
   nombre: string;
   categoria: string;
   marca: string;
+  talla?: string;
+  color?: string;
+  sexo?: string;
   costo: number;
   precio: number;
   stock: number;
@@ -32,6 +38,9 @@ export interface ProductoUpdate {
   nombre?: string;
   categoria?: string;
   marca?: string;
+  talla?: string;
+  color?: string;
+  sexo?: string;
   costo?: number;
   precio?: number;
   stock?: number;
