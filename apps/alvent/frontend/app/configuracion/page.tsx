@@ -658,19 +658,6 @@ export default function ConfiguracionPage() {
   const datosPlanSimulado = planCatalogo.find((p) => p.codigo === normalizarPlan(planSimulado)) || null;
   const datosPlanActual = planCatalogo.find((p) => p.codigo === normalizarPlan(businessForm.plan)) || null;
   const planCatalogoVisible = planCatalogo.filter((p) => PLANES_VISIBLES_EN_SECCION.includes(p.codigo as (typeof PLANES_VISIBLES_EN_SECCION)[number]));
-  const planControlSeleccionadoData = planCatalogoVisible.find((p) => p.codigo === normalizarPlan(planControlSeleccionado)) || planCatalogoVisible[0] || null;
-  const planControlActivo = planControlSeleccionadoData
-    ? normalizarPlan(businessForm.plan) === planControlSeleccionadoData.codigo
-    : false;
-  const planControlSimulado = planControlSeleccionadoData
-    ? normalizarPlan(planSimulado) === planControlSeleccionadoData.codigo
-    : false;
-  const planControlSemaforo = planControlSeleccionadoData
-    ? evaluarSemaforoPlan(planControlSeleccionadoData)
-    : { tone: "neutral", text: "Sin referencia" };
-  const planControlMontoKey = planControlSeleccionadoData
-    ? PLAN_PRICE_MAP[planControlSeleccionadoData.codigo] as keyof typeof planAmounts
-    : null;
   const datosPlanBaseGratuito = planCatalogo.find((p) => p.codigo === "GRATUITO") || null;
 
   const datosPlanGratuitoPromocional = {
@@ -814,6 +801,20 @@ export default function ConfiguracionPage() {
     if (tieneMejora) return { tone: "up", text: "Mejora" };
     return { tone: "neutral", text: "Neutro" };
   };
+
+  const planControlSeleccionadoData = planCatalogoVisible.find((p) => p.codigo === normalizarPlan(planControlSeleccionado)) || planCatalogoVisible[0] || null;
+  const planControlActivo = planControlSeleccionadoData
+    ? normalizarPlan(businessForm.plan) === planControlSeleccionadoData.codigo
+    : false;
+  const planControlSimulado = planControlSeleccionadoData
+    ? normalizarPlan(planSimulado) === planControlSeleccionadoData.codigo
+    : false;
+  const planControlSemaforo = planControlSeleccionadoData
+    ? evaluarSemaforoPlan(planControlSeleccionadoData)
+    : { tone: "neutral", text: "Sin referencia" };
+  const planControlMontoKey = planControlSeleccionadoData
+    ? PLAN_PRICE_MAP[planControlSeleccionadoData.codigo] as keyof typeof planAmounts
+    : null;
 
   const copiarBondadesDesdePlan = (codigoPlan: string) => {
     const plan = planCatalogo.find((p) => p.codigo === normalizarPlan(codigoPlan));
