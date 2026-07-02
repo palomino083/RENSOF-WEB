@@ -28,6 +28,29 @@ def _alvent_frontend_url(path: str = "") -> str:
     return f"{base}{normalized_path}"
 
 
+def _is_html_navigation_request(request: Request) -> bool:
+    if request.method not in {"GET", "HEAD"}:
+        return False
+
+    sec_fetch_dest = request.headers.get("sec-fetch-dest", "").lower()
+    if sec_fetch_dest and sec_fetch_dest != "document":
+        return False
+
+    accept = request.headers.get("accept", "").lower()
+    if sec_fetch_dest == "document":
+        return True
+
+    return "text/html" in accept
+
+
+def _frontend_unavailable_response() -> Response:
+    return Response(
+        content="ALVENT frontend unavailable",
+        status_code=503,
+        media_type="text/plain",
+    )
+
+
 def _build_proxy_target(origin: str, full_path: str, query: str) -> str:
     base = origin.rstrip("/")
     path = f"/{full_path.lstrip('/')}" if full_path else ""
@@ -199,6 +222,8 @@ async def alven_app_login(request: Request) -> Response:
     try:
         return await _proxy_alvent_frontend_request(request, "login")
     except httpx.RequestError:
+        if not _is_html_navigation_request(request):
+            return _frontend_unavailable_response()
         return templates.TemplateResponse(
             request,
             "alvent_login_fallback.html",
@@ -226,6 +251,8 @@ async def alven_app_root_proxy(request: Request) -> Response:
     try:
         return await _proxy_alvent_frontend_request(request)
     except httpx.RequestError:
+        if not _is_html_navigation_request(request):
+            return _frontend_unavailable_response()
         return RedirectResponse("/alven/app/dashboard", status_code=307)
 
 
@@ -238,7 +265,9 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
     try:
         return await _proxy_alvent_frontend_request(request, full_path)
     except httpx.RequestError:
-        if request.method == "GET" and full_path.strip("/") == "dashboard":
+        if not _is_html_navigation_request(request):
+            return _frontend_unavailable_response()
+        if full_path.strip("/") == "dashboard":
             return _render_alvent_dashboard_fallback(request)
         return RedirectResponse("/alven/app/login", status_code=307)
 
