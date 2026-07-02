@@ -68,7 +68,7 @@ def _proxy_response_headers(response_headers: httpx.Headers, frontend_origin: st
 async def _proxy_request(request: Request, origin: str, full_path: str = "") -> Response:
     target_url = _build_proxy_target(origin, full_path, request.url.query)
     body = await request.body()
-    excluded_request_headers = {"host", "content-length"}
+    excluded_request_headers = {"host", "content-length", "accept-encoding"}
     forwarded_headers = {
         key: value
         for key, value in request.headers.items()
