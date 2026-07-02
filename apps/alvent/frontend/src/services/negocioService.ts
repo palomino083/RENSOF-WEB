@@ -207,4 +207,72 @@ export const negocioService = {
       fecha: string;
     }>;
   },
+
+  getSimulationScenarios: async (negocioId: number) => {
+    const res = await api.get(`/negocios/${negocioId}/simulador/escenarios`);
+    return res.data as {
+      negocio_id: number;
+      escenarios: Array<{
+        id: string;
+        nombre: string;
+        planCodigo: string;
+        override: {
+          habilitado: boolean;
+          usuarios_ilimitado: boolean;
+          usuarios_limite: number;
+          reportes_habilitado: boolean;
+          reportes_ilimitado: boolean;
+          reportes_limite: number;
+          backups_habilitado: boolean;
+          backups_ilimitado: boolean;
+          backups_limite: number;
+        };
+        fecha: string;
+      }>;
+    };
+  },
+
+  updateSimulationScenarios: async (
+    negocioId: number,
+    escenarios: Array<{
+      id: string;
+      nombre: string;
+      planCodigo: string;
+      override: {
+        habilitado: boolean;
+        usuarios_ilimitado: boolean;
+        usuarios_limite: number;
+        reportes_habilitado: boolean;
+        reportes_ilimitado: boolean;
+        reportes_limite: number;
+        backups_habilitado: boolean;
+        backups_ilimitado: boolean;
+        backups_limite: number;
+      };
+      fecha: string;
+    }>
+  ) => {
+    const res = await api.put(`/negocios/${negocioId}/simulador/escenarios`, { escenarios });
+    return res.data as {
+      ok: boolean;
+      mensaje: string;
+      escenarios: Array<{
+        id: string;
+        nombre: string;
+        planCodigo: string;
+        override: {
+          habilitado: boolean;
+          usuarios_ilimitado: boolean;
+          usuarios_limite: number;
+          reportes_habilitado: boolean;
+          reportes_ilimitado: boolean;
+          reportes_limite: number;
+          backups_habilitado: boolean;
+          backups_ilimitado: boolean;
+          backups_limite: number;
+        };
+        fecha: string;
+      }>;
+    };
+  },
 };

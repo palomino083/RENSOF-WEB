@@ -74,7 +74,7 @@ const MODULOS_BASE = [
   "Backups",
 ] as const;
 
-const PLAN_BONDAD_SOURCES = ["GRATUITO", "PRUEBA", "BASICO", "LITE", "PRO", "PREMIUM"] as const;
+const PLAN_BONDAD_SOURCES = ["GRATUITO", "BASICO", "PRO", "PREMIUM"] as const;
 const PLANES_VISIBLES_EN_SECCION = ["GRATUITO", "BASICO", "PRO", "PREMIUM"] as const;
 
 const PLAN_VISUAL_PROPUESTA = [
@@ -205,6 +205,24 @@ const renderBenefitIcon = (icon: string) => {
 
 
 export default function ConfiguracionPage() {
+  type SimuladorEscenario = {
+    id: string;
+    nombre: string;
+    planCodigo: string;
+    override: {
+      habilitado: boolean;
+      usuarios_ilimitado: boolean;
+      usuarios_limite: number;
+      reportes_habilitado: boolean;
+      reportes_ilimitado: boolean;
+      reportes_limite: number;
+      backups_habilitado: boolean;
+      backups_ilimitado: boolean;
+      backups_limite: number;
+    };
+    fecha: string;
+  };
+
   // ==========================
   // STATE CENTRALIZADO
   // ==========================
@@ -242,6 +260,19 @@ export default function ConfiguracionPage() {
     backups_limite: number | null;
   }>>([]);
   const [planSimulado, setPlanSimulado] = useState<string>("BASICO");
+  const [simuladorOverride, setSimuladorOverride] = useState({
+    habilitado: false,
+    usuarios_ilimitado: false,
+    usuarios_limite: 0,
+    reportes_habilitado: false,
+    reportes_ilimitado: false,
+    reportes_limite: 0,
+    backups_habilitado: false,
+    backups_ilimitado: false,
+    backups_limite: 0,
+  });
+  const [simuladorEscenarioNombre, setSimuladorEscenarioNombre] = useState("");
+  const [simuladorEscenarios, setSimuladorEscenarios] = useState<SimuladorEscenario[]>([]);
   const [showPagoPlanModal, setShowPagoPlanModal] = useState(false);
   const [planPagoObjetivo, setPlanPagoObjetivo] = useState("PRO");
   const [comprobantePagoFile, setComprobantePagoFile] = useState<File | null>(null);
@@ -519,7 +550,7 @@ export default function ConfiguracionPage() {
           if (tipo === "reportes") return plan.reportes_habilitado === habilitado && plan.reportes_limite === limite;
           return plan.backups_habilitado === habilitado && plan.backups_limite === limite;
         });
-        return match?.codigo || (tipo === "reportes" ? "LITE" : tipo === "backups" ? "PRO" : "BASICO");
+        return match?.codigo || (tipo === "reportes" ? "PRO" : tipo === "backups" ? "PRO" : "BASICO");
       };
 
       setFreePlanBoost((prev) => ({
@@ -635,9 +666,26 @@ export default function ConfiguracionPage() {
     backups_limite: freePlanBoost.habilitar_backups ? (freePlanBoost.backups_limite ?? 0) : 0,
   };
 
-  const datosPlanSimuladoEfectivo = normalizarPlan(planSimulado) === "GRATUITO"
+  const datosPlanSimuladoBase = normalizarPlan(planSimulado) === "GRATUITO"
     ? datosPlanGratuitoPromocional
     : datosPlanSimulado;
+
+  const datosPlanSimuladoEfectivo = !datosPlanSimuladoBase
+    ? null
+    : simuladorOverride.habilitado
+      ? {
+          ...datosPlanSimuladoBase,
+          usuarios_limite: simuladorOverride.usuarios_ilimitado ? null : simuladorOverride.usuarios_limite,
+          reportes_habilitado: simuladorOverride.reportes_habilitado,
+          reportes_limite: simuladorOverride.reportes_habilitado
+            ? (simuladorOverride.reportes_ilimitado ? null : simuladorOverride.reportes_limite)
+            : 0,
+          backups_habilitado: simuladorOverride.backups_habilitado,
+          backups_limite: simuladorOverride.backups_habilitado
+            ? (simuladorOverride.backups_ilimitado ? null : simuladorOverride.backups_limite)
+            : 0,
+        }
+      : datosPlanSimuladoBase;
   const datosPlanActualEfectivo = normalizarPlan(businessForm.plan) === "GRATUITO"
     ? datosPlanGratuitoPromocional
     : datosPlanActual;
@@ -663,6 +711,223 @@ export default function ConfiguracionPage() {
     const b = simulado ?? Number.POSITIVE_INFINITY;
     if (a === b) return "igual";
     return b > a ? "mejora" : "recorte";
+  };
+
+  const modulosActivosAntes = MODULOS_BASE.reduce((acc, modulo) => acc + (estadoModuloActual(modulo) ? 1 : 0), 0);
+  const modulosActivosDespues = MODULOS_BASE.reduce((acc, modulo) => acc + (estadoModuloSimulado(modulo) ? 1 : 0), 0);
+  const modulosQueSeActivan = MODULOS_BASE.filter((modulo) => !estadoModuloActual(modulo) && estadoModuloSimulado(modulo)).length;
+  const modulosQueSeDesactivan = MODULOS_BASE.filter((modulo) => estadoModuloActual(modulo) && !estadoModuloSimulado(modulo)).length;
+  const deltaUsuarios = compararLimite(datosPlanActualEfectivo?.usuarios_limite, datosPlanSimuladoEfectivo?.usuarios_limite);
+  const deltaReportes = (datosPlanActualEfectivo?.reportes_habilitado === datosPlanSimuladoEfectivo?.reportes_habilitado)
+    ? compararLimite(datosPlanActualEfectivo?.reportes_limite, datosPlanSimuladoEfectivo?.reportes_limite)
+    : ((datosPlanSimuladoEfectivo?.reportes_habilitado ? 1 : 0) >= (datosPlanActualEfectivo?.reportes_habilitado ? 1 : 0) ? "mejora" : "recorte");
+  const deltaBackups = (datosPlanActualEfectivo?.backups_habilitado === datosPlanSimuladoEfectivo?.backups_habilitado)
+    ? compararLimite(datosPlanActualEfectivo?.backups_limite, datosPlanSimuladoEfectivo?.backups_limite)
+    : ((datosPlanSimuladoEfectivo?.backups_habilitado ? 1 : 0) >= (datosPlanActualEfectivo?.backups_habilitado ? 1 : 0) ? "mejora" : "recorte");
+  const scoreImpacto =
+    (modulosQueSeActivan * 2) -
+    (modulosQueSeDesactivan * 2) +
+    (deltaUsuarios === "mejora" ? 3 : deltaUsuarios === "recorte" ? -3 : 0) +
+    (deltaReportes === "mejora" ? 3 : deltaReportes === "recorte" ? -3 : 0) +
+    (deltaBackups === "mejora" ? 3 : deltaBackups === "recorte" ? -3 : 0);
+  const riesgoImpacto = scoreImpacto >= 5 ? "Bajo" : scoreImpacto >= 0 ? "Medio" : "Alto";
+
+  const obtenerPlanEfectivo = (plan: {
+    codigo: string;
+    nombre: string;
+    usuarios_limite: number | null;
+    reportes_habilitado: boolean;
+    reportes_limite: number | null;
+    backups_habilitado: boolean;
+    backups_limite: number | null;
+  }) => {
+    if (plan.codigo === "GRATUITO") return datosPlanGratuitoPromocional;
+    return plan;
+  };
+
+  const consumoUsuarios = planStats?.usuarios.consumidos ?? 0;
+  const consumoReportes = planStats?.reportes.consumidos ?? 0;
+  const consumoBackups = planStats?.backups.consumidos ?? 0;
+
+  const planSugerido = planCatalogoVisible
+    .map((plan) => obtenerPlanEfectivo(plan))
+    .find((plan) => {
+      const usuariosOk = plan.usuarios_limite == null || plan.usuarios_limite >= consumoUsuarios;
+      const reportesOk = plan.reportes_habilitado
+        ? (plan.reportes_limite == null || plan.reportes_limite >= consumoReportes)
+        : consumoReportes === 0;
+      const backupsOk = plan.backups_habilitado
+        ? (plan.backups_limite == null || plan.backups_limite >= consumoBackups)
+        : consumoBackups === 0;
+      return usuariosOk && reportesOk && backupsOk;
+    }) || null;
+
+  const resumenSugerencia = planSugerido
+    ? `Sugerido: ${nombrePlan(planSugerido.codigo)} para ${consumoUsuarios} usuarios, ${consumoReportes} reportes y ${consumoBackups} backups consumidos.`
+    : "No hay un plan visible que cubra totalmente el consumo actual. Revisa limites y montos.";
+
+  const evaluarSemaforoPlan = (plan: {
+    codigo: string;
+    nombre: string;
+    usuarios_limite: number | null;
+    reportes_habilitado: boolean;
+    reportes_limite: number | null;
+    backups_habilitado: boolean;
+    backups_limite: number | null;
+  }) => {
+    const objetivo = obtenerPlanEfectivo(plan);
+    const actual = datosPlanActualEfectivo;
+    if (!actual) return { tone: "neutral", text: "Sin referencia" };
+
+    const du = compararLimite(actual.usuarios_limite, objetivo.usuarios_limite);
+    const dr = (actual.reportes_habilitado === objetivo.reportes_habilitado)
+      ? compararLimite(actual.reportes_limite, objetivo.reportes_limite)
+      : ((objetivo.reportes_habilitado ? 1 : 0) >= (actual.reportes_habilitado ? 1 : 0) ? "mejora" : "recorte");
+    const db = (actual.backups_habilitado === objetivo.backups_habilitado)
+      ? compararLimite(actual.backups_limite, objetivo.backups_limite)
+      : ((objetivo.backups_habilitado ? 1 : 0) >= (actual.backups_habilitado ? 1 : 0) ? "mejora" : "recorte");
+
+    const tieneRecorte = du === "recorte" || dr === "recorte" || db === "recorte";
+    const tieneMejora = du === "mejora" || dr === "mejora" || db === "mejora";
+
+    if (tieneRecorte) return { tone: "down", text: "Riesgo: recorte" };
+    if (planSugerido && normalizarPlan(planSugerido.codigo) === normalizarPlan(plan.codigo)) {
+      return { tone: "up", text: "Recomendado" };
+    }
+    if (tieneMejora) return { tone: "up", text: "Mejora" };
+    return { tone: "neutral", text: "Neutro" };
+  };
+
+  const copiarBondadesDesdePlan = (codigoPlan: string) => {
+    const plan = planCatalogo.find((p) => p.codigo === normalizarPlan(codigoPlan));
+    if (!plan) return;
+    setFreePlanBoost((prev) => ({
+      ...prev,
+      usuarios_source_plan: plan.codigo,
+      usuarios_limite: plan.usuarios_limite,
+      habilitar_reportes: Boolean(plan.reportes_habilitado),
+      reportes_source_plan: plan.codigo,
+      reportes_limite: plan.reportes_limite,
+      habilitar_backups: Boolean(plan.backups_habilitado),
+      backups_source_plan: plan.codigo,
+      backups_limite: plan.backups_limite,
+    }));
+  };
+
+  const sincronizarOverrideConPlanBase = useCallback(() => {
+    if (!datosPlanSimuladoBase) return;
+    setSimuladorOverride({
+      habilitado: false,
+      usuarios_ilimitado: datosPlanSimuladoBase.usuarios_limite == null,
+      usuarios_limite: datosPlanSimuladoBase.usuarios_limite ?? 0,
+      reportes_habilitado: Boolean(datosPlanSimuladoBase.reportes_habilitado),
+      reportes_ilimitado: datosPlanSimuladoBase.reportes_limite == null,
+      reportes_limite: datosPlanSimuladoBase.reportes_limite ?? 0,
+      backups_habilitado: Boolean(datosPlanSimuladoBase.backups_habilitado),
+      backups_ilimitado: datosPlanSimuladoBase.backups_limite == null,
+      backups_limite: datosPlanSimuladoBase.backups_limite ?? 0,
+    });
+  }, [datosPlanSimuladoBase]);
+
+  const cargarEscenariosSimulador = useCallback(async () => {
+    const negocioId = getNegocioIdActivo();
+    if (!isSuperadmin || !negocioId) {
+      setSimuladorEscenarios([]);
+      return;
+    }
+    try {
+      const data = await negocioService.getSimulationScenarios(negocioId);
+      setSimuladorEscenarios(Array.isArray(data.escenarios) ? data.escenarios : []);
+    } catch {
+      setSimuladorEscenarios([]);
+    }
+  }, [getNegocioIdActivo, isSuperadmin]);
+
+  const guardarEscenariosSimulador = async (escenarios: SimuladorEscenario[]) => {
+    const negocioId = getNegocioIdActivo();
+    if (!isSuperadmin || !negocioId) return;
+    try {
+      const data = await negocioService.updateSimulationScenarios(negocioId, escenarios);
+      setSimuladorEscenarios(Array.isArray(data.escenarios) ? data.escenarios : []);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudieron guardar los escenarios del simulador"));
+    }
+  };
+
+  const guardarEscenarioActual = async () => {
+    if (!isSuperadmin) return;
+    const nombre = simuladorEscenarioNombre.trim();
+    if (!nombre) {
+      setError("Ingresa un nombre para guardar el escenario");
+      return;
+    }
+    const nuevo: SimuladorEscenario = {
+      id: `esc-${Date.now()}`,
+      nombre,
+      planCodigo: normalizarPlan(planSimulado),
+      override: { ...simuladorOverride, habilitado: true },
+      fecha: new Date().toISOString(),
+    };
+    const actualizados = [nuevo, ...simuladorEscenarios].slice(0, 20);
+    await guardarEscenariosSimulador(actualizados);
+    setSimuladorEscenarioNombre("");
+    setSuccess(`Escenario '${nombre}' guardado`);
+  };
+
+  const cargarEscenarioGuardado = (escenario: SimuladorEscenario) => {
+    setPlanSimulado(normalizarPlan(escenario.planCodigo));
+    setSimuladorOverride(escenario.override);
+    setSuccess(`Escenario '${escenario.nombre}' cargado`);
+  };
+
+  const eliminarEscenarioGuardado = async (escenarioId: string) => {
+    const actualizados = simuladorEscenarios.filter((esc) => esc.id !== escenarioId);
+    await guardarEscenariosSimulador(actualizados);
+  };
+
+  const aplicarPresetEjecutivo = (preset: "conservador" | "comercial" | "premium") => {
+    if (preset === "conservador") {
+      setPlanSimulado("BASICO");
+      setSimuladorOverride({
+        habilitado: true,
+        usuarios_ilimitado: false,
+        usuarios_limite: 3,
+        reportes_habilitado: false,
+        reportes_ilimitado: false,
+        reportes_limite: 0,
+        backups_habilitado: false,
+        backups_ilimitado: false,
+        backups_limite: 0,
+      });
+      return;
+    }
+    if (preset === "comercial") {
+      setPlanSimulado("PRO");
+      setSimuladorOverride({
+        habilitado: true,
+        usuarios_ilimitado: false,
+        usuarios_limite: 12,
+        reportes_habilitado: true,
+        reportes_ilimitado: false,
+        reportes_limite: 3000,
+        backups_habilitado: true,
+        backups_ilimitado: false,
+        backups_limite: 30,
+      });
+      return;
+    }
+    setPlanSimulado("PREMIUM");
+    setSimuladorOverride({
+      habilitado: true,
+      usuarios_ilimitado: true,
+      usuarios_limite: 0,
+      reportes_habilitado: true,
+      reportes_ilimitado: true,
+      reportes_limite: 0,
+      backups_habilitado: true,
+      backups_ilimitado: true,
+      backups_limite: 0,
+    });
   };
 
   useEffect(() => {
@@ -718,6 +983,13 @@ export default function ConfiguracionPage() {
   }, [businessForm.plan]);
 
   useEffect(() => {
+    sincronizarOverrideConPlanBase();
+  }, [
+    planSimulado,
+    sincronizarOverrideConPlanBase,
+  ]);
+
+  useEffect(() => {
     if (isSuperadmin) return;
     const negocioId = parseNumero(getStorageItem("negocio_id"));
     if (!negocioId) return;
@@ -726,6 +998,10 @@ export default function ConfiguracionPage() {
     void cargarHistorialPlanes(negocioId);
     void cargarMontosPlanes(negocioId);
   }, [isSuperadmin, cargarBranding, cargarPlanStats, cargarHistorialPlanes, cargarMontosPlanes]);
+
+  useEffect(() => {
+    void cargarEscenariosSimulador();
+  }, [cargarEscenariosSimulador, negocioSeleccionadoId, isSuperadmin]);
 
   
 
@@ -836,6 +1112,10 @@ export default function ConfiguracionPage() {
   const estadoBackups = planStats?.backups.habilitado ? "Habilitado" : "Bloqueado";
   const estadoReportes = planStats?.reportes.habilitado ? "Habilitado" : "Bloqueado";
   const negocioActivoId = getNegocioIdActivo();
+  const planSugeridoActivo = planSugerido
+    ? normalizarPlan(planSugerido.codigo) === normalizarPlan(businessForm.plan)
+    : false;
+  const puedeAplicarSugerido = Boolean(planSugerido) && !planSugeridoActivo && !changingPlan && !simuladorOverride.habilitado && Boolean(negocioActivoId);
   const formatPrecio = (value: number) => `S/${Number(value || 0).toFixed(0)}`;
 
   return (
@@ -1387,8 +1667,35 @@ export default function ConfiguracionPage() {
               <>
                 <h3 className={styles.catalogTitle}>Catalogo de planes</h3>
                 <p className={styles.catalogText}>Selecciona un plan para aplicar al negocio activo y visualizar sus funcionalidades.</p>
+                <div className={styles.planRecommendationBox}>
+                  <strong>Recomendacion automatica por consumo</strong>
+                  <p>{resumenSugerencia}</p>
+                  {planSugerido ? (
+                    <div className={styles.planRecommendationActions}>
+                      <button
+                        type="button"
+                        className={`${styles.planSimBtn} focus-ring`}
+                        onClick={() => {
+                          setPlanSimulado(planSugerido.codigo);
+                          irASeccion("cfg-plan-simulador");
+                        }}
+                      >
+                        Simular recomendado
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.planApplyMainBtn} focus-ring`}
+                        onClick={() => cambiarPlanNegocio(planSugerido.codigo)}
+                        disabled={!puedeAplicarSugerido}
+                      >
+                        {planSugeridoActivo ? "Plan sugerido activo" : changingPlan ? "Aplicando..." : simuladorOverride.habilitado ? "Desactiva ajuste avanzado" : "Aplicar recomendado"}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
 
                 <div className={styles.planAmountsBox}>
+                  <div id="cfg-plan-montos" />
                   <h4>Montos comerciales de planes</h4>
                   <p>Modifica precios oficiales visibles para este negocio.</p>
                   <div className={styles.planAmountsGrid}>
@@ -1448,10 +1755,18 @@ export default function ConfiguracionPage() {
                 </div>
 
                 <div className={styles.freePlanBoostBox}>
+                  <div id="cfg-plan-bondades-gratuito" />
                   <h4>Plan Gratuito promocional (solo superadministrador)</h4>
                   <p>
                     Mezcla bondades de planes superiores para captar nuevos clientes sin costo inicial.
                   </p>
+
+                  <div className={styles.freePlanBoostQuickActions}>
+                    <span>Aplicar plantilla rapida:</span>
+                    <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => copiarBondadesDesdePlan("BASICO")}>Copiar Basico</button>
+                    <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => copiarBondadesDesdePlan("PRO")}>Copiar Pro</button>
+                    <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => copiarBondadesDesdePlan("PREMIUM")}>Copiar Premium</button>
+                  </div>
 
                   <div className={styles.freePlanBoostGrid}>
                     <div className={styles.formRow}>
@@ -1555,7 +1870,7 @@ export default function ConfiguracionPage() {
                   </button>
                 </div>
 
-                <div className={styles.simulatorBox}>
+                <div id="cfg-plan-simulador" className={styles.simulatorBox}>
                   <div className={styles.simulatorHead}>
                     <div>
                       <h4>Simulador visual de plan</h4>
@@ -1568,14 +1883,200 @@ export default function ConfiguracionPage() {
                       className={`${styles.planApplyMainBtn} focus-ring`}
                       disabled={
                         changingPlan ||
+                        simuladorOverride.habilitado ||
                         !negocioActivoId ||
                         normalizarPlan(planSimulado) === normalizarPlan(businessForm.plan)
                       }
                       onClick={() => cambiarPlanNegocio(planSimulado)}
                     >
-                      {changingPlan ? "Aplicando..." : "Aplicar plan simulado"}
+                      {changingPlan ? "Aplicando..." : simuladorOverride.habilitado ? "Desactiva ajuste avanzado" : "Aplicar plan simulado"}
                     </button>
                   </div>
+
+                  <div className={styles.simulatorPlanTabs}>
+                    {planCatalogoVisible.map((plan) => {
+                      const selected = normalizarPlan(planSimulado) === plan.codigo;
+                      return (
+                        <button
+                          key={`sim-tab-${plan.codigo}`}
+                          type="button"
+                          className={`${styles.simulatorPlanTabBtn} ${selected ? styles.simulatorPlanTabBtnActive : ""} focus-ring`}
+                          onClick={() => setPlanSimulado(plan.codigo)}
+                        >
+                          {nombrePlan(plan.codigo)}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {isSuperadmin ? (
+                    <div className={styles.simulatorAdvancedBox}>
+                      <div className={styles.simulatorAdvancedHead}>
+                        <strong>Ajuste avanzado (solo simulacion)</strong>
+                        <label className={styles.inlineCheck}>
+                          <input
+                            type="checkbox"
+                            checked={simuladorOverride.habilitado}
+                            onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, habilitado: e.target.checked }))}
+                          />
+                          Activar personalizacion superadmin
+                        </label>
+                      </div>
+
+                      <p>
+                        Puedes modificar limites para analizar escenarios. Estos ajustes no se guardan hasta aplicar un plan real.
+                      </p>
+
+                      <div className={styles.simulatorAdvancedGrid}>
+                        <div className={styles.formRow}>
+                          <label>Usuarios permitidos</label>
+                          <div className={styles.simulatorInlineRow}>
+                            <input
+                              type="number"
+                              min={0}
+                              step="1"
+                              className="focus-ring"
+                              disabled={!simuladorOverride.habilitado || simuladorOverride.usuarios_ilimitado}
+                              value={simuladorOverride.usuarios_limite}
+                              onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, usuarios_limite: Number(e.target.value || 0) }))}
+                            />
+                            <label className={styles.inlineCheck}>
+                              <input
+                                type="checkbox"
+                                disabled={!simuladorOverride.habilitado}
+                                checked={simuladorOverride.usuarios_ilimitado}
+                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, usuarios_ilimitado: e.target.checked }))}
+                              />
+                              Ilimitado
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className={styles.formRow}>
+                          <label>Reportes permitidos</label>
+                          <div className={styles.simulatorInlineRow}>
+                            <label className={styles.inlineCheck}>
+                              <input
+                                type="checkbox"
+                                disabled={!simuladorOverride.habilitado}
+                                checked={simuladorOverride.reportes_habilitado}
+                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, reportes_habilitado: e.target.checked }))}
+                              />
+                              Habilitar
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              step="1"
+                              className="focus-ring"
+                              disabled={!simuladorOverride.habilitado || !simuladorOverride.reportes_habilitado || simuladorOverride.reportes_ilimitado}
+                              value={simuladorOverride.reportes_limite}
+                              onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, reportes_limite: Number(e.target.value || 0) }))}
+                            />
+                            <label className={styles.inlineCheck}>
+                              <input
+                                type="checkbox"
+                                disabled={!simuladorOverride.habilitado || !simuladorOverride.reportes_habilitado}
+                                checked={simuladorOverride.reportes_ilimitado}
+                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, reportes_ilimitado: e.target.checked }))}
+                              />
+                              Ilimitado
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className={styles.formRow}>
+                          <label>Backups permitidos</label>
+                          <div className={styles.simulatorInlineRow}>
+                            <label className={styles.inlineCheck}>
+                              <input
+                                type="checkbox"
+                                disabled={!simuladorOverride.habilitado}
+                                checked={simuladorOverride.backups_habilitado}
+                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, backups_habilitado: e.target.checked }))}
+                              />
+                              Habilitar
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              step="1"
+                              className="focus-ring"
+                              disabled={!simuladorOverride.habilitado || !simuladorOverride.backups_habilitado || simuladorOverride.backups_ilimitado}
+                              value={simuladorOverride.backups_limite}
+                              onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, backups_limite: Number(e.target.value || 0) }))}
+                            />
+                            <label className={styles.inlineCheck}>
+                              <input
+                                type="checkbox"
+                                disabled={!simuladorOverride.habilitado || !simuladorOverride.backups_habilitado}
+                                checked={simuladorOverride.backups_ilimitado}
+                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, backups_ilimitado: e.target.checked }))}
+                              />
+                              Ilimitado
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={styles.simulatorScenarioBox}>
+                        <strong>Escenarios guardados</strong>
+                        <div className={styles.simulatorScenarioActions}>
+                          <input
+                            placeholder="Nombre del escenario"
+                            value={simuladorEscenarioNombre}
+                            onChange={(e) => setSimuladorEscenarioNombre(e.target.value)}
+                            className="focus-ring"
+                          />
+                          <button
+                            type="button"
+                            className={`${styles.planApplyMainBtn} focus-ring`}
+                            onClick={guardarEscenarioActual}
+                          >
+                            Guardar escenario
+                          </button>
+                        </div>
+
+                        <div className={styles.simulatorPresetRow}>
+                          <span>Presets ejecutivos:</span>
+                          <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => aplicarPresetEjecutivo("conservador")}>Conservador</button>
+                          <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => aplicarPresetEjecutivo("comercial")}>Comercial</button>
+                          <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => aplicarPresetEjecutivo("premium")}>Premium agresivo</button>
+                        </div>
+
+                        <div className={styles.simulatorScenarioList}>
+                          {simuladorEscenarios.length === 0 ? (
+                            <p>No hay escenarios guardados para este negocio.</p>
+                          ) : (
+                            simuladorEscenarios.map((esc) => (
+                              <article key={esc.id} className={styles.simulatorScenarioItem}>
+                                <div>
+                                  <strong>{esc.nombre}</strong>
+                                  <small>Plan {nombrePlan(esc.planCodigo)} | {new Date(esc.fecha).toLocaleDateString("es-PE")}</small>
+                                </div>
+                                <div className={styles.simulatorScenarioBtns}>
+                                  <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => cargarEscenarioGuardado(esc)}>
+                                    Cargar
+                                  </button>
+                                  <button type="button" className={`${styles.cardInlineLinkBtn} focus-ring`} onClick={() => void eliminarEscenarioGuardado(esc.id)}>
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </article>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className={`${styles.planSimBtn} focus-ring`}
+                        onClick={sincronizarOverrideConPlanBase}
+                      >
+                        Restaurar valores del plan base
+                      </button>
+                    </div>
+                  ) : null}
 
                   <div className={styles.moduleGrid}>
                     {MODULOS_BASE.map((modulo) => {
@@ -1593,6 +2094,27 @@ export default function ConfiguracionPage() {
                     <p>Usuarios permitidos: <strong>{datosPlanSimuladoEfectivo?.usuarios_limite ?? "Ilimitado"}</strong></p>
                     <p>Reportes permitidos: <strong>{datosPlanSimuladoEfectivo?.reportes_habilitado ? (datosPlanSimuladoEfectivo.reportes_limite ?? "Ilimitado") : "No"}</strong></p>
                     <p>Backups permitidos: <strong>{datosPlanSimuladoEfectivo?.backups_habilitado ? (datosPlanSimuladoEfectivo.backups_limite ?? "Ilimitado") : "No"}</strong></p>
+                  </div>
+
+                  <div className={styles.simulatorExecutiveBox}>
+                    <h5>Resumen ejecutivo de impacto</h5>
+                    <div className={styles.simulatorExecutiveGrid}>
+                      <article className={styles.simulatorExecutiveItem}>
+                        <span>Modulos activos</span>
+                        <strong>{modulosActivosAntes} → {modulosActivosDespues}</strong>
+                        <small>{modulosQueSeActivan} se activan, {modulosQueSeDesactivan} se desactivan</small>
+                      </article>
+                      <article className={styles.simulatorExecutiveItem}>
+                        <span>Score de impacto</span>
+                        <strong>{scoreImpacto >= 0 ? `+${scoreImpacto}` : scoreImpacto}</strong>
+                        <small>Usuarios: {deltaUsuarios} | Reportes: {deltaReportes} | Backups: {deltaBackups}</small>
+                      </article>
+                      <article className={`${styles.simulatorExecutiveItem} ${riesgoImpacto === "Alto" ? styles.simulatorRiskHigh : riesgoImpacto === "Medio" ? styles.simulatorRiskMedium : styles.simulatorRiskLow}`}>
+                        <span>Riesgo de cambio</span>
+                        <strong>{riesgoImpacto}</strong>
+                        <small>{riesgoImpacto === "Alto" ? "Puede recortar capacidades actuales" : riesgoImpacto === "Medio" ? "Cambio equilibrado" : "Mejora clara de capacidad"}</small>
+                      </article>
+                    </div>
                   </div>
 
                   <div className={styles.diffBox}>
@@ -1644,14 +2166,56 @@ export default function ConfiguracionPage() {
                   {planCatalogoVisible.map((plan) => {
                     const activo = normalizarPlan(businessForm.plan) === plan.codigo;
                     const simulado = normalizarPlan(planSimulado) === plan.codigo;
+                    const stateLabel = activo ? "Activo" : simulado ? "Simulado" : "Disponible";
+                    const stateClass = activo ? styles.cardStateActive : simulado ? styles.cardStateSimulated : styles.cardStateAvailable;
+                    const planAmountKey = PLAN_PRICE_MAP[plan.codigo] as keyof typeof planAmounts;
+                    const signal = evaluarSemaforoPlan(plan);
+                    const signalClass = signal.tone === "up" ? styles.catalogSignalUp : signal.tone === "down" ? styles.catalogSignalDown : styles.catalogSignalNeutral;
                     return (
                       <article key={plan.codigo} className={`${styles.catalogCard} ${activo ? styles.catalogCardActive : ""}`}>
                         <h4>{plan.nombre}</h4>
-                        <p className={styles.cardState}>{activo ? "Activo" : simulado ? "Simulado" : "Disponible"}</p>
-                        <p>Usuarios: <strong>{plan.usuarios_limite ?? "Ilimitado"}</strong></p>
-                        <p>Monto: <strong>{formatPrecio(planAmounts[PLAN_PRICE_MAP[plan.codigo]])}</strong></p>
-                        <p>Reportes: <strong>{plan.reportes_habilitado ? (plan.reportes_limite ?? "Ilimitado") : "No"}</strong></p>
-                        <p>Backups: <strong>{plan.backups_habilitado ? (plan.backups_limite ?? "Ilimitado") : "No"}</strong></p>
+                        <p className={`${styles.cardState} ${stateClass}`}>{stateLabel}</p>
+                        <p className={`${styles.catalogSignal} ${signalClass}`}>{signal.text}</p>
+
+                        <div className={styles.catalogMetrics}>
+                          <p>Usuarios: <strong>{plan.usuarios_limite ?? "Ilimitado"}</strong></p>
+                          <p>Monto: <strong>{formatPrecio(planAmounts[planAmountKey])}</strong></p>
+                          <p>Reportes: <strong>{plan.reportes_habilitado ? (plan.reportes_limite ?? "Ilimitado") : "No"}</strong></p>
+                          <p>Backups: <strong>{plan.backups_habilitado ? (plan.backups_limite ?? "Ilimitado") : "No"}</strong></p>
+                        </div>
+
+                        <div className={styles.cardQuickEdit}>
+                          <label htmlFor={`monto-${plan.codigo}`}>Monto editable</label>
+                          <div className={styles.cardQuickEditRow}>
+                            <input
+                              id={`monto-${plan.codigo}`}
+                              type="number"
+                              min={0}
+                              step="1"
+                              className="focus-ring"
+                              value={planAmounts[planAmountKey]}
+                              onChange={(e) => setPlanAmounts((prev) => ({ ...prev, [planAmountKey]: Number(e.target.value || 0) }))}
+                            />
+                            <button
+                              type="button"
+                              className={`${styles.planSimBtn} focus-ring`}
+                              onClick={guardarMontosPlanes}
+                              disabled={savingPlanAmounts || !negocioActivoId}
+                            >
+                              {savingPlanAmounts ? "Guardando..." : "Guardar monto"}
+                            </button>
+                          </div>
+                          {plan.codigo === "GRATUITO" ? (
+                            <button
+                              type="button"
+                              className={`${styles.cardInlineLinkBtn} focus-ring`}
+                              onClick={() => irASeccion("cfg-plan-bondades-gratuito")}
+                            >
+                              Editar bondades gratuitas
+                            </button>
+                          ) : null}
+                        </div>
+
                         <div className={styles.cardActions}>
                           <button
                             type="button"

@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 from uuid import uuid4
+import json
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
@@ -54,6 +55,18 @@ class PlanMontosUpdate(BaseModel):
     premium: float = Field(ge=0)
 
 
+class SimuladorEscenarioItem(BaseModel):
+    id: str = Field(min_length=3, max_length=80)
+    nombre: str = Field(min_length=3, max_length=80)
+    planCodigo: str = Field(min_length=3, max_length=20)
+    override: dict
+    fecha: str = Field(min_length=8, max_length=40)
+
+
+class SimuladorEscenariosUpdate(BaseModel):
+    escenarios: List[SimuladorEscenarioItem] = Field(default_factory=list)
+
+
 PLAN_MONTOS_DEFAULT = {
     "GRATUITO": 0.0,
     "PRUEBA": 15.0,
@@ -73,6 +86,19 @@ def _resolver_montos_planes(negocio: Negocio) -> dict[str, float]:
         "PRO": float(negocio.plan_monto_pro if negocio.plan_monto_pro is not None else PLAN_MONTOS_DEFAULT["PRO"]),
         "PREMIUM": float(negocio.plan_monto_premium if negocio.plan_monto_premium is not None else PLAN_MONTOS_DEFAULT["PREMIUM"]),
     }
+
+
+def _leer_escenarios_simulador(negocio: Negocio) -> list[dict]:
+    raw = str(getattr(negocio, "plan_simulador_escenarios", "") or "").strip()
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return parsed
+    except json.JSONDecodeError:
+        return []
+    return []
 
 
 def _normalizar_source_plan(plan: str, fallback: str) -> str:
@@ -453,6 +479,52 @@ def actualizar_montos_planes(
             "pro": montos["PRO"],
             "premium": montos["PREMIUM"],
         },
+    }
+
+
+@router.get("/{negocio_id}/simulador/escenarios")
+def obtener_escenarios_simulador(
+    negocio_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin:
+        raise HTTPException(status_code=403, detail="Solo superadministrador")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    return {
+        "negocio_id": negocio_id,
+        "escenarios": _leer_escenarios_simulador(negocio),
+    }
+
+
+@router.put("/{negocio_id}/simulador/escenarios")
+def actualizar_escenarios_simulador(
+    negocio_id: int,
+    data: SimuladorEscenariosUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin:
+        raise HTTPException(status_code=403, detail="Solo superadministrador")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    escenarios = [item.model_dump() for item in data.escenarios][:20]
+    negocio.plan_simulador_escenarios = json.dumps(escenarios, ensure_ascii=False)
+    db.commit()
+
+    return {
+        "ok": True,
+        "mensaje": "Escenarios del simulador actualizados",
+        "escenarios": escenarios,
     }
 
 
