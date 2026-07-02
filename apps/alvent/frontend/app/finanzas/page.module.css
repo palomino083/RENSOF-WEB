@@ -1,0 +1,208 @@
+.shell {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  min-height: 100%;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 95% 0%, rgba(20, 184, 166, 0.14), transparent 38%),
+    radial-gradient(circle at 0% 100%, rgba(2, 132, 199, 0.1), transparent 30%),
+    linear-gradient(160deg, #f8fafc 0%, #ecfeff 55%, #f8fafc 100%);
+}
+
+.hero {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(8, 145, 178, 0.94));
+  color: #e0f2fe;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  color: #67e8f9;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.errorBox {
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 12px;
+  background: #fee2e2;
+  color: #7f1d1d;
+  padding: 10px 12px;
+}
+
+.successBox {
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  border-radius: 12px;
+  background: #dcfce7;
+  color: #14532d;
+  padding: 10px 12px;
+}
+
+.kpiGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.kpiCard {
+  border: 1px solid rgba(203, 213, 225, 0.75);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+  display: grid;
+  gap: 6px;
+}
+
+.kpiCard span {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.kpiCard strong {
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.card {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.periodRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.periodRow input {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #0f172a;
+}
+
+.formGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.formGrid label {
+  display: grid;
+  gap: 6px;
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.formGrid input,
+.formGrid select {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #0f172a;
+}
+
+.fullRow {
+  grid-column: 1 / -1;
+}
+
+.inlineActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.actionBtn,
+.actionPrimaryBtn,
+.actionDangerBtn {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.actionPrimaryBtn {
+  border-color: rgba(8, 145, 178, 0.5);
+  background: linear-gradient(120deg, #0891b2, #0369a1);
+  color: #ecfeff;
+}
+
+.actionDangerBtn {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: #fff1f2;
+  color: #9f1239;
+}
+
+.fileCell {
+  display: grid;
+  gap: 6px;
+}
+
+.fileCell a {
+  color: #0c4a6e;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.fileCell input {
+  font-size: 0.8rem;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.85);
+  font-size: 0.93rem;
+  color: #1e293b;
+}
+
+.table thead th {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+@media (max-width: 900px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .fullRow {
+    grid-column: auto;
+  }
+}

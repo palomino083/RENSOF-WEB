@@ -70,6 +70,7 @@ const PERMISOS: Record<string, string[]> = {
     "reportes",
     "usuarios",
     "configuracion",
+    "finanzas",
   ],
 
   CAJERO: ["pos", "ventas", "clientes"],
@@ -135,6 +136,7 @@ const MENU: MenuBlock[] = [
     items: [
       { label: "Usuarios", href: "/usuarios", icon: "👤", key: "usuarios" },
       { label: "Configuración", href: "/configuracion", icon: "⚙️", key: "configuracion" },
+      { label: "Finanzas", href: "/finanzas", icon: "🧾", key: "finanzas" },
     ],
   },
 ];
@@ -180,6 +182,8 @@ export default function Menu() {
   const roles = Array.isArray(usuario?.roles)
     ? usuario.roles.map((r) => String(r || "").toUpperCase())
     : [];
+  const esSuperadmin = rol === "SUPERADMIN" || roles.includes("SUPERADMIN");
+  const rolEtiqueta = esSuperadmin ? "SUPERADMINISTRADOR" : rol;
 
   const isActive = (href: string) => pathname === href;
 
@@ -303,7 +307,12 @@ const menuFiltrado = useMemo(() => {
       <div style={{ marginTop: "20px" }}>
         <strong>{usuario.nombres || "Usuario"}</strong>
 
-        <p style={{ color: "#94A3B8" }}>{rol}</p>
+        <p style={{ color: "#94A3B8", marginBottom: esSuperadmin ? "2px" : "10px" }}>{rolEtiqueta}</p>
+        {esSuperadmin ? (
+          <p style={{ color: "#fbbf24", fontSize: "12px", marginTop: 0, marginBottom: "10px" }}>
+            Sin negocio fijo
+          </p>
+        ) : null}
 
         <button
           onClick={() => {

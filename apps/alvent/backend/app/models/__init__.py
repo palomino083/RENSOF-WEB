@@ -11,6 +11,7 @@ from .sucursal import Sucursal
 
 from .configuracion_negocio import ConfiguracionNegocio
 from .plan_pago import PlanPago
+from .finanzas import GastoOperativo, CierreMensualFinanzas
 from .refresh_token import RefreshToken, TokenBlacklist
 from .email_verification import EmailVerification, PasswordReset
 

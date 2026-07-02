@@ -54,7 +54,7 @@
 .overviewGrid {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .overviewCard {
@@ -112,6 +112,29 @@
 .overviewCard strong {
   color: #0f172a;
   font-size: 1.05rem;
+}
+
+.superadminMeta {
+  color: #92400e;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.superadminFinanceHint {
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  background: linear-gradient(135deg, rgba(255, 251, 235, 0.96), rgba(255, 237, 213, 0.92));
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.superadminFinanceHint strong {
+  color: #9a3412;
+}
+
+.superadminFinanceHint p {
+  margin: 0;
 }
 
 .actionBar {
@@ -1407,7 +1430,7 @@
 
 .cardQuickEditRow {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   gap: 6px;
 }
 
@@ -1424,6 +1447,186 @@
   padding: 6px 8px;
   cursor: pointer;
   width: fit-content;
+}
+
+.quickSelectorsGrid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.quickSelectorsGrid label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.77rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.quickSelectorsGrid select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 6px 8px;
+}
+
+.quickBenefitPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quickBenefitPills span {
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  background: #f0f9ff;
+  color: #075985;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+}
+
+.planGlobalBatchBar {
+  border: 1px solid rgba(14, 116, 144, 0.35);
+  border-radius: 12px;
+  background: linear-gradient(140deg, rgba(236, 254, 255, 0.9), rgba(255, 255, 255, 0.96));
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.planGlobalBatchBar strong {
+  color: #0f172a;
+}
+
+.planGlobalBatchBar p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.86rem;
+}
+
+.planExecutiveControlBar {
+  border: 1px solid rgba(14, 165, 233, 0.36);
+  border-radius: 12px;
+  background: linear-gradient(142deg, rgba(239, 246, 255, 0.92), rgba(248, 250, 252, 0.95));
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.planExecutiveControlHead {
+  display: grid;
+  gap: 3px;
+}
+
+.planExecutiveControlHead strong {
+  color: #0c4a6e;
+}
+
+.planExecutiveControlHead p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.82rem;
+}
+
+.planExecutiveControlGrid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1.2fr 1fr auto;
+  align-items: end;
+}
+
+.planExecutiveControlGrid label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.77rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.planExecutiveControlGrid select {
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 7px 8px;
+}
+
+.planExecutiveControlStats {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.planExecutiveControlStats span {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #334155;
+  padding: 7px 8px;
+  font-size: 0.8rem;
+}
+
+.planExecutiveControlStats strong {
+  color: #0f172a;
+}
+
+.quickPerksChecklist {
+  border: 1px dashed #7dd3fc;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.quickPerksChecklist span {
+  font-size: 0.76rem;
+  color: #0c4a6e;
+  font-weight: 800;
+}
+
+.quickCheckItem {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.78rem;
+  color: #334155;
+}
+
+.quickCheckItem input {
+  accent-color: #0369a1;
+}
+
+.quickPresetBox {
+  border: 1px dashed #bae6fd;
+  border-radius: 10px;
+  background: #f0f9ff;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.quickPresetBox label {
+  font-size: 0.77rem;
+  font-weight: 700;
+  color: #075985;
+}
+
+.quickPresetRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+
+.quickPresetRow input,
+.quickPresetRow select {
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 6px 8px;
 }
 
 .planSimBtn {
@@ -1537,6 +1740,14 @@
     grid-template-columns: 1fr;
   }
 
+  .planExecutiveControlGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .planExecutiveControlStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .planVisualCard {
     min-height: 0;
   }
@@ -1634,6 +1845,18 @@
   }
 
   .cardQuickEditRow {
+    grid-template-columns: 1fr;
+  }
+
+  .quickSelectorsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .quickPresetRow {
+    grid-template-columns: 1fr;
+  }
+
+  .planExecutiveControlStats {
     grid-template-columns: 1fr;
   }
 

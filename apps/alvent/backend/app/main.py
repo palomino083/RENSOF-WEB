@@ -37,6 +37,7 @@ from app.routers.system import router as system_router
 from app.routers.usuarios import router as usuarios_router
 from app.routers.ventas import router as ventas_router
 from app.routers.negocios import router as negocios_router
+from app.routers.finanzas import router as finanzas_router
 
 # ==========================================
 # PATHS
@@ -363,6 +364,7 @@ app.include_router(ventas_router)
 app.include_router(dashboard_router)
 app.include_router(system_router)
 app.include_router(negocios_router)
+app.include_router(finanzas_router)
 
 # ==========================================
 # ROOT
