@@ -144,18 +144,37 @@ export default function Menu() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const data = localStorage.getItem("usuario");
-    if (data) {
+    const cargarUsuario = () => {
+      const data = localStorage.getItem("usuario");
+      if (!data) {
+        setUsuario({});
+        return;
+      }
       try {
         const parsed = JSON.parse(data);
         if (parsed && typeof parsed === "object") {
           setUsuario(parsed);
+          return;
         }
       } catch {
         setUsuario({ nombres: data });
+        return;
       }
-    }
-  }, []);
+      setUsuario({});
+    };
+
+    cargarUsuario();
+
+    window.addEventListener("storage", cargarUsuario);
+    window.addEventListener("focus", cargarUsuario);
+    window.addEventListener("alvent-user-updated", cargarUsuario as EventListener);
+
+    return () => {
+      window.removeEventListener("storage", cargarUsuario);
+      window.removeEventListener("focus", cargarUsuario);
+      window.removeEventListener("alvent-user-updated", cargarUsuario as EventListener);
+    };
+  }, [pathname]);
 
   const rol = (usuario?.rol || "CAJERO").toUpperCase();
   const roles = Array.isArray(usuario?.roles)

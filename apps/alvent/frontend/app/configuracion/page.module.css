@@ -365,6 +365,21 @@
   font-size: 0.78rem;
 }
 
+.planFold {
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.8);
+  padding: 10px;
+  display: grid;
+  gap: 12px;
+}
+
+.planFoldSummary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #0f172a;
+}
+
 .formRow input,
 .formRow select {
   border: 1px solid #cbd5e1;

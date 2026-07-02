@@ -103,6 +103,10 @@ export default function LoginPage() {
         })
       );
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("alvent-user-updated"));
+      }
+
       // Redirección
       const tieneNegocio = !!res.data.negocio_id;
 

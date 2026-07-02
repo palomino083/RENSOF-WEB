@@ -7,8 +7,10 @@ from fastapi.templating import Jinja2Templates
 
 from app.core.config import (
     ALVENT_APP_URL,
+    ALVENT_BACKEND_LOCAL_ORIGIN,
     ALVENT_BACKEND_ORIGIN,
     ALVENT_FRONTEND_BASE_PATH,
+    ALVENT_FRONTEND_LOCAL_ORIGIN,
     ALVENT_FRONTEND_ORIGIN,
     TEMPLATES_DIR,
 )
@@ -60,7 +62,11 @@ def _build_proxy_target(origin: str, full_path: str, query: str) -> str:
     return target
 
 
-def _proxy_response_headers(response_headers: httpx.Headers, frontend_origin: str, backend_origin: str) -> dict[str, str]:
+def _proxy_response_headers(
+    response_headers: httpx.Headers,
+    frontend_origins: list[str],
+    backend_origin: str,
+) -> dict[str, str]:
     excluded = {
         "content-encoding",
         "transfer-encoding",
@@ -78,8 +84,10 @@ def _proxy_response_headers(response_headers: httpx.Headers, frontend_origin: st
             continue
         if key.lower() == "location":
             location = value
-            if location.startswith(frontend_origin):
-                location = location.replace(frontend_origin, "/alven/app", 1)
+            for frontend_origin in frontend_origins:
+                if location.startswith(frontend_origin):
+                    location = location.replace(frontend_origin, "/alven/app", 1)
+                    break
             if location.startswith(backend_origin):
                 location = location.replace(backend_origin, "/alven/api", 1)
             headers[key] = location
@@ -88,7 +96,37 @@ def _proxy_response_headers(response_headers: httpx.Headers, frontend_origin: st
     return headers
 
 
-async def _proxy_request(request: Request, origin: str, full_path: str = "") -> Response:
+def _frontend_origins_for_request(request: Request) -> list[str]:
+    origins: list[str] = []
+    host = request.headers.get("host", "").lower()
+    is_local_request = host.startswith("127.0.0.1") or host.startswith("localhost")
+
+    if is_local_request and ALVENT_FRONTEND_LOCAL_ORIGIN:
+        # En entorno local priorizamos solo el frontend local para validar cambios
+        # recientes sin caer silenciosamente al origen remoto.
+        return [ALVENT_FRONTEND_LOCAL_ORIGIN.rstrip("/")]
+
+    remote_origin = ALVENT_FRONTEND_ORIGIN.rstrip("/")
+    if remote_origin not in origins:
+        origins.append(remote_origin)
+
+    return origins
+
+
+def _backend_origin_for_request(request: Request) -> str:
+    host = request.headers.get("host", "").lower()
+    is_local_request = host.startswith("127.0.0.1") or host.startswith("localhost")
+    if is_local_request and ALVENT_BACKEND_LOCAL_ORIGIN:
+        return ALVENT_BACKEND_LOCAL_ORIGIN.rstrip("/")
+    return ALVENT_BACKEND_ORIGIN.rstrip("/")
+
+
+async def _proxy_request(
+    request: Request,
+    origin: str,
+    full_path: str = "",
+    frontend_origins: list[str] | None = None,
+) -> Response:
     target_url = _build_proxy_target(origin, full_path, request.url.query)
     body = await request.body()
     excluded_request_headers = {"host", "content-length", "accept-encoding"}
@@ -111,12 +149,17 @@ async def _proxy_request(request: Request, origin: str, full_path: str = "") -> 
     return Response(
         content=proxied.content,
         status_code=proxied.status_code,
-        headers=_proxy_response_headers(proxied.headers, ALVENT_FRONTEND_ORIGIN, ALVENT_BACKEND_ORIGIN),
+        headers=_proxy_response_headers(
+            proxied.headers,
+            frontend_origins or [ALVENT_FRONTEND_ORIGIN.rstrip("/")],
+            ALVENT_BACKEND_ORIGIN,
+        ),
         media_type=proxied.headers.get("content-type"),
     )
 
 
 async def _proxy_alvent_frontend_request(request: Request, full_path: str = "") -> Response:
+    frontend_origins = _frontend_origins_for_request(request)
     requested_path = full_path.strip("/")
     base_path = ALVENT_FRONTEND_BASE_PATH.strip("/")
 
@@ -126,16 +169,40 @@ async def _proxy_alvent_frontend_request(request: Request, full_path: str = "") 
         candidates.append(prefixed_path)
 
     last_response: Response | None = None
-    for candidate in candidates:
-        response = await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, candidate)
-        body_preview = response.body[:4096].decode("utf-8", errors="ignore").lower()
-        looks_like_not_found = "this page could not be found" in body_preview
+    last_request_error: httpx.RequestError | None = None
 
-        if response.status_code != 404 and not looks_like_not_found:
-            return response
-        last_response = response
+    for frontend_origin in frontend_origins:
+        for candidate in candidates:
+            try:
+                response = await _proxy_request(
+                    request,
+                    frontend_origin,
+                    candidate,
+                    frontend_origins=frontend_origins,
+                )
+            except httpx.RequestError as exc:
+                last_request_error = exc
+                continue
 
-    return last_response if last_response is not None else await _proxy_request(request, ALVENT_FRONTEND_ORIGIN, requested_path)
+            body_preview = response.body[:4096].decode("utf-8", errors="ignore").lower()
+            looks_like_not_found = "this page could not be found" in body_preview
+            is_server_error = response.status_code >= 500
+
+            if not is_server_error and response.status_code != 404 and not looks_like_not_found:
+                return response
+            last_response = response
+
+    if last_response is not None:
+        return last_response
+    if last_request_error is not None:
+        raise last_request_error
+
+    return await _proxy_request(
+        request,
+        ALVENT_FRONTEND_ORIGIN,
+        requested_path,
+        frontend_origins=frontend_origins,
+    )
 
 
 def _alvent_fallback_auth_payload(usuario: str) -> dict[str, object]:
@@ -277,8 +344,9 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
     response_model=None,
 )
 async def alven_api_login_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
     try:
-        return await _proxy_request(request, ALVENT_BACKEND_ORIGIN, "auth/login")
+        return await _proxy_request(request, backend_origin, "auth/login")
     except httpx.RequestError:
         payload = await request.json()
         usuario = str(payload.get("usuario") or "").strip()
@@ -299,7 +367,8 @@ async def alven_api_login_proxy_or_fallback(request: Request) -> Response:
     response_model=None,
 )
 async def alven_api_proxy(full_path: str, request: Request) -> Response:
-    return await _proxy_request(request, ALVENT_BACKEND_ORIGIN, full_path)
+    backend_origin = _backend_origin_for_request(request)
+    return await _proxy_request(request, backend_origin, full_path)
 
 
 @router.get("/proyectos", response_class=HTMLResponse)

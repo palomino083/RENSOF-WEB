@@ -344,10 +344,12 @@ export default function ConfiguracionPage() {
 
   const getNegocioIdActivo = useCallback(() => {
     if (isSuperadmin) {
-      return negocioSeleccionadoId || parseNumero(getStorageItem("negocio_id"));
+      const negocioSesion = parseNumero(getStorageItem("negocio_id"));
+      const primerNegocio = negociosDisponibles[0]?.id || 0;
+      return negocioSeleccionadoId || negocioSesion || primerNegocio;
     }
     return parseNumero(getStorageItem("negocio_id"));
-  }, [isSuperadmin, negocioSeleccionadoId]);
+  }, [isSuperadmin, negocioSeleccionadoId, negociosDisponibles]);
 
   const cargarBranding = useCallback(async (negocioIdArg?: number) => {
     try {
@@ -958,6 +960,14 @@ export default function ConfiguracionPage() {
     }
     void cargarCatalogoPlanes();
   }, [isSuperadmin, cargarNegociosSuperadmin, cargarCatalogoPlanes]);
+
+  useEffect(() => {
+    if (!isSuperadmin || negociosDisponibles.length === 0) return;
+    const existeSeleccion = negociosDisponibles.some((n) => n.id === negocioSeleccionadoId);
+    if (!existeSeleccion) {
+      setNegocioSeleccionadoId(negociosDisponibles[0].id);
+    }
+  }, [isSuperadmin, negociosDisponibles, negocioSeleccionadoId]);
 
   useEffect(() => {
     const negocioId = getNegocioIdActivo();
@@ -1665,10 +1675,15 @@ export default function ConfiguracionPage() {
 
             {isSuperadmin ? (
               <>
-                <h3 className={styles.catalogTitle}>Catalogo de planes</h3>
-                <p className={styles.catalogText}>Selecciona un plan para aplicar al negocio activo y visualizar sus funcionalidades.</p>
+                <h3 className={styles.catalogTitle}>Decision de plan</h3>
+                <p className={styles.catalogText}>Selecciona el negocio y toma una decision en 3 pasos: recomendar, simular y aplicar.</p>
+                {!negocioActivoId ? (
+                  <p className={styles.helperText}>
+                    Selecciona un negocio en la barra superior para habilitar edicion y guardado.
+                  </p>
+                ) : null}
                 <div className={styles.planRecommendationBox}>
-                  <strong>Recomendacion automatica por consumo</strong>
+                  <strong>Paso 1. Recomendacion automatica por consumo</strong>
                   <p>{resumenSugerencia}</p>
                   {planSugerido ? (
                     <div className={styles.planRecommendationActions}>
@@ -1694,75 +1709,15 @@ export default function ConfiguracionPage() {
                   ) : null}
                 </div>
 
-                <div className={styles.planAmountsBox}>
-                  <div id="cfg-plan-montos" />
-                  <h4>Montos comerciales de planes</h4>
-                  <p>Modifica precios oficiales visibles para este negocio.</p>
-                  <div className={styles.planAmountsGrid}>
-                    <label className={styles.formRow}>
-                      <span>Gratuito</span>
-                      <input
-                        type="number"
-                        min={0}
-                        step="1"
-                        className="focus-ring"
-                        value={planAmounts.gratuito}
-                        onChange={(e) => setPlanAmounts((prev) => ({ ...prev, gratuito: Number(e.target.value || 0) }))}
-                      />
-                    </label>
-                    <label className={styles.formRow}>
-                      <span>Basico</span>
-                      <input
-                        type="number"
-                        min={0}
-                        step="1"
-                        className="focus-ring"
-                        value={planAmounts.basico}
-                        onChange={(e) => setPlanAmounts((prev) => ({ ...prev, basico: Number(e.target.value || 0) }))}
-                      />
-                    </label>
-                    <label className={styles.formRow}>
-                      <span>Pro</span>
-                      <input
-                        type="number"
-                        min={0}
-                        step="1"
-                        className="focus-ring"
-                        value={planAmounts.pro}
-                        onChange={(e) => setPlanAmounts((prev) => ({ ...prev, pro: Number(e.target.value || 0) }))}
-                      />
-                    </label>
-                    <label className={styles.formRow}>
-                      <span>Premium</span>
-                      <input
-                        type="number"
-                        min={0}
-                        step="1"
-                        className="focus-ring"
-                        value={planAmounts.premium}
-                        onChange={(e) => setPlanAmounts((prev) => ({ ...prev, premium: Number(e.target.value || 0) }))}
-                      />
-                    </label>
-                  </div>
-                  <button
-                    type="button"
-                    className={`${styles.planApplyMainBtn} focus-ring`}
-                    onClick={guardarMontosPlanes}
-                    disabled={savingPlanAmounts || !negocioActivoId}
-                  >
-                    {savingPlanAmounts ? "Guardando montos..." : "Guardar montos"}
-                  </button>
-                </div>
-
                 <div className={styles.freePlanBoostBox}>
                   <div id="cfg-plan-bondades-gratuito" />
-                  <h4>Plan Gratuito promocional (solo superadministrador)</h4>
+                  <h4>Paso 2. Oferta de entrada (Plan Gratuito)</h4>
                   <p>
-                    Mezcla bondades de planes superiores para captar nuevos clientes sin costo inicial.
+                    Define una version comercial del Gratuito para mejorar conversion sin costo inicial.
                   </p>
 
                   <div className={styles.freePlanBoostQuickActions}>
-                    <span>Aplicar plantilla rapida:</span>
+                    <span>Plantilla rapida:</span>
                     <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => copiarBondadesDesdePlan("BASICO")}>Copiar Basico</button>
                     <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => copiarBondadesDesdePlan("PRO")}>Copiar Pro</button>
                     <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => copiarBondadesDesdePlan("PREMIUM")}>Copiar Premium</button>
@@ -1866,14 +1821,14 @@ export default function ConfiguracionPage() {
                     onClick={guardarBondadesPlanGratuito}
                     disabled={savingFreePlanBoost || !negocioActivoId}
                   >
-                    {savingFreePlanBoost ? "Guardando bondades..." : "Guardar bondades promocionales"}
+                    {savingFreePlanBoost ? "Guardando bondades..." : "Guardar oferta Gratuito"}
                   </button>
                 </div>
 
                 <div id="cfg-plan-simulador" className={styles.simulatorBox}>
                   <div className={styles.simulatorHead}>
                     <div>
-                      <h4>Simulador visual de plan</h4>
+                      <h4>Paso 3. Simular y aplicar decision</h4>
                       <p>
                         Simulando: <strong>{nombrePlan(planSimulado)}</strong> | Activo: <strong>{nombrePlan(businessForm.plan)}</strong>
                       </p>
@@ -1893,6 +1848,10 @@ export default function ConfiguracionPage() {
                     </button>
                   </div>
 
+                  <p className={styles.helperText}>
+                    Usa las pestanas para comparar planes rapidamente. Abre el analisis detallado solo si necesitas validar impacto tecnico.
+                  </p>
+
                   <div className={styles.simulatorPlanTabs}>
                     {planCatalogoVisible.map((plan) => {
                       const selected = normalizarPlan(planSimulado) === plan.codigo;
@@ -1909,176 +1868,179 @@ export default function ConfiguracionPage() {
                     })}
                   </div>
 
-                  {isSuperadmin ? (
-                    <div className={styles.simulatorAdvancedBox}>
-                      <div className={styles.simulatorAdvancedHead}>
-                        <strong>Ajuste avanzado (solo simulacion)</strong>
-                        <label className={styles.inlineCheck}>
-                          <input
-                            type="checkbox"
-                            checked={simuladorOverride.habilitado}
-                            onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, habilitado: e.target.checked }))}
-                          />
-                          Activar personalizacion superadmin
-                        </label>
-                      </div>
+                  <details className={styles.planFold}>
+                    <summary className={styles.planFoldSummary}>Ver analisis detallado y escenarios</summary>
 
-                      <p>
-                        Puedes modificar limites para analizar escenarios. Estos ajustes no se guardan hasta aplicar un plan real.
-                      </p>
-
-                      <div className={styles.simulatorAdvancedGrid}>
-                        <div className={styles.formRow}>
-                          <label>Usuarios permitidos</label>
-                          <div className={styles.simulatorInlineRow}>
+                    {isSuperadmin ? (
+                      <div className={styles.simulatorAdvancedBox}>
+                        <div className={styles.simulatorAdvancedHead}>
+                          <strong>Ajuste avanzado (solo simulacion)</strong>
+                          <label className={styles.inlineCheck}>
                             <input
-                              type="number"
-                              min={0}
-                              step="1"
-                              className="focus-ring"
-                              disabled={!simuladorOverride.habilitado || simuladorOverride.usuarios_ilimitado}
-                              value={simuladorOverride.usuarios_limite}
-                              onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, usuarios_limite: Number(e.target.value || 0) }))}
+                              type="checkbox"
+                              checked={simuladorOverride.habilitado}
+                              onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, habilitado: e.target.checked }))}
                             />
-                            <label className={styles.inlineCheck}>
+                            Activar personalizacion superadmin
+                          </label>
+                        </div>
+
+                        <p>
+                          Puedes modificar limites para analizar escenarios. Estos ajustes no se guardan hasta aplicar un plan real.
+                        </p>
+
+                        <div className={styles.simulatorAdvancedGrid}>
+                          <div className={styles.formRow}>
+                            <label>Usuarios permitidos</label>
+                            <div className={styles.simulatorInlineRow}>
                               <input
-                                type="checkbox"
-                                disabled={!simuladorOverride.habilitado}
-                                checked={simuladorOverride.usuarios_ilimitado}
-                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, usuarios_ilimitado: e.target.checked }))}
+                                type="number"
+                                min={0}
+                                step="1"
+                                className="focus-ring"
+                                disabled={!simuladorOverride.habilitado || simuladorOverride.usuarios_ilimitado}
+                                value={simuladorOverride.usuarios_limite}
+                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, usuarios_limite: Number(e.target.value || 0) }))}
                               />
-                              Ilimitado
-                            </label>
+                              <label className={styles.inlineCheck}>
+                                <input
+                                  type="checkbox"
+                                  disabled={!simuladorOverride.habilitado}
+                                  checked={simuladorOverride.usuarios_ilimitado}
+                                  onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, usuarios_ilimitado: e.target.checked }))}
+                                />
+                                Ilimitado
+                              </label>
+                            </div>
+                          </div>
+
+                          <div className={styles.formRow}>
+                            <label>Reportes permitidos</label>
+                            <div className={styles.simulatorInlineRow}>
+                              <label className={styles.inlineCheck}>
+                                <input
+                                  type="checkbox"
+                                  disabled={!simuladorOverride.habilitado}
+                                  checked={simuladorOverride.reportes_habilitado}
+                                  onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, reportes_habilitado: e.target.checked }))}
+                                />
+                                Habilitar
+                              </label>
+                              <input
+                                type="number"
+                                min={0}
+                                step="1"
+                                className="focus-ring"
+                                disabled={!simuladorOverride.habilitado || !simuladorOverride.reportes_habilitado || simuladorOverride.reportes_ilimitado}
+                                value={simuladorOverride.reportes_limite}
+                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, reportes_limite: Number(e.target.value || 0) }))}
+                              />
+                              <label className={styles.inlineCheck}>
+                                <input
+                                  type="checkbox"
+                                  disabled={!simuladorOverride.habilitado || !simuladorOverride.reportes_habilitado}
+                                  checked={simuladorOverride.reportes_ilimitado}
+                                  onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, reportes_ilimitado: e.target.checked }))}
+                                />
+                                Ilimitado
+                              </label>
+                            </div>
+                          </div>
+
+                          <div className={styles.formRow}>
+                            <label>Backups permitidos</label>
+                            <div className={styles.simulatorInlineRow}>
+                              <label className={styles.inlineCheck}>
+                                <input
+                                  type="checkbox"
+                                  disabled={!simuladorOverride.habilitado}
+                                  checked={simuladorOverride.backups_habilitado}
+                                  onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, backups_habilitado: e.target.checked }))}
+                                />
+                                Habilitar
+                              </label>
+                              <input
+                                type="number"
+                                min={0}
+                                step="1"
+                                className="focus-ring"
+                                disabled={!simuladorOverride.habilitado || !simuladorOverride.backups_habilitado || simuladorOverride.backups_ilimitado}
+                                value={simuladorOverride.backups_limite}
+                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, backups_limite: Number(e.target.value || 0) }))}
+                              />
+                              <label className={styles.inlineCheck}>
+                                <input
+                                  type="checkbox"
+                                  disabled={!simuladorOverride.habilitado || !simuladorOverride.backups_habilitado}
+                                  checked={simuladorOverride.backups_ilimitado}
+                                  onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, backups_ilimitado: e.target.checked }))}
+                                />
+                                Ilimitado
+                              </label>
+                            </div>
                           </div>
                         </div>
 
-                        <div className={styles.formRow}>
-                          <label>Reportes permitidos</label>
-                          <div className={styles.simulatorInlineRow}>
-                            <label className={styles.inlineCheck}>
-                              <input
-                                type="checkbox"
-                                disabled={!simuladorOverride.habilitado}
-                                checked={simuladorOverride.reportes_habilitado}
-                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, reportes_habilitado: e.target.checked }))}
-                              />
-                              Habilitar
-                            </label>
+                        <div className={styles.simulatorScenarioBox}>
+                          <strong>Escenarios guardados</strong>
+                          <div className={styles.simulatorScenarioActions}>
                             <input
-                              type="number"
-                              min={0}
-                              step="1"
+                              placeholder="Nombre del escenario"
+                              value={simuladorEscenarioNombre}
+                              onChange={(e) => setSimuladorEscenarioNombre(e.target.value)}
                               className="focus-ring"
-                              disabled={!simuladorOverride.habilitado || !simuladorOverride.reportes_habilitado || simuladorOverride.reportes_ilimitado}
-                              value={simuladorOverride.reportes_limite}
-                              onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, reportes_limite: Number(e.target.value || 0) }))}
                             />
-                            <label className={styles.inlineCheck}>
-                              <input
-                                type="checkbox"
-                                disabled={!simuladorOverride.habilitado || !simuladorOverride.reportes_habilitado}
-                                checked={simuladorOverride.reportes_ilimitado}
-                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, reportes_ilimitado: e.target.checked }))}
-                              />
-                              Ilimitado
-                            </label>
+                            <button
+                              type="button"
+                              className={`${styles.planApplyMainBtn} focus-ring`}
+                              onClick={guardarEscenarioActual}
+                            >
+                              Guardar escenario
+                            </button>
+                          </div>
+
+                          <div className={styles.simulatorPresetRow}>
+                            <span>Presets ejecutivos:</span>
+                            <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => aplicarPresetEjecutivo("conservador")}>Conservador</button>
+                            <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => aplicarPresetEjecutivo("comercial")}>Comercial</button>
+                            <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => aplicarPresetEjecutivo("premium")}>Premium agresivo</button>
+                          </div>
+
+                          <div className={styles.simulatorScenarioList}>
+                            {simuladorEscenarios.length === 0 ? (
+                              <p>No hay escenarios guardados para este negocio.</p>
+                            ) : (
+                              simuladorEscenarios.map((esc) => (
+                                <article key={esc.id} className={styles.simulatorScenarioItem}>
+                                  <div>
+                                    <strong>{esc.nombre}</strong>
+                                    <small>Plan {nombrePlan(esc.planCodigo)} | {new Date(esc.fecha).toLocaleDateString("es-PE")}</small>
+                                  </div>
+                                  <div className={styles.simulatorScenarioBtns}>
+                                    <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => cargarEscenarioGuardado(esc)}>
+                                      Cargar
+                                    </button>
+                                    <button type="button" className={`${styles.cardInlineLinkBtn} focus-ring`} onClick={() => void eliminarEscenarioGuardado(esc.id)}>
+                                      Eliminar
+                                    </button>
+                                  </div>
+                                </article>
+                              ))
+                            )}
                           </div>
                         </div>
 
-                        <div className={styles.formRow}>
-                          <label>Backups permitidos</label>
-                          <div className={styles.simulatorInlineRow}>
-                            <label className={styles.inlineCheck}>
-                              <input
-                                type="checkbox"
-                                disabled={!simuladorOverride.habilitado}
-                                checked={simuladorOverride.backups_habilitado}
-                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, backups_habilitado: e.target.checked }))}
-                              />
-                              Habilitar
-                            </label>
-                            <input
-                              type="number"
-                              min={0}
-                              step="1"
-                              className="focus-ring"
-                              disabled={!simuladorOverride.habilitado || !simuladorOverride.backups_habilitado || simuladorOverride.backups_ilimitado}
-                              value={simuladorOverride.backups_limite}
-                              onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, backups_limite: Number(e.target.value || 0) }))}
-                            />
-                            <label className={styles.inlineCheck}>
-                              <input
-                                type="checkbox"
-                                disabled={!simuladorOverride.habilitado || !simuladorOverride.backups_habilitado}
-                                checked={simuladorOverride.backups_ilimitado}
-                                onChange={(e) => setSimuladorOverride((prev) => ({ ...prev, backups_ilimitado: e.target.checked }))}
-                              />
-                              Ilimitado
-                            </label>
-                          </div>
-                        </div>
+                        <button
+                          type="button"
+                          className={`${styles.planSimBtn} focus-ring`}
+                          onClick={sincronizarOverrideConPlanBase}
+                        >
+                          Restaurar valores del plan base
+                        </button>
                       </div>
+                    ) : null}
 
-                      <div className={styles.simulatorScenarioBox}>
-                        <strong>Escenarios guardados</strong>
-                        <div className={styles.simulatorScenarioActions}>
-                          <input
-                            placeholder="Nombre del escenario"
-                            value={simuladorEscenarioNombre}
-                            onChange={(e) => setSimuladorEscenarioNombre(e.target.value)}
-                            className="focus-ring"
-                          />
-                          <button
-                            type="button"
-                            className={`${styles.planApplyMainBtn} focus-ring`}
-                            onClick={guardarEscenarioActual}
-                          >
-                            Guardar escenario
-                          </button>
-                        </div>
-
-                        <div className={styles.simulatorPresetRow}>
-                          <span>Presets ejecutivos:</span>
-                          <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => aplicarPresetEjecutivo("conservador")}>Conservador</button>
-                          <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => aplicarPresetEjecutivo("comercial")}>Comercial</button>
-                          <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => aplicarPresetEjecutivo("premium")}>Premium agresivo</button>
-                        </div>
-
-                        <div className={styles.simulatorScenarioList}>
-                          {simuladorEscenarios.length === 0 ? (
-                            <p>No hay escenarios guardados para este negocio.</p>
-                          ) : (
-                            simuladorEscenarios.map((esc) => (
-                              <article key={esc.id} className={styles.simulatorScenarioItem}>
-                                <div>
-                                  <strong>{esc.nombre}</strong>
-                                  <small>Plan {nombrePlan(esc.planCodigo)} | {new Date(esc.fecha).toLocaleDateString("es-PE")}</small>
-                                </div>
-                                <div className={styles.simulatorScenarioBtns}>
-                                  <button type="button" className={`${styles.planSimBtn} focus-ring`} onClick={() => cargarEscenarioGuardado(esc)}>
-                                    Cargar
-                                  </button>
-                                  <button type="button" className={`${styles.cardInlineLinkBtn} focus-ring`} onClick={() => void eliminarEscenarioGuardado(esc.id)}>
-                                    Eliminar
-                                  </button>
-                                </div>
-                              </article>
-                            ))
-                          )}
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        className={`${styles.planSimBtn} focus-ring`}
-                        onClick={sincronizarOverrideConPlanBase}
-                      >
-                        Restaurar valores del plan base
-                      </button>
-                    </div>
-                  ) : null}
-
-                  <div className={styles.moduleGrid}>
+                    <div className={styles.moduleGrid}>
                     {MODULOS_BASE.map((modulo) => {
                       const activo = estadoModuloSimulado(modulo);
                       return (
@@ -2088,15 +2050,15 @@ export default function ConfiguracionPage() {
                         </article>
                       );
                     })}
-                  </div>
+                    </div>
 
-                  <div className={styles.simulatorKpis}>
+                    <div className={styles.simulatorKpis}>
                     <p>Usuarios permitidos: <strong>{datosPlanSimuladoEfectivo?.usuarios_limite ?? "Ilimitado"}</strong></p>
                     <p>Reportes permitidos: <strong>{datosPlanSimuladoEfectivo?.reportes_habilitado ? (datosPlanSimuladoEfectivo.reportes_limite ?? "Ilimitado") : "No"}</strong></p>
                     <p>Backups permitidos: <strong>{datosPlanSimuladoEfectivo?.backups_habilitado ? (datosPlanSimuladoEfectivo.backups_limite ?? "Ilimitado") : "No"}</strong></p>
-                  </div>
+                    </div>
 
-                  <div className={styles.simulatorExecutiveBox}>
+                    <div className={styles.simulatorExecutiveBox}>
                     <h5>Resumen ejecutivo de impacto</h5>
                     <div className={styles.simulatorExecutiveGrid}>
                       <article className={styles.simulatorExecutiveItem}>
@@ -2115,9 +2077,9 @@ export default function ConfiguracionPage() {
                         <small>{riesgoImpacto === "Alto" ? "Puede recortar capacidades actuales" : riesgoImpacto === "Medio" ? "Cambio equilibrado" : "Mejora clara de capacidad"}</small>
                       </article>
                     </div>
-                  </div>
+                    </div>
 
-                  <div className={styles.diffBox}>
+                    <div className={styles.diffBox}>
                     <h5>Diferencias antes vs despues</h5>
                     <p className={styles.diffSubtitle}>
                       Antes: <strong>{nombrePlan(businessForm.plan)}</strong> | Despues: <strong>{nombrePlan(planSimulado)}</strong>
@@ -2159,7 +2121,8 @@ export default function ConfiguracionPage() {
                         </span>
                       </article>
                     </div>
-                  </div>
+                    </div>
+                  </details>
                 </div>
 
                 <div className={styles.catalogGrid}>
