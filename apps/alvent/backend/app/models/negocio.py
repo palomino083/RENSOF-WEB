@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String, Text
+from sqlalchemy import Boolean, Column, Float, Integer, String, Text
 from sqlalchemy.orm import relationship
 from app.database.database import Base
 import enum
@@ -27,6 +27,12 @@ class Negocio(Base):
     plan_gratuito_reportes_limite = Column(Integer, nullable=True)
     plan_gratuito_backups_habilitado = Column(Boolean, nullable=False, default=False)
     plan_gratuito_backups_limite = Column(Integer, nullable=True)
+    plan_monto_gratuito = Column(Float, nullable=True)
+    plan_monto_prueba = Column(Float, nullable=True)
+    plan_monto_basico = Column(Float, nullable=True)
+    plan_monto_lite = Column(Float, nullable=True)
+    plan_monto_pro = Column(Float, nullable=True)
+    plan_monto_premium = Column(Float, nullable=True)
     descripcion = Column(Text, nullable=True)
     logo_url = Column(String(500), nullable=True)
 

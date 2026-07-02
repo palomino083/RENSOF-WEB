@@ -63,6 +63,7 @@ const MODULOS_BASE = [
 ] as const;
 
 const PLAN_BONDAD_SOURCES = ["GRATUITO", "PRUEBA", "BASICO", "LITE", "PRO", "PREMIUM"] as const;
+const PLANES_VISIBLES_EN_SECCION = ["GRATUITO", "BASICO", "PRO", "PREMIUM"] as const;
 
 const PLAN_VISUAL_PROPUESTA = [
   {
@@ -108,6 +109,15 @@ const PLAN_VISUAL_PROPUESTA = [
     accentClass: "premium",
   },
 ] as const;
+
+const PLAN_PRICE_MAP: Record<string, "gratuito" | "prueba" | "basico" | "lite" | "pro" | "premium"> = {
+  GRATUITO: "gratuito",
+  PRUEBA: "prueba",
+  BASICO: "basico",
+  LITE: "lite",
+  PRO: "pro",
+  PREMIUM: "premium",
+};
 
 const renderBenefitIcon = (icon: string) => {
   if (icon === "spark") {
@@ -229,6 +239,15 @@ export default function ConfiguracionPage() {
   });
   const [sendingSolicitudPlan, setSendingSolicitudPlan] = useState(false);
   const [savingFreePlanBoost, setSavingFreePlanBoost] = useState(false);
+  const [savingPlanAmounts, setSavingPlanAmounts] = useState(false);
+  const [planAmounts, setPlanAmounts] = useState({
+    gratuito: 0,
+    prueba: 15,
+    basico: 20,
+    lite: 35,
+    pro: 45,
+    premium: 65,
+  });
   const [freePlanBoost, setFreePlanBoost] = useState({
     usuarios_source_plan: "BASICO",
     habilitar_reportes: false,
@@ -273,7 +292,9 @@ export default function ConfiguracionPage() {
   };
 
   const getNegocioIdActivo = () => {
-    if (isSuperadmin) return negocioSeleccionadoId;
+    if (isSuperadmin) {
+      return negocioSeleccionadoId || parseNumero(localStorage.getItem("negocio_id"));
+    }
     return parseNumero(localStorage.getItem("negocio_id"));
   };
 
@@ -433,7 +454,8 @@ export default function ConfiguracionPage() {
       const items = await negocioService.list();
       setNegociosDisponibles(items || []);
       const primerNegocio = items?.[0]?.id || 0;
-      setNegocioSeleccionadoId((prev) => prev || primerNegocio);
+      const negocioSesion = parseNumero(localStorage.getItem("negocio_id"));
+      setNegocioSeleccionadoId((prev) => prev || negocioSesion || primerNegocio);
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar negocios"));
     }
@@ -496,6 +518,35 @@ export default function ConfiguracionPage() {
     }
   };
 
+  const cargarMontosPlanes = async (negocioIdArg?: number) => {
+    const negocioId = negocioIdArg || getNegocioIdActivo();
+    if (!negocioId) return;
+    try {
+      const data = await negocioService.getPlanAmounts(negocioId);
+      setPlanAmounts(data.montos);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo cargar montos de planes"));
+    }
+  };
+
+  const guardarMontosPlanes = async () => {
+    const negocioId = getNegocioIdActivo();
+    if (!isSuperadmin || !negocioId) return;
+
+    try {
+      setSavingPlanAmounts(true);
+      setError("");
+      setSuccess("");
+      const data = await negocioService.updatePlanAmounts(negocioId, planAmounts);
+      setPlanAmounts(data.montos);
+      setSuccess(data.mensaje);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo actualizar montos de planes"));
+    } finally {
+      setSavingPlanAmounts(false);
+    }
+  };
+
   const guardarBondadesPlanGratuito = async () => {
     const negocioId = getNegocioIdActivo();
     if (!isSuperadmin || !negocioId) return;
@@ -551,6 +602,7 @@ export default function ConfiguracionPage() {
 
   const datosPlanSimulado = planCatalogo.find((p) => p.codigo === normalizarPlan(planSimulado)) || null;
   const datosPlanActual = planCatalogo.find((p) => p.codigo === normalizarPlan(businessForm.plan)) || null;
+  const planCatalogoVisible = planCatalogo.filter((p) => PLANES_VISIBLES_EN_SECCION.includes(p.codigo as (typeof PLANES_VISIBLES_EN_SECCION)[number]));
   const datosPlanBaseGratuito = planCatalogo.find((p) => p.codigo === "GRATUITO") || null;
 
   const datosPlanGratuitoPromocional = {
@@ -623,11 +675,13 @@ export default function ConfiguracionPage() {
   }, [isSuperadmin]);
 
   useEffect(() => {
-    if (!negocioSeleccionadoId) return;
-    void cargarBranding(negocioSeleccionadoId);
+    const negocioId = getNegocioIdActivo();
+    if (!negocioId) return;
+    void cargarBranding(negocioId);
     void cargarPlanStats();
-    void cargarHistorialPlanes(negocioSeleccionadoId);
-    void cargarBondadesPlanGratuito(negocioSeleccionadoId);
+    void cargarHistorialPlanes(negocioId);
+    void cargarBondadesPlanGratuito(negocioId);
+    void cargarMontosPlanes(negocioId);
   }, [negocioSeleccionadoId, isSuperadmin]);
 
   useEffect(() => {
@@ -641,6 +695,7 @@ export default function ConfiguracionPage() {
     void cargarBranding(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
+    void cargarMontosPlanes(negocioId);
   }, [isSuperadmin]);
 
   
@@ -751,6 +806,8 @@ export default function ConfiguracionPage() {
   const nombreEmpresa = negocio?.nombre || businessForm.nombre || "Empresa";
   const estadoBackups = planStats?.backups.habilitado ? "Habilitado" : "Bloqueado";
   const estadoReportes = planStats?.reportes.habilitado ? "Habilitado" : "Bloqueado";
+  const negocioActivoId = getNegocioIdActivo();
+  const formatPrecio = (value: number) => `S/${Number(value || 0).toFixed(0)}`;
 
   return (
     <ProtectedRoute>
@@ -1224,9 +1281,10 @@ export default function ConfiguracionPage() {
                       <small>{plan.subtitulo}</small>
                     </div>
                     <div className={styles.planVisualPriceWrap}>
-                      <strong>{plan.precio}</strong>
+                      <strong>{formatPrecio(planAmounts[PLAN_PRICE_MAP[plan.key]])}</strong>
                       <span>por mes</span>
                     </div>
+                    <div className={styles.planVisualPriceDivider} aria-hidden="true" />
                     <p className={styles.planVisualLema}>{plan.lema}</p>
                     <ul className={styles.planVisualList}>
                       {plan.beneficios.map((item) => (
@@ -1241,9 +1299,16 @@ export default function ConfiguracionPage() {
               </div>
 
               <div className={styles.planVisualCallout}>
-                <div>
+                <div className={styles.planVisualCalloutCopy}>
                   <strong>Activa ALVENT segun tu etapa comercial</strong>
                   <p>Empieza con el gratuito y escala a Pro o Premium cuando tu operacion lo requiera.</p>
+                  <div className={styles.planVisualMiniStrip} aria-label="Beneficios destacados">
+                    <span title="Respuestas inteligentes">{renderBenefitIcon("spark")}</span>
+                    <span title="Ahorro de tiempo">{renderBenefitIcon("rocket")}</span>
+                    <span title="Ideas ilimitadas">{renderBenefitIcon("chart")}</span>
+                    <span title="Seguridad de acceso">{renderBenefitIcon("shield")}</span>
+                    <span title="Uso profesional">{renderBenefitIcon("briefcase")}</span>
+                  </div>
                 </div>
                 <button
                   type="button"
@@ -1286,6 +1351,65 @@ export default function ConfiguracionPage() {
               <>
                 <h3 className={styles.catalogTitle}>Catalogo de planes</h3>
                 <p className={styles.catalogText}>Selecciona un plan para aplicar al negocio activo y visualizar sus funcionalidades.</p>
+
+                <div className={styles.planAmountsBox}>
+                  <h4>Montos comerciales de planes</h4>
+                  <p>Modifica precios oficiales visibles para este negocio.</p>
+                  <div className={styles.planAmountsGrid}>
+                    <label className={styles.formRow}>
+                      <span>Gratuito</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="1"
+                        className="focus-ring"
+                        value={planAmounts.gratuito}
+                        onChange={(e) => setPlanAmounts((prev) => ({ ...prev, gratuito: Number(e.target.value || 0) }))}
+                      />
+                    </label>
+                    <label className={styles.formRow}>
+                      <span>Basico</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="1"
+                        className="focus-ring"
+                        value={planAmounts.basico}
+                        onChange={(e) => setPlanAmounts((prev) => ({ ...prev, basico: Number(e.target.value || 0) }))}
+                      />
+                    </label>
+                    <label className={styles.formRow}>
+                      <span>Pro</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="1"
+                        className="focus-ring"
+                        value={planAmounts.pro}
+                        onChange={(e) => setPlanAmounts((prev) => ({ ...prev, pro: Number(e.target.value || 0) }))}
+                      />
+                    </label>
+                    <label className={styles.formRow}>
+                      <span>Premium</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="1"
+                        className="focus-ring"
+                        value={planAmounts.premium}
+                        onChange={(e) => setPlanAmounts((prev) => ({ ...prev, premium: Number(e.target.value || 0) }))}
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    className={`${styles.planApplyMainBtn} focus-ring`}
+                    onClick={guardarMontosPlanes}
+                    disabled={savingPlanAmounts || !negocioActivoId}
+                  >
+                    {savingPlanAmounts ? "Guardando montos..." : "Guardar montos"}
+                  </button>
+                </div>
 
                 <div className={styles.freePlanBoostBox}>
                   <h4>Plan Gratuito promocional (solo superadministrador)</h4>
@@ -1389,7 +1513,7 @@ export default function ConfiguracionPage() {
                     type="button"
                     className={`${styles.planApplyMainBtn} focus-ring`}
                     onClick={guardarBondadesPlanGratuito}
-                    disabled={savingFreePlanBoost || !negocioSeleccionadoId}
+                    disabled={savingFreePlanBoost || !negocioActivoId}
                   >
                     {savingFreePlanBoost ? "Guardando bondades..." : "Guardar bondades promocionales"}
                   </button>
@@ -1408,7 +1532,7 @@ export default function ConfiguracionPage() {
                       className={`${styles.planApplyMainBtn} focus-ring`}
                       disabled={
                         changingPlan ||
-                        !negocioSeleccionadoId ||
+                        !negocioActivoId ||
                         normalizarPlan(planSimulado) === normalizarPlan(businessForm.plan)
                       }
                       onClick={() => cambiarPlanNegocio(planSimulado)}
@@ -1481,7 +1605,7 @@ export default function ConfiguracionPage() {
                 </div>
 
                 <div className={styles.catalogGrid}>
-                  {planCatalogo.map((plan) => {
+                  {planCatalogoVisible.map((plan) => {
                     const activo = normalizarPlan(businessForm.plan) === plan.codigo;
                     const simulado = normalizarPlan(planSimulado) === plan.codigo;
                     return (
@@ -1489,6 +1613,7 @@ export default function ConfiguracionPage() {
                         <h4>{plan.nombre}</h4>
                         <p className={styles.cardState}>{activo ? "Activo" : simulado ? "Simulado" : "Disponible"}</p>
                         <p>Usuarios: <strong>{plan.usuarios_limite ?? "Ilimitado"}</strong></p>
+                        <p>Monto: <strong>{formatPrecio(planAmounts[PLAN_PRICE_MAP[plan.codigo]])}</strong></p>
                         <p>Reportes: <strong>{plan.reportes_habilitado ? (plan.reportes_limite ?? "Ilimitado") : "No"}</strong></p>
                         <p>Backups: <strong>{plan.backups_habilitado ? (plan.backups_limite ?? "Ilimitado") : "No"}</strong></p>
                         <div className={styles.cardActions}>
@@ -1503,7 +1628,7 @@ export default function ConfiguracionPage() {
                           <button
                             type="button"
                             className={`${styles.planPickBtn} focus-ring`}
-                            disabled={activo || changingPlan || !negocioSeleccionadoId}
+                            disabled={activo || changingPlan || !negocioActivoId}
                             onClick={() => cambiarPlanNegocio(plan.codigo)}
                           >
                             {activo ? "Plan activo" : changingPlan ? "Aplicando..." : "Aplicar"}
@@ -1522,7 +1647,7 @@ export default function ConfiguracionPage() {
                 </p>
 
                 <div className={styles.userPlanGrid}>
-                  {planCatalogo.map((plan) => {
+                  {planCatalogoVisible.map((plan) => {
                     const activo = normalizarPlan(businessForm.plan) === plan.codigo;
                     const simulado = normalizarPlan(planSimulado) === plan.codigo;
 
@@ -1531,6 +1656,7 @@ export default function ConfiguracionPage() {
                         <h4>{plan.nombre}</h4>
                         <p className={styles.cardState}>{activo ? "Plan activo" : "Disponible"}</p>
                         <p>Usuarios: <strong>{plan.usuarios_limite ?? "Ilimitado"}</strong></p>
+                        <p>Monto: <strong>{formatPrecio(planAmounts[PLAN_PRICE_MAP[plan.codigo]])}</strong></p>
                         <p>Reportes: <strong>{plan.reportes_habilitado ? (plan.reportes_limite ?? "Ilimitado") : "No"}</strong></p>
                         <p>Backups: <strong>{plan.backups_habilitado ? (plan.backups_limite ?? "Ilimitado") : "No"}</strong></p>
                         <div className={styles.cardActions}>

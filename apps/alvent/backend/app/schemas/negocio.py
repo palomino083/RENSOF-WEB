@@ -13,6 +13,12 @@ class NegocioBase(BaseModel):
     plan_gratuito_reportes_limite: Optional[int] = None
     plan_gratuito_backups_habilitado: bool = False
     plan_gratuito_backups_limite: Optional[int] = None
+    plan_monto_gratuito: Optional[float] = None
+    plan_monto_prueba: Optional[float] = None
+    plan_monto_basico: Optional[float] = None
+    plan_monto_lite: Optional[float] = None
+    plan_monto_pro: Optional[float] = None
+    plan_monto_premium: Optional[float] = None
     descripcion: Optional[str] = None
     logo_url: Optional[str] = None
     
@@ -51,6 +57,12 @@ class NegocioUpdate(BaseModel):
     plan_gratuito_reportes_limite: Optional[int] = None
     plan_gratuito_backups_habilitado: Optional[bool] = None
     plan_gratuito_backups_limite: Optional[int] = None
+    plan_monto_gratuito: Optional[float] = None
+    plan_monto_prueba: Optional[float] = None
+    plan_monto_basico: Optional[float] = None
+    plan_monto_lite: Optional[float] = None
+    plan_monto_pro: Optional[float] = None
+    plan_monto_premium: Optional[float] = None
     descripcion: Optional[str] = None
     logo_url: Optional[str] = None
     ruc: Optional[str] = None

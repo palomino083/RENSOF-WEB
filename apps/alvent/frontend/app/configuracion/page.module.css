@@ -502,6 +502,29 @@
   gap: 8px;
   min-height: 296px;
   grid-template-rows: auto auto auto 1fr;
+  position: relative;
+  overflow: hidden;
+}
+
+.planVisualCard::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 24px rgba(59, 130, 246, 0.18);
+}
+
+.planVisualCard::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(125, 211, 252, 0.16), rgba(56, 189, 248, 0.95), rgba(125, 211, 252, 0.16));
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.8);
 }
 
 .planVisualCardHead {
@@ -521,6 +544,8 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 8px;
+  margin-top: 1px;
+  margin-bottom: 3px;
 }
 
 .planVisualPriceWrap strong {
@@ -542,6 +567,14 @@
   margin: 0;
   color: #cbd5e1;
   font-size: 0.8rem;
+  padding-top: 2px;
+  margin-bottom: 2px;
+}
+
+.planVisualPriceDivider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(125, 211, 252, 0.06), rgba(125, 211, 252, 0.42), rgba(125, 211, 252, 0.06));
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
 }
 
 .planVisualList {
@@ -604,14 +637,41 @@
   box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.24), inset 0 0 24px rgba(16, 185, 129, 0.16), 0 14px 32px rgba(2, 6, 23, 0.5);
 }
 
+.planVisualCard_free::before {
+  box-shadow: inset 0 0 26px rgba(16, 185, 129, 0.2);
+}
+
+.planVisualCard_free::after {
+  background: linear-gradient(90deg, rgba(110, 231, 183, 0.18), rgba(16, 185, 129, 0.98), rgba(110, 231, 183, 0.18));
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.84);
+}
+
 .planVisualCard_pro {
   border-color: rgba(56, 189, 248, 0.72);
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.26), inset 0 0 24px rgba(59, 130, 246, 0.14), 0 14px 32px rgba(2, 6, 23, 0.5);
 }
 
+.planVisualCard_pro::before {
+  box-shadow: inset 0 0 26px rgba(59, 130, 246, 0.22);
+}
+
+.planVisualCard_pro::after {
+  background: linear-gradient(90deg, rgba(125, 211, 252, 0.18), rgba(56, 189, 248, 0.98), rgba(125, 211, 252, 0.18));
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.86);
+}
+
 .planVisualCard_premium {
   border-color: rgba(192, 132, 252, 0.72);
   box-shadow: 0 0 0 1px rgba(147, 51, 234, 0.24), inset 0 0 24px rgba(168, 85, 247, 0.16), 0 14px 32px rgba(2, 6, 23, 0.5);
+}
+
+.planVisualCard_premium::before {
+  box-shadow: inset 0 0 26px rgba(168, 85, 247, 0.22);
+}
+
+.planVisualCard_premium::after {
+  background: linear-gradient(90deg, rgba(216, 180, 254, 0.2), rgba(168, 85, 247, 0.98), rgba(216, 180, 254, 0.2));
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.86);
 }
 
 .planVisualCard_premium .planVisualIcon {
@@ -643,6 +703,11 @@
   gap: 12px;
 }
 
+.planVisualCalloutCopy {
+  display: grid;
+  gap: 6px;
+}
+
 .planVisualCallout strong {
   color: #e0f2fe;
 }
@@ -651,6 +716,39 @@
   margin: 2px 0 0;
   color: #bae6fd;
   font-size: 0.82rem;
+}
+
+.planVisualMiniStrip {
+  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 252, 0.32);
+  background: rgba(15, 23, 42, 0.48);
+  width: fit-content;
+}
+
+.planVisualMiniStrip span {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  background: rgba(30, 41, 59, 0.8);
+}
+
+.planVisualMiniStrip svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: #93c5fd;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .planVisualCtaBtn {
@@ -725,6 +823,31 @@
 
 .catalogText {
   color: #334155;
+}
+
+.planAmountsBox {
+  border: 1px solid rgba(14, 165, 233, 0.28);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(239, 246, 255, 0.86), rgba(255, 255, 255, 0.96));
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.planAmountsBox h4 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.planAmountsBox p {
+  margin: 0;
+  color: #475569;
+}
+
+.planAmountsGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .simulatorBox {
@@ -1046,7 +1169,8 @@
 
   .planVisualGrid,
   .freePlanBoostGrid,
-  .freePlanBoostStats {
+  .freePlanBoostStats,
+  .planAmountsGrid {
     grid-template-columns: 1fr;
   }
 
@@ -1057,6 +1181,11 @@
   .planVisualCallout {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .planVisualMiniStrip {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .planVisualPriceWrap {

@@ -119,6 +119,47 @@ export const negocioService = {
     };
   },
 
+  getPlanAmounts: async (negocioId: number) => {
+    const res = await api.get(`/negocios/${negocioId}/planes/montos`);
+    return res.data as {
+      negocio_id: number;
+      montos: {
+        gratuito: number;
+        prueba: number;
+        basico: number;
+        lite: number;
+        pro: number;
+        premium: number;
+      };
+    };
+  },
+
+  updatePlanAmounts: async (
+    negocioId: number,
+    data: {
+      gratuito: number;
+      prueba: number;
+      basico: number;
+      lite: number;
+      pro: number;
+      premium: number;
+    }
+  ) => {
+    const res = await api.put(`/negocios/${negocioId}/planes/montos`, data);
+    return res.data as {
+      ok: boolean;
+      mensaje: string;
+      montos: {
+        gratuito: number;
+        prueba: number;
+        basico: number;
+        lite: number;
+        pro: number;
+        premium: number;
+      };
+    };
+  },
+
   requestPlanChange: async (
     negocioId: number,
     data: {

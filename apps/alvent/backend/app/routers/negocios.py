@@ -45,6 +45,36 @@ class PlanGratuitoBondadesUpdate(BaseModel):
     backups_source_plan: str = Field(default="PRO", min_length=3, max_length=20)
 
 
+class PlanMontosUpdate(BaseModel):
+    gratuito: float = Field(ge=0)
+    prueba: float = Field(ge=0)
+    basico: float = Field(ge=0)
+    lite: float = Field(ge=0)
+    pro: float = Field(ge=0)
+    premium: float = Field(ge=0)
+
+
+PLAN_MONTOS_DEFAULT = {
+    "GRATUITO": 0.0,
+    "PRUEBA": 15.0,
+    "BASICO": 20.0,
+    "LITE": 35.0,
+    "PRO": 45.0,
+    "PREMIUM": 65.0,
+}
+
+
+def _resolver_montos_planes(negocio: Negocio) -> dict[str, float]:
+    return {
+        "GRATUITO": float(negocio.plan_monto_gratuito if negocio.plan_monto_gratuito is not None else PLAN_MONTOS_DEFAULT["GRATUITO"]),
+        "PRUEBA": float(negocio.plan_monto_prueba if negocio.plan_monto_prueba is not None else PLAN_MONTOS_DEFAULT["PRUEBA"]),
+        "BASICO": float(negocio.plan_monto_basico if negocio.plan_monto_basico is not None else PLAN_MONTOS_DEFAULT["BASICO"]),
+        "LITE": float(negocio.plan_monto_lite if negocio.plan_monto_lite is not None else PLAN_MONTOS_DEFAULT["LITE"]),
+        "PRO": float(negocio.plan_monto_pro if negocio.plan_monto_pro is not None else PLAN_MONTOS_DEFAULT["PRO"]),
+        "PREMIUM": float(negocio.plan_monto_premium if negocio.plan_monto_premium is not None else PLAN_MONTOS_DEFAULT["PREMIUM"]),
+    }
+
+
 def _normalizar_source_plan(plan: str, fallback: str) -> str:
     valor = str(plan or fallback).upper().strip()
     if valor == "FREE":
@@ -355,6 +385,74 @@ def actualizar_bondades_plan_gratuito(
         "reportes_limite": config["reportes_limite"],
         "backups_habilitado": config["backups_habilitado"],
         "backups_limite": config["backups_limite"],
+    }
+
+
+@router.get("/{negocio_id}/planes/montos")
+def obtener_montos_planes(
+    negocio_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin and current_user.get("negocio_id") != negocio_id:
+        raise HTTPException(status_code=403, detail="Sin permiso")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    montos = _resolver_montos_planes(negocio)
+    return {
+        "negocio_id": negocio_id,
+        "montos": {
+            "gratuito": montos["GRATUITO"],
+            "prueba": montos["PRUEBA"],
+            "basico": montos["BASICO"],
+            "lite": montos["LITE"],
+            "pro": montos["PRO"],
+            "premium": montos["PREMIUM"],
+        },
+    }
+
+
+@router.put("/{negocio_id}/planes/montos")
+def actualizar_montos_planes(
+    negocio_id: int,
+    data: PlanMontosUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin:
+        raise HTTPException(status_code=403, detail="Solo superadministrador")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    negocio.plan_monto_gratuito = float(data.gratuito)
+    negocio.plan_monto_prueba = float(data.prueba)
+    negocio.plan_monto_basico = float(data.basico)
+    negocio.plan_monto_lite = float(data.lite)
+    negocio.plan_monto_pro = float(data.pro)
+    negocio.plan_monto_premium = float(data.premium)
+
+    db.commit()
+    db.refresh(negocio)
+
+    montos = _resolver_montos_planes(negocio)
+    return {
+        "ok": True,
+        "mensaje": "Montos de planes actualizados",
+        "montos": {
+            "gratuito": montos["GRATUITO"],
+            "prueba": montos["PRUEBA"],
+            "basico": montos["BASICO"],
+            "lite": montos["LITE"],
+            "pro": montos["PRO"],
+            "premium": montos["PREMIUM"],
+        },
     }
 
 

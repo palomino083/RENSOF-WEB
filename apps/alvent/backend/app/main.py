@@ -208,6 +208,30 @@ def _ensure_multitenant_columns() -> None:
             conn.exec_driver_sql(
                 "ALTER TABLE negocios ADD COLUMN plan_gratuito_backups_limite INTEGER"
             )
+        if "plan_monto_gratuito" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_monto_gratuito REAL"
+            )
+        if "plan_monto_prueba" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_monto_prueba REAL"
+            )
+        if "plan_monto_basico" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_monto_basico REAL"
+            )
+        if "plan_monto_lite" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_monto_lite REAL"
+            )
+        if "plan_monto_pro" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_monto_pro REAL"
+            )
+        if "plan_monto_premium" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_monto_premium REAL"
+            )
 
 # ==========================================
 # LIFESPAN
