@@ -15,9 +15,7 @@ import styles from "./page.module.css";
 
 const PLAN_OPTIONS = [
   { value: "GRATUITO", label: "Gratuito" },
-  { value: "PRUEBA", label: "Prueba" },
   { value: "BASICO", label: "Basico" },
-  { value: "LITE", label: "Lite" },
   { value: "PRO", label: "Pro" },
   { value: "PREMIUM", label: "Premium" },
 ] as const;
@@ -1315,7 +1313,7 @@ export default function ConfiguracionPage() {
               <div className={styles.planVisualCallout}>
                 <div className={styles.planVisualCalloutCopy}>
                   <strong>Activa ALVENT segun tu etapa comercial</strong>
-                  <p>Empieza con el gratuito y escala a Pro o Premium cuando tu operacion lo requiera.</p>
+                  <p>Empieza con el gratuito y escala a Basico, Pro o Premium cuando tu operacion lo requiera.</p>
                   <div className={styles.planVisualMiniStrip} aria-label="Beneficios destacados">
                     <span title="Respuestas inteligentes">{renderBenefitIcon("spark")}</span>
                     <span title="Ahorro de tiempo">{renderBenefitIcon("rocket")}</span>
