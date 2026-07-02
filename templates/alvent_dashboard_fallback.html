@@ -19,8 +19,8 @@
         <h2 class="story-title" style="font-size:clamp(1.4rem,3vw,2rem); margin-top:0;">Sesion activa</h2>
         <p id="sessionSummary" class="story-text">Verificando credenciales locales...</p>
         <div class="hero-actions" style="margin-top:18px; display:flex; flex-wrap:wrap; gap:12px;">
-          <a href="/alven/app/login" class="r-btn r-btn-primary">Reintentar login</a>
-          <a href="/alven" class="r-btn r-btn-ghost">Volver a ALVENT</a>
+          <a href="{{ alvent_login_url }}" class="r-btn r-btn-primary">Reintentar login</a>
+          <a href="{{ alvent_login_url }}" class="r-btn r-btn-ghost">Volver a ALVENT</a>
           <button id="logoutBtn" type="button" class="r-btn r-btn-ghost">Cerrar sesion</button>
         </div>
         <p class="story-text" style="margin-top:18px;">Cuando el frontend dedicado vuelva a estar disponible, esta misma ruta abrira el dashboard completo.</p>
@@ -37,7 +37,7 @@
     const logoutBtn = document.getElementById("logoutBtn");
 
     if (!token) {
-      window.location.replace("/alven/app/login");
+      window.location.replace("{{ alvent_login_url }}");
       return;
     }
 
@@ -58,7 +58,7 @@
       localStorage.removeItem("usuario_id");
       localStorage.removeItem("negocio_id");
       localStorage.removeItem("usuario");
-      window.location.replace("/alven/app/login");
+      window.location.replace("{{ alvent_login_url }}");
     });
   }());
 </script>

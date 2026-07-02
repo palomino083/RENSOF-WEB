@@ -22,6 +22,12 @@ ALVENT_FALLBACK_USER = os.getenv("ALVENT_FALLBACK_USER", "Admin")
 ALVENT_FALLBACK_PASSWORD = os.getenv("ALVENT_FALLBACK_PASSWORD", "123456")
 
 
+def _alvent_frontend_url(path: str = "") -> str:
+    base = ALVENT_FRONTEND_ORIGIN.rstrip("/")
+    normalized_path = f"/{path.lstrip('/')}" if path else ""
+    return f"{base}{normalized_path}"
+
+
 def _build_proxy_target(origin: str, full_path: str, query: str) -> str:
     base = origin.rstrip("/")
     path = f"/{full_path.lstrip('/')}" if full_path else ""
@@ -131,6 +137,8 @@ def _render_alvent_dashboard_fallback(request: Request) -> Response:
             "active_page": "servicios",
             "page_title": "Dashboard ALVENT ERP PRO | RENSOF",
             "page_description": "Panel de contingencia de ALVENT ERP PRO cuando el frontend dedicado no esta disponible.",
+            "alvent_login_url": _alvent_frontend_url("alven/app/login"),
+            "alvent_dashboard_url": _alvent_frontend_url("alven/app/dashboard"),
         },
     )
 
@@ -198,6 +206,8 @@ async def alven_app_login(request: Request) -> Response:
                 "active_page": "servicios",
                 "page_title": "Login ALVENT ERP PRO | RENSOF",
                 "page_description": "Acceso de contingencia a ALVENT ERP PRO cuando el frontend dedicado no esta disponible.",
+                "alvent_login_url": _alvent_frontend_url("alven/app/login"),
+                "alvent_dashboard_url": _alvent_frontend_url("alven/app/dashboard"),
             },
         )
 
