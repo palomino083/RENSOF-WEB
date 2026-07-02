@@ -81,6 +81,20 @@ const PLAN_VISUAL_PROPUESTA = [
     accentClass: "free",
   },
   {
+    key: "BASICO",
+    titulo: "Plan Basico",
+    precio: "S/20",
+    subtitulo: "Operacion estable",
+    lema: "Control diario para negocios en crecimiento",
+    beneficios: [
+      { icon: "check", text: "Mas usuarios" },
+      { icon: "spark", text: "Flujo comercial continuo" },
+      { icon: "chart", text: "Operacion ordenada" },
+      { icon: "briefcase", text: "Base para escalar" },
+    ],
+    accentClass: "basic",
+  },
+  {
     key: "PRO",
     titulo: "Plan Pro",
     precio: "S/45",
