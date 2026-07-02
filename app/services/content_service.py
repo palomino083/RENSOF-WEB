@@ -139,9 +139,9 @@ def get_home_content(session: Session) -> HomeContent:
     insights = [Insight(title=publication.title) for publication in publications[:3]]
 
     return HomeContent(
-        slogan="Transformando datos en decisiones estrategicas.",
+        slogan="Transformando datos en decisiones estratégicas.",
         mission=(
-            "Impulsar organizaciones inteligentes mediante ciencia, tecnologia e innovacion, "
+            "Impulsar organizaciones inteligentes mediante ciencia, tecnología e innovacion, "
             "transformando informacion en decisiones estrategicas que generen desarrollo sostenible."
         ),
         vision=(

@@ -48,6 +48,8 @@ router = APIRouter(
     tags=["Auth"]
 )
 
+SUPERADMIN_USERNAME = "admin"
+
 
 def _normalizar_rol(rol: str | None) -> str:
     raw = str(rol or "").strip().upper()
@@ -68,6 +70,12 @@ def _roles_usuario(usuario: Usuario) -> list[str]:
     if not roles and usuario.rol:
         roles = [_normalizar_rol(usuario.rol)]
     return roles
+
+
+def _es_superadmin_fijo(usuario: Usuario | None) -> bool:
+    if not usuario:
+        return False
+    return str(getattr(usuario, "usuario", "") or "").strip().lower() == SUPERADMIN_USERNAME
 
 
 @router.post("/register", response_model=RegisterResponse)
@@ -206,13 +214,17 @@ def login(
     usuario.fecha_ultima_conexion = datetime.utcnow()
     db.commit()
 
+    es_superadmin = _es_superadmin_fijo(usuario) or bool(usuario.id == 1)
+    rol_respuesta = "SUPERADMIN" if es_superadmin else _normalizar_rol(usuario.rol)
+    roles_respuesta = ["SUPERADMIN"] if es_superadmin else _roles_usuario(usuario)
+
     # Crear token de acceso (corta expiración)
     access_token = create_access_token(
         data={
             "sub": str(usuario.id),
-            "negocio_id": usuario.negocio_id,
-            "rol": _normalizar_rol(usuario.rol),
-            "roles": _roles_usuario(usuario),
+            "negocio_id": None if es_superadmin else usuario.negocio_id,
+            "rol": rol_respuesta,
+            "roles": roles_respuesta,
         }
     )
     
@@ -243,10 +255,10 @@ def login(
         "refresh_token": refresh_token_jwt,
         "token_type": "bearer",
         "usuario_id": usuario.id,
-        "negocio_id": usuario.negocio_id,
+        "negocio_id": None if es_superadmin else usuario.negocio_id,
         "nombres": usuario.nombres,
-        "rol": _normalizar_rol(usuario.rol),
-        "roles": _roles_usuario(usuario),
+        "rol": rol_respuesta,
+        "roles": roles_respuesta,
     }
 
 

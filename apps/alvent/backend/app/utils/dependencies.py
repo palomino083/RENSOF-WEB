@@ -10,6 +10,8 @@ from app.utils.planes import normalizar_plan
 
 security = HTTPBearer()
 
+SUPERADMIN_USERNAME = "admin"
+
 
 def _normalizar_rol(rol: str | None) -> str:
     raw = str(rol or "").strip().upper()
@@ -59,11 +61,20 @@ async def get_current_user(
     if not token_data.get("negocio_id") and usuario.negocio_id:
         token_data["negocio_id"] = int(usuario.negocio_id)
 
+    es_superadmin_fijo = str(getattr(usuario, "usuario", "") or "").strip().lower() == SUPERADMIN_USERNAME
+
     token_data["is_superadmin"] = (
+        es_superadmin_fijo
+        or
         usuario_id == 1
         or token_data["rol"] == "SUPERADMIN"
         or "SUPERADMIN" in token_data["roles"]
     )
+
+    if token_data["is_superadmin"]:
+        token_data["rol"] = "SUPERADMIN"
+        token_data["roles"] = ["SUPERADMIN"]
+        token_data["negocio_id"] = None
 
     negocio_id = int(token_data.get("negocio_id") or 0)
     if negocio_id:
