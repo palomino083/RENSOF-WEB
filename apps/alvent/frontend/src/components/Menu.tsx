@@ -145,6 +145,15 @@ export default function Menu() {
   const [usuario, setUsuario] = useState<Usuario>({});
   const pathname = usePathname();
 
+  const normalizePath = (value: string) => {
+    const clean = String(value || "").replace(/\/+$/, "") || "/";
+    return clean.startsWith("/alven/app")
+      ? clean.replace("/alven/app", "") || "/"
+      : clean;
+  };
+
+  const toAppHref = (href: string) => appPath(href.replace(/^\/+/, ""));
+
   useEffect(() => {
     const cargarUsuario = () => {
       const data = localStorage.getItem("usuario");
@@ -185,7 +194,7 @@ export default function Menu() {
   const esSuperadmin = rol === "SUPERADMIN" || roles.includes("SUPERADMIN");
   const rolEtiqueta = esSuperadmin ? "SUPERADMINISTRADOR" : rol;
 
-  const isActive = (href: string) => pathname === href;
+  const isActive = (href: string) => normalizePath(pathname) === normalizePath(href);
 
   /* =========================
      🔐 FILTRO POR PERMISOS
@@ -248,7 +257,7 @@ const menuFiltrado = useMemo(() => {
               {block.items.map((item: MenuItem) => (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={toAppHref(item.href)}
                   style={{
                     display: "flex",
                     padding: "10px",
@@ -275,7 +284,7 @@ const menuFiltrado = useMemo(() => {
             </>
           ) : (
             <Link
-              href={block.href}
+              href={toAppHref(block.href)}
               style={{
                 display: "flex",
                 padding: "10px",
