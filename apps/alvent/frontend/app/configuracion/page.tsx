@@ -836,7 +836,8 @@ export default function ConfiguracionPage() {
     backups_habilitado: boolean;
     backups_limite: number | null;
   }) => {
-    if (plan.codigo === "GRATUITO") return datosPlanGratuitoPromocional;
+    // Superadmin debe ver exactamente el catalogo editable guardado en esta pantalla.
+    if (plan.codigo === "GRATUITO" && !isSuperadmin) return datosPlanGratuitoPromocional;
     return plan;
   };
 
@@ -1903,17 +1904,6 @@ export default function ConfiguracionPage() {
                     <span title="Uso profesional">{renderBenefitIcon("briefcase")}</span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className={`${styles.planVisualCtaBtn} focus-ring`}
-                  onClick={() => {
-                    setPlanSimulado("GRATUITO");
-                    const nodo = document.getElementById("cfg-plan");
-                    if (nodo) nodo.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                >
-                  Activar simulacion gratuita
-                </button>
               </div>
             </div>
 
