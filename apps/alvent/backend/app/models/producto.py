@@ -1,5 +1,6 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy.ext.mutable import MutableDict
 from app.database.database import Base
 
 
@@ -27,6 +28,7 @@ class Producto(Base):
     stock_minimo = Column(Integer, default=5)
 
     foto = Column(String(255), nullable=True)
+    atributos_extra = Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
 
     activo = Column(Boolean, default=True)
 

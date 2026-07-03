@@ -1,3 +1,5 @@
+import re
+
 from pydantic import BaseModel, field_validator
 from typing import Optional
 
@@ -11,6 +13,18 @@ class UsuarioCreate(BaseModel):
     password: str
     rol: str
     roles: Optional[list[str]] = None
+
+    @field_validator("dni")
+    @classmethod
+    def validar_dni(cls, value: Optional[str]):
+        if value is None:
+            return None
+        raw = str(value).strip()
+        if raw == "":
+            return None
+        if not re.fullmatch(r"\d{8}", raw):
+            raise ValueError("DNI invalido: debe contener exactamente 8 digitos numericos")
+        return raw
 
 
 class UsuarioOut(BaseModel):

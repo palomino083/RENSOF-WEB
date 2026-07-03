@@ -23,7 +23,7 @@ class Negocio(Base):
 
     nombre = Column(String(255), nullable=False, index=True)
     tipo = Column(String(50), nullable=False)
-    plan = Column(String(20), nullable=False, default="BASICO")
+    plan = Column(String(20), nullable=False, default="GRATUITO")
     plan_gratuito_usuarios_limite = Column(Integer, nullable=True)
     plan_gratuito_reportes_habilitado = Column(Boolean, nullable=False, default=False)
     plan_gratuito_reportes_limite = Column(Integer, nullable=True)

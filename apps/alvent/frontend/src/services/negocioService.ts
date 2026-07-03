@@ -254,6 +254,23 @@ export const negocioService = {
     }>;
   },
 
+  validatePlanPayment: async (
+    negocioId: number,
+    planPagoId: number,
+    accion: "APROBAR" | "RECHAZAR"
+  ) => {
+    const res = await api.patch(`/negocios/${negocioId}/planes/historial/${planPagoId}/validar`, {
+      accion,
+    });
+    return res.data as {
+      ok: boolean;
+      mensaje: string;
+      plan_pago_id: number;
+      estado: string;
+      plan_solicitado: string;
+    };
+  },
+
   getSimulationScenarios: async (negocioId: number) => {
     const res = await api.get(`/negocios/${negocioId}/simulador/escenarios`);
     return res.data as {

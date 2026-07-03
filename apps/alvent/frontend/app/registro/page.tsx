@@ -76,6 +76,7 @@ export default function RegisterPage() {
       const resNegocio = await api.post("/negocios/", {
         nombre: negocioBase,
         tipo: "tienda",
+        plan: "GRATUITO",
         descripcion: "Negocio creado automaticamente en registro",
       });
 

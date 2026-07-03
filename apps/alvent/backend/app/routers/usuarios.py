@@ -1,10 +1,13 @@
+import json
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field
 
 from app.database.database import get_db
+from app.models.configuracion_negocio import ConfiguracionNegocio
 from app.models.email_verification import EmailVerification, PasswordReset
 from app.models.negocio import Negocio
 from app.models.refresh_token import RefreshToken, TokenBlacklist
@@ -23,6 +26,66 @@ router = APIRouter(
 ROLES_VALIDOS = {"ADMINISTRADOR", "CAJERO", "ALMACEN", "VENDEDOR"}
 ROLES_PRIORIDAD = ["ADMINISTRADOR", "VENDEDOR", "CAJERO", "ALMACEN"]
 SUPERADMIN_USERNAME = "admin"
+MODULOS_VALIDOS = [
+    "Dashboard",
+    "POS",
+    "Ventas",
+    "Productos",
+    "Inventario",
+    "Clientes",
+    "Cajas",
+    "Reportes",
+    "Usuarios",
+    "Configuracion",
+]
+PERMISOS_POR_ROL_DEFAULT: dict[str, list[str]] = {
+    "ADMINISTRADOR": [
+        "Dashboard",
+        "POS",
+        "Ventas",
+        "Productos",
+        "Inventario",
+        "Clientes",
+        "Cajas",
+        "Reportes",
+        "Usuarios",
+        "Configuracion",
+    ],
+    "CAJERO": ["Dashboard", "POS", "Ventas", "Clientes"],
+    "VENDEDOR": ["Dashboard", "POS", "Ventas", "Clientes"],
+    "ALMACEN": ["Dashboard", "Productos", "Inventario"],
+}
+
+
+class PermisosMatrizUpdate(BaseModel):
+    matriz: dict[str, list[str]] = Field(default_factory=dict)
+
+
+def _normalizar_matriz_permisos(matriz: dict[str, list[str]] | None) -> dict[str, list[str]]:
+    source = matriz or {}
+    output: dict[str, list[str]] = {}
+
+    for rol in sorted(ROLES_VALIDOS):
+        raw_modulos = source.get(rol, PERMISOS_POR_ROL_DEFAULT.get(rol, []))
+        normalizados: list[str] = []
+        for modulo in raw_modulos or []:
+            nombre = str(modulo or "").strip()
+            if nombre in MODULOS_VALIDOS and nombre not in normalizados:
+                normalizados.append(nombre)
+        output[rol] = normalizados
+
+    return output
+
+
+def _obtener_config_negocio(db: Session, negocio_id: int) -> ConfiguracionNegocio:
+    config = db.query(ConfiguracionNegocio).filter(ConfiguracionNegocio.negocio_id == negocio_id).first()
+    if config:
+        return config
+
+    config = ConfiguracionNegocio(negocio_id=negocio_id)
+    db.add(config)
+    db.flush()
+    return config
 
 
 def _normalizar_roles(rol: str, roles: list[str] | None) -> tuple[str, str]:
@@ -122,6 +185,60 @@ def _asegurar_actor_admin(db: Session, current_user: dict) -> None:
             status_code=403,
             detail="Solo un administrador puede asignar usuarios de caja, vendedor o almacen",
         )
+
+
+@router.get("/permisos-matriz")
+def obtener_matriz_permisos(
+    current_user: dict = Depends(get_current_user_with_negocio),
+    db: Session = Depends(get_db),
+):
+    _asegurar_actor_admin(db, current_user)
+
+    negocio_id = int(current_user.get("negocio_id") or 0)
+    if not negocio_id:
+        raise HTTPException(status_code=400, detail="Negocio no encontrado en sesion")
+
+    config = _obtener_config_negocio(db, negocio_id)
+    raw = str(getattr(config, "permisos_roles_json", "") or "").strip()
+    if not raw:
+        matriz = PERMISOS_POR_ROL_DEFAULT
+    else:
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            parsed = {}
+        matriz = parsed if isinstance(parsed, dict) else {}
+
+    return {
+        "negocio_id": negocio_id,
+        "matriz": _normalizar_matriz_permisos(matriz),
+    }
+
+
+@router.put("/permisos-matriz")
+def actualizar_matriz_permisos(
+    data: PermisosMatrizUpdate,
+    current_user: dict = Depends(get_current_user_with_negocio),
+    db: Session = Depends(get_db),
+):
+    _asegurar_actor_admin(db, current_user)
+
+    negocio_id = int(current_user.get("negocio_id") or 0)
+    if not negocio_id:
+        raise HTTPException(status_code=400, detail="Negocio no encontrado en sesion")
+
+    config = _obtener_config_negocio(db, negocio_id)
+    matriz = _normalizar_matriz_permisos(data.matriz)
+    config.permisos_roles_json = json.dumps(matriz, ensure_ascii=False)
+
+    db.commit()
+
+    return {
+        "ok": True,
+        "mensaje": "Matriz de permisos actualizada",
+        "negocio_id": negocio_id,
+        "matriz": matriz,
+    }
 
 # ==========================================
 # CREAR USUARIO

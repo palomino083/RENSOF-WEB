@@ -70,6 +70,12 @@
   gap: 8px;
 }
 
+.errorHint {
+  color: #b91c1c;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .formGrid input {
   border: 1px solid #cbd5e1;
   border-radius: 10px;

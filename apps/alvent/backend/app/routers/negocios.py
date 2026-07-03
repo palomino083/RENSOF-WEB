@@ -87,6 +87,10 @@ class SimuladorEscenariosUpdate(BaseModel):
     escenarios: List[SimuladorEscenarioItem] = Field(default_factory=list)
 
 
+class PlanPagoValidacionUpdate(BaseModel):
+    accion: str = Field(min_length=7, max_length=10)
+
+
 PLAN_MONTOS_DEFAULT = {
     "GRATUITO": 0.0,
     "PRUEBA": 15.0,
@@ -855,6 +859,80 @@ def obtener_historial_planes(
         .limit(30)
         .all()
     )
+
+
+@router.patch("/{negocio_id}/planes/historial/{plan_pago_id}/validar")
+def validar_pago_plan(
+    negocio_id: int,
+    plan_pago_id: int,
+    data: PlanPagoValidacionUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin:
+        raise HTTPException(status_code=403, detail="Solo superadministrador")
+
+    pago = (
+        db.query(PlanPago)
+        .filter(PlanPago.id == plan_pago_id, PlanPago.negocio_id == negocio_id)
+        .first()
+    )
+    if not pago:
+        raise HTTPException(status_code=404, detail="Pago no encontrado")
+
+    accion = str(data.accion or "").strip().upper()
+    if accion not in {"APROBAR", "RECHAZAR"}:
+        raise HTTPException(status_code=400, detail="Accion invalida")
+
+    if str(pago.estado or "").upper() != "PENDIENTE_VALIDACION":
+        raise HTTPException(status_code=400, detail="El pago ya fue procesado")
+
+    if accion == "APROBAR":
+        negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+        if not negocio:
+            raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+        plan_anterior = _normalizar_plan(getattr(negocio, "plan", "GRATUITO"))
+        plan_nuevo = _normalizar_plan(getattr(pago, "plan_solicitado", plan_anterior))
+        negocio.plan = plan_nuevo
+        pago.estado = "APLICADO"
+
+        registrar_auditoria(
+            db=db,
+            modulo="Planes",
+            accion="Validacion manual de pago",
+            descripcion=(
+                f"Pago {pago.id} aprobado para negocio {negocio_id}: "
+                f"{plan_anterior} -> {plan_nuevo} ref={str(pago.referencia_pago)[:40]}"
+            ),
+            usuario=str(current_user.get("usuario_id") or "Sistema"),
+        )
+        mensaje = "Pago aprobado y plan activado"
+    else:
+        pago.estado = "RECHAZADO"
+        registrar_auditoria(
+            db=db,
+            modulo="Planes",
+            accion="Validacion manual de pago",
+            descripcion=(
+                f"Pago {pago.id} rechazado para negocio {negocio_id} "
+                f"ref={str(pago.referencia_pago)[:40]}"
+            ),
+            usuario=str(current_user.get("usuario_id") or "Sistema"),
+        )
+        mensaje = "Pago rechazado"
+
+    db.commit()
+    db.refresh(pago)
+
+    return {
+        "ok": True,
+        "mensaje": mensaje,
+        "plan_pago_id": pago.id,
+        "estado": pago.estado,
+        "plan_solicitado": pago.plan_solicitado,
+    }
 
 
 @router.post("/{negocio_id}/planes/comprobante")

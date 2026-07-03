@@ -17,7 +17,13 @@ export interface Producto {
   stock: number;
   stock_minimo?: number;
   foto?: string;
+  atributos_extra?: Record<string, string>;
 }
+
+export type ColumnaProductoCustom = {
+  key: string;
+  label: string;
+};
 
 export interface ProductoCreate {
   codigo: string;
@@ -32,6 +38,7 @@ export interface ProductoCreate {
   stock: number;
   stock_minimo?: number;
   foto?: string;
+  atributos_extra?: Record<string, string>;
 }
 
 export interface ProductoUpdate {
@@ -46,12 +53,39 @@ export interface ProductoUpdate {
   stock?: number;
   stock_minimo?: number;
   foto?: string;
+  atributos_extra?: Record<string, string>;
 }
 
 /* =========================
    SERVICE
 ========================= */
 export const productosService = {
+  async getTableConfig(): Promise<{
+    negocio_id: number;
+    tipo_negocio: string;
+    columnas_custom: ColumnaProductoCustom[];
+    tipos_custom: string[];
+  }> {
+    const res = await api.get("/productos/tabla-config");
+    return res.data;
+  },
+
+  async updateTableConfig(data: {
+    tipo_negocio?: string;
+    columnas_custom: ColumnaProductoCustom[];
+    tipos_custom?: string[];
+  }): Promise<{
+    ok: boolean;
+    mensaje: string;
+    negocio_id: number;
+    tipo_negocio: string;
+    columnas_custom: ColumnaProductoCustom[];
+    tipos_custom: string[];
+  }> {
+    const res = await api.put("/productos/tabla-config", data);
+    return res.data;
+  },
+
   /* =========================
      LISTAR
   ========================= */

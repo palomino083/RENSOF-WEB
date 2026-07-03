@@ -92,6 +92,31 @@
      font-weight: 700;
      color: var(--text-primary);
    }
+
+  .rowActions {
+    display: inline-flex;
+    gap: 6px;
+  }
+
+  .rowBtn {
+    border: none;
+    border-radius: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-weight: 700;
+    background: #dbeafe;
+    color: #0f172a;
+  }
+
+  .rowBtn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .deleteBtn {
+    background: #fee2e2;
+    color: #991b1b;
+  }
   border: 1px solid rgba(203, 213, 225, 0.75);
   border-radius: 12px;
   padding: 12px;
@@ -135,6 +160,31 @@
 
 .superadminFinanceHint p {
   margin: 0;
+}
+
+.planHistoryHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.planHistoryFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-weight: 700;
+}
+
+.planHistoryFilter select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 7px 9px;
 }
 
 .actionBar {
@@ -386,6 +436,12 @@
 .helperText {
   color: #64748b;
   font-size: 0.78rem;
+}
+
+.errorHint {
+  color: #b91c1c;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .planFold {

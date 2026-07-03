@@ -17,6 +17,8 @@ from fastapi.responses import JSONResponse
 
 
 from app.database.database import Base, SessionLocal, engine
+from app.models.cliente import Cliente
+from app.models.negocio import Negocio
 from app.models.usuario import Usuario
 from app.utils.jwt_utils import hash_password
 
@@ -179,6 +181,10 @@ def _ensure_multitenant_columns() -> None:
             conn.exec_driver_sql(
                 "ALTER TABLE productos ADD COLUMN sexo VARCHAR(20)"
             )
+        if "atributos_extra" not in producto_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE productos ADD COLUMN atributos_extra JSON"
+            )
 
         negocio_columns = {
             row[1]
@@ -204,7 +210,7 @@ def _ensure_multitenant_columns() -> None:
 
         if "plan" not in negocio_columns:
             conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan VARCHAR(20) DEFAULT 'BASICO'"
+                "ALTER TABLE negocios ADD COLUMN plan VARCHAR(20) DEFAULT 'GRATUITO'"
             )
         if "plan_gratuito_usuarios_limite" not in negocio_columns:
             conn.exec_driver_sql(
@@ -259,6 +265,67 @@ def _ensure_multitenant_columns() -> None:
                 "ALTER TABLE negocios ADD COLUMN plan_simulador_escenarios TEXT"
             )
 
+        configuracion_columns = {
+            row[1]
+            for row in conn.exec_driver_sql("PRAGMA table_info(configuracion_negocio)")
+        }
+        if "permisos_roles_json" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN permisos_roles_json TEXT"
+            )
+        if "productos_columnas_json" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN productos_columnas_json TEXT"
+            )
+
+
+def _solo_digitos_exactos(value: str | None, largo: int) -> str | None:
+    raw = "".join(ch for ch in str(value or "") if ch.isdigit())
+    if len(raw) == largo:
+        return raw
+    return None
+
+
+def _normalize_legacy_identifiers() -> None:
+    """Normaliza identificadores legacy para reglas actuales (RUC 11, celular 9, DNI 8)."""
+    db = SessionLocal()
+    cambios = 0
+    try:
+        negocios = db.query(Negocio).all()
+        for negocio in negocios:
+            ruc_norm = _solo_digitos_exactos(getattr(negocio, "ruc", None), 11)
+            telefono_norm = _solo_digitos_exactos(getattr(negocio, "telefono", None), 9)
+            whatsapp_norm = _solo_digitos_exactos(getattr(negocio, "whatsapp", None), 9)
+
+            if getattr(negocio, "ruc", None) != ruc_norm:
+                negocio.ruc = ruc_norm
+                cambios += 1
+            if getattr(negocio, "telefono", None) != telefono_norm:
+                negocio.telefono = telefono_norm
+                cambios += 1
+            if getattr(negocio, "whatsapp", None) != whatsapp_norm:
+                negocio.whatsapp = whatsapp_norm
+                cambios += 1
+
+        clientes = db.query(Cliente).all()
+        for cliente in clientes:
+            telefono_norm = _solo_digitos_exactos(getattr(cliente, "telefono", None), 9)
+            if getattr(cliente, "telefono", None) != telefono_norm:
+                cliente.telefono = telefono_norm
+                cambios += 1
+
+        usuarios = db.query(Usuario).all()
+        for usuario in usuarios:
+            dni_norm = _solo_digitos_exactos(getattr(usuario, "dni", None), 8)
+            if getattr(usuario, "dni", None) != dni_norm:
+                usuario.dni = dni_norm
+                cambios += 1
+
+        if cambios:
+            db.commit()
+    finally:
+        db.close()
+
 # ==========================================
 # LIFESPAN
 # ==========================================
@@ -272,6 +339,7 @@ async def lifespan(app: FastAPI):
 
     Base.metadata.create_all(bind=engine)
     _ensure_multitenant_columns()
+    _normalize_legacy_identifiers()
     _ensure_unique_superadmin_account()
 
     print("Base de datos inicializada")

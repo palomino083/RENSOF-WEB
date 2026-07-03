@@ -229,6 +229,12 @@
   color: #64748b;
 }
 
+.validationHint {
+  color: #b91c1c;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .rowActions {
   display: inline-flex;
   gap: 6px;
@@ -375,6 +381,11 @@
   font-weight: 700;
 }
 
+.matrixActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .matrixGrid {
   display: grid;
   grid-template-columns: 140px repeat(4, minmax(64px, 1fr));
@@ -418,6 +429,11 @@
   padding: 2px 8px;
   font-weight: 700;
   font-size: 0.72rem;
+}
+
+.matrixToggleBtn {
+  border: none;
+  cursor: pointer;
 }
 
 .permitido {

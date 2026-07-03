@@ -65,6 +65,12 @@ const parseNumero = (value: string | null | undefined) => {
   return Number.isFinite(num) ? num : 0;
 };
 
+const sanitizarRuc = (value: string | null | undefined) =>
+  String(value || "").replace(/\D/g, "").slice(0, 11);
+
+const sanitizarCelular = (value: string | null | undefined) =>
+  String(value || "").replace(/\D/g, "").slice(0, 9);
+
 const getStorageItem = (key: string) => {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(key);
@@ -308,12 +314,14 @@ export default function ConfiguracionPage() {
     fecha: string;
   }>>([]);
   const [loadingHistorialPlanes, setLoadingHistorialPlanes] = useState(false);
+  const [filtroEstadoHistorialPlan, setFiltroEstadoHistorialPlan] = useState<"TODOS" | "PENDIENTE_VALIDACION" | "APLICADO" | "RECHAZADO">("TODOS");
+  const [validatingPlanPagoId, setValidatingPlanPagoId] = useState<number | null>(null);
   const [solicitudPlan, setSolicitudPlan] = useState({
     plan_objetivo: "PRO",
     referencia_pago: "",
     canal_pago: "transferencia",
     validacion_modo: "MANUAL" as "AUTO" | "MANUAL",
-    declaracion_anti_fraude: false,
+    declaracion_anti_fraude: true,
     observaciones: "",
   });
   const [sendingSolicitudPlan, setSendingSolicitudPlan] = useState(false);
@@ -341,7 +349,7 @@ export default function ConfiguracionPage() {
   const [businessForm, setBusinessForm] = useState({
     nombre: "",
     tipo: "tienda",
-    plan: "BASICO",
+    plan: "GRATUITO",
     descripcion: "",
     ruc: "",
     razon_social: "",
@@ -359,6 +367,13 @@ export default function ConfiguracionPage() {
     zona_horaria: "America/Lima",
     idioma: "es",
   });
+
+  const historialPlanesFiltrado =
+    filtroEstadoHistorialPlan === "TODOS"
+      ? historialPlanes
+      : historialPlanes.filter(
+        (item) => String(item.estado || "").toUpperCase() === filtroEstadoHistorialPlan
+      );
 
   const irASeccion = (id: string) => {
     const node = document.getElementById(id);
@@ -390,12 +405,12 @@ export default function ConfiguracionPage() {
         tipo: data.tipo || "tienda",
         plan: normalizarPlan(data.plan),
         descripcion: data.descripcion || "",
-        ruc: data.ruc || "",
+        ruc: sanitizarRuc(data.ruc),
         razon_social: data.razon_social || "",
         documento_propietario: data.documento_propietario || "",
         email: data.email || "",
-        telefono: data.telefono || "",
-        whatsapp: data.whatsapp || "",
+        telefono: sanitizarCelular(data.telefono),
+        whatsapp: sanitizarCelular(data.whatsapp),
         pais: data.pais || "Peru",
         direccion: data.direccion || "",
         departamento: data.departamento || "",
@@ -477,6 +492,22 @@ export default function ConfiguracionPage() {
       return;
     }
 
+    const rucSanitizado = sanitizarRuc(businessForm.ruc);
+    const telefonoSanitizado = sanitizarCelular(businessForm.telefono);
+    const whatsappSanitizado = sanitizarCelular(businessForm.whatsapp);
+    if (rucSanitizado && rucSanitizado.length !== 11) {
+      setError("El RUC debe tener exactamente 11 digitos numericos");
+      return;
+    }
+    if (telefonoSanitizado && telefonoSanitizado.length !== 9) {
+      setError("El celular debe tener exactamente 9 digitos numericos");
+      return;
+    }
+    if (whatsappSanitizado && whatsappSanitizado.length !== 9) {
+      setError("El WhatsApp debe tener exactamente 9 digitos numericos");
+      return;
+    }
+
     try {
       setSavingBusiness(true);
       setError("");
@@ -486,12 +517,12 @@ export default function ConfiguracionPage() {
         nombre: businessForm.nombre.trim(),
         tipo: businessForm.tipo,
         descripcion: businessForm.descripcion.trim() || undefined,
-        ruc: businessForm.ruc.trim() || undefined,
+        ruc: rucSanitizado || undefined,
         razon_social: businessForm.razon_social.trim() || undefined,
         documento_propietario: businessForm.documento_propietario.trim() || undefined,
         email: businessForm.email.trim() || undefined,
-        telefono: businessForm.telefono.trim() || undefined,
-        whatsapp: businessForm.whatsapp.trim() || undefined,
+        telefono: telefonoSanitizado || undefined,
+        whatsapp: whatsappSanitizado || undefined,
         pais: businessForm.pais.trim() || undefined,
         direccion: businessForm.direccion.trim() || undefined,
         departamento: businessForm.departamento.trim() || undefined,
@@ -609,6 +640,15 @@ export default function ConfiguracionPage() {
   const resolverNegocioObjetivo = async (accion: string) => {
     const negocioId = getNegocioIdActivo();
     if (negocioId) return negocioId;
+
+    if (isSuperadmin && negociosDisponibles.length > 0) {
+      const fallbackId = Number(negociosDisponibles[0]?.id || 0);
+      if (fallbackId) {
+        setNegocioSeleccionadoId(fallbackId);
+        return fallbackId;
+      }
+    }
+
     return 0;
   };
 
@@ -906,6 +946,9 @@ export default function ConfiguracionPage() {
   const planControlMontoKey = planControlSeleccionadoData
     ? PLAN_PRICE_MAP[planControlSeleccionadoData.codigo] as keyof typeof planAmounts
     : null;
+  const planControlAccionRequiereNegocio =
+    (planControlAccion === "aplicar" || planControlAccion === "guardar_monto" || planControlAccion === "guardar_limites")
+    && !negocioActivoId;
 
   const copiarBondadesDesdePlan = (codigoPlan: string) => {
     const plan = planCatalogo.find((p) => p.codigo === normalizarPlan(codigoPlan));
@@ -1217,11 +1260,6 @@ export default function ConfiguracionPage() {
       return;
     }
 
-    if (!solicitudPlan.declaracion_anti_fraude) {
-      setError("Debes aceptar la declaracion antifraude para continuar");
-      return;
-    }
-
     if (solicitudPlan.canal_pago !== "efectivo" && !comprobantePagoFile) {
       setError("Adjunta el comprobante para validar el pago");
       return;
@@ -1242,8 +1280,8 @@ export default function ConfiguracionPage() {
         plan_objetivo: planPagoObjetivo,
         referencia_pago: solicitudPlan.referencia_pago.trim(),
         canal_pago: solicitudPlan.canal_pago,
-        validacion_modo: solicitudPlan.validacion_modo,
-        declaracion_anti_fraude: solicitudPlan.declaracion_anti_fraude,
+        validacion_modo: "MANUAL",
+        declaracion_anti_fraude: true,
         observaciones: solicitudPlan.observaciones.trim() || undefined,
         comprobante_url,
       });
@@ -1252,7 +1290,7 @@ export default function ConfiguracionPage() {
       setSuccess(`${resp.mensaje} ${detalleSeguridad}`);
       setShowPagoPlanModal(false);
       setComprobantePagoFile(null);
-      setSolicitudPlan((prev) => ({ ...prev, referencia_pago: "", observaciones: "", declaracion_anti_fraude: false }));
+      setSolicitudPlan((prev) => ({ ...prev, referencia_pago: "", observaciones: "", declaracion_anti_fraude: true, validacion_modo: "MANUAL" }));
       await cargarBranding(negocioId);
       await cargarPlanStats();
       await cargarHistorialPlanes(negocioId);
@@ -1271,10 +1309,39 @@ export default function ConfiguracionPage() {
     setShowPagoPlanModal(true);
   };
 
+  const validarPagoPlanComoSuperadmin = async (
+    planPagoId: number,
+    accion: "APROBAR" | "RECHAZAR"
+  ) => {
+    const negocioId = getNegocioIdActivo();
+    if (!isSuperadmin || !negocioId) {
+      setError("Selecciona una empresa cliente para validar pagos");
+      return;
+    }
+
+    try {
+      setValidatingPlanPagoId(planPagoId);
+      setError("");
+      setSuccess("");
+      const resp = await negocioService.validatePlanPayment(negocioId, planPagoId, accion);
+      setSuccess(resp.mensaje);
+      await cargarHistorialPlanes(negocioId);
+      await cargarBranding(negocioId);
+      await cargarPlanStats();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo validar el pago del plan"));
+    } finally {
+      setValidatingPlanPagoId(null);
+    }
+  };
+
   const planActual = nombrePlan(planStats?.plan || businessForm.plan || "-");
   const nombreEmpresa = negocio?.nombre || businessForm.nombre || "Empresa";
   const estadoBackups = planStats?.backups.habilitado ? "Habilitado" : "Bloqueado";
   const estadoReportes = planStats?.reportes.habilitado ? "Habilitado" : "Bloqueado";
+  const rucInvalido = Boolean(businessForm.ruc) && businessForm.ruc.length !== 11;
+  const telefonoInvalido = Boolean(businessForm.telefono) && businessForm.telefono.length !== 9;
+  const whatsappInvalido = Boolean(businessForm.whatsapp) && businessForm.whatsapp.length !== 9;
   const negocioActivoId = getNegocioIdActivo();
   const negociosObjetivoFiltrados = negociosDisponibles.filter((item) => {
     if (negocioTipoFiltro === "todos") return true;
@@ -1398,20 +1465,24 @@ export default function ConfiguracionPage() {
                         ))}
                       </select>
 
-                      <label htmlFor="empresa-negocio-objetivo">Negocio objetivo</label>
+                      <label htmlFor="empresa-negocio-objetivo">Empresa cliente</label>
                       <select
                         id="empresa-negocio-objetivo"
                         className={`${styles.negocioSelect} focus-ring`}
                         value={negocioSeleccionadoId || ""}
                         onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
+                        disabled={negociosObjetivoFiltrados.length === 0}
                       >
-                        <option value="">Selecciona negocio objetivo</option>
+                        <option value="">Selecciona empresa cliente</option>
                         {negociosObjetivoFiltrados.map((item) => (
                           <option key={`empresa-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre} ({nombreTipoNegocio(item.tipo)})</option>
                         ))}
                       </select>
+                      {negociosObjetivoFiltrados.length === 0 ? (
+                        <small className={styles.helperText}>No hay empresas cliente para el tipo seleccionado.</small>
+                      ) : null}
                       {!negocioActivoId ? (
-                        <small className={styles.helperText}>Selecciona una empresa cliente para poder guardar datos.</small>
+                        <small className={styles.helperText}>Selecciona una empresa cliente para guardar cambios.</small>
                       ) : null}
                     </div>
                   </div>
@@ -1453,18 +1524,25 @@ export default function ConfiguracionPage() {
 
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-plan">Plan</label>
-                        <select
-                          id="empresa-plan"
-                          value={businessForm.plan}
-                          onChange={(e) => setBusinessForm({ ...businessForm, plan: e.target.value })}
-                          className="focus-ring"
-                          disabled={!isSuperadmin}
-                        >
-                          {PLAN_OPTIONS.map((plan) => (
-                            <option key={plan.value} value={plan.value}>{plan.label}</option>
-                          ))}
-                        </select>
-                        {!isSuperadmin ? <small className={styles.helperText}>Solo superadministrador puede cambiar el plan.</small> : null}
+                        {isSuperadmin ? (
+                          <select
+                            id="empresa-plan"
+                            value={businessForm.plan}
+                            onChange={(e) => setBusinessForm({ ...businessForm, plan: e.target.value })}
+                            className="focus-ring"
+                          >
+                            {PLAN_OPTIONS.map((plan) => (
+                              <option key={plan.value} value={plan.value}>{plan.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            id="empresa-plan"
+                            value={nombrePlan(businessForm.plan)}
+                            className="focus-ring"
+                            readOnly
+                          />
+                        )}
                       </div>
 
                       <div className={styles.formRow}>
@@ -1532,9 +1610,14 @@ export default function ConfiguracionPage() {
                         <input
                           id="empresa-ruc"
                           value={businessForm.ruc}
-                          onChange={(e) => setBusinessForm({ ...businessForm, ruc: e.target.value })}
+                          onChange={(e) => setBusinessForm({ ...businessForm, ruc: sanitizarRuc(e.target.value) })}
+                          inputMode="numeric"
+                          maxLength={11}
+                          pattern="[0-9]{11}"
+                          placeholder="11 digitos"
                           className="focus-ring"
                         />
+                        {rucInvalido ? <small className={styles.errorHint}>RUC incompleto: deben ser 11 digitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -1580,9 +1663,13 @@ export default function ConfiguracionPage() {
                         <input
                           id="empresa-telefono"
                           value={businessForm.telefono}
-                          onChange={(e) => setBusinessForm({ ...businessForm, telefono: e.target.value })}
+                          onChange={(e) => setBusinessForm({ ...businessForm, telefono: sanitizarCelular(e.target.value) })}
+                          inputMode="numeric"
+                          maxLength={9}
+                          pattern="[0-9]{9}"
                           className="focus-ring"
                         />
+                        {telefonoInvalido ? <small className={styles.errorHint}>Celular incompleto: deben ser 9 digitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -1590,9 +1677,13 @@ export default function ConfiguracionPage() {
                         <input
                           id="empresa-whatsapp"
                           value={businessForm.whatsapp}
-                          onChange={(e) => setBusinessForm({ ...businessForm, whatsapp: e.target.value })}
+                          onChange={(e) => setBusinessForm({ ...businessForm, whatsapp: sanitizarCelular(e.target.value) })}
+                          inputMode="numeric"
+                          maxLength={9}
+                          pattern="[0-9]{9}"
                           className="focus-ring"
                         />
+                        {whatsappInvalido ? <small className={styles.errorHint}>WhatsApp incompleto: deben ser 9 digitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -1664,23 +1755,6 @@ export default function ConfiguracionPage() {
                     <p>
                       Carga el logotipo oficial para usarlo en boletas y facturas PDF.
                     </p>
-
-                    {isSuperadmin ? (
-                      <div className={styles.formRow}>
-                        <label htmlFor="branding-negocio-objetivo">Negocio objetivo</label>
-                        <select
-                          id="branding-negocio-objetivo"
-                          className={`${styles.negocioSelect} focus-ring`}
-                          value={negocioSeleccionadoId || ""}
-                          onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
-                        >
-                          <option value="">Selecciona negocio objetivo</option>
-                          {negociosObjetivoFiltrados.map((item) => (
-                            <option key={`branding-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre} ({nombreTipoNegocio(item.tipo)})</option>
-                          ))}
-                        </select>
-                      </div>
-                    ) : null}
 
                     <div className={styles.identityGrid}>
                       <div className={styles.logoFrame}>
@@ -1983,120 +2057,223 @@ export default function ConfiguracionPage() {
 
                 <section className={styles.planAmountsBox}>
                   <div>
-                    <h4>Negocio objetivo para aplicar plan</h4>
-                    <p>Selecciona explicitamente la empresa cliente sobre la que deseas ejecutar cambios de plan.</p>
+                    <h4>Empresa cliente para aplicar plan</h4>
+                    <p>Usa la empresa cliente seleccionada en la seccion Empresa para ejecutar cambios de plan.</p>
                   </div>
-                  <div className={styles.actionGroup}>
-                    <select
-                      className={`${styles.negocioSelect} focus-ring`}
-                      value={negocioSeleccionadoId || ""}
-                      onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
+                  {!negocioActivoId ? (
+                    <small className={styles.helperText}>Sin empresa cliente seleccionada, aplicar plan estara bloqueado.</small>
+                  ) : null}
+                </section>
+
+                <section className={styles.planExecutiveControlBar}>
+                  <div className={styles.planExecutiveControlHead}>
+                    <strong>Panel ejecutivo de decisión</strong>
+                    <p>Una sola vista para elegir plan y ejecutar la accion requerida sin duplicar tarjetas.</p>
+                  </div>
+
+                  <div className={styles.planExecutiveControlGrid}>
+                    <label>
+                      Plan objetivo
+                      <select
+                        value={planControlSeleccionado}
+                        onChange={(e) => setPlanControlSeleccionado(e.target.value)}
+                        className="focus-ring"
+                      >
+                        {planCatalogoVisible.map((plan) => (
+                          <option key={`control-plan-${plan.codigo}`} value={plan.codigo}>{plan.nombre}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      Accion
+                      <select
+                        value={planControlAccion}
+                        onChange={(e) => setPlanControlAccion(e.target.value as "simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades")}
+                        className="focus-ring"
+                      >
+                        <option value="simular">Simular plan</option>
+                        <option value="aplicar">Aplicar plan al negocio</option>
+                        <option value="guardar_monto">Guardar montos</option>
+                        <option value="guardar_limites">Guardar limites</option>
+                        <option value="bondades">Ir a bondades del gratuito</option>
+                      </select>
+                    </label>
+
+                    <button
+                      type="button"
+                      className={`${styles.planPickBtn} focus-ring`}
+                      onClick={() => void ejecutarAccionPlanEjecutiva()}
+                      disabled={!planControlSeleccionadoData || changingPlan || savingPlanAmounts || savingPlanLimits || Boolean(planControlAccionRequiereNegocio)}
+                      title={planControlAccionRequiereNegocio ? "Selecciona una empresa cliente en la seccion Empresa" : ""}
                     >
-                      <option value="">Selecciona negocio objetivo</option>
-                      {negociosObjetivoFiltrados.map((item) => (
-                        <option key={item.id} value={item.id}>{item.id} - {item.nombre} ({nombreTipoNegocio(item.tipo)})</option>
-                      ))}
-                    </select>
-                    {!negocioActivoId ? (
-                      <small className={styles.helperText}>Sin negocio seleccionado, aplicar plan estara bloqueado.</small>
-                    ) : null}
+                      {planControlAccion === "simular" ? "Ejecutar simulacion" :
+                        planControlAccion === "aplicar" ? (changingPlan ? "Aplicando..." : "Aplicar plan") :
+                        planControlAccion === "guardar_monto" ? (savingPlanAmounts ? "Guardando..." : "Guardar montos") :
+                        planControlAccion === "guardar_limites" ? (savingPlanLimits ? "Guardando..." : "Guardar limites") :
+                        "Ir a bondades"}
+                    </button>
+                  </div>
+
+                  <div className={styles.planExecutiveControlStats}>
+                    <span>Estado: <strong>{planControlActivo ? "Activo" : planControlSimulado ? "Simulado" : "Disponible"}</strong></span>
+                    <span>Riesgo: <strong>{planControlSemaforo.text}</strong></span>
+                    <span>Usuarios: <strong>{planControlSeleccionadoData?.usuarios_limite ?? "Ilimitado"}</strong></span>
+                    <span>Monto: <strong>{planControlMontoKey ? formatPrecio(planAmounts[planControlMontoKey]) : "-"}</strong></span>
                   </div>
                 </section>
 
-                <div className={styles.catalogGrid}>
-                  {planCatalogoVisible.map((plan) => {
-                    const activo = Boolean(negocioActivoId) && normalizarPlan(businessForm.plan) === plan.codigo;
-                    const simulado = normalizarPlan(planSimulado) === plan.codigo;
-                    const stateLabel = !negocioActivoId
-                      ? (simulado ? "Seleccionado" : "Disponible")
-                      : activo
-                        ? "Activo"
-                        : simulado
-                          ? "Simulado"
-                          : "Disponible";
-                    const stateClass = activo ? styles.cardStateActive : simulado ? styles.cardStateSimulated : styles.cardStateAvailable;
-                    const planAmountKey = PLAN_PRICE_MAP[plan.codigo] as keyof typeof planAmounts;
-                    const signal = evaluarSemaforoPlan(plan);
-                    const signalClass = signal.tone === "up" ? styles.catalogSignalUp : signal.tone === "down" ? styles.catalogSignalDown : styles.catalogSignalNeutral;
-                    return (
-                      <article key={plan.codigo} className={`${styles.catalogCard} ${(activo || (!negocioActivoId && simulado)) ? styles.catalogCardActive : ""}`}>
-                        <h4>{plan.nombre}</h4>
-                        <p className={`${styles.cardState} ${stateClass}`}>{stateLabel}</p>
-                        <p className={`${styles.catalogSignal} ${signalClass}`}>{signal.text}</p>
-
-                        <div className={styles.catalogMetrics}>
-                          <p>Usuarios: <strong>{plan.usuarios_limite ?? "Ilimitado"}</strong></p>
-                          <p>Monto: <strong>{formatPrecio(planAmounts[planAmountKey])}</strong></p>
-                          <p>Reportes: <strong>{plan.reportes_habilitado ? (plan.reportes_limite ?? "Ilimitado") : "No"}</strong></p>
-                          <p>Backups: <strong>{plan.backups_habilitado ? (plan.backups_limite ?? "Ilimitado") : "No"}</strong></p>
-                        </div>
-
-                        <div className={styles.cardActions}>
-                          <button
-                            type="button"
-                            className={`${styles.planSimBtn} focus-ring`}
-                            disabled={simulado}
-                            onClick={() => setPlanSimulado(plan.codigo)}
-                          >
-                            {simulado ? "Seleccionado" : "Seleccionar plan"}
-                          </button>
-                          <button
-                            type="button"
-                            className={`${styles.planPickBtn} focus-ring`}
-                            disabled={activo || changingPlan || !negocioActivoId}
-                            onClick={() => void cambiarPlanNegocio(plan.codigo)}
-                            title={!negocioActivoId ? "Selecciona primero el negocio objetivo" : ""}
-                          >
-                            {activo ? "Plan activo" : changingPlan ? "Aplicando..." : !negocioActivoId ? "Elegir negocio" : "Aplicar plan"}
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
+                <section className={styles.planHistoryBox}>
+                  <div className={styles.planHistoryHead}>
+                    <h4>Validacion de pagos de planes</h4>
+                    <label className={styles.planHistoryFilter}>
+                      Estado
+                      <select
+                        value={filtroEstadoHistorialPlan}
+                        onChange={(e) => setFiltroEstadoHistorialPlan(e.target.value as "TODOS" | "PENDIENTE_VALIDACION" | "APLICADO" | "RECHAZADO")}
+                        className="focus-ring"
+                      >
+                        <option value="TODOS">Todos</option>
+                        <option value="PENDIENTE_VALIDACION">Pendientes</option>
+                        <option value="APLICADO">Aprobados</option>
+                        <option value="RECHAZADO">Rechazados</option>
+                      </select>
+                    </label>
+                  </div>
+                  {!negocioActivoId ? (
+                    <p>Selecciona una empresa cliente para revisar pagos pendientes.</p>
+                  ) : loadingHistorialPlanes ? (
+                    <p>Cargando pagos...</p>
+                  ) : historialPlanesFiltrado.length === 0 ? (
+                    <p>No hay pagos registrados para esta empresa.</p>
+                  ) : (
+                    <div className={styles.planHistoryTableWrap}>
+                      <table className={styles.planHistoryTable}>
+                        <thead>
+                          <tr>
+                            <th>Fecha</th>
+                            <th>Cambio</th>
+                            <th>Estado</th>
+                            <th>Canal</th>
+                            <th>Referencia</th>
+                            <th>Comprobante</th>
+                            <th>Accion</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {historialPlanesFiltrado.map((item) => {
+                            const pendiente = String(item.estado || "").toUpperCase() === "PENDIENTE_VALIDACION";
+                            return (
+                              <tr key={`sa-plan-${item.id}`}>
+                                <td>{new Date(item.fecha).toLocaleString()}</td>
+                                <td>{nombrePlan(item.plan_actual)} a {nombrePlan(item.plan_solicitado)}</td>
+                                <td>{item.estado}</td>
+                                <td>{item.canal_pago}</td>
+                                <td>{item.referencia_pago}</td>
+                                <td>
+                                  {item.comprobante_url ? (
+                                    <a href={toAbsoluteUrl(item.comprobante_url)} target="_blank" rel="noreferrer">
+                                      Ver archivo
+                                    </a>
+                                  ) : (
+                                    "-"
+                                  )}
+                                </td>
+                                <td>
+                                  {pendiente ? (
+                                    <div className={styles.rowActions}>
+                                      <button
+                                        type="button"
+                                        className={styles.rowBtn}
+                                        disabled={validatingPlanPagoId === item.id}
+                                        onClick={() => void validarPagoPlanComoSuperadmin(item.id, "APROBAR")}
+                                      >
+                                        {validatingPlanPagoId === item.id ? "Procesando..." : "Aprobar"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className={`${styles.rowBtn} ${styles.deleteBtn}`}
+                                        disabled={validatingPlanPagoId === item.id}
+                                        onClick={() => void validarPagoPlanComoSuperadmin(item.id, "RECHAZAR")}
+                                      >
+                                        {validatingPlanPagoId === item.id ? "Procesando..." : "Rechazar"}
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    "-"
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
               </>
             ) : (
               <div className={styles.clientPlanRequestBox}>
                 <h3>Escoge tu plan y activa con pago</h3>
                 <p>
-                  Mismo formato visual por plan. Al hacer clic en Aplicar se abre la opcion de pago inmediatamente.
+                  Presentacion ejecutiva unificada para elegir plan, simular impacto y activar con pago.
                 </p>
 
-                <div className={styles.userPlanGrid}>
-                  {planCatalogoVisible.map((plan) => {
-                    const activo = normalizarPlan(businessForm.plan) === plan.codigo;
-                    const simulado = normalizarPlan(planSimulado) === plan.codigo;
+                <section className={styles.planExecutiveControlBar}>
+                  <div className={styles.planExecutiveControlHead}>
+                    <strong>Decision de plan</strong>
+                    <p>Selecciona un plan, simula su efecto y activa de inmediato desde un solo bloque.</p>
+                  </div>
 
-                    return (
-                      <article key={`cliente-${plan.codigo}`} className={`${styles.catalogCard} ${activo ? styles.catalogCardActive : ""}`}>
-                        <h4>{plan.nombre}</h4>
-                        <p className={styles.cardState}>{activo ? "Plan activo" : "Disponible"}</p>
-                        <p>Usuarios: <strong>{plan.usuarios_limite ?? "Ilimitado"}</strong></p>
-                        <p>Monto: <strong>{formatPrecio(planAmounts[PLAN_PRICE_MAP[plan.codigo]])}</strong></p>
-                        <p>Reportes: <strong>{plan.reportes_habilitado ? (plan.reportes_limite ?? "Ilimitado") : "No"}</strong></p>
-                        <p>Backups: <strong>{plan.backups_habilitado ? (plan.backups_limite ?? "Ilimitado") : "No"}</strong></p>
-                        <div className={styles.cardActions}>
-                          <button
-                            type="button"
-                            className={`${styles.planSimBtn} focus-ring`}
-                            disabled={simulado}
-                            onClick={() => setPlanSimulado(plan.codigo)}
-                          >
-                            {simulado ? "Simulando" : "Simular"}
-                          </button>
-                          <button
-                            type="button"
-                            className={`${styles.planPickBtn} focus-ring`}
-                            disabled={activo}
-                            onClick={() => abrirPagoPlan(plan.codigo)}
-                          >
-                            {activo ? "Plan activo" : "Aplicar"}
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
+                  <div className={styles.planExecutiveControlGrid}>
+                    <label>
+                      Plan objetivo
+                      <select
+                        value={planControlSeleccionado}
+                        onChange={(e) => setPlanControlSeleccionado(e.target.value)}
+                        className="focus-ring"
+                      >
+                        {planCatalogoVisible.map((plan) => (
+                          <option key={`cliente-plan-${plan.codigo}`} value={plan.codigo}>{plan.nombre}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      Accion rapida
+                      <select
+                        value={planControlSimulado ? "simulado" : "simular"}
+                        onChange={(e) => {
+                          if (e.target.value === "simular" && planControlSeleccionadoData) {
+                            setPlanSimulado(planControlSeleccionadoData.codigo);
+                          }
+                        }}
+                        className="focus-ring"
+                      >
+                        <option value="simular">Simular plan</option>
+                        <option value="simulado">Plan simulado</option>
+                      </select>
+                    </label>
+
+                    <button
+                      type="button"
+                      className={`${styles.planPickBtn} focus-ring`}
+                      disabled={!planControlSeleccionadoData || planControlActivo}
+                      onClick={() => {
+                        if (planControlSeleccionadoData) abrirPagoPlan(planControlSeleccionadoData.codigo);
+                      }}
+                    >
+                      {planControlActivo ? "Plan activo" : "Aplicar con pago"}
+                    </button>
+                  </div>
+
+                  <div className={styles.planExecutiveControlStats}>
+                    <span>Estado: <strong>{planControlActivo ? "Activo" : planControlSimulado ? "Simulado" : "Disponible"}</strong></span>
+                    <span>Riesgo: <strong>{planControlSemaforo.text}</strong></span>
+                    <span>Usuarios: <strong>{planControlSeleccionadoData?.usuarios_limite ?? "Ilimitado"}</strong></span>
+                    <span>Monto: <strong>{planControlMontoKey ? formatPrecio(planAmounts[planControlMontoKey]) : "-"}</strong></span>
+                  </div>
+                </section>
 
                 <div className={styles.planHistoryBox}>
                   <h4>Historial de planes y pagos</h4>
@@ -2170,17 +2347,6 @@ export default function ConfiguracionPage() {
               </>
             )}
           >
-            <label htmlFor="cliente-validacion-modo">Validacion antifraude</label>
-            <select
-              id="cliente-validacion-modo"
-              className="focus-ring"
-              value={solicitudPlan.validacion_modo}
-              onChange={(e) => setSolicitudPlan((prev) => ({ ...prev, validacion_modo: e.target.value as "AUTO" | "MANUAL" }))}
-            >
-              <option value="MANUAL">Manual (recomendada, activacion tras revision)</option>
-              <option value="AUTO">Automatica (si cumple controles de seguridad)</option>
-            </select>
-
             <select
               id="cliente-canal-pago"
               className="focus-ring"
@@ -2217,15 +2383,6 @@ export default function ConfiguracionPage() {
               accept="image/png,image/jpeg,image/webp,application/pdf"
               onChange={(e) => setComprobantePagoFile(e.target.files?.[0] || null)}
             />
-
-            <label className={styles.inlineCheck}>
-              <input
-                type="checkbox"
-                checked={solicitudPlan.declaracion_anti_fraude}
-                onChange={(e) => setSolicitudPlan((prev) => ({ ...prev, declaracion_anti_fraude: e.target.checked }))}
-              />
-              Declaro que el pago es legitimo y autorizo validacion antifraude de la evidencia.
-            </label>
           </ModalCard>
 
           <ModalCard

@@ -2,6 +2,24 @@ import { api } from "./api";
 
 export const usuariosService = {
 
+  getPermissionsMatrix: async () => {
+    const res = await api.get("/usuarios/permisos-matriz");
+    return res.data as {
+      negocio_id: number;
+      matriz: Record<string, string[]>;
+    };
+  },
+
+  updatePermissionsMatrix: async (matriz: Record<string, string[]>) => {
+    const res = await api.put("/usuarios/permisos-matriz", { matriz });
+    return res.data as {
+      ok: boolean;
+      mensaje: string;
+      negocio_id: number;
+      matriz: Record<string, string[]>;
+    };
+  },
+
   getAll: async () => {
     const res = await api.get("/usuarios/");
     return res.data;

@@ -22,7 +22,7 @@ $backend = Start-Process -FilePath $pythonExe `
 
 Write-Host "Iniciando frontend ALVENT en apps/alvent/frontend ..." -ForegroundColor Cyan
 $frontend = Start-Process -FilePath "cmd.exe" `
-  -ArgumentList "/c", "npm run dev" `
+  -ArgumentList "/c", "npm run dev -- -p 3001" `
   -WorkingDirectory $frontendDir `
   -PassThru
 

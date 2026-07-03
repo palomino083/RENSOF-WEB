@@ -25,9 +25,9 @@ ALVENT_FALLBACK_PASSWORD = os.getenv("ALVENT_FALLBACK_PASSWORD", "123456")
 
 
 def _alvent_frontend_url(path: str = "") -> str:
-    base = ALVENT_FRONTEND_ORIGIN.rstrip("/")
+    # Mantener navegacion dentro del mismo host (rensof.pe) para evitar saltos a Render.
     normalized_path = f"/{path.lstrip('/')}" if path else ""
-    return f"{base}{normalized_path}"
+    return normalized_path or "/alven/app/login"
 
 
 def _is_html_navigation_request(request: Request) -> bool:
@@ -73,6 +73,11 @@ def _build_proxy_target(origin: str, full_path: str, query: str) -> str:
     if query:
         target = f"{target}?{query}"
     return target
+
+
+def _is_next_asset_request_path(path: str) -> bool:
+    normalized = path.strip("/").lower()
+    return normalized.startswith("_next/") or "/_next/" in normalized
 
 
 def _proxy_response_headers(
@@ -181,6 +186,12 @@ async def _proxy_alvent_frontend_request(request: Request, full_path: str = "") 
     if prefixed_path and prefixed_path not in candidates:
         candidates.append(prefixed_path)
 
+    is_asset_request = _is_next_asset_request_path(requested_path)
+    if is_asset_request and prefixed_path and requested_path:
+        # Para assets de Next priorizamos la variante con basePath para evitar
+        # aceptar HTML de fallback en vez de JS/CSS.
+        candidates = [prefixed_path, requested_path]
+
     last_response: Response | None = None
     last_request_error: httpx.RequestError | None = None
 
@@ -200,6 +211,12 @@ async def _proxy_alvent_frontend_request(request: Request, full_path: str = "") 
             body_preview = response.body[:4096].decode("utf-8", errors="ignore").lower()
             looks_like_not_found = "this page could not be found" in body_preview
             is_server_error = response.status_code >= 500
+            content_type = response.headers.get("content-type", "").lower()
+            is_html_content = "text/html" in content_type
+
+            if is_asset_request and (is_html_content or response.status_code == 404 or looks_like_not_found):
+                last_response = response
+                continue
 
             if not is_server_error and response.status_code != 404 and not looks_like_not_found:
                 return response

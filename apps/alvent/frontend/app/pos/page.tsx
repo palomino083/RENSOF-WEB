@@ -369,21 +369,23 @@ export default function PosPage() {
   const registrarClienteAutomatico = async (): Promise<number | null> => {
     const nombre = clienteNombre.trim();
     const documento = limpiarNumero(clienteDocumento);
+    const celular = limpiarNumero(clienteWhatsapp).slice(0, 9);
 
     if (!nombre || !documento) return null;
+    if (documento.length !== 8) return null;
 
     const clientes = await clientesService.getAll();
     const existente = clientes.find((c) => c.dni === documento);
 
     if (existente?.id) {
       const nombreDistinto = existente.nombre !== nombre;
-      const telefonoDistinto = (existente.telefono || "") !== clienteWhatsapp.trim();
+      const telefonoDistinto = (existente.telefono || "") !== celular;
       const emailDistinto = (existente.email || "") !== clienteEmail.trim();
 
       if (nombreDistinto || telefonoDistinto || emailDistinto) {
         await clientesService.update(existente.id, {
           nombre,
-          telefono: clienteWhatsapp.trim() || undefined,
+          telefono: celular || undefined,
           email: clienteEmail.trim() || undefined,
         });
       }
@@ -394,7 +396,7 @@ export default function PosPage() {
     const nuevo = await clientesService.create({
       nombre,
       dni: documento,
-      telefono: clienteWhatsapp.trim() || undefined,
+      telefono: celular || undefined,
       email: clienteEmail.trim() || undefined,
     });
 
@@ -461,6 +463,11 @@ export default function PosPage() {
       }
     }
 
+    if (tipoComprobante === "BOLETA" && documento.length !== 8) {
+      alert("Para boleta, ingresa DNI válido de 8 dígitos");
+      return;
+    }
+
     if (tipoComprobante !== "NINGUNO" && enviarEmail && !clienteEmail.trim()) {
       alert("Activas envio por email, pero falta correo del cliente");
       return;
@@ -468,6 +475,11 @@ export default function PosPage() {
 
     if (tipoComprobante !== "NINGUNO" && enviarWhatsapp && !limpiarNumero(clienteWhatsapp)) {
       alert("Activas envio por WhatsApp, pero falta numero valido");
+      return;
+    }
+
+    if (clienteWhatsapp.trim() && limpiarNumero(clienteWhatsapp).length !== 9) {
+      alert("El celular debe tener exactamente 9 digitos numericos");
       return;
     }
 
@@ -782,8 +794,15 @@ export default function PosPage() {
                   <input
                     id="cliente-doc"
                     value={clienteDocumento}
-                    onChange={(e) => setClienteDocumento(e.target.value)}
+                    onChange={(e) => {
+                      const soloDigitos = e.target.value.replace(/\D/g, "");
+                      const maxLen = tipoComprobante === "FACTURA" ? 11 : 8;
+                      setClienteDocumento(soloDigitos.slice(0, maxLen));
+                    }}
                     placeholder={tipoComprobante === "FACTURA" ? "11 digitos" : "8 digitos"}
+                    inputMode="numeric"
+                    maxLength={tipoComprobante === "FACTURA" ? 11 : 8}
+                    pattern={tipoComprobante === "FACTURA" ? "[0-9]{11}" : "[0-9]{8}"}
                     className="focus-ring"
                   />
                 </div>
@@ -805,10 +824,16 @@ export default function PosPage() {
                   <input
                     id="cliente-wa"
                     value={clienteWhatsapp}
-                    onChange={(e) => setClienteWhatsapp(e.target.value)}
-                    placeholder="51999999999"
+                    onChange={(e) => setClienteWhatsapp(e.target.value.replace(/\D/g, "").slice(0, 9))}
+                    placeholder="999999999"
+                    inputMode="numeric"
+                    maxLength={9}
+                    pattern="[0-9]{9}"
                     className="focus-ring"
                   />
+                  {Boolean(clienteWhatsapp) && limpiarNumero(clienteWhatsapp).length !== 9 ? (
+                    <small>Celular incompleto: deben ser 9 digitos.</small>
+                  ) : null}
                 </div>
 
                 <div className={styles.channelRow}>

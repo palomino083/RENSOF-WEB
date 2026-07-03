@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Menu from "@/components/Menu";
 import { usuariosService } from "@/services/usuariosService";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -60,6 +60,9 @@ const MODULOS_PERMISOS = [
   "Configuracion",
 ];
 
+const sanitizarDni = (value: string | null | undefined) =>
+  String(value || "").replace(/\D/g, "").slice(0, 8);
+
 function normalizarRol(rol: string) {
   const upper = String(rol || "").toUpperCase().trim();
   const compact = upper.replace(/[^A-Z0-9]/g, "");
@@ -79,7 +82,9 @@ export default function UsuariosPage() {
   const [success, setSuccess] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [savingForm, setSavingForm] = useState(false);
+  const [savingMatrix, setSavingMatrix] = useState(false);
   const [rowAction, setRowAction] = useState<{ id: number; type: "toggle" | "delete" } | null>(null);
+  const [permisosPorRol, setPermisosPorRol] = useState<Record<string, string[]>>(PERMISOS_POR_ROL);
 
   /* =========================
      🔥 EDITAR STATE
@@ -152,6 +157,17 @@ export default function UsuariosPage() {
     }
   };
 
+  const cargarMatrizPermisos = useCallback(async () => {
+    try {
+      const data = await usuariosService.getPermissionsMatrix();
+      if (data?.matriz && typeof data.matriz === "object") {
+        setPermisosPorRol(data.matriz);
+      }
+    } catch {
+      setPermisosPorRol(PERMISOS_POR_ROL);
+    }
+  }, []);
+
   useEffect(() => {
     cargarUsuarios();
 
@@ -169,6 +185,11 @@ export default function UsuariosPage() {
       setIsAdmin(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    void cargarMatrizPermisos();
+  }, [isAdmin, cargarMatrizPermisos]);
 
   /* =========================
      🔍 BUSCADOR
@@ -210,6 +231,11 @@ export default function UsuariosPage() {
       return;
     }
 
+    if (form.dni && sanitizarDni(form.dni).length !== 8) {
+      setError("El DNI debe tener exactamente 8 digitos numericos");
+      return;
+    }
+
     try {
       setSavingForm(true);
       setError("");
@@ -220,6 +246,7 @@ export default function UsuariosPage() {
       }
       await usuariosService.create({
         ...form,
+        dni: sanitizarDni(form.dni) || undefined,
         rol: rolPrincipal(form.roles),
       });
 
@@ -265,6 +292,11 @@ export default function UsuariosPage() {
       return;
     }
 
+    if (form.dni && sanitizarDni(form.dni).length !== 8) {
+      setError("El DNI debe tener exactamente 8 digitos numericos");
+      return;
+    }
+
     try {
       setSavingForm(true);
       setError("");
@@ -276,6 +308,7 @@ export default function UsuariosPage() {
 
       await usuariosService.update(usuarioEdit.id, {
         ...form,
+        dni: sanitizarDni(form.dni) || undefined,
         rol: rolPrincipal(form.roles),
       });
 
@@ -324,6 +357,38 @@ export default function UsuariosPage() {
 
       return { ...prev, roles: [...sinAdmin, upper] };
     });
+  };
+
+  const togglePermisoMatriz = (rol: string, modulo: string) => {
+    if (!isAdmin) return;
+
+    setPermisosPorRol((prev) => {
+      const actuales = Array.isArray(prev[rol]) ? [...prev[rol]] : [];
+      const existe = actuales.includes(modulo);
+      const next = existe
+        ? actuales.filter((m) => m !== modulo)
+        : [...actuales, modulo];
+      return {
+        ...prev,
+        [rol]: next,
+      };
+    });
+  };
+
+  const guardarMatrizPermisos = async () => {
+    if (!isAdmin) return;
+    try {
+      setSavingMatrix(true);
+      setError("");
+      setSuccess("");
+      const resp = await usuariosService.updatePermissionsMatrix(permisosPorRol);
+      setPermisosPorRol(resp.matriz || permisosPorRol);
+      setSuccess(resp.mensaje || "Matriz de permisos actualizada");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo actualizar la matriz de permisos"));
+    } finally {
+      setSavingMatrix(false);
+    }
   };
 
   /* =========================
@@ -617,8 +682,13 @@ export default function UsuariosPage() {
                   className="focus-ring"
                   placeholder="DNI"
                   value={form.dni}
-                  onChange={(e) => setForm({ ...form, dni: e.target.value })}
+                  onChange={(e) => setForm({ ...form, dni: sanitizarDni(e.target.value) })}
+                  inputMode="numeric"
+                  maxLength={8}
                 />
+                {Boolean(form.dni) && sanitizarDni(form.dni).length !== 8 ? (
+                  <small className={styles.validationHint}>DNI incompleto: deben ser 8 digitos.</small>
+                ) : null}
                 <input
                   className="focus-ring"
                   placeholder="Email"
@@ -663,6 +733,18 @@ export default function UsuariosPage() {
 
                 <div className={styles.permissionsMatrix}>
                   <div className={styles.matrixHeader}>Matriz visual de permisos por rol</div>
+                  {isAdmin ? (
+                    <div className={styles.matrixActions}>
+                      <button
+                        type="button"
+                        className={styles.rowBtn}
+                        onClick={() => void guardarMatrizPermisos()}
+                        disabled={savingMatrix}
+                      >
+                        {savingMatrix ? "Guardando..." : "Guardar matriz"}
+                      </button>
+                    </div>
+                  ) : null}
                   <div className={styles.matrixGrid}>
                     <div className={styles.matrixCorner}>Modulo</div>
                     {ROLES_DISPONIBLES.map((rol) => (
@@ -673,12 +755,22 @@ export default function UsuariosPage() {
                       <Fragment key={modulo}>
                         <div className={styles.matrixRowHead}>{modulo}</div>
                         {ROLES_DISPONIBLES.map((rol) => {
-                          const permitido = (PERMISOS_POR_ROL[rol] || []).includes(modulo);
+                          const permitido = (permisosPorRol[rol] || []).includes(modulo);
                           return (
                             <div key={`${modulo}-${rol}`} className={styles.matrixCell}>
-                              <span className={permitido ? styles.permitido : styles.noPermitido}>
-                                {permitido ? "Si" : "No"}
-                              </span>
+                              {isAdmin ? (
+                                <button
+                                  type="button"
+                                  className={`${styles.matrixToggleBtn} ${permitido ? styles.permitido : styles.noPermitido}`}
+                                  onClick={() => togglePermisoMatriz(rol, modulo)}
+                                >
+                                  {permitido ? "Si" : "No"}
+                                </button>
+                              ) : (
+                                <span className={permitido ? styles.permitido : styles.noPermitido}>
+                                  {permitido ? "Si" : "No"}
+                                </span>
+                              )}
                             </div>
                           );
                         })}

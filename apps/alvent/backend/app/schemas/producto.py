@@ -14,6 +14,7 @@ class ProductoCreate(BaseModel):
     color: Optional[str] = None
     sexo: Optional[str] = None
     foto: Optional[str] = None
+    atributos_extra: Optional[dict[str, str]] = Field(default_factory=dict)
 
 
 class ProductoOut(BaseModel):
@@ -29,5 +30,6 @@ class ProductoOut(BaseModel):
     costo: float
     stock: int
     foto: Optional[str] = None
+    atributos_extra: Optional[dict[str, str]] = Field(default_factory=dict)
 
     model_config = ConfigDict(from_attributes=True)

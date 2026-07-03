@@ -42,6 +42,8 @@ class ConfiguracionNegocio(Base):
     bloquear_caja_diferencia = Column(Boolean, default=True)
     requerir_autorizacion_cambios = Column(Boolean, default=True)
     historial_cambios = Column(Boolean, default=True)
+    permisos_roles_json = Column(Text, nullable=True)
+    productos_columnas_json = Column(Text, nullable=True)
 
     # Auditoría
     fecha_creacion = Column(DateTime, default=datetime.utcnow)

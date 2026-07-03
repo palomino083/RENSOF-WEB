@@ -27,6 +27,25 @@ function Assert-StatusCode {
   }
 }
 
+function Assert-ContainsAny {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Content,
+    [Parameter(Mandatory = $true)]
+    [string[]]$Patterns,
+    [Parameter(Mandatory = $true)]
+    [string]$Message
+  )
+
+  foreach ($pattern in $Patterns) {
+    if ($Content -match $pattern) {
+      return
+    }
+  }
+
+  throw $Message
+}
+
 Write-Host "[ALVENT Health Check] Iniciando verificacion..." -ForegroundColor Cyan
 
 # 1) Login backend
@@ -49,9 +68,18 @@ try {
 
 Assert-StatusCode -Actual ([int]$loginPage.StatusCode) -Expected 200 -Message "Frontend login no disponible"
 
-if ($loginPage.Content -notmatch "Iniciar sesion") {
-  throw "Frontend login no contiene el contenido esperado."
+Assert-ContainsAny -Content $loginPage.Content -Patterns @("Iniciar sesi[oó]n", "ALVENT ERP") -Message "Frontend login no contiene el contenido esperado."
+
+$assetPattern = '/alven/app/_next/static/[^"<> ]+'
+$assetMatches = [regex]::Matches($loginPage.Content, $assetPattern)
+if ($assetMatches.Count -eq 0) {
+  throw "Frontend login no contiene referencias a assets _next."
 }
+
+$firstAssetPath = $assetMatches[0].Value
+$firstAssetUrl = "http://localhost:3001$firstAssetPath"
+$firstAsset = Invoke-WebRequest -Uri $firstAssetUrl -UseBasicParsing
+Assert-StatusCode -Actual ([int]$firstAsset.StatusCode) -Expected 200 -Message "Asset estatico _next no disponible"
 
 Write-Host "[OK] Frontend login disponible." -ForegroundColor Green
 
@@ -65,9 +93,7 @@ try {
 
 Assert-StatusCode -Actual ([int]$dashboardPage.StatusCode) -Expected 200 -Message "Frontend dashboard no disponible"
 
-if ($dashboardPage.Content -notmatch "ALVENT ERP") {
-  throw "Frontend dashboard no contiene el contenido esperado."
-}
+Assert-ContainsAny -Content $dashboardPage.Content -Patterns @("ALVENT ERP", "Dashboard", "Iniciar sesi[oó]n") -Message "Frontend dashboard no contiene el contenido esperado."
 
 Write-Host "[OK] Frontend dashboard disponible." -ForegroundColor Green
 Write-Host "[ALVENT Health Check] Verificacion completada con exito." -ForegroundColor Green

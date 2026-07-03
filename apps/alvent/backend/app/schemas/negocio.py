@@ -1,4 +1,6 @@
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
+import re
+
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
 from typing import Optional
 from datetime import datetime
 
@@ -7,7 +9,7 @@ class NegocioBase(BaseModel):
     """Base para operaciones de negocio"""
     nombre: str = Field(..., min_length=3, max_length=255)
     tipo: str
-    plan: str = "BASICO"
+    plan: str = "GRATUITO"
     plan_gratuito_usuarios_limite: Optional[int] = None
     plan_gratuito_reportes_habilitado: bool = False
     plan_gratuito_reportes_limite: Optional[int] = None
@@ -40,6 +42,36 @@ class NegocioBase(BaseModel):
     moneda: str = "PEN"
     zona_horaria: str = "America/Lima"
     idioma: str = "es"
+
+    @field_validator("ruc", mode="before")
+    @classmethod
+    def validar_ruc(cls, value: Optional[str]):
+        if value is None:
+            return None
+
+        raw = str(value).strip()
+        if raw == "":
+            return None
+
+        if not re.fullmatch(r"\d{11}", raw):
+            raise ValueError("RUC debe tener exactamente 11 digitos numericos")
+
+        return raw
+
+    @field_validator("telefono", "whatsapp", mode="before")
+    @classmethod
+    def validar_celular(cls, value: Optional[str]):
+        if value is None:
+            return None
+
+        raw = str(value).strip()
+        if raw == "":
+            return None
+
+        if not re.fullmatch(r"\d{9}", raw):
+            raise ValueError("Celular debe tener exactamente 9 digitos numericos")
+
+        return raw
 
 
 class NegocioCreate(NegocioBase):
@@ -80,6 +112,36 @@ class NegocioUpdate(BaseModel):
     moneda: Optional[str] = None
     zona_horaria: Optional[str] = None
     idioma: Optional[str] = None
+
+    @field_validator("ruc", mode="before")
+    @classmethod
+    def validar_ruc(cls, value: Optional[str]):
+        if value is None:
+            return None
+
+        raw = str(value).strip()
+        if raw == "":
+            return None
+
+        if not re.fullmatch(r"\d{11}", raw):
+            raise ValueError("RUC debe tener exactamente 11 digitos numericos")
+
+        return raw
+
+    @field_validator("telefono", "whatsapp", mode="before")
+    @classmethod
+    def validar_celular(cls, value: Optional[str]):
+        if value is None:
+            return None
+
+        raw = str(value).strip()
+        if raw == "":
+            return None
+
+        if not re.fullmatch(r"\d{9}", raw):
+            raise ValueError("Celular debe tener exactamente 9 digitos numericos")
+
+        return raw
 
 
 class NegocioOut(NegocioBase):

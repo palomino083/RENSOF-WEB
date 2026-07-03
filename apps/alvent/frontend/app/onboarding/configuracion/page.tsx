@@ -5,6 +5,12 @@ import { api } from "@/services/api";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { appPath } from "@/utils/appPath";
 
+const sanitizarRuc = (value: string | null | undefined) =>
+  String(value || "").replace(/\D/g, "").slice(0, 11);
+
+const sanitizarCelular = (value: string | null | undefined) =>
+  String(value || "").replace(/\D/g, "").slice(0, 9);
+
 export default function ConfiguracionNegocioPage() {
   const [negocioId, setNegocioId] = useState<number | null>(null);
   const [negocio, setNegocio] = useState<any>(null);
@@ -29,7 +35,11 @@ export default function ConfiguracionNegocioPage() {
         api.get(`/negocios/${id}/configuracion`),
       ]);
       
-      setNegocio(resNegocio.data);
+      setNegocio({
+        ...resNegocio.data,
+        ruc: sanitizarRuc(resNegocio.data?.ruc),
+        telefono: sanitizarCelular(resNegocio.data?.telefono),
+      });
       setConfig(resConfig.data);
     } catch (err) {
       setError("Error cargando datos");
@@ -40,13 +50,29 @@ export default function ConfiguracionNegocioPage() {
 
   const actualizarNegocio = async () => {
     if (!negocio) return;
+
+    const rucSanitizado = sanitizarRuc(negocio.ruc);
+    const telefonoSanitizado = sanitizarCelular(negocio.telefono);
+    if (rucSanitizado && rucSanitizado.length !== 11) {
+      setError("El RUC debe tener exactamente 11 dígitos numéricos");
+      return;
+    }
+    if (telefonoSanitizado && telefonoSanitizado.length !== 9) {
+      setError("El celular debe tener exactamente 9 dígitos numéricos");
+      return;
+    }
     
     setSaving(true);
     setError("");
     setSuccess("");
     
     try {
-      const res = await api.put(`/negocios/${negocioId}`, negocio);
+      const payload = {
+        ...negocio,
+        ruc: rucSanitizado || undefined,
+        telefono: telefonoSanitizado || undefined,
+      };
+      const res = await api.put(`/negocios/${negocioId}`, payload);
       setNegocio(res.data);
       setSuccess("✅ Negocio actualizado correctamente");
     } catch (err: any) {
@@ -190,7 +216,11 @@ export default function ConfiguracionNegocioPage() {
                 </label>
                 <input
                   value={negocio.ruc || ""}
-                  onChange={(e) => setNegocio({ ...negocio, ruc: e.target.value })}
+                  onChange={(e) => setNegocio({ ...negocio, ruc: sanitizarRuc(e.target.value) })}
+                  inputMode="numeric"
+                  maxLength={11}
+                  pattern="[0-9]{11}"
+                  placeholder="11 dígitos"
                   style={{
                     width: "100%",
                     padding: "12px 16px",
@@ -200,6 +230,9 @@ export default function ConfiguracionNegocioPage() {
                     boxSizing: "border-box",
                   }}
                 />
+                {Boolean(negocio.ruc) && String(negocio.ruc).length !== 11 ? (
+                  <small style={{ color: "#b91c1c", fontWeight: 700 }}>RUC incompleto: deben ser 11 dígitos.</small>
+                ) : null}
               </div>
 
               <div>
@@ -228,7 +261,11 @@ export default function ConfiguracionNegocioPage() {
                 </label>
                 <input
                   value={negocio.telefono || ""}
-                  onChange={(e) => setNegocio({ ...negocio, telefono: e.target.value })}
+                  onChange={(e) => setNegocio({ ...negocio, telefono: sanitizarCelular(e.target.value) })}
+                  inputMode="numeric"
+                  maxLength={9}
+                  pattern="[0-9]{9}"
+                  placeholder="9 dígitos"
                   style={{
                     width: "100%",
                     padding: "12px 16px",
@@ -238,6 +275,9 @@ export default function ConfiguracionNegocioPage() {
                     boxSizing: "border-box",
                   }}
                 />
+                {Boolean(negocio.telefono) && String(negocio.telefono).length !== 9 ? (
+                  <small style={{ color: "#b91c1c", fontWeight: 700 }}>Celular incompleto: deben ser 9 dígitos.</small>
+                ) : null}
               </div>
 
               <div>

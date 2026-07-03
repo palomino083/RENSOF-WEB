@@ -71,11 +71,11 @@ PLAN_LABELS = {
 
 
 LEGACY_PLAN_ALIAS = {
-    "FREE": "BASICO",
+    "FREE": "GRATUITO",
 }
 
 
-def normalizar_plan(plan: str | None, default: str = "BASICO") -> str:
+def normalizar_plan(plan: str | None, default: str = "GRATUITO") -> str:
     valor = str(plan or default).upper().strip()
     valor = LEGACY_PLAN_ALIAS.get(valor, valor)
     if valor not in PLANES:
@@ -134,7 +134,7 @@ def _parse_catalogo_custom(raw_value: str | None) -> dict[str, dict]:
 
 
 def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None) -> PlanConfig:
-    codigo = normalizar_plan(plan or getattr(negocio, "plan", "BASICO"))
+    codigo = normalizar_plan(plan or getattr(negocio, "plan", "GRATUITO"))
     base = PLANES[codigo]
 
     if codigo == "GRATUITO":

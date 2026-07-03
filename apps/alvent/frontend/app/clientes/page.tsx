@@ -10,6 +10,12 @@ import Toolbar from "@/components/ui/Toolbar";
 import DataTable from "@/components/ui/DataTable";
 import styles from "./page.module.css";
 
+const sanitizarDni = (value: string | null | undefined) =>
+  String(value || "").replace(/\D/g, "").slice(0, 8);
+
+const sanitizarCelular = (value: string | null | undefined) =>
+  String(value || "").replace(/\D/g, "").slice(0, 9);
+
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [editId, setEditId] = useState<number | null>(null);
@@ -61,8 +67,8 @@ export default function ClientesPage() {
   const handleEdit = (c: Cliente) => {
     setEditId(c.id ?? null);
     setNombre(c.nombre);
-    setDni(c.dni);
-    setTelefono(c.telefono || "");
+    setDni(sanitizarDni(c.dni));
+    setTelefono(sanitizarCelular(c.telefono || ""));
     setEmail(c.email || "");
   };
 
@@ -73,6 +79,16 @@ export default function ClientesPage() {
     try {
       if (!nombre || !dni) {
         alert("Nombre y DNI obligatorios");
+        return;
+      }
+
+      if (dni.length !== 8) {
+        alert("El DNI debe tener exactamente 8 digitos numericos");
+        return;
+      }
+
+      if (telefono && telefono.length !== 9) {
+        alert("El celular debe tener exactamente 9 digitos numericos");
         return;
       }
 
@@ -163,15 +179,21 @@ export default function ClientesPage() {
                 <input
                   className="focus-ring"
                   value={dni}
-                  onChange={(e) => setDni(e.target.value)}
+                  onChange={(e) => setDni(sanitizarDni(e.target.value))}
                   placeholder="DNI"
+                  inputMode="numeric"
+                  maxLength={8}
                 />
+                {Boolean(dni) && dni.length !== 8 ? <small className={styles.errorHint}>DNI incompleto: deben ser 8 digitos.</small> : null}
                 <input
                   className="focus-ring"
                   value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
+                  onChange={(e) => setTelefono(sanitizarCelular(e.target.value))}
                   placeholder="Telefono"
+                  inputMode="numeric"
+                  maxLength={9}
                 />
+                {Boolean(telefono) && telefono.length !== 9 ? <small className={styles.errorHint}>Celular incompleto: deben ser 9 digitos.</small> : null}
                 <input
                   className="focus-ring"
                   value={email}
