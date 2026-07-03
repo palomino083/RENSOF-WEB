@@ -433,6 +433,96 @@ def _alvent_planes_catalogo_fallback_payload() -> dict[str, object]:
     }
 
 
+def _alvent_usuarios_fallback_payload() -> list[dict[str, object]]:
+    return [
+        {
+            "id": 1,
+            "nombres": "Administrador contingencia",
+            "usuario": "admin",
+            "dni": None,
+            "email": "admin@rensof.pe",
+            "rol": "ADMINISTRADOR",
+            "roles": ["ADMINISTRADOR"],
+            "activo": True,
+        }
+    ]
+
+
+def _alvent_usuario_created_fallback_payload(payload: dict[str, object]) -> dict[str, object]:
+    nombres = str(payload.get("nombres") or "Usuario contingencia").strip() or "Usuario contingencia"
+    usuario = str(payload.get("usuario") or "usuario.contingencia").strip() or "usuario.contingencia"
+    email = str(payload.get("email") or "usuario@rensof.pe").strip() or "usuario@rensof.pe"
+    roles_raw = payload.get("roles")
+    roles = [str(item).upper().strip() for item in roles_raw] if isinstance(roles_raw, list) else []
+    if not roles:
+        rol = str(payload.get("rol") or "CAJERO").upper().strip() or "CAJERO"
+        roles = [rol]
+
+    return {
+        "id": 0,
+        "nombres": nombres,
+        "usuario": usuario,
+        "dni": str(payload.get("dni") or "").strip() or None,
+        "email": email,
+        "rol": roles[0],
+        "roles": roles,
+        "activo": True,
+    }
+
+
+def _alvent_usuario_updated_fallback_payload(usuario_id: int, payload: dict[str, object]) -> dict[str, object]:
+    nombres = str(payload.get("nombres") or "Usuario actualizado").strip() or "Usuario actualizado"
+    usuario = str(payload.get("usuario") or f"usuario.{usuario_id}").strip() or f"usuario.{usuario_id}"
+    email = str(payload.get("email") or "usuario@rensof.pe").strip() or "usuario@rensof.pe"
+    roles_raw = payload.get("roles")
+    roles = [str(item).upper().strip() for item in roles_raw] if isinstance(roles_raw, list) else []
+    if not roles:
+        rol = str(payload.get("rol") or "CAJERO").upper().strip() or "CAJERO"
+        roles = [rol]
+
+    return {
+        "id": int(usuario_id),
+        "nombres": nombres,
+        "usuario": usuario,
+        "dni": str(payload.get("dni") or "").strip() or None,
+        "email": email,
+        "rol": roles[0],
+        "roles": roles,
+        "activo": bool(payload.get("activo", True)),
+    }
+
+
+def _alvent_usuario_toggle_estado_fallback_payload(usuario_id: int) -> dict[str, object]:
+    return {
+        "ok": True,
+        "mensaje": "Estado actualizado en modo contingencia",
+        "usuario_id": int(usuario_id),
+    }
+
+
+def _alvent_usuarios_permisos_fallback_payload() -> dict[str, object]:
+    return {
+        "negocio_id": 0,
+        "matriz": {
+            "ADMINISTRADOR": [
+                "Dashboard",
+                "POS",
+                "Ventas",
+                "Productos",
+                "Inventario",
+                "Clientes",
+                "Cajas",
+                "Reportes",
+                "Usuarios",
+                "Configuracion",
+            ],
+            "CAJERO": ["Dashboard", "POS", "Ventas", "Clientes"],
+            "VENDEDOR": ["Dashboard", "POS", "Ventas", "Clientes"],
+            "ALMACEN": ["Dashboard", "Productos", "Inventario"],
+        },
+    }
+
+
 def _alvent_ventas_fallback_payload() -> list[dict[str, object]]:
     return []
 
@@ -576,6 +666,9 @@ async def alven_app_root_proxy(request: Request) -> Response:
 async def alven_app_proxy(full_path: str, request: Request) -> Response:
     try:
         proxied_response = await _proxy_alvent_frontend_request(request, full_path)
+        full_path_normalized = full_path.strip("/").lower()
+        if full_path_normalized == "dashboard" and proxied_response.status_code == 429:
+            return _render_alvent_dashboard_fallback(request)
         if proxied_response.status_code < 500 and not _looks_like_render_loading_page(proxied_response):
             return proxied_response
     except httpx.RequestError:
@@ -762,6 +855,121 @@ async def alven_api_negocios_planes_catalogo_proxy_or_fallback(request: Request)
         pass
 
     return JSONResponse(_alvent_planes_catalogo_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/usuarios/",
+    methods=["GET", "POST", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_usuarios_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "usuarios/")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    if request.method == "POST":
+        payload: dict[str, object] = {}
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {}
+        return JSONResponse(_alvent_usuario_created_fallback_payload(payload), status_code=200)
+
+    return JSONResponse(_alvent_usuarios_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/usuarios/permisos-matriz",
+    methods=["GET", "PUT", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_usuarios_permisos_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "usuarios/permisos-matriz")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    fallback = _alvent_usuarios_permisos_fallback_payload()
+    if request.method == "PUT":
+        payload: dict[str, object] = {}
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {}
+        matriz = payload.get("matriz")
+        if isinstance(matriz, dict):
+            fallback["matriz"] = {
+                str(k): [str(item) for item in v] if isinstance(v, list) else []
+                for k, v in matriz.items()
+            }
+        response_payload = {
+            "ok": True,
+            "mensaje": "Matriz de permisos guardada en modo contingencia",
+            "negocio_id": fallback["negocio_id"],
+            "matriz": fallback["matriz"],
+        }
+        return JSONResponse(response_payload, status_code=200)
+
+    return JSONResponse(fallback, status_code=200)
+
+
+@router.api_route(
+    "/alven/api/usuarios/{usuario_id}",
+    methods=["PATCH", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_usuario_patch_proxy_or_fallback(usuario_id: int, request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, f"usuarios/{usuario_id}")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    payload: dict[str, object] = {}
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    return JSONResponse(_alvent_usuario_updated_fallback_payload(usuario_id, payload), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/usuarios/{usuario_id}/estado",
+    methods=["PATCH", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_usuario_estado_patch_proxy_or_fallback(usuario_id: int, request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, f"usuarios/{usuario_id}/estado")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    return JSONResponse(_alvent_usuario_toggle_estado_fallback_payload(usuario_id), status_code=200)
 
 
 @router.api_route(
