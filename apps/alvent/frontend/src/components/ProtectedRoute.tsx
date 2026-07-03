@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { tieneAcceso } from "@/utils/permisos";
+import { appPath } from "@/utils/appPath";
 
 export default function ProtectedRoute({
   children,
@@ -30,7 +31,7 @@ export default function ProtectedRoute({
     if (!usuario.rol) {
 
       window.location.href =
-        "/login";
+        appPath("login");
 
       return;
     }
@@ -54,7 +55,7 @@ export default function ProtectedRoute({
       );
 
       window.location.href =
-        "/dashboard";
+        appPath("dashboard");
     }
 
   }, [pathname]);

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { resetPassword } from "@/services/authService";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { appPath } from "@/utils/appPath";
 import styles from "./page.module.css";
 
 export default function ResetPasswordPage() {
@@ -47,7 +48,7 @@ export default function ResetPasswordPage() {
       setLoading(true);
       const res = await resetPassword(token, { password, confirmPassword });
       setSuccess(res.mensaje || "Contraseña actualizada correctamente");
-      setTimeout(() => router.push("/login"), 1200);
+      setTimeout(() => router.push(appPath("login")), 1200);
     } catch (err: any) {
       setError(getApiErrorMessage(err, "No se pudo actualizar la contraseña"));
     } finally {
@@ -85,7 +86,7 @@ export default function ResetPasswordPage() {
           </button>
         </form>
 
-        <Link href="/login" className={styles.backLink}>
+        <Link href={appPath("login")} className={styles.backLink}>
           Volver al login
         </Link>
       </section>

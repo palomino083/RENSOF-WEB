@@ -11,6 +11,7 @@ import { negocioService } from "@/services/negocioService";
 import { API_URL } from "@/services/api";
 import { generarComprobantePdfBlob } from "@/utils/comprobantePdf";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { appPath } from "@/utils/appPath";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -508,7 +509,7 @@ export default function PosPage() {
 
     if (!payload.usuario_id) {
       alert("Sesión inválida. Vuelve a iniciar sesión.");
-      router.push("/login");
+      router.push(appPath("login"));
       return;
     }
 
