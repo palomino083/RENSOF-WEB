@@ -310,7 +310,7 @@ export default function ConfiguracionPage() {
   const [freePlanBoost, setFreePlanBoost] = useState({
     usuarios_source_plan: "BASICO",
     habilitar_reportes: false,
-    reportes_source_plan: "LITE",
+    reportes_source_plan: "PRO",
     habilitar_backups: false,
     backups_source_plan: "PRO",
     usuarios_limite: 1 as number | null,
@@ -548,7 +548,7 @@ export default function ConfiguracionPage() {
       const data = await negocioService.getFreePlanPerks(negocioId);
 
       const inferirSourcePorLimite = (limite: number | null, habilitado: boolean, tipo: "reportes" | "backups" | "usuarios") => {
-        const candidatos = planCatalogo.length > 0 ? planCatalogo : [];
+        const candidatos = planCatalogo.filter((plan) => PLAN_BONDAD_SOURCES.includes(plan.codigo as (typeof PLAN_BONDAD_SOURCES)[number]));
         const match = candidatos.find((plan) => {
           if (tipo === "usuarios") return plan.usuarios_limite === limite;
           if (tipo === "reportes") return plan.reportes_habilitado === habilitado && plan.reportes_limite === limite;
@@ -586,7 +586,11 @@ export default function ConfiguracionPage() {
 
   const guardarMontosPlanes = async () => {
     const negocioId = getNegocioIdActivo();
-    if (!isSuperadmin || !negocioId) return;
+    if (!isSuperadmin) return;
+    if (!negocioId) {
+      setError("Selecciona un negocio para guardar montos");
+      return;
+    }
 
     try {
       setSavingPlanAmounts(true);
@@ -604,7 +608,11 @@ export default function ConfiguracionPage() {
 
   const guardarBondadesPlanGratuito = async () => {
     const negocioId = getNegocioIdActivo();
-    if (!isSuperadmin || !negocioId) return;
+    if (!isSuperadmin) return;
+    if (!negocioId) {
+      setError("Selecciona un negocio para guardar bondades");
+      return;
+    }
 
     try {
       setSavingFreePlanBoost(true);
@@ -636,7 +644,11 @@ export default function ConfiguracionPage() {
 
   const cambiarPlanNegocio = async (planCodigo: string) => {
     const negocioId = getNegocioIdActivo();
-    if (!isSuperadmin || !negocioId) return;
+    if (!isSuperadmin) return;
+    if (!negocioId) {
+      setError("Selecciona un negocio para aplicar cambios de plan");
+      return;
+    }
     if (normalizarPlan(planCodigo) === normalizarPlan(businessForm.plan)) return;
 
     try {
@@ -658,7 +670,8 @@ export default function ConfiguracionPage() {
   const datosPlanSimulado = planCatalogo.find((p) => p.codigo === normalizarPlan(planSimulado)) || null;
   const datosPlanActual = planCatalogo.find((p) => p.codigo === normalizarPlan(businessForm.plan)) || null;
   const planCatalogoVisible = planCatalogo.filter((p) => PLANES_VISIBLES_EN_SECCION.includes(p.codigo as (typeof PLANES_VISIBLES_EN_SECCION)[number]));
-  const planCatalogoCompleto = planCatalogo.length > 0 ? planCatalogo : planCatalogoVisible;
+  const planCatalogoBondades = planCatalogo.filter((p) => PLAN_BONDAD_SOURCES.includes(p.codigo as (typeof PLAN_BONDAD_SOURCES)[number]));
+  const planCatalogoBondadesVisible = planCatalogoBondades.length > 0 ? planCatalogoBondades : planCatalogoVisible;
   const datosPlanBaseGratuito = planCatalogo.find((p) => p.codigo === "GRATUITO") || null;
 
   const datosPlanGratuitoPromocional = {
@@ -835,6 +848,10 @@ export default function ConfiguracionPage() {
 
   const ejecutarAccionPlanEjecutiva = async () => {
     if (!planControlSeleccionadoData) return;
+    if ((planControlAccion === "aplicar" || planControlAccion === "guardar_monto") && !negocioActivoId) {
+      setError("Selecciona un negocio para ejecutar esta accion");
+      return;
+    }
     if (planControlAccion === "simular") {
       setPlanSimulado(planControlSeleccionadoData.codigo);
       return;
@@ -1730,7 +1747,7 @@ export default function ConfiguracionPage() {
                       type="button"
                       className={`${styles.planApplyMainBtn} focus-ring`}
                       onClick={() => void ejecutarAccionPlanEjecutiva()}
-                      disabled={!negocioActivoId || changingPlan || savingPlanAmounts}
+                      disabled={changingPlan || savingPlanAmounts}
                     >
                       Ejecutar accion
                     </button>
@@ -1785,7 +1802,7 @@ export default function ConfiguracionPage() {
                       type="button"
                       className={`${styles.saveBusinessBtn} focus-ring`}
                       onClick={() => void guardarMontosPlanes()}
-                      disabled={savingPlanAmounts || !negocioActivoId}
+                      disabled={savingPlanAmounts}
                     >
                       {savingPlanAmounts ? "Guardando..." : "Guardar montos"}
                     </button>
@@ -1839,7 +1856,7 @@ export default function ConfiguracionPage() {
                           }))
                         }
                       >
-                        {planCatalogoCompleto.map((plan) => (
+                        {planCatalogoBondadesVisible.map((plan) => (
                           <option key={`free-users-${plan.codigo}`} value={plan.codigo}>
                             {nombrePlan(plan.codigo)}
                           </option>
@@ -1873,7 +1890,7 @@ export default function ConfiguracionPage() {
                         }
                         disabled={!freePlanBoost.habilitar_reportes}
                       >
-                        {planCatalogoCompleto.map((plan) => (
+                        {planCatalogoBondadesVisible.map((plan) => (
                           <option key={`free-reports-${plan.codigo}`} value={plan.codigo}>
                             {nombrePlan(plan.codigo)}
                           </option>
@@ -1907,7 +1924,7 @@ export default function ConfiguracionPage() {
                         }
                         disabled={!freePlanBoost.habilitar_backups}
                       >
-                        {planCatalogoCompleto.map((plan) => (
+                        {planCatalogoBondadesVisible.map((plan) => (
                           <option key={`free-backups-${plan.codigo}`} value={plan.codigo}>
                             {nombrePlan(plan.codigo)}
                           </option>
@@ -1955,7 +1972,7 @@ export default function ConfiguracionPage() {
                       type="button"
                       className={`${styles.saveBusinessBtn} focus-ring`}
                       onClick={() => void guardarBondadesPlanGratuito()}
-                      disabled={savingFreePlanBoost || !negocioActivoId}
+                      disabled={savingFreePlanBoost}
                     >
                       {savingFreePlanBoost ? "Guardando..." : "Guardar bondades"}
                     </button>
