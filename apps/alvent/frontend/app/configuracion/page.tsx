@@ -47,8 +47,23 @@ const TIPO_NEGOCIO_LABELS: Record<string, string> = {
   otro: "Otro",
 };
 
+const TIPO_NEGOCIO_ALIAS: Record<string, string> = {
+  servicio_de_aplicativos: "servicio_aplicativos",
+  servicios_aplicativos: "servicio_aplicativos",
+  desarrollo_de_software: "desarrollo_software",
+};
+
+const normalizarTipoNegocio = (tipo?: string | null) => {
+  const base = String(tipo || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/-/g, "_");
+  return TIPO_NEGOCIO_ALIAS[base] || base;
+};
+
 const nombreTipoNegocio = (tipo?: string | null) => {
-  const key = String(tipo || "").trim().toLowerCase();
+  const key = normalizarTipoNegocio(tipo);
   return TIPO_NEGOCIO_LABELS[key] || (tipo ? String(tipo) : "No definido");
 };
 
@@ -400,9 +415,10 @@ export default function ConfiguracionPage() {
       const data = await negocioService.getById(negocioId);
       setNegocio(data);
       setLogoPreviewUrl(data.logo_url ? toAbsoluteUrl(data.logo_url) : "");
+      const tipoNormalizado = normalizarTipoNegocio(data.tipo);
       setBusinessForm({
         nombre: data.nombre || "",
-        tipo: data.tipo || "tienda",
+        tipo: TIPO_NEGOCIO_LABELS[tipoNormalizado] ? tipoNormalizado : "otro",
         plan: normalizarPlan(data.plan),
         descripcion: data.descripcion || "",
         ruc: sanitizarRuc(data.ruc),
@@ -1345,8 +1361,11 @@ export default function ConfiguracionPage() {
   const whatsappInvalido = Boolean(businessForm.whatsapp) && businessForm.whatsapp.length !== 9;
   const negociosObjetivoFiltrados = negociosDisponibles.filter((item) => {
     if (negocioTipoFiltro === "todos") return true;
-    return String(item.tipo || "").trim().toLowerCase() === negocioTipoFiltro;
+    return normalizarTipoNegocio(item.tipo) === negocioTipoFiltro;
   });
+  const negociosObjetivoOpciones = negociosObjetivoFiltrados.length > 0
+    ? negociosObjetivoFiltrados
+    : negociosDisponibles;
   const planSugeridoActivo = planSugerido
     ? normalizarPlan(planSugerido.codigo) === normalizarPlan(businessForm.plan)
     : false;
@@ -1452,7 +1471,7 @@ export default function ConfiguracionPage() {
                 {isSuperadmin ? (
                   <div className={styles.companyBlock}>
                     <div className={styles.formRow}>
-                      <label htmlFor="empresa-negocio-tipo-filtro">Tipo de negocio (filtro)</label>
+                      <label htmlFor="empresa-negocio-tipo-filtro">Filtrar empresas por tipo</label>
                       <select
                         id="empresa-negocio-tipo-filtro"
                         className={`${styles.negocioSelect} focus-ring`}
@@ -1470,16 +1489,18 @@ export default function ConfiguracionPage() {
                         id="empresa-negocio-objetivo"
                         className={`${styles.negocioSelect} focus-ring`}
                         value={negocioSeleccionadoId || ""}
-                        onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
-                        disabled={negociosObjetivoFiltrados.length === 0}
+                        onChange={(e) => setNegocioSeleccionadoId(parseNumero(e.target.value))}
+                        disabled={negociosObjetivoOpciones.length === 0}
                       >
                         <option value="">Selecciona empresa cliente</option>
-                        {negociosObjetivoFiltrados.map((item) => (
+                        {negociosObjetivoOpciones.map((item) => (
                           <option key={`empresa-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre} ({nombreTipoNegocio(item.tipo)})</option>
                         ))}
                       </select>
-                      {negociosObjetivoFiltrados.length === 0 ? (
+                      {negociosDisponibles.length === 0 ? (
                         <small className={styles.helperText}>No hay empresas cliente para el tipo seleccionado.</small>
+                      ) : (negocioTipoFiltro !== "todos" && negociosObjetivoFiltrados.length === 0) ? (
+                        <small className={styles.helperText}>No hubo coincidencias exactas para este tipo; se muestran todas las empresas disponibles.</small>
                       ) : null}
                       {!negocioActivoId ? (
                         <small className={styles.helperText}>Selecciona una empresa cliente para guardar cambios.</small>
@@ -1503,7 +1524,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-tipo">Tipo de negocio</label>
+                        <label htmlFor="empresa-tipo">Tipo de negocio de la empresa</label>
                         <select
                           id="empresa-tipo"
                           value={businessForm.tipo}
