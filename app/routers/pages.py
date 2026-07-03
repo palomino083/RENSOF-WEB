@@ -139,6 +139,10 @@ def _backend_origin_for_request(request: Request) -> str:
     return ALVENT_BACKEND_ORIGIN.rstrip("/")
 
 
+def _is_usable_upstream_response(status_code: int) -> bool:
+    return status_code < 500 and status_code != 429
+
+
 async def _proxy_request(
     request: Request,
     origin: str,
@@ -613,7 +617,7 @@ def alven(request: Request):
 async def alven_app_login(request: Request) -> Response:
     try:
         proxied_response = await _proxy_alvent_frontend_request(request, "login")
-        if proxied_response.status_code < 500 and not _looks_like_render_loading_page(proxied_response):
+        if _is_usable_upstream_response(proxied_response.status_code) and not _looks_like_render_loading_page(proxied_response):
             return proxied_response
     except httpx.RequestError:
         pass
@@ -651,11 +655,17 @@ def root_favicon_redirect() -> Response:
 )
 async def alven_app_root_proxy(request: Request) -> Response:
     try:
-        return await _proxy_alvent_frontend_request(request)
+        proxied_response = await _proxy_alvent_frontend_request(request)
+        if _is_usable_upstream_response(proxied_response.status_code) and not _looks_like_render_loading_page(proxied_response):
+            return proxied_response
+        if proxied_response.status_code == 429 and _is_html_navigation_request(request):
+            return _render_alvent_dashboard_fallback(request)
     except httpx.RequestError:
-        if not _is_html_navigation_request(request):
-            return _frontend_unavailable_response()
-        return RedirectResponse("/alven/app/dashboard", status_code=307)
+        pass
+
+    if not _is_html_navigation_request(request):
+        return _frontend_unavailable_response()
+    return _render_alvent_dashboard_fallback(request)
 
 
 @router.api_route(
@@ -669,7 +679,7 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
         full_path_normalized = full_path.strip("/").lower()
         if full_path_normalized == "dashboard" and proxied_response.status_code == 429:
             return _render_alvent_dashboard_fallback(request)
-        if proxied_response.status_code < 500 and not _looks_like_render_loading_page(proxied_response):
+        if _is_usable_upstream_response(proxied_response.status_code) and not _looks_like_render_loading_page(proxied_response):
             return proxied_response
     except httpx.RequestError:
         pass
@@ -691,7 +701,7 @@ async def alven_api_login_proxy_or_fallback(request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "auth/login")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -718,7 +728,7 @@ async def alven_api_dashboard_overview_proxy_or_fallback(request: Request) -> Re
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "dashboard/overview")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -735,7 +745,7 @@ async def alven_api_productos_proxy_or_fallback(request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "productos/")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -763,7 +773,7 @@ async def alven_api_productos_upload_proxy_or_fallback(request: Request) -> Resp
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "productos/upload")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -783,7 +793,7 @@ async def alven_api_productos_tabla_config_proxy_or_fallback(request: Request) -
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "productos/tabla-config")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -815,7 +825,7 @@ async def alven_api_ventas_proxy_or_fallback(request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "ventas/")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -832,7 +842,7 @@ async def alven_api_negocios_proxy_or_fallback(request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "negocios/")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -849,7 +859,7 @@ async def alven_api_negocios_planes_catalogo_proxy_or_fallback(request: Request)
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "negocios/planes/catalogo")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -866,7 +876,7 @@ async def alven_api_usuarios_proxy_or_fallback(request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "usuarios/")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -894,7 +904,7 @@ async def alven_api_usuarios_permisos_proxy_or_fallback(request: Request) -> Res
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "usuarios/permisos-matriz")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -935,7 +945,7 @@ async def alven_api_usuario_patch_proxy_or_fallback(usuario_id: int, request: Re
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, f"usuarios/{usuario_id}")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -961,7 +971,7 @@ async def alven_api_usuario_estado_patch_proxy_or_fallback(usuario_id: int, requ
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, f"usuarios/{usuario_id}/estado")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -981,7 +991,7 @@ async def alven_api_ventas_resumen_proxy_or_fallback(request: Request) -> Respon
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "ventas/resumen")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
@@ -998,7 +1008,7 @@ async def alven_api_ventas_reporte_proxy_or_fallback(request: Request) -> Respon
     backend_origin = _backend_origin_for_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "ventas/reporte/ganancias")
-        if proxied.status_code < 500:
+        if _is_usable_upstream_response(proxied.status_code):
             return proxied
     except httpx.RequestError:
         pass
