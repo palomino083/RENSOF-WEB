@@ -658,6 +658,7 @@ export default function ConfiguracionPage() {
   const datosPlanSimulado = planCatalogo.find((p) => p.codigo === normalizarPlan(planSimulado)) || null;
   const datosPlanActual = planCatalogo.find((p) => p.codigo === normalizarPlan(businessForm.plan)) || null;
   const planCatalogoVisible = planCatalogo.filter((p) => PLANES_VISIBLES_EN_SECCION.includes(p.codigo as (typeof PLANES_VISIBLES_EN_SECCION)[number]));
+  const planCatalogoCompleto = planCatalogo.length > 0 ? planCatalogo : planCatalogoVisible;
   const datosPlanBaseGratuito = planCatalogo.find((p) => p.codigo === "GRATUITO") || null;
 
   const datosPlanGratuitoPromocional = {
@@ -1748,6 +1749,49 @@ export default function ConfiguracionPage() {
                   ) : null}
                 </div>
 
+                <section className={styles.planAmountsBox}>
+                  <div>
+                    <h4>Montos editables por plan</h4>
+                    <p>Centraliza la edicion de precios antes de guardar los cambios en todos los planes.</p>
+                  </div>
+
+                  <div className={styles.planAmountsGrid}>
+                    {planCatalogoVisible.map((plan) => {
+                      const planAmountKey = PLAN_PRICE_MAP[plan.codigo] as keyof typeof planAmounts;
+                      return (
+                        <label key={`amount-${plan.codigo}`} className={styles.formRow}>
+                          <span>{nombrePlan(plan.codigo)}</span>
+                          <input
+                            type="number"
+                            min={0}
+                            step="1"
+                            className="focus-ring"
+                            value={planAmounts[planAmountKey]}
+                            onChange={(e) =>
+                              setPlanAmounts((prev) => ({
+                                ...prev,
+                                [planAmountKey]: Number(e.target.value || 0),
+                              }))
+                            }
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  <div className={styles.freePlanBoostQuickActions}>
+                    <span>Guardar todo el catalogo de montos:</span>
+                    <button
+                      type="button"
+                      className={`${styles.saveBusinessBtn} focus-ring`}
+                      onClick={() => void guardarMontosPlanes()}
+                      disabled={savingPlanAmounts || !negocioActivoId}
+                    >
+                      {savingPlanAmounts ? "Guardando..." : "Guardar montos"}
+                    </button>
+                  </div>
+                </section>
+
                 <div className={styles.catalogGrid}>
                   {planCatalogoVisible.map((plan) => {
                     const activo = normalizarPlan(businessForm.plan) === plan.codigo;
@@ -1853,6 +1897,150 @@ export default function ConfiguracionPage() {
                     );
                   })}
                 </div>
+
+                <section id="cfg-plan-bondades-gratuito" className={styles.freePlanBoostBox}>
+                  <div>
+                    <h4>Edicion de bondades gratuitas</h4>
+                    <p>
+                      Ajusta desde que plan se heredan los limites del plan Gratuito para usuarios, reportes y backups.
+                    </p>
+                  </div>
+
+                  <div className={styles.freePlanBoostGrid}>
+                    <label className={styles.formRow}>
+                      <span>Usuarios desde plan</span>
+                      <select
+                        className="focus-ring"
+                        value={freePlanBoost.usuarios_source_plan}
+                        onChange={(e) =>
+                          setFreePlanBoost((prev) => ({
+                            ...prev,
+                            usuarios_source_plan: e.target.value,
+                          }))
+                        }
+                      >
+                        {planCatalogoCompleto.map((plan) => (
+                          <option key={`free-users-${plan.codigo}`} value={plan.codigo}>
+                            {nombrePlan(plan.codigo)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className={styles.formRow}>
+                      <span>Reportes gratuitos</span>
+                      <label className={styles.inlineCheck}>
+                        <input
+                          type="checkbox"
+                          checked={freePlanBoost.habilitar_reportes}
+                          onChange={(e) =>
+                            setFreePlanBoost((prev) => ({
+                              ...prev,
+                              habilitar_reportes: e.target.checked,
+                            }))
+                          }
+                        />
+                        Habilitar reportes
+                      </label>
+                      <select
+                        className="focus-ring"
+                        value={freePlanBoost.reportes_source_plan}
+                        onChange={(e) =>
+                          setFreePlanBoost((prev) => ({
+                            ...prev,
+                            reportes_source_plan: e.target.value,
+                          }))
+                        }
+                        disabled={!freePlanBoost.habilitar_reportes}
+                      >
+                        {planCatalogoCompleto.map((plan) => (
+                          <option key={`free-reports-${plan.codigo}`} value={plan.codigo}>
+                            {nombrePlan(plan.codigo)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className={styles.formRow}>
+                      <span>Backups gratuitos</span>
+                      <label className={styles.inlineCheck}>
+                        <input
+                          type="checkbox"
+                          checked={freePlanBoost.habilitar_backups}
+                          onChange={(e) =>
+                            setFreePlanBoost((prev) => ({
+                              ...prev,
+                              habilitar_backups: e.target.checked,
+                            }))
+                          }
+                        />
+                        Habilitar backups
+                      </label>
+                      <select
+                        className="focus-ring"
+                        value={freePlanBoost.backups_source_plan}
+                        onChange={(e) =>
+                          setFreePlanBoost((prev) => ({
+                            ...prev,
+                            backups_source_plan: e.target.value,
+                          }))
+                        }
+                        disabled={!freePlanBoost.habilitar_backups}
+                      >
+                        {planCatalogoCompleto.map((plan) => (
+                          <option key={`free-backups-${plan.codigo}`} value={plan.codigo}>
+                            {nombrePlan(plan.codigo)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className={styles.freePlanBoostStats}>
+                    <span>
+                      Usuarios: <strong>{formatLimite(freePlanBoost.usuarios_limite)}</strong>
+                    </span>
+                    <span>
+                      Reportes: <strong>{freePlanBoost.habilitar_reportes ? formatLimite(freePlanBoost.reportes_limite) : "No"}</strong>
+                    </span>
+                    <span>
+                      Backups: <strong>{freePlanBoost.habilitar_backups ? formatLimite(freePlanBoost.backups_limite) : "No"}</strong>
+                    </span>
+                  </div>
+
+                  <div className={styles.freePlanBoostQuickActions}>
+                    <span>Acciones rapidas:</span>
+                    <button
+                      type="button"
+                      className={`${styles.actionBtn} focus-ring`}
+                      onClick={() => copiarBondadesDesdePlan("BASICO")}
+                    >
+                      Copiar de Basico
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.actionBtn} focus-ring`}
+                      onClick={() => copiarBondadesDesdePlan("PRO")}
+                    >
+                      Copiar de Pro
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.actionBtn} focus-ring`}
+                      onClick={() => copiarBondadesDesdePlan("PREMIUM")}
+                    >
+                      Copiar de Premium
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.saveBusinessBtn} focus-ring`}
+                      onClick={() => void guardarBondadesPlanGratuito()}
+                      disabled={savingFreePlanBoost || !negocioActivoId}
+                    >
+                      {savingFreePlanBoost ? "Guardando..." : "Guardar bondades"}
+                    </button>
+                  </div>
+                </section>
               </>
             ) : (
               <div className={styles.clientPlanRequestBox}>
