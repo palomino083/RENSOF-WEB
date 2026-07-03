@@ -12,6 +12,9 @@ export const api = axios.create({
   },
 });
 
+const shouldLogNetworkDebug =
+  typeof window !== "undefined" && process.env.NODE_ENV !== "production";
+
 function getLocalFallbackBaseUrls(currentBaseURL?: string): string[] {
   const candidates = [
     "/alven/api",
@@ -80,7 +83,7 @@ api.interceptors.response.use(
         config.__networkRetryIndex = retryIndex + 1;
         config.baseURL = nextBaseURL;
 
-        if (typeof window !== "undefined") {
+        if (shouldLogNetworkDebug) {
           console.warn("AXIOS NETWORK RETRY:", {
             from: currentBaseURL,
             to: nextBaseURL,
@@ -178,13 +181,15 @@ api.interceptors.response.use(
       }
     }
 
-    console.log("AXIOS ERROR:", {
-      code: error.code,
-      message: error.message,
-      url: error.config?.url,
-      status: error.response?.status,
-      response: error.response?.data,
-    });
+    if (shouldLogNetworkDebug) {
+      console.log("AXIOS ERROR:", {
+        code: error.code,
+        message: error.message,
+        url: error.config?.url,
+        status: error.response?.status,
+        response: error.response?.data,
+      });
+    }
 
     return Promise.reject(error);
   }

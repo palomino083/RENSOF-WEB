@@ -3,6 +3,9 @@ $ErrorActionPreference = "Stop"
 
 $backendLoginUrl = "http://127.0.0.1:8000/alven/api/auth/login"
 $backendOverviewUrl = "http://127.0.0.1:8000/alven/api/dashboard/overview"
+$backendProductosUrl = "http://127.0.0.1:8000/alven/api/productos/"
+$backendVentasUrl = "http://127.0.0.1:8000/alven/api/ventas/"
+$backendVentasResumenUrl = "http://127.0.0.1:8000/alven/api/ventas/resumen"
 $frontendLoginUrl = "http://127.0.0.1:8000/alven/app/login"
 $frontendDashboardUrl = "http://127.0.0.1:8000/alven/app/dashboard"
 $repoRoot = Split-Path -Path $PSScriptRoot -Parent
@@ -97,6 +100,32 @@ if ($null -eq $overviewResponse.kpis) {
 }
 
 Write-Host "[OK] Backend dashboard/overview responde correctamente." -ForegroundColor Green
+
+# 1c) Endpoints de lista usados por frontend (productos/ventas)
+$authHeaders = @{ Authorization = "Bearer $($loginResponse.access_token)" }
+
+$productosResponse = Invoke-WithRetry -Message "Endpoint /productos/ no disponible aun" -Action {
+  Invoke-RestMethod -Method Get -Uri $backendProductosUrl -Headers $authHeaders
+}
+if (-not ($productosResponse -is [System.Array])) {
+  throw "Endpoint /productos/ responde con tipo inesperado (se esperaba lista)."
+}
+
+$ventasResponse = Invoke-WithRetry -Message "Endpoint /ventas/ no disponible aun" -Action {
+  Invoke-RestMethod -Method Get -Uri $backendVentasUrl -Headers $authHeaders
+}
+if (-not ($ventasResponse -is [System.Array])) {
+  throw "Endpoint /ventas/ responde con tipo inesperado (se esperaba lista)."
+}
+
+$ventasResumenResponse = Invoke-WithRetry -Message "Endpoint /ventas/resumen no disponible aun" -Action {
+  Invoke-RestMethod -Method Get -Uri $backendVentasResumenUrl -Headers $authHeaders
+}
+if ($null -eq $ventasResumenResponse.hoy -or $null -eq $ventasResumenResponse.mes) {
+  throw "Endpoint /ventas/resumen responde sin estructura esperada."
+}
+
+Write-Host "[OK] Endpoints /productos/ y /ventas/ responden correctamente." -ForegroundColor Green
 
 # 2) Login page frontend
 $loginPage = Invoke-WithRetry -Message "Frontend login no disponible aun" -Action {

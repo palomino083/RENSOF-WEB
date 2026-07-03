@@ -5,9 +5,29 @@ import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
+import PlanVisualCards from "@/features/planes/components/PlanVisualCards";
+import {
+  formatLimite,
+  PLANES_VISIBLES_EN_SECCION,
+  PLAN_PRICE_MAP,
+  PLAN_VISUAL_META,
+  normalizarPlan,
+} from "@/features/planes/visualNarrative";
+import { negocioService, type Negocio } from "@/services/negocioService";
 import { finanzasService, type CierreMensual, type GastoOperativo, type IngresoPlan } from "@/services/finanzasService";
 import { getApiErrorMessage } from "@/utils/apiError";
+import { appPath } from "@/utils/appPath";
 import styles from "./page.module.css";
+
+type PlanCatalogItem = {
+  codigo: string;
+  nombre: string;
+  usuarios_limite: number | null;
+  reportes_habilitado: boolean;
+  reportes_limite: number | null;
+  backups_habilitado: boolean;
+  backups_limite: number | null;
+};
 
 const periodoActual = () => {
   const hoy = new Date();
@@ -26,6 +46,17 @@ export default function FinanzasPage() {
   const [categorias, setCategorias] = useState<string[]>([]);
   const [cierres, setCierres] = useState<CierreMensual[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [negocios, setNegocios] = useState<Negocio[]>([]);
+  const [negocioObjetivoId, setNegocioObjetivoId] = useState<number>(0);
+  const [planCatalogo, setPlanCatalogo] = useState<PlanCatalogItem[]>([]);
+  const [planAmounts, setPlanAmounts] = useState({
+    gratuito: 0,
+    prueba: 15,
+    basico: 20,
+    lite: 35,
+    pro: 45,
+    premium: 65,
+  });
 
   const [form, setForm] = useState({
     categoria: "Operaciones",
@@ -56,9 +87,43 @@ export default function FinanzasPage() {
     }
   };
 
+  const cargarPlanes = async (negocioId: number) => {
+    try {
+      const [catalogo, montos] = await Promise.all([
+        negocioService.getPlanCatalog(),
+        negocioId ? negocioService.getPlanAmounts(negocioId) : Promise.resolve(null),
+      ]);
+
+      setPlanCatalogo(Array.isArray(catalogo.planes) ? catalogo.planes : []);
+      if (montos?.montos) {
+        setPlanAmounts(montos.montos);
+      }
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo cargar narrativa de planes"));
+    }
+  };
+
   useEffect(() => {
     void cargarTodo(periodo);
   }, [periodo]);
+
+  useEffect(() => {
+    const initPlanes = async () => {
+      try {
+        const lista = await negocioService.list();
+        setNegocios(Array.isArray(lista) ? lista : []);
+        const fallback = Number(lista?.[0]?.id || 0);
+        setNegocioObjetivoId((prev) => prev || fallback);
+      } catch {
+        setNegocios([]);
+      }
+    };
+    void initPlanes();
+  }, []);
+
+  useEffect(() => {
+    void cargarPlanes(negocioObjetivoId);
+  }, [negocioObjetivoId]);
 
   const limpiarFormulario = () => {
     setForm({
@@ -172,6 +237,42 @@ export default function FinanzasPage() {
   const totalGastos = useMemo(() => gastos.reduce((acc, row) => acc + Number(row.monto || 0), 0), [gastos]);
   const utilidad = totalIngresos - totalGastos;
 
+  const planVisualCards = useMemo(() => {
+    return planCatalogo
+      .filter((plan) => PLANES_VISIBLES_EN_SECCION.includes(normalizarPlan(plan.codigo) as (typeof PLANES_VISIBLES_EN_SECCION)[number]))
+      .map((plan) => {
+        const codigo = normalizarPlan(plan.codigo);
+        const meta = PLAN_VISUAL_META[codigo] || {
+          subtitulo: "Alternativa configurable",
+          lema: "Plan editable desde el panel propietario",
+          accentClass: "pro" as const,
+        };
+        const amountKey = PLAN_PRICE_MAP[codigo] as keyof typeof planAmounts;
+        const precio = amountKey ? Number(planAmounts[amountKey] || 0) : 0;
+
+        return {
+          key: codigo,
+          titulo: `Plan ${plan.nombre}`,
+          subtitulo: meta.subtitulo,
+          accentClass: meta.accentClass,
+          lema: meta.lema,
+          precio: `S/${precio.toFixed(0)}`,
+          beneficios: [
+            { icon: "user" as const, text: `Usuarios: ${formatLimite(plan.usuarios_limite)}` },
+            {
+              icon: "chart" as const,
+              text: plan.reportes_habilitado ? `Reportes: ${formatLimite(plan.reportes_limite)}` : "Reportes: no incluidos",
+            },
+            {
+              icon: "shield" as const,
+              text: plan.backups_habilitado ? `Backups: ${formatLimite(plan.backups_limite)}` : "Backups: no incluidos",
+            },
+            { icon: "briefcase" as const, text: "Escalable por negocio" },
+          ],
+        };
+      });
+  }, [planCatalogo, planAmounts]);
+
   return (
     <ProtectedRoute>
       <div className="app-layout">
@@ -221,6 +322,40 @@ export default function FinanzasPage() {
               <span>Resultado</span>
               <strong>S/{utilidad.toFixed(2)}</strong>
             </article>
+          </section>
+
+          <section className={styles.card}>
+            <Toolbar title="Narrativa dinámica de planes" right={<StatusBadge text="Unificado con Configuración" variant="info" />} />
+            <p>
+              Alternativas comerciales conectadas al catálogo real y montos editables. El propietario del sistema ajusta capacidad y precio desde Configuración.
+            </p>
+
+            <div className={styles.periodRow}>
+              <label className={styles.selectorInline}>
+                Empresa objetivo para lectura de montos
+                <select
+                  value={negocioObjetivoId || ""}
+                  onChange={(e) => setNegocioObjetivoId(Number(e.target.value || 0))}
+                  className="focus-ring"
+                >
+                  <option value="">Seleccionar empresa</option>
+                  {negocios.map((n) => (
+                    <option key={n.id} value={n.id}>{n.id} - {n.nombre}</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className={`${styles.actionBtn} focus-ring`}
+                onClick={() => {
+                  window.location.href = appPath("configuracion");
+                }}
+              >
+                Ir a Configuración de planes
+              </button>
+            </div>
+
+            <PlanVisualCards cards={planVisualCards} />
           </section>
 
           <section className={styles.card}>

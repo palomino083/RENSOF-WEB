@@ -19,6 +19,23 @@ import os
 router = APIRouter(prefix="/productos", tags=["Productos"])
 
 TIPOS_NEGOCIO_BASE = {"tienda", "restaurante", "farmacia", "supermercado", "otro"}
+CORE_COLUMN_KEYS = {
+    "foto",
+    "codigo",
+    "nombre",
+    "categoria",
+    "marca",
+    "talla",
+    "color",
+    "sexo",
+    "costo",
+    "precio",
+    "utilidad",
+    "margen",
+    "stock",
+    "estado",
+    "acciones",
+}
 
 
 def _obtener_negocio_id(current_user: dict) -> int:
@@ -83,24 +100,42 @@ def _normalizar_tipos_custom(payload: list | None) -> list[str]:
     return output
 
 
-def _leer_config_tabla(raw: str) -> tuple[list[dict[str, str]], list[str]]:
+def _normalizar_columnas_visibles(payload: list | None, columnas_custom: list[dict[str, str]]) -> list[str]:
+    items = payload if isinstance(payload, list) else []
+    custom_tokens = {f"custom:{item['key']}" for item in columnas_custom if item.get("key")}
+    allowed = CORE_COLUMN_KEYS.union(custom_tokens)
+    output: list[str] = []
+    seen: set[str] = set()
+
+    for item in items:
+        token = str(item or "").strip().lower()
+        if not token or token in seen or token not in allowed:
+            continue
+        seen.add(token)
+        output.append(token)
+
+    return output
+
+
+def _leer_config_tabla(raw: str) -> tuple[list[dict[str, str]], list[str], list[str]]:
     if not raw:
-        return [], []
+        return [], [], []
 
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
-        return [], []
+        return [], [], []
 
     if isinstance(parsed, list):
-        return _normalizar_columnas_custom(parsed), []
+        return _normalizar_columnas_custom(parsed), [], []
 
     if isinstance(parsed, dict):
         columnas = _normalizar_columnas_custom(parsed.get("columnas_custom"))
         tipos = _normalizar_tipos_custom(parsed.get("tipos_custom"))
-        return columnas, tipos
+        visibles = _normalizar_columnas_visibles(parsed.get("columnas_visibles"), columnas)
+        return columnas, tipos, visibles
 
-    return [], []
+    return [], [], []
 
 
 def _obtener_o_crear_config(db: Session, negocio_id: int) -> ConfiguracionNegocio:
@@ -126,7 +161,7 @@ def get_tabla_productos_config(
 
     config = _obtener_o_crear_config(db, negocio_id)
     raw = str(getattr(config, "productos_columnas_json", "") or "").strip()
-    columnas_custom, tipos_custom = _leer_config_tabla(raw)
+    columnas_custom, tipos_custom, columnas_visibles = _leer_config_tabla(raw)
 
     tipo_negocio_actual = _normalizar_tipo_negocio(getattr(negocio, "tipo", ""))
     if tipo_negocio_actual and tipo_negocio_actual not in TIPOS_NEGOCIO_BASE and tipo_negocio_actual not in tipos_custom:
@@ -137,6 +172,7 @@ def get_tabla_productos_config(
         "tipo_negocio": tipo_negocio_actual,
         "columnas_custom": columnas_custom,
         "tipos_custom": tipos_custom,
+        "columnas_visibles": columnas_visibles,
     }
 
 
@@ -153,7 +189,7 @@ def update_tabla_productos_config(
 
     config = _obtener_o_crear_config(db, negocio_id)
     raw = str(getattr(config, "productos_columnas_json", "") or "").strip()
-    _, tipos_existentes = _leer_config_tabla(raw)
+    columnas_previas, tipos_existentes, columnas_visibles_previas = _leer_config_tabla(raw)
 
     tipo_negocio = _normalizar_tipo_negocio(payload.get("tipo_negocio"))
     tipos_custom = _normalizar_tipos_custom(payload.get("tipos_custom"))
@@ -167,11 +203,17 @@ def update_tabla_productos_config(
             tipos_custom.append(tipo_negocio)
         negocio.tipo = tipo_negocio
 
-    columnas_custom = _normalizar_columnas_custom(payload.get("columnas_custom"))
+    columnas_custom_raw = payload.get("columnas_custom")
+    columnas_custom = _normalizar_columnas_custom(columnas_custom_raw if columnas_custom_raw is not None else columnas_previas)
+    columnas_visibles = _normalizar_columnas_visibles(
+        payload.get("columnas_visibles") if payload.get("columnas_visibles") is not None else columnas_visibles_previas,
+        columnas_custom,
+    )
     config.productos_columnas_json = json.dumps(
         {
             "columnas_custom": columnas_custom,
             "tipos_custom": tipos_custom,
+            "columnas_visibles": columnas_visibles,
         },
         ensure_ascii=False,
     )
@@ -185,6 +227,7 @@ def update_tabla_productos_config(
         "tipo_negocio": _normalizar_tipo_negocio(getattr(negocio, "tipo", "")),
         "columnas_custom": columnas_custom,
         "tipos_custom": tipos_custom,
+        "columnas_visibles": columnas_visibles,
     }
 
 # ======================

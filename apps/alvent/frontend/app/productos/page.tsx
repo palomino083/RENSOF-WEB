@@ -38,6 +38,23 @@ type ColumnaCustom = {
 };
 
 type ColumnaPresetKey = "categoria" | "marca" | "talla" | "color" | "sexo";
+type ColumnaCoreKey =
+  | "foto"
+  | "codigo"
+  | "nombre"
+  | "costo"
+  | "precio"
+  | "utilidad"
+  | "margen"
+  | "stock"
+  | "estado"
+  | "acciones";
+
+type TableColumn = {
+  key: string;
+  label: string;
+  locked?: boolean;
+};
 
 type TipoNegocio = "tienda" | "restaurante" | "farmacia" | "supermercado" | "otro";
 
@@ -64,6 +81,22 @@ const LABEL_COLUMNA: Record<ColumnaPresetKey, string> = {
   color: "Color",
   sexo: "Sexo",
 };
+
+const CORE_COLUMNS_BEFORE: Array<{ key: ColumnaCoreKey; label: string; locked?: boolean }> = [
+  { key: "foto", label: "Foto", locked: true },
+  { key: "codigo", label: "Codigo", locked: true },
+  { key: "nombre", label: "Nombre", locked: true },
+];
+
+const CORE_COLUMNS_AFTER: Array<{ key: ColumnaCoreKey; label: string; locked?: boolean }> = [
+  { key: "costo", label: "Costo" },
+  { key: "precio", label: "Precio" },
+  { key: "utilidad", label: "Utilidad" },
+  { key: "margen", label: "Margen" },
+  { key: "stock", label: "Stock" },
+  { key: "estado", label: "Estado" },
+  { key: "acciones", label: "Acciones", locked: true },
+];
 
 type FormProducto = {
   codigo: string;
@@ -93,9 +126,9 @@ export default function Productos() {
   const [newTipoNegocio, setNewTipoNegocio] = useState("");
   const [savingTableConfig, setSavingTableConfig] = useState(false);
   const [columnasCustom, setColumnasCustom] = useState<ColumnaCustom[]>([]);
+  const [columnasVisibles, setColumnasVisibles] = useState<string[]>([]);
   const [newColumnLabel, setNewColumnLabel] = useState("");
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
-  const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState<FormProducto>({
     codigo: "",
@@ -139,6 +172,40 @@ export default function Productos() {
     return COLUMNAS_POR_TIPO[tipo] || COLUMNAS_POR_TIPO.otro;
   }, [tipoNegocio]);
 
+  const columnasDisponibles = useMemo<TableColumn[]>(() => {
+    const preset = columnasPresetActivas.map((key) => ({ key, label: LABEL_COLUMNA[key] }));
+    const custom = columnasCustom.map((col) => ({ key: `custom:${col.key}`, label: col.label }));
+    return [...CORE_COLUMNS_BEFORE, ...preset, ...custom, ...CORE_COLUMNS_AFTER];
+  }, [columnasPresetActivas, columnasCustom]);
+
+  const columnasDisponiblesMap = useMemo(() => {
+    const map = new Map<string, TableColumn>();
+    columnasDisponibles.forEach((col) => map.set(col.key, col));
+    return map;
+  }, [columnasDisponibles]);
+
+  const columnasTabla = useMemo<TableColumn[]>(() => {
+    const requested = columnasVisibles.length > 0 ? columnasVisibles : columnasDisponibles.map((c) => c.key);
+    const seen = new Set<string>();
+    const ordered: TableColumn[] = [];
+
+    requested.forEach((key) => {
+      const col = columnasDisponiblesMap.get(key);
+      if (!col || seen.has(key)) return;
+      seen.add(key);
+      ordered.push(col);
+    });
+
+    columnasDisponibles.forEach((col) => {
+      if (!seen.has(col.key)) {
+        seen.add(col.key);
+        ordered.push(col);
+      }
+    });
+
+    return ordered;
+  }, [columnasVisibles, columnasDisponibles, columnasDisponiblesMap]);
+
   const allTiposOptions = useMemo(() => {
     const base = TIPOS_NEGOCIO_OPTIONS.map((item) => ({ value: item.value, label: item.label }));
     const custom = tiposCustom
@@ -159,16 +226,19 @@ export default function Productos() {
       const tipoPayload = (next?.tipo ?? tipoNegocio) || "";
       const columnasPayload = next?.columnas ?? columnasCustom;
       const tiposPayload = next?.tipos ?? tiposCustom;
+      const visiblesPayload = columnasVisibles;
 
       const resp = await productosService.updateTableConfig({
         tipo_negocio: tipoPayload || undefined,
         columnas_custom: columnasPayload,
         tipos_custom: tiposPayload,
+        columnas_visibles: visiblesPayload,
       });
 
       setTipoNegocio(String(resp.tipo_negocio || ""));
       setColumnasCustom(Array.isArray(resp.columnas_custom) ? resp.columnas_custom : []);
       setTiposCustom(Array.isArray(resp.tipos_custom) ? resp.tipos_custom : []);
+      setColumnasVisibles(Array.isArray(resp.columnas_visibles) ? resp.columnas_visibles : []);
       setSuccess(resp.mensaje || "Configuracion de tabla guardada");
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo guardar la configuracion de tabla"));
@@ -233,10 +303,12 @@ export default function Productos() {
       setTipoNegocio(String(cfg?.tipo_negocio || ""));
       setColumnasCustom(Array.isArray(cfg?.columnas_custom) ? cfg.columnas_custom : []);
       setTiposCustom(Array.isArray(cfg?.tipos_custom) ? cfg.tipos_custom : []);
+      setColumnasVisibles(Array.isArray(cfg?.columnas_visibles) ? cfg.columnas_visibles : []);
     } catch {
       setTipoNegocio("");
       setColumnasCustom([]);
       setTiposCustom([]);
+      setColumnasVisibles([]);
     }
   };
 
@@ -414,6 +486,7 @@ export default function Productos() {
   const removerColumnaCustom = (key: string) => {
     const nextColumns = columnasCustom.filter((item) => item.key !== key);
     setColumnasCustom(nextColumns);
+    setColumnasVisibles((prev) => prev.filter((item) => item !== `custom:${key}`));
     setForm((prev) => {
       const nextExtra = { ...(prev.atributos_extra || {}) };
       delete nextExtra[key];
@@ -421,6 +494,34 @@ export default function Productos() {
         ...prev,
         atributos_extra: nextExtra,
       };
+    });
+  };
+
+  const toggleColumnaVisible = (key: string) => {
+    const columna = columnasDisponiblesMap.get(key);
+    if (columna?.locked) return;
+
+    setColumnasVisibles((prev) => {
+      const base = prev.length > 0 ? [...prev] : columnasDisponibles.map((c) => c.key);
+      if (base.includes(key)) {
+        return base.filter((item) => item !== key);
+      }
+      return [...base, key];
+    });
+  };
+
+  const moverColumna = (key: string, direction: -1 | 1) => {
+    setColumnasVisibles((prev) => {
+      const base = prev.length > 0 ? [...prev] : columnasDisponibles.map((c) => c.key);
+      const index = base.indexOf(key);
+      if (index < 0) return base;
+      const target = index + direction;
+      if (target < 0 || target >= base.length) return base;
+      const next = [...base];
+      const aux = next[target];
+      next[target] = next[index];
+      next[index] = aux;
+      return next;
     });
   };
 
@@ -434,22 +535,90 @@ export default function Productos() {
     }));
   };
 
-  const tableHeaders = [
-    "Foto",
-    "Codigo",
-    "Nombre",
-    ...columnasPresetActivas.map((key) => LABEL_COLUMNA[key]),
-    ...columnasCustom.map((col) => col.label),
-    "Costo",
-    "Precio",
-    "Utilidad",
-    "Margen",
-    "Stock",
-    "Estado",
-    "Acciones",
-  ];
+  useEffect(() => {
+    if (columnasDisponibles.length === 0) return;
+    setColumnasVisibles((prev) => {
+      if (prev.length === 0) return columnasDisponibles.map((c) => c.key);
+      const available = new Set(columnasDisponibles.map((c) => c.key));
+      const merged = prev.filter((key) => available.has(key));
+      columnasDisponibles.forEach((col) => {
+        if (!merged.includes(col.key)) {
+          merged.push(col.key);
+        }
+      });
+      return merged;
+    });
+  }, [columnasDisponibles]);
 
-  const tableMinWidth = 980 + (columnasPresetActivas.length + columnasCustom.length) * 92;
+  const tableHeaders = columnasTabla.map((col) => col.label);
+
+  const tableMinWidth = 980 + Math.max(0, columnasTabla.length - 10) * 92;
+
+  const esColumnaVisible = (key: string) => columnasTabla.some((col) => col.key === key);
+
+  const renderCell = (p: Producto, col: TableColumn) => {
+    const utilidad = p.precio - (p.costo ?? 0);
+    const margen = p.precio > 0 ? (utilidad / p.precio) * 100 : 0;
+    const estado = p.stock <= 5 ? "Bajo" : p.stock <= 15 ? "Medio" : "OK";
+    const estadoVariant = estado === "Bajo" ? "danger" : estado === "Medio" ? "warning" : "success";
+
+    if (col.key === "foto") {
+      return p.foto ? (
+        <Image
+          src={getImageUrl(p.foto)}
+          alt={p.nombre}
+          width={120}
+          height={80}
+          unoptimized
+          className={styles.tableImage}
+          onError={fallbackImage}
+        />
+      ) : (
+        <span className={styles.fallback}>IMG</span>
+      );
+    }
+
+    if (col.key === "codigo") return p.codigo;
+    if (col.key === "nombre") return p.nombre;
+    if (col.key === "categoria") return p.categoria || "-";
+    if (col.key === "marca") return p.marca || "-";
+    if (col.key === "talla") return p.talla || "-";
+    if (col.key === "color") return p.color || "-";
+    if (col.key === "sexo") return p.sexo || "-";
+    if (col.key === "costo") return formatMoney(Number(p.costo ?? 0));
+    if (col.key === "precio") return formatMoney(Number(p.precio ?? 0));
+    if (col.key === "utilidad") {
+      return <span className={utilidad >= 0 ? styles.up : styles.down}>{formatMoney(utilidad)}</span>;
+    }
+    if (col.key === "margen") return `${margen.toFixed(1)}%`;
+    if (col.key === "stock") return p.stock;
+    if (col.key === "estado") {
+      return <StatusBadge text={estado} variant={estadoVariant} />;
+    }
+    if (col.key === "acciones") {
+      return (
+        <div className={styles.actionRow}>
+          <button type="button" onClick={() => editarProducto(p)} className={styles.rowButton}>
+            Editar
+          </button>
+          <button
+            type="button"
+            onClick={() => eliminarProducto(p.codigo)}
+            className={`${styles.rowButton} ${styles.deleteButton}`}
+          >
+            Eliminar
+          </button>
+        </div>
+      );
+    }
+
+    if (col.key.startsWith("custom:")) {
+      const customKey = col.key.slice("custom:".length);
+      return p.atributos_extra?.[customKey] || "-";
+    }
+
+    return "-";
+  };
 
   /* =========================
      UI
@@ -601,6 +770,44 @@ export default function Productos() {
             <p className={styles.hint}>No hay columnas personalizadas todavia.</p>
           )}
         </div>
+
+        <div className={styles.configBlock}>
+          <label>Editar columnas visibles y orden</label>
+          <p className={styles.hint}>Activa, oculta y ordena las columnas sin actualizar el aplicativo.</p>
+          <div className={styles.columnEditorGrid}>
+            {columnasTabla.map((col) => (
+              <div key={`layout-${col.key}`} className={styles.columnEditorItem}>
+                <button
+                  type="button"
+                  className={`${styles.columnToggleBtn} ${esColumnaVisible(col.key) ? styles.columnToggleActive : ""}`}
+                  onClick={() => toggleColumnaVisible(col.key)}
+                  disabled={Boolean(col.locked)}
+                  title={col.locked ? "Columna bloqueada" : "Mostrar u ocultar columna"}
+                >
+                  {col.label}
+                </button>
+                <div className={styles.columnMoveActions}>
+                  <button type="button" className={styles.columnMoveBtn} onClick={() => moverColumna(col.key, -1)}>
+                    ←
+                  </button>
+                  <button type="button" className={styles.columnMoveBtn} onClick={() => moverColumna(col.key, 1)}>
+                    →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className={styles.configInline}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              disabled={savingTableConfig}
+              onClick={() => void guardarConfigTabla()}
+            >
+              {savingTableConfig ? "Guardando..." : "Guardar layout de tabla"}
+            </button>
+          </div>
+        </div>
       </section>
 
       <ModalCard
@@ -706,27 +913,11 @@ export default function Productos() {
           <button
             type="button"
             className={styles.uploadButton}
-            onClick={() => cameraInputRef.current?.click()}
-          >
-            Tomar foto
-          </button>
-          <button
-            type="button"
-            className={styles.uploadButton}
             onClick={() => galleryInputRef.current?.click()}
           >
             Subir desde galeria
           </button>
         </div>
-
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className={styles.hiddenFileInput}
-          onChange={(e) => void manejarArchivoFoto(e.target.files?.[0])}
-        />
 
         <input
           ref={galleryInputRef}
@@ -757,56 +948,11 @@ export default function Productos() {
           density="executive"
         >
           {productosFiltrados.map((p) => {
-            const utilidad = p.precio - (p.costo ?? 0);
-            const margen = p.precio > 0 ? (utilidad / p.precio) * 100 : 0;
-            const estado = p.stock <= 5 ? "Bajo" : p.stock <= 15 ? "Medio" : "OK";
-            const estadoVariant = estado === "Bajo" ? "danger" : estado === "Medio" ? "warning" : "success";
-
             return (
               <tr key={p.codigo}>
-                <td>
-                  {p.foto ? (
-                    <Image
-                      src={getImageUrl(p.foto)}
-                      alt={p.nombre}
-                      width={120}
-                      height={80}
-                      unoptimized
-                      className={styles.tableImage}
-                      onError={fallbackImage}
-                    />
-                  ) : (
-                    <span className={styles.fallback}>IMG</span>
-                  )}
-                </td>
-                <td>{p.codigo}</td>
-                <td>{p.nombre}</td>
-                {columnasPresetActivas.map((col) => (
-                  <td key={`${p.codigo}-${col}`}>{String((p as Record<string, unknown>)[col] || "-")}</td>
+                {columnasTabla.map((col) => (
+                  <td key={`${p.codigo}-${col.key}`}>{renderCell(p, col)}</td>
                 ))}
-                {columnasCustom.map((col) => (
-                  <td key={`${p.codigo}-${col.key}`}>{p.atributos_extra?.[col.key] || "-"}</td>
-                ))}
-                <td>{formatMoney(Number(p.costo ?? 0))}</td>
-                <td>{formatMoney(Number(p.precio ?? 0))}</td>
-                <td className={utilidad >= 0 ? styles.up : styles.down}>{formatMoney(utilidad)}</td>
-                <td>{margen.toFixed(1)}%</td>
-                <td>{p.stock}</td>
-                <td><StatusBadge text={estado} variant={estadoVariant} /></td>
-                <td>
-                  <div className={styles.actionRow}>
-                    <button type="button" onClick={() => editarProducto(p)} className={styles.rowButton}>
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => eliminarProducto(p.codigo)}
-                      className={`${styles.rowButton} ${styles.deleteButton}`}
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </td>
               </tr>
             );
           })}

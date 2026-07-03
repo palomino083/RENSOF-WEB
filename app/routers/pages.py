@@ -286,6 +286,32 @@ def _alvent_dashboard_overview_fallback_payload() -> dict[str, object]:
     }
 
 
+def _alvent_productos_fallback_payload() -> list[dict[str, object]]:
+    return []
+
+
+def _alvent_ventas_fallback_payload() -> list[dict[str, object]]:
+    return []
+
+
+def _alvent_ventas_resumen_fallback_payload() -> dict[str, object]:
+    return {
+        "hoy": {"ventas": 0, "monto": 0.0},
+        "semana": {"ventas": 0, "monto": 0.0},
+        "mes": {"ventas": 0, "monto": 0.0},
+        "anio": {"ventas": 0, "monto": 0.0},
+    }
+
+
+def _alvent_ventas_reporte_fallback_payload() -> dict[str, object]:
+    return {
+        "total_ventas": 0.0,
+        "total_costos": 0.0,
+        "ganancia_total": 0.0,
+        "detalle": [],
+    }
+
+
 def _render_alvent_dashboard_fallback(request: Request) -> Response:
     return templates.TemplateResponse(
         request,
@@ -462,6 +488,74 @@ async def alven_api_dashboard_overview_proxy_or_fallback(request: Request) -> Re
         pass
 
     return JSONResponse(_alvent_dashboard_overview_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/productos/",
+    methods=["GET"],
+    response_model=None,
+)
+async def alven_api_productos_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "productos/")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    return JSONResponse(_alvent_productos_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/ventas/",
+    methods=["GET"],
+    response_model=None,
+)
+async def alven_api_ventas_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "ventas/")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    return JSONResponse(_alvent_ventas_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/ventas/resumen",
+    methods=["GET"],
+    response_model=None,
+)
+async def alven_api_ventas_resumen_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "ventas/resumen")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    return JSONResponse(_alvent_ventas_resumen_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/ventas/reporte/ganancias",
+    methods=["GET"],
+    response_model=None,
+)
+async def alven_api_ventas_reporte_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "ventas/reporte/ganancias")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    return JSONResponse(_alvent_ventas_reporte_fallback_payload(), status_code=200)
 
 
 @router.api_route(

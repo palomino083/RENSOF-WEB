@@ -8,9 +8,16 @@ import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
 import Toolbar from "@/components/ui/Toolbar";
 import ModalCard from "@/components/ui/ModalCard";
 import StatusBadge from "@/components/ui/StatusBadge";
+import PlanVisualCards from "@/features/planes/components/PlanVisualCards";
 import { systemService } from "@/services/systemService";
 import { API_URL } from "@/services/api";
 import { negocioService, type Negocio } from "@/services/negocioService";
+import {
+  PLANES_VISIBLES_EN_SECCION,
+  PLAN_PRICE_MAP,
+  PLAN_VISUAL_META,
+  normalizarPlan,
+} from "@/features/planes/visualNarrative";
 import { getApiErrorMessage } from "@/utils/apiError";
 import styles from "./page.module.css";
 
@@ -20,15 +27,6 @@ const PLAN_OPTIONS = [
   { value: "PRO", label: "Pro" },
   { value: "PREMIUM", label: "Premium" },
 ] as const;
-
-const LEGACY_PLAN_ALIAS: Record<string, string> = {
-  FREE: "GRATUITO",
-};
-
-const normalizarPlan = (plan?: string | null) => {
-  const raw = String(plan || "GRATUITO").toUpperCase();
-  return LEGACY_PLAN_ALIAS[raw] || raw;
-};
 
 const nombrePlan = (plan?: string | null) => {
   const normalizado = normalizarPlan(plan);
@@ -127,76 +125,7 @@ const MODULOS_BASE = [
   "Backups",
 ] as const;
 
-const PLAN_BONDAD_SOURCES = ["GRATUITO", "BASICO", "PRO", "PREMIUM"] as const;
-const PLANES_VISIBLES_EN_SECCION = ["GRATUITO", "BASICO", "PRO", "PREMIUM"] as const;
-
-const PLAN_VISUAL_PROPUESTA = [
-  {
-    key: "GRATUITO",
-    titulo: "Plan Gratuito",
-    precio: "S/0",
-    subtitulo: "Entrada sin costo",
-    lema: "Ideal para primera implementacion",
-    beneficios: [
-      { icon: "check", text: "Consultas basicas" },
-      { icon: "spark", text: "Tareas operativas" },
-      { icon: "chart", text: "Control inicial" },
-      { icon: "user", text: "Uso personal" },
-    ],
-    accentClass: "free",
-  },
-  {
-    key: "BASICO",
-    titulo: "Plan Básico",
-    precio: "S/20",
-    subtitulo: "Operación estable",
-    lema: "Control diario para negocios en crecimiento",
-    beneficios: [
-      { icon: "check", text: "Mas usuarios" },
-      { icon: "spark", text: "Flujo comercial continuo" },
-      { icon: "chart", text: "Operación ordenada" },
-      { icon: "briefcase", text: "Base para escalar" },
-    ],
-    accentClass: "basic",
-  },
-  {
-    key: "PRO",
-    titulo: "Plan Pro",
-    precio: "S/45",
-    subtitulo: "Escala comercial",
-    lema: "Mayor velocidad y analítica",
-    beneficios: [
-      { icon: "check", text: "Todo lo del gratuito" },
-      { icon: "spark", text: "Mayor velocidad" },
-      { icon: "chart", text: "Reportes avanzados" },
-      { icon: "rocket", text: "Apoyo a negocio" },
-    ],
-    accentClass: "pro",
-  },
-  {
-    key: "PREMIUM",
-    titulo: "Plan Premium",
-    precio: "S/65",
-    subtitulo: "Máximo rendimiento",
-    lema: "Operación con prioridad total",
-    beneficios: [
-      { icon: "crown", text: "Rendimiento máximo" },
-      { icon: "shield", text: "Acceso prioritario" },
-      { icon: "chart", text: "Marketing y ventas" },
-      { icon: "briefcase", text: "Uso profesional" },
-    ],
-    accentClass: "premium",
-  },
-] as const;
-
-const PLAN_PRICE_MAP: Record<string, "gratuito" | "prueba" | "basico" | "lite" | "pro" | "premium"> = {
-  GRATUITO: "gratuito",
-  PRUEBA: "prueba",
-  BASICO: "basico",
-  LITE: "lite",
-  PRO: "pro",
-  PREMIUM: "premium",
-};
+const PLAN_BONDAD_SOURCES = PLANES_VISIBLES_EN_SECCION;
 
 const renderBenefitIcon = (icon: string) => {
   if (icon === "spark") {
@@ -1387,6 +1316,52 @@ export default function ConfiguracionPage() {
   const puedeAplicarSugerido = Boolean(planSugerido) && !planSugeridoActivo && !changingPlan && !simuladorOverride.habilitado && Boolean(negocioActivoId);
   const formatPrecio = (value: number) => `S/${Number(value || 0).toFixed(0)}`;
 
+  const planVisualCards = planCatalogoVisible.map((plan) => {
+    const codigo = normalizarPlan(plan.codigo);
+    const meta = PLAN_VISUAL_META[codigo] || {
+      subtitulo: "Alternativa configurable",
+      lema: "Plan editable desde el panel propietario",
+      accentClass: "pro" as const,
+    };
+    const planEfectivo = obtenerPlanEfectivo(plan);
+    const planAmountKey = PLAN_PRICE_MAP[codigo] as keyof typeof planAmounts;
+    const precio = planAmountKey ? formatPrecio(planAmounts[planAmountKey]) : "S/0";
+    const esActual = normalizarPlan(businessForm.plan) === codigo;
+    const esSugerido = Boolean(planSugerido) && normalizarPlan(planSugerido?.codigo) === codigo;
+
+    const beneficios = [
+      { icon: "user", text: `Usuarios: ${formatLimite(planEfectivo.usuarios_limite)}` },
+      {
+        icon: "chart",
+        text: planEfectivo.reportes_habilitado
+          ? `Reportes: ${formatLimite(planEfectivo.reportes_limite)}`
+          : "Reportes: no incluidos",
+      },
+      {
+        icon: "shield",
+        text: planEfectivo.backups_habilitado
+          ? `Backups: ${formatLimite(planEfectivo.backups_limite)}`
+          : "Backups: no incluidos",
+      },
+      {
+        icon: esSugerido ? "spark" : "briefcase",
+        text: esSugerido ? "Recomendado por consumo actual" : "Escalable por negocio",
+      },
+    ];
+
+    return {
+      key: codigo,
+      titulo: `Plan ${nombrePlan(codigo)}`,
+      subtitulo: meta.subtitulo,
+      lema: esActual ? "Plan activo en la empresa seleccionada" : meta.lema,
+      accentClass: meta.accentClass,
+      precio,
+      beneficios,
+      esActual,
+      esSugerido,
+    };
+  });
+
   return (
     <ProtectedRoute>
       <div className="app-layout">
@@ -1906,40 +1881,20 @@ export default function ConfiguracionPage() {
               <header className={styles.planVisualHero}>
                 <p className={styles.planVisualEyebrow}>ALVENT PREMIUM 2026</p>
                 <h3 className={styles.planVisualHeadline}>Activa tu plan segun el ritmo de crecimiento</h3>
-                <p className={styles.planVisualSubhead}>Version comercial para captar nuevos clientes con una lectura rapida de valor.</p>
+                <p className={styles.planVisualSubhead}>
+                  Alternativas dinámicas conectadas al catálogo editable. {isSuperadmin ? "Como propietario del sistema, ajusta montos y límites desde esta misma sección." : "Solicita el plan ideal según tu consumo."}
+                </p>
               </header>
-              <div className={styles.planVisualGrid}>
-                {PLAN_VISUAL_PROPUESTA.map((plan, index) => (
-                  <article
-                    key={`visual-${plan.key}`}
-                    className={`${styles.planVisualCard} ${styles[`planVisualCard_${plan.accentClass}`]} ${index === 0 ? styles.planVisualCardFree : ""}`}
-                  >
-                    <div className={styles.planVisualCardHead}>
-                      <span className={styles.planVisualPill}>{plan.titulo}</span>
-                      <small>{plan.subtitulo}</small>
-                    </div>
-                    <div className={styles.planVisualPriceWrap}>
-                      <strong>{formatPrecio(planAmounts[PLAN_PRICE_MAP[plan.key]])}</strong>
-                      <span>por mes</span>
-                    </div>
-                    <div className={styles.planVisualPriceDivider} aria-hidden="true" />
-                    <p className={styles.planVisualLema}>{plan.lema}</p>
-                    <ul className={styles.planVisualList}>
-                      {plan.beneficios.map((item) => (
-                        <li key={`${plan.key}-${item.text}`}>
-                          <span className={styles.planVisualIcon}>{renderBenefitIcon(item.icon)}</span>
-                          <span>{item.text}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </article>
-                ))}
-              </div>
+              <PlanVisualCards cards={planVisualCards} />
 
               <div className={styles.planVisualCallout}>
                 <div className={styles.planVisualCalloutCopy}>
                   <strong>Activa ALVENT segun tu etapa comercial</strong>
-                  <p>Empieza con el gratuito y escala a Básico, Pro o Premium cuando tu operación lo requiera.</p>
+                  <p>
+                    {isSuperadmin
+                      ? "Propietario del sistema: define capacidades y precios desde Configuración para que toda la vitrina de planes se actualice al instante."
+                      : "Empieza con el gratuito y escala a Básico, Pro o Premium cuando tu operación lo requiera."}
+                  </p>
                   <div className={styles.planVisualMiniStrip} aria-label="Beneficios destacados">
                     <span title="Respuestas inteligentes">{renderBenefitIcon("spark")}</span>
                     <span title="Ahorro de tiempo">{renderBenefitIcon("rocket")}</span>

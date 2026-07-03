@@ -65,6 +65,7 @@ export const productosService = {
     tipo_negocio: string;
     columnas_custom: ColumnaProductoCustom[];
     tipos_custom: string[];
+    columnas_visibles: string[];
   }> {
     const res = await api.get("/productos/tabla-config");
     return res.data;
@@ -74,6 +75,7 @@ export const productosService = {
     tipo_negocio?: string;
     columnas_custom: ColumnaProductoCustom[];
     tipos_custom?: string[];
+    columnas_visibles?: string[];
   }): Promise<{
     ok: boolean;
     mensaje: string;
@@ -81,6 +83,7 @@ export const productosService = {
     tipo_negocio: string;
     columnas_custom: ColumnaProductoCustom[];
     tipos_custom: string[];
+    columnas_visibles: string[];
   }> {
     const res = await api.put("/productos/tabla-config", data);
     return res.data;

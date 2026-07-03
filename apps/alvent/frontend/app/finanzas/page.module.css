@@ -100,6 +100,103 @@
   color: #0f172a;
 }
 
+.selectorInline {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.selectorInline select {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #0f172a;
+  min-width: 260px;
+}
+
+.planVisualGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.planCard {
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  border-radius: 12px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(10, 25, 47, 0.9));
+  color: #e2e8f0;
+}
+
+.planCard header {
+  display: grid;
+  gap: 2px;
+}
+
+.planCard header span {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #93c5fd;
+  font-weight: 700;
+}
+
+.planCard header strong {
+  font-size: 2rem;
+  line-height: 1;
+  color: #f8fafc;
+}
+
+.planCard header small {
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.planCard p {
+  margin: 10px 0 8px;
+  font-size: 0.86rem;
+  color: #bae6fd;
+}
+
+.planCard h4 {
+  margin: 10px 0 4px;
+  font-size: 0.9rem;
+  color: #f8fafc;
+}
+
+.planCard ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.planCard li {
+  font-size: 0.84rem;
+  color: #e2e8f0;
+}
+
+.planCard_free {
+  border-color: rgba(45, 212, 191, 0.75);
+}
+
+.planCard_basic {
+  border-color: rgba(251, 191, 36, 0.75);
+}
+
+.planCard_pro {
+  border-color: rgba(56, 189, 248, 0.8);
+}
+
+.planCard_premium {
+  border-color: rgba(192, 132, 252, 0.8);
+}
+
 .formGrid {
   display: grid;
   gap: 10px;
