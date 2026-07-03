@@ -1293,18 +1293,6 @@ export default function ConfiguracionPage() {
               <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-empresa")}>Empresa</button>
               <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-operaciones")}>Operaciones</button>
               <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-plan")}>Plan</button>
-              {isSuperadmin ? (
-                <select
-                  className={`${styles.negocioSelect} focus-ring`}
-                  value={negocioSeleccionadoId || ""}
-                  onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
-                >
-                  <option value="">Selecciona negocio</option>
-                  {negociosDisponibles.map((item) => (
-                    <option key={item.id} value={item.id}>{item.id} - {item.nombre}</option>
-                  ))}
-                </select>
-              ) : null}
             </div>
             <button
               type="button"
@@ -1822,6 +1810,11 @@ export default function ConfiguracionPage() {
                   <div>
                     <h4>Limites editables por plan</h4>
                     <p>Define usuarios, reportes y backups por plan. Estos limites se aplican al negocio seleccionado.</p>
+                    {!negocioActivoId ? (
+                      <small className={styles.helperText}>
+                        Sin negocio objetivo seleccionado: puedes seleccionar plan para analisis, pero aplicar requiere elegir una empresa.
+                      </small>
+                    ) : null}
                   </div>
 
                   <div className={styles.planAmountsGrid}>
@@ -1897,17 +1890,45 @@ export default function ConfiguracionPage() {
                   </div>
                 </section>
 
+                <section className={styles.planAmountsBox}>
+                  <div>
+                    <h4>Negocio objetivo para aplicar plan</h4>
+                    <p>Selecciona explicitamente la empresa cliente sobre la que deseas ejecutar cambios de plan.</p>
+                  </div>
+                  <div className={styles.actionGroup}>
+                    <select
+                      className={`${styles.negocioSelect} focus-ring`}
+                      value={negocioSeleccionadoId || ""}
+                      onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
+                    >
+                      <option value="">Selecciona negocio objetivo</option>
+                      {negociosDisponibles.map((item) => (
+                        <option key={item.id} value={item.id}>{item.id} - {item.nombre}</option>
+                      ))}
+                    </select>
+                    {!negocioActivoId ? (
+                      <small className={styles.helperText}>Sin negocio seleccionado, aplicar plan estara bloqueado.</small>
+                    ) : null}
+                  </div>
+                </section>
+
                 <div className={styles.catalogGrid}>
                   {planCatalogoVisible.map((plan) => {
-                    const activo = normalizarPlan(businessForm.plan) === plan.codigo;
+                    const activo = Boolean(negocioActivoId) && normalizarPlan(businessForm.plan) === plan.codigo;
                     const simulado = normalizarPlan(planSimulado) === plan.codigo;
-                    const stateLabel = activo ? "Activo" : simulado ? "Simulado" : "Disponible";
+                    const stateLabel = !negocioActivoId
+                      ? (simulado ? "Seleccionado" : "Disponible")
+                      : activo
+                        ? "Activo"
+                        : simulado
+                          ? "Simulado"
+                          : "Disponible";
                     const stateClass = activo ? styles.cardStateActive : simulado ? styles.cardStateSimulated : styles.cardStateAvailable;
                     const planAmountKey = PLAN_PRICE_MAP[plan.codigo] as keyof typeof planAmounts;
                     const signal = evaluarSemaforoPlan(plan);
                     const signalClass = signal.tone === "up" ? styles.catalogSignalUp : signal.tone === "down" ? styles.catalogSignalDown : styles.catalogSignalNeutral;
                     return (
-                      <article key={plan.codigo} className={`${styles.catalogCard} ${activo ? styles.catalogCardActive : ""}`}>
+                      <article key={plan.codigo} className={`${styles.catalogCard} ${(activo || (!negocioActivoId && simulado)) ? styles.catalogCardActive : ""}`}>
                         <h4>{plan.nombre}</h4>
                         <p className={`${styles.cardState} ${stateClass}`}>{stateLabel}</p>
                         <p className={`${styles.catalogSignal} ${signalClass}`}>{signal.text}</p>
@@ -1922,12 +1943,20 @@ export default function ConfiguracionPage() {
                         <div className={styles.cardActions}>
                           <button
                             type="button"
+                            className={`${styles.planSimBtn} focus-ring`}
+                            disabled={simulado}
+                            onClick={() => setPlanSimulado(plan.codigo)}
+                          >
+                            {simulado ? "Seleccionado" : "Seleccionar plan"}
+                          </button>
+                          <button
+                            type="button"
                             className={`${styles.planPickBtn} focus-ring`}
                             disabled={activo || changingPlan || !negocioActivoId}
                             onClick={() => void cambiarPlanNegocio(plan.codigo)}
                             title={!negocioActivoId ? "Selecciona primero el negocio objetivo" : ""}
                           >
-                            {activo ? "Plan activo" : changingPlan ? "Aplicando..." : !negocioActivoId ? "Selecciona negocio" : "Aplicar plan"}
+                            {activo ? "Plan activo" : changingPlan ? "Aplicando..." : !negocioActivoId ? "Elegir negocio" : "Aplicar plan"}
                           </button>
                         </div>
                       </article>
