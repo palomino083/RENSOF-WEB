@@ -348,11 +348,10 @@ export default function ConfiguracionPage() {
   const getNegocioIdActivo = useCallback(() => {
     if (isSuperadmin) {
       const negocioSesion = parseNumero(getStorageItem("negocio_id"));
-      const primerNegocio = negociosDisponibles[0]?.id || 0;
-      return negocioSeleccionadoId || negocioSesion || primerNegocio;
+      return negocioSeleccionadoId || negocioSesion;
     }
     return parseNumero(getStorageItem("negocio_id"));
-  }, [isSuperadmin, negocioSeleccionadoId, negociosDisponibles]);
+  }, [isSuperadmin, negocioSeleccionadoId]);
 
   const cargarBranding = useCallback(async (negocioIdArg?: number) => {
     try {
@@ -447,9 +446,9 @@ export default function ConfiguracionPage() {
   };
 
   const guardarDatosEmpresa = async () => {
-    const negocioId = getNegocioIdActivo();
+    const negocioId = await resolverNegocioObjetivo("guardar datos de empresa");
     if (!negocioId) {
-      setError("No se encontro negocio asociado");
+      setError("Selecciona explicitamente el negocio objetivo antes de guardar datos de empresa");
       return;
     }
 
@@ -512,9 +511,8 @@ export default function ConfiguracionPage() {
     try {
       const items = await negocioService.list();
       setNegociosDisponibles(items || []);
-      const primerNegocio = items?.[0]?.id || 0;
       const negocioSesion = parseNumero(getStorageItem("negocio_id"));
-      setNegocioSeleccionadoId((prev) => prev || negocioSesion || primerNegocio);
+      setNegocioSeleccionadoId((prev) => prev || negocioSesion);
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar negocios"));
     }
@@ -1085,7 +1083,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin || negociosDisponibles.length === 0) return;
     const existeSeleccion = negociosDisponibles.some((n) => n.id === negocioSeleccionadoId);
     if (!existeSeleccion) {
-      setNegocioSeleccionadoId(negociosDisponibles[0].id);
+      setNegocioSeleccionadoId(0);
     }
   }, [isSuperadmin, negociosDisponibles, negocioSeleccionadoId]);
 
@@ -1347,6 +1345,28 @@ export default function ConfiguracionPage() {
               </aside>
 
               <div className={styles.companyPanel}>
+                {isSuperadmin ? (
+                  <div className={styles.companyBlock}>
+                    <div className={styles.formRow}>
+                      <label htmlFor="empresa-negocio-objetivo">Negocio objetivo</label>
+                      <select
+                        id="empresa-negocio-objetivo"
+                        className={`${styles.negocioSelect} focus-ring`}
+                        value={negocioSeleccionadoId || ""}
+                        onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
+                      >
+                        <option value="">Selecciona negocio objetivo</option>
+                        {negociosDisponibles.map((item) => (
+                          <option key={`empresa-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre}</option>
+                        ))}
+                      </select>
+                      {!negocioActivoId ? (
+                        <small className={styles.helperText}>Selecciona una empresa cliente para poder guardar datos.</small>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
                 {empresaTab === "general" ? (
                   <div className={styles.companyBlock}>
                     <h3>Informacion general</h3>
@@ -1660,10 +1680,11 @@ export default function ConfiguracionPage() {
               <button
                 type="button"
                 onClick={guardarDatosEmpresa}
-                disabled={savingBusiness}
+                disabled={savingBusiness || !negocioActivoId}
                 className={`${styles.saveBusinessBtn} focus-ring`}
+                title={!negocioActivoId ? "Selecciona primero el negocio objetivo" : ""}
               >
-                {savingBusiness ? "Guardando..." : "Guardar datos de empresa"}
+                {savingBusiness ? "Guardando..." : !negocioActivoId ? "Selecciona negocio" : "Guardar datos de empresa"}
               </button>
             ) : null}
           </section>
