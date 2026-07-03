@@ -81,6 +81,8 @@ El acceso a /admin usa login por formulario + sesion segura por cookie (sin popu
 - Variable de entorno de entrada ALVENT en RENSOF: ALVENT_APP_URL
 - Referencia de ejemplo: .env.example
 
+Si no defines credenciales personalizadas para el panel raíz, el acceso también acepta el alias legacy `Admin / 123456`.
+
 La clave admin puede dejarse en texto plano para desarrollo o definirse como hash PBKDF2 con este formato:
 
 - pbkdf2_sha256$<iteraciones>$<salt_hex>$<hash_hex>

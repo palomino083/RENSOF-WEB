@@ -53,6 +53,19 @@ def _frontend_unavailable_response() -> Response:
     )
 
 
+def _looks_like_render_loading_page(response: Response) -> bool:
+    content_type = response.headers.get("content-type", "").lower()
+    if "text/html" not in content_type:
+        return False
+
+    try:
+        body_preview = response.body[:8192].decode("utf-8", errors="ignore").lower()
+    except Exception:
+        return False
+
+    return "render - application loading" in body_preview or "render application loading" in body_preview
+
+
 def _build_proxy_target(origin: str, full_path: str, query: str) -> str:
     base = origin.rstrip("/")
     path = f"/{full_path.lstrip('/')}" if full_path else ""
@@ -286,21 +299,26 @@ def alven(request: Request):
 @router.get("/alven/app/login", response_class=HTMLResponse, response_model=None)
 async def alven_app_login(request: Request) -> Response:
     try:
-        return await _proxy_alvent_frontend_request(request, "login")
+        proxied_response = await _proxy_alvent_frontend_request(request, "login")
+        if proxied_response.status_code < 500 and not _looks_like_render_loading_page(proxied_response):
+            return proxied_response
     except httpx.RequestError:
-        if not _is_html_navigation_request(request):
-            return _frontend_unavailable_response()
-        return templates.TemplateResponse(
-            request,
-            "alvent_login_fallback.html",
-            {
-                "active_page": "servicios",
-                "page_title": "Login ALVENT ERP PRO | RENSOF",
-                "page_description": "Acceso de contingencia a ALVENT ERP PRO cuando el frontend dedicado no esta disponible.",
-                "alvent_login_url": _alvent_frontend_url("alven/app/login"),
-                "alvent_dashboard_url": _alvent_frontend_url("alven/app/dashboard"),
-            },
-        )
+        pass
+
+    if not _is_html_navigation_request(request):
+        return _frontend_unavailable_response()
+
+    return templates.TemplateResponse(
+        request,
+        "alvent_login_fallback.html",
+        {
+            "active_page": "servicios",
+            "page_title": "Login ALVENT ERP PRO | RENSOF",
+            "page_description": "Acceso de contingencia a ALVENT ERP PRO cuando el frontend dedicado no esta disponible.",
+            "alvent_login_url": _alvent_frontend_url("alven/app/login"),
+            "alvent_dashboard_url": _alvent_frontend_url("alven/app/dashboard"),
+        },
+    )
 
 
 @router.get("/alvent", response_model=None)
@@ -329,13 +347,18 @@ async def alven_app_root_proxy(request: Request) -> Response:
 )
 async def alven_app_proxy(full_path: str, request: Request) -> Response:
     try:
-        return await _proxy_alvent_frontend_request(request, full_path)
+        proxied_response = await _proxy_alvent_frontend_request(request, full_path)
+        if proxied_response.status_code < 500 and not _looks_like_render_loading_page(proxied_response):
+            return proxied_response
     except httpx.RequestError:
-        if not _is_html_navigation_request(request):
-            return _frontend_unavailable_response()
-        if full_path.strip("/") == "dashboard":
-            return _render_alvent_dashboard_fallback(request)
-        return RedirectResponse("/alven/app/login", status_code=307)
+        pass
+
+    if not _is_html_navigation_request(request):
+        return _frontend_unavailable_response()
+
+    if full_path.strip("/") == "dashboard":
+        return _render_alvent_dashboard_fallback(request)
+    return RedirectResponse("/alven/app/login", status_code=307)
 
 
 @router.api_route(
