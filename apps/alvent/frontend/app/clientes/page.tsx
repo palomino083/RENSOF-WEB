@@ -113,8 +113,9 @@ export default function ClientesPage() {
       };
 
       const result = await clientesService.guardar(payload);
+      const isEditing = editId !== null;
 
-      if (editId) {
+      if (isEditing) {
         setClientes((prev) =>
           prev.map((c) =>
             c.id === editId ? { ...c, ...result } : c
@@ -136,7 +137,7 @@ export default function ClientesPage() {
   // ELIMINAR
   // ======================
   const handleDelete = async (id?: number) => {
-    if (!id) return;
+    if (id == null) return;
 
     const ok = confirm("¿Eliminar cliente?");
     if (!ok) return;

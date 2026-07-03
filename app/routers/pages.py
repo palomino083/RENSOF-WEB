@@ -555,7 +555,7 @@ def _alvent_clientes_fallback_payload() -> list[dict[str, object]]:
 
 def _alvent_cliente_created_fallback_payload(payload: dict[str, object]) -> dict[str, object]:
     return {
-        "id": 0,
+        "id": 100000 + secrets.randbelow(900000),
         "nombre": str(payload.get("nombre") or "Cliente contingencia").strip() or "Cliente contingencia",
         "dni": str(payload.get("dni") or "").strip(),
         "telefono": str(payload.get("telefono") or "").strip(),
