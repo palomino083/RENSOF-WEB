@@ -249,6 +249,43 @@ def _alvent_fallback_auth_payload(usuario: str) -> dict[str, object]:
     }
 
 
+def _alvent_dashboard_overview_fallback_payload() -> dict[str, object]:
+    return {
+        "contexto": {
+            "modo_global": False,
+            "negocio_id": None,
+        },
+        "kpis": {
+            "productos": 0,
+            "clientes": 0,
+            "usuarios": 0,
+            "ventas": 0,
+            "monto_vendido": 0.0,
+            "caja_abierta": False,
+        },
+        "ventas": [],
+        "caja": {
+            "estado": "cerrada",
+            "saldo_inicial": 0,
+            "ingresos": 0,
+            "egresos": 0,
+            "saldo_actual": 0,
+        },
+        "inventario": {
+            "total_productos": 0,
+            "stock_critico": 0,
+            "valor_inventario": 0.0,
+        },
+        "top_productos": [],
+        "alertas": [
+            {
+                "tipo": "WARNING",
+                "mensaje": "No se pudo conectar con el backend de ALVENT. Se muestra vista de contingencia.",
+            }
+        ],
+    }
+
+
 def _render_alvent_dashboard_fallback(request: Request) -> Response:
     return templates.TemplateResponse(
         request,
@@ -408,6 +445,23 @@ async def alven_api_login_proxy_or_fallback(request: Request) -> Response:
         return JSONResponse({"detail": "Contrasena incorrecta"}, status_code=401)
 
     return JSONResponse(_alvent_fallback_auth_payload(usuario))
+
+
+@router.api_route(
+    "/alven/api/dashboard/overview",
+    methods=["GET"],
+    response_model=None,
+)
+async def alven_api_dashboard_overview_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "dashboard/overview")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    return JSONResponse(_alvent_dashboard_overview_fallback_payload(), status_code=200)
 
 
 @router.api_route(

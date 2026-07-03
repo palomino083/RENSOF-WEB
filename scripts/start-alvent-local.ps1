@@ -6,6 +6,10 @@ $frontendDir = Join-Path $repoRoot "apps/alvent/frontend"
 $pythonExe = Join-Path $repoRoot ".venv/Scripts/python.exe"
 $pidsFile = Join-Path $repoRoot "scripts/.alvent-local.pids.json"
 
+if (-not $env:ALVENT_FRONTEND_LOCAL_ORIGIN) {
+  $env:ALVENT_FRONTEND_LOCAL_ORIGIN = "http://127.0.0.1:3001"
+}
+
 if (-not (Test-Path $pythonExe)) {
   throw "No se encontro el entorno Python en: $pythonExe"
 }

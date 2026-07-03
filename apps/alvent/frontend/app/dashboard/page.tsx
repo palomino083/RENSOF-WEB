@@ -146,7 +146,9 @@ export default function Dashboard() {
       const overview = await dashboardService.getOverview();
       setData(overview);
     } catch (err) {
-      console.error(err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error(err);
+      }
       setError("No fue posible cargar el dashboard.");
     } finally {
       setLoading(false);
@@ -198,7 +200,9 @@ export default function Dashboard() {
       setShowResetModal(false);
       cargarDashboard();
     } catch (err: any) {
-      console.error(err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error(err);
+      }
       alert(err?.response?.data?.detail || "Error al reiniciar");
     } finally {
       setLoadingReset(false);
