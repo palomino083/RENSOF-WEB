@@ -946,6 +946,7 @@ export default function ConfiguracionPage() {
   const planControlMontoKey = planControlSeleccionadoData
     ? PLAN_PRICE_MAP[planControlSeleccionadoData.codigo] as keyof typeof planAmounts
     : null;
+  const negocioActivoId = getNegocioIdActivo();
   const planControlAccionRequiereNegocio =
     (planControlAccion === "aplicar" || planControlAccion === "guardar_monto" || planControlAccion === "guardar_limites")
     && !negocioActivoId;
@@ -1342,7 +1343,6 @@ export default function ConfiguracionPage() {
   const rucInvalido = Boolean(businessForm.ruc) && businessForm.ruc.length !== 11;
   const telefonoInvalido = Boolean(businessForm.telefono) && businessForm.telefono.length !== 9;
   const whatsappInvalido = Boolean(businessForm.whatsapp) && businessForm.whatsapp.length !== 9;
-  const negocioActivoId = getNegocioIdActivo();
   const negociosObjetivoFiltrados = negociosDisponibles.filter((item) => {
     if (negocioTipoFiltro === "todos") return true;
     return String(item.tipo || "").trim().toLowerCase() === negocioTipoFiltro;
