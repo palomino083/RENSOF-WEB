@@ -290,6 +290,114 @@ def _alvent_productos_fallback_payload() -> list[dict[str, object]]:
     return []
 
 
+def _alvent_productos_tabla_config_fallback_payload(overrides: dict[str, object] | None = None) -> dict[str, object]:
+    default_config: dict[str, object] = {
+        "ok": True,
+        "mensaje": "Configuracion de tabla en modo contingencia",
+        "negocio_id": 0,
+        "tipo_negocio": "",
+        "columnas_custom": [],
+        "tipos_custom": [],
+        "columnas_visibles": [
+            "codigo",
+            "foto",
+            "costo",
+            "precio",
+            "utilidad",
+            "nombre",
+            "margen",
+            "stock",
+            "estado",
+            "acciones",
+        ],
+    }
+
+    if not overrides:
+        return default_config
+
+    if "tipo_negocio" in overrides:
+        default_config["tipo_negocio"] = str(overrides.get("tipo_negocio") or "").strip()
+
+    columnas_custom = overrides.get("columnas_custom")
+    if isinstance(columnas_custom, list):
+        default_config["columnas_custom"] = [item for item in columnas_custom if isinstance(item, dict)]
+
+    tipos_custom = overrides.get("tipos_custom")
+    if isinstance(tipos_custom, list):
+        default_config["tipos_custom"] = [str(item).strip() for item in tipos_custom if str(item).strip()]
+
+    columnas_visibles = overrides.get("columnas_visibles")
+    if isinstance(columnas_visibles, list):
+        default_config["columnas_visibles"] = [str(item).strip() for item in columnas_visibles if str(item).strip()]
+
+    return default_config
+
+
+def _alvent_negocios_fallback_payload() -> list[dict[str, object]]:
+    return [
+        {
+            "id": 0,
+            "nombre": "Negocio en contingencia",
+            "tipo": "otro",
+            "plan": "GRATUITO",
+            "descripcion": "Modo contingencia ALVENT",
+            "logo_url": None,
+        }
+    ]
+
+
+def _alvent_planes_catalogo_fallback_payload() -> dict[str, object]:
+    return {
+        "planes": [
+            {
+                "codigo": "GRATUITO",
+                "nombre": "Gratuito",
+                "usuarios_limite": 1,
+                "reportes_habilitado": False,
+                "reportes_limite": 0,
+                "backups_habilitado": False,
+                "backups_limite": 0,
+            },
+            {
+                "codigo": "BASICO",
+                "nombre": "Basico",
+                "usuarios_limite": 3,
+                "reportes_habilitado": True,
+                "reportes_limite": 10,
+                "backups_habilitado": False,
+                "backups_limite": 0,
+            },
+            {
+                "codigo": "LITE",
+                "nombre": "Lite",
+                "usuarios_limite": 6,
+                "reportes_habilitado": True,
+                "reportes_limite": 30,
+                "backups_habilitado": True,
+                "backups_limite": 10,
+            },
+            {
+                "codigo": "PRO",
+                "nombre": "Pro",
+                "usuarios_limite": 15,
+                "reportes_habilitado": True,
+                "reportes_limite": 120,
+                "backups_habilitado": True,
+                "backups_limite": 60,
+            },
+            {
+                "codigo": "PREMIUM",
+                "nombre": "Premium",
+                "usuarios_limite": None,
+                "reportes_habilitado": True,
+                "reportes_limite": None,
+                "backups_habilitado": True,
+                "backups_limite": None,
+            },
+        ]
+    }
+
+
 def _alvent_ventas_fallback_payload() -> list[dict[str, object]]:
     return []
 
@@ -508,6 +616,38 @@ async def alven_api_productos_proxy_or_fallback(request: Request) -> Response:
 
 
 @router.api_route(
+    "/alven/api/productos/tabla-config",
+    methods=["GET", "PUT", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_productos_tabla_config_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "productos/tabla-config")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    if request.method == "GET":
+        return JSONResponse(_alvent_productos_tabla_config_fallback_payload(), status_code=200)
+
+    payload: dict[str, object] = {}
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    fallback = _alvent_productos_tabla_config_fallback_payload(payload)
+    fallback["ok"] = True
+    fallback["mensaje"] = "Configuracion guardada en modo contingencia"
+    return JSONResponse(fallback, status_code=200)
+
+
+@router.api_route(
     "/alven/api/ventas/",
     methods=["GET"],
     response_model=None,
@@ -522,6 +662,40 @@ async def alven_api_ventas_proxy_or_fallback(request: Request) -> Response:
         pass
 
     return JSONResponse(_alvent_ventas_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/negocios/",
+    methods=["GET"],
+    response_model=None,
+)
+async def alven_api_negocios_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "negocios/")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    return JSONResponse(_alvent_negocios_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/negocios/planes/catalogo",
+    methods=["GET"],
+    response_model=None,
+)
+async def alven_api_negocios_planes_catalogo_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "negocios/planes/catalogo")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    return JSONResponse(_alvent_planes_catalogo_fallback_payload(), status_code=200)
 
 
 @router.api_route(
