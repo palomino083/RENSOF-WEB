@@ -102,43 +102,44 @@ api.interceptors.response.use(
         isRefreshing = true;
 
         const refreshToken = localStorage.getItem("refreshToken");
-        if (refreshToken) {
-          // Intentar refrescar el token
-          api
-            .post("/auth/refresh", { refresh_token: refreshToken })
-            .then((res) => {
-              const { access_token, token_type } = res.data;
-              localStorage.setItem("token", access_token);
-              
-              // Actualizar token en la instancia actual
-              api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
-              config.headers.Authorization = `Bearer ${access_token}`;
-              
-              processQueue(null, access_token);
-              
-              // Reintentar la solicitud original con el nuevo token
-              return api(config);
-            })
-            .catch((err) => {
-              // Si falla el refresh, logout
-              localStorage.clear();
-              processQueue(err, null);
-              
-              if (typeof window !== "undefined") {
-                window.location.href = appPath("login");
-              }
-              
-              return Promise.reject(err);
-            });
-        } else {
-          // Sin refresh token, logout
+        if (!refreshToken) {
           localStorage.clear();
-          processQueue(error, null);
-          
+          isRefreshing = false;
+
           if (typeof window !== "undefined") {
             window.location.href = appPath("login");
           }
+
+          return Promise.reject(error);
         }
+
+        // Intentar refrescar el token
+        api
+          .post("/auth/refresh", { refresh_token: refreshToken })
+          .then((res) => {
+            const { access_token } = res.data;
+            localStorage.setItem("token", access_token);
+
+            // Actualizar token en la instancia actual
+            api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+            config.headers.Authorization = `Bearer ${access_token}`;
+
+            processQueue(null, access_token);
+
+            // Reintentar la solicitud original con el nuevo token
+            return api(config);
+          })
+          .catch((err) => {
+            // Si falla el refresh, logout
+            localStorage.clear();
+            processQueue(err, null);
+
+            if (typeof window !== "undefined") {
+              window.location.href = appPath("login");
+            }
+
+            return Promise.reject(err);
+          });
       }
 
       // Encolar la solicitud mientras se refresca

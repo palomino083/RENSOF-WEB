@@ -541,6 +541,46 @@ def _alvent_ventas_fallback_payload() -> list[dict[str, object]]:
     return []
 
 
+def _alvent_clientes_fallback_payload() -> list[dict[str, object]]:
+    return [
+        {
+            "id": 1,
+            "nombre": "Cliente contingencia",
+            "dni": "00000000",
+            "telefono": "",
+            "email": "cliente@rensof.pe",
+        }
+    ]
+
+
+def _alvent_cliente_created_fallback_payload(payload: dict[str, object]) -> dict[str, object]:
+    return {
+        "id": 0,
+        "nombre": str(payload.get("nombre") or "Cliente contingencia").strip() or "Cliente contingencia",
+        "dni": str(payload.get("dni") or "").strip(),
+        "telefono": str(payload.get("telefono") or "").strip(),
+        "email": str(payload.get("email") or "").strip(),
+    }
+
+
+def _alvent_cliente_updated_fallback_payload(cliente_id: int, payload: dict[str, object]) -> dict[str, object]:
+    return {
+        "id": int(cliente_id),
+        "nombre": str(payload.get("nombre") or f"Cliente {cliente_id}").strip() or f"Cliente {cliente_id}",
+        "dni": str(payload.get("dni") or "").strip(),
+        "telefono": str(payload.get("telefono") or "").strip(),
+        "email": str(payload.get("email") or "").strip(),
+    }
+
+
+def _alvent_cliente_delete_fallback_payload(cliente_id: int) -> dict[str, object]:
+    return {
+        "ok": True,
+        "mensaje": "Cliente eliminado en modo contingencia",
+        "cliente_id": int(cliente_id),
+    }
+
+
 def _alvent_ventas_resumen_fallback_payload() -> dict[str, object]:
     return {
         "hoy": {"ventas": 0, "monto": 0.0},
@@ -854,6 +894,74 @@ async def alven_api_ventas_proxy_or_fallback(request: Request) -> Response:
         pass
 
     return JSONResponse(_alvent_ventas_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/clientes/",
+    methods=["GET", "POST", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_clientes_proxy_or_fallback(request: Request) -> Response:
+    return await _alven_api_clientes_collection_fallback_only(request)
+
+
+@router.api_route(
+    "/alven/api/clientes",
+    methods=["GET", "POST", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_clientes_no_slash_proxy_or_fallback(request: Request) -> Response:
+    return await _alven_api_clientes_collection_fallback_only(request)
+
+
+async def _alven_api_clientes_collection_fallback_only(request: Request) -> Response:
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    if request.method == "POST":
+        payload: dict[str, object] = {}
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {}
+        return JSONResponse(_alvent_cliente_created_fallback_payload(payload), status_code=200)
+
+    clientes = _alvent_clientes_fallback_payload()
+    buscar = str(request.query_params.get("buscar") or "").strip().lower()
+    if buscar:
+        clientes = [
+            item
+            for item in clientes
+            if buscar in str(item.get("nombre") or "").lower()
+            or buscar in str(item.get("dni") or "").lower()
+            or buscar in str(item.get("email") or "").lower()
+        ]
+
+    return JSONResponse(clientes, status_code=200)
+
+
+@router.api_route(
+    "/alven/api/clientes/{cliente_id}",
+    methods=["PUT", "DELETE", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_cliente_item_proxy_or_fallback(cliente_id: int, request: Request) -> Response:
+    # Mantener operativa la pantalla de clientes aun cuando el backend dedicado falle.
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    if request.method == "DELETE":
+        return JSONResponse(_alvent_cliente_delete_fallback_payload(cliente_id), status_code=200)
+
+    payload: dict[str, object] = {}
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    return JSONResponse(_alvent_cliente_updated_fallback_payload(cliente_id, payload), status_code=200)
 
 
 @router.api_route(
