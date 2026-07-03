@@ -105,7 +105,9 @@ export default function RegisterPage() {
         window.location.href = appPath("onboarding/configuracion");
       }, 1500);
     } catch (err: any) {
-      console.error("REGISTRO ERROR:", err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("REGISTRO ERROR:", err);
+      }
       setError(getApiErrorMessage(err, "Error en el registro"));
     } finally {
       setLoading(false);
