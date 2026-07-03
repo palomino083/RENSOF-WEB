@@ -97,6 +97,7 @@ export default function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   const [showResetModal, setShowResetModal] = useState(false);
   const [password, setPassword] = useState("");
@@ -145,6 +146,7 @@ export default function Dashboard() {
       setError("");
       const overview = await dashboardService.getOverview();
       setData(overview);
+      setLastUpdatedAt(new Date());
     } catch (err) {
       if (process.env.NODE_ENV !== "production") {
         console.error(err);
@@ -282,6 +284,22 @@ export default function Dashboard() {
             </div>
             <div className={styles.heroActions}>
               <ExecutiveThemeSwitch />
+              <p className={styles.refreshMeta}>
+                {lastUpdatedAt
+                  ? `Actualizado: ${lastUpdatedAt.toLocaleTimeString("es-PE", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}`
+                  : "Actualizado: pendiente"}
+              </p>
+              <button
+                type="button"
+                onClick={cargarDashboard}
+                className={`${styles.refreshBtn} focus-ring`}
+              >
+                Refrescar dashboard
+              </button>
               <button
                 type="button"
                 onClick={() => setShowResetModal(true)}

@@ -584,7 +584,7 @@ export default function PosPage() {
 
       setSuccess(`Venta #${ventaId || ""} registrada correctamente`);
 
-      router.push("/ventas");
+      router.push(appPath("ventas"));
     } catch (err: unknown) {
       alert(getApiErrorMessage(err, "Error creando venta"));
       setError(getApiErrorMessage(err, "Error creando venta"));
@@ -896,7 +896,8 @@ export default function PosPage() {
           <button
             type="button"
             onClick={finalizarVenta}
-            disabled={processing}
+            disabled={processing || carrito.length === 0}
+            title={carrito.length === 0 ? "Agrega al menos un producto para cobrar" : undefined}
             className={`${styles.payButton} focus-ring`}
           >
             {processing ? "Procesando..." : "Cobrar"}
