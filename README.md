@@ -19,6 +19,26 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
+## Arranque Local ALVENT (1 Comando)
+
+Para levantar backend + frontend de ALVENT con un solo comando en PowerShell:
+
+```powershell
+.\scripts\start-alvent-local.ps1
+```
+
+Acceso:
+
+- Login: `http://localhost:3001/alven/app/login`
+- API: `http://127.0.0.1:8000/alven/api`
+- Credenciales superadmin: `Admin / 123456`
+
+Para detener ambos procesos:
+
+```powershell
+.\scripts\stop-alvent-local.ps1
+```
+
 ## Despliegue en Render
 
 El acceso real a ALVENT dentro de RENSOF requiere tres servicios activos:
