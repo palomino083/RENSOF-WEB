@@ -245,6 +245,7 @@ class PlanSolicitudOut(BaseModel):
 
 class PlanPagoHistorialOut(BaseModel):
     id: int
+    usuario_id: Optional[int] = None
     plan_actual: str
     plan_solicitado: str
     canal_pago: str

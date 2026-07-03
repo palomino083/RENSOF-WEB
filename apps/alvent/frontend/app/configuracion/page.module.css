@@ -976,6 +976,47 @@
   font-weight: 700;
 }
 
+.paymentAccountsEditorGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.paymentAccountCard {
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.paymentAccountCard h5 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.paymentAccountCard label {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.paymentAccountCard input,
+.paymentAccountCard textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: #fff;
+}
+
+.paymentAccountCard textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
 .catalogTitle {
   margin-top: 8px;
   color: #0f172a;

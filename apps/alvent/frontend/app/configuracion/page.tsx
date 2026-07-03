@@ -128,6 +128,8 @@ const MODULOS_BASE = [
 const PLAN_BONDAD_SOURCES = PLANES_VISIBLES_EN_SECCION;
 
 type CanalPago = "transferencia" | "tarjeta" | "yape" | "plin";
+type DestinoCobro = { titulo: string; detalle: string[] };
+type PaymentDestinations = Record<CanalPago, DestinoCobro>;
 
 const CANALES_PAGO: Array<{ value: CanalPago; label: string }> = [
   { value: "transferencia", label: "Transferencia" },
@@ -136,7 +138,7 @@ const CANALES_PAGO: Array<{ value: CanalPago; label: string }> = [
   { value: "plin", label: "Plin" },
 ];
 
-const DESTINOS_COBRO_ALVENT: Record<CanalPago, { titulo: string; detalle: string[] }> = {
+const PAYMENT_DESTINATIONS_DEFAULT: PaymentDestinations = {
   transferencia: {
     titulo: "Cuenta bancaria para transferencia",
     detalle: [
@@ -168,6 +170,33 @@ const DESTINOS_COBRO_ALVENT: Record<CanalPago, { titulo: string; detalle: string
       "Titular: RENSOF S.A.C.",
     ],
   },
+};
+
+const normalizarDestinoCobro = (
+  value: unknown,
+  fallback: DestinoCobro
+): DestinoCobro => {
+  const raw = typeof value === "object" && value !== null ? (value as Partial<DestinoCobro>) : {};
+  const titulo = String(raw.titulo || fallback.titulo).trim() || fallback.titulo;
+  const detalleRaw = Array.isArray(raw.detalle) ? raw.detalle : fallback.detalle;
+  const detalle = detalleRaw
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .slice(0, 8);
+  return {
+    titulo,
+    detalle: detalle.length > 0 ? detalle : fallback.detalle,
+  };
+};
+
+const normalizarPaymentDestinations = (value: unknown): PaymentDestinations => {
+  const raw = typeof value === "object" && value !== null ? (value as Partial<PaymentDestinations>) : {};
+  return {
+    transferencia: normalizarDestinoCobro(raw.transferencia, PAYMENT_DESTINATIONS_DEFAULT.transferencia),
+    tarjeta: normalizarDestinoCobro(raw.tarjeta, PAYMENT_DESTINATIONS_DEFAULT.tarjeta),
+    yape: normalizarDestinoCobro(raw.yape, PAYMENT_DESTINATIONS_DEFAULT.yape),
+    plin: normalizarDestinoCobro(raw.plin, PAYMENT_DESTINATIONS_DEFAULT.plin),
+  };
 };
 
 const esCanalPago = (value: string): value is CanalPago =>
@@ -314,6 +343,7 @@ export default function ConfiguracionPage() {
   const [comprobantePagoFile, setComprobantePagoFile] = useState<File | null>(null);
   const [historialPlanes, setHistorialPlanes] = useState<Array<{
     id: number;
+    usuario_id?: number | null;
     plan_actual: string;
     plan_solicitado: string;
     canal_pago: string;
@@ -324,6 +354,8 @@ export default function ConfiguracionPage() {
     fecha: string;
   }>>([]);
   const [loadingHistorialPlanes, setLoadingHistorialPlanes] = useState(false);
+  const [paymentDestinations, setPaymentDestinations] = useState<PaymentDestinations>(PAYMENT_DESTINATIONS_DEFAULT);
+  const [savingPaymentDestinations, setSavingPaymentDestinations] = useState(false);
   const [filtroEstadoHistorialPlan, setFiltroEstadoHistorialPlan] = useState<"TODOS" | "PENDIENTE_VALIDACION" | "APLICADO" | "RECHAZADO">("TODOS");
   const [validatingPlanPagoId, setValidatingPlanPagoId] = useState<number | null>(null);
   const [solicitudPlan, setSolicitudPlan] = useState({
@@ -601,6 +633,77 @@ export default function ConfiguracionPage() {
       setLoadingHistorialPlanes(false);
     }
   }, [getNegocioIdActivo]);
+
+  const cargarCuentasCobro = useCallback(async (negocioIdArg?: number) => {
+    const negocioId = negocioIdArg || getNegocioIdActivo();
+    if (!negocioId) {
+      setPaymentDestinations(PAYMENT_DESTINATIONS_DEFAULT);
+      return;
+    }
+
+    try {
+      const data = await negocioService.getPaymentDestinations(negocioId);
+      setPaymentDestinations(normalizarPaymentDestinations(data?.cuentas));
+    } catch (err: unknown) {
+      setPaymentDestinations(PAYMENT_DESTINATIONS_DEFAULT);
+      setError(getApiErrorMessage(err, "No se pudieron cargar las cuentas para pago"));
+    }
+  }, [getNegocioIdActivo]);
+
+  const guardarCuentasCobro = async () => {
+    const negocioId = getNegocioIdActivo();
+    if (!isSuperadmin) return;
+    if (!negocioId) {
+      setError("Selecciona una empresa cliente para guardar cuentas de pago");
+      return;
+    }
+
+    try {
+      setSavingPaymentDestinations(true);
+      setError("");
+      setSuccess("");
+      const payload = normalizarPaymentDestinations(paymentDestinations);
+      const data = await negocioService.updatePaymentDestinations(negocioId, payload);
+      setPaymentDestinations(normalizarPaymentDestinations(data.cuentas));
+      setSuccess(data.mensaje || "Cuentas para pago actualizadas");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudieron actualizar las cuentas para pago"));
+    } finally {
+      setSavingPaymentDestinations(false);
+    }
+  };
+
+  const actualizarCuentaCobro = (
+    canal: CanalPago,
+    campo: "titulo" | "detalle",
+    value: string
+  ) => {
+    setPaymentDestinations((prev) => {
+      const actual = prev[canal];
+      if (campo === "titulo") {
+        return {
+          ...prev,
+          [canal]: {
+            ...actual,
+            titulo: value,
+          },
+        };
+      }
+
+      const detalle = value
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 8);
+      return {
+        ...prev,
+        [canal]: {
+          ...actual,
+          detalle,
+        },
+      };
+    });
+  };
 
   const cargarBondadesPlanGratuito = useCallback(async (negocioIdArg?: number) => {
     const negocioId = negocioIdArg || getNegocioIdActivo();
@@ -961,7 +1064,7 @@ export default function ConfiguracionPage() {
     (planControlAccion === "aplicar" || planControlAccion === "guardar_monto" || planControlAccion === "guardar_limites")
     && !negocioActivoId;
   const canalPagoSeleccionado = normalizarCanalPago(solicitudPlan.canal_pago);
-  const destinoCobroSeleccionado = DESTINOS_COBRO_ALVENT[canalPagoSeleccionado];
+  const destinoCobroSeleccionado = paymentDestinations[canalPagoSeleccionado] || PAYMENT_DESTINATIONS_DEFAULT[canalPagoSeleccionado];
 
   const copiarBondadesDesdePlan = (codigoPlan: string) => {
     const plan = planCatalogo.find((p) => p.codigo === normalizarPlan(codigoPlan));
@@ -1169,6 +1272,7 @@ export default function ConfiguracionPage() {
     void cargarBranding(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
+    void cargarCuentasCobro(negocioId);
     void cargarCatalogoPlanes(negocioId);
     void cargarBondadesPlanGratuito(negocioId);
     void cargarMontosPlanes(negocioId);
@@ -1179,6 +1283,7 @@ export default function ConfiguracionPage() {
     cargarBranding,
     cargarPlanStats,
     cargarHistorialPlanes,
+    cargarCuentasCobro,
     cargarCatalogoPlanes,
     cargarBondadesPlanGratuito,
     cargarMontosPlanes,
@@ -1202,9 +1307,10 @@ export default function ConfiguracionPage() {
     void cargarBranding(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
+    void cargarCuentasCobro(negocioId);
     void cargarCatalogoPlanes(negocioId);
     void cargarMontosPlanes(negocioId);
-  }, [isSuperadmin, cargarBranding, cargarPlanStats, cargarHistorialPlanes, cargarCatalogoPlanes, cargarMontosPlanes]);
+  }, [isSuperadmin, cargarBranding, cargarPlanStats, cargarHistorialPlanes, cargarCuentasCobro, cargarCatalogoPlanes, cargarMontosPlanes]);
 
   useEffect(() => {
     void cargarEscenariosSimulador();
@@ -2157,6 +2263,55 @@ export default function ConfiguracionPage() {
 
                 <section className={styles.planHistoryBox}>
                   <div className={styles.planHistoryHead}>
+                    <h4>Cuentas para pago por canal</h4>
+                  </div>
+                  {!negocioActivoId ? (
+                    <p>Selecciona una empresa cliente para editar cuentas de cobro.</p>
+                  ) : (
+                    <div className={styles.paymentAccountsEditorGrid}>
+                      {CANALES_PAGO.map((canal) => {
+                        const cuenta = paymentDestinations[canal.value];
+                        return (
+                          <article key={`cuenta-${canal.value}`} className={styles.paymentAccountCard}>
+                            <h5>{canal.label}</h5>
+                            <label>
+                              Titulo
+                              <input
+                                type="text"
+                                className="focus-ring"
+                                value={cuenta?.titulo || ""}
+                                onChange={(e) => actualizarCuentaCobro(canal.value, "titulo", e.target.value)}
+                              />
+                            </label>
+                            <label>
+                              Detalle (una linea por dato)
+                              <textarea
+                                className="focus-ring"
+                                value={(cuenta?.detalle || []).join("\n")}
+                                onChange={(e) => actualizarCuentaCobro(canal.value, "detalle", e.target.value)}
+                              />
+                            </label>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className={styles.freePlanBoostQuickActions}>
+                    <span>Aplica estos datos en el modal de pago de usuarios.</span>
+                    <button
+                      type="button"
+                      className={`${styles.saveBusinessBtn} focus-ring`}
+                      onClick={() => void guardarCuentasCobro()}
+                      disabled={savingPaymentDestinations || !negocioActivoId}
+                    >
+                      {savingPaymentDestinations ? "Guardando..." : "Guardar cuentas"}
+                    </button>
+                  </div>
+                </section>
+
+                <section className={styles.planHistoryBox}>
+                  <div className={styles.planHistoryHead}>
                     <h4>Validacion de pagos de planes</h4>
                     <label className={styles.planHistoryFilter}>
                       Estado
@@ -2184,6 +2339,7 @@ export default function ConfiguracionPage() {
                         <thead>
                           <tr>
                             <th>Fecha</th>
+                            <th>Solicitante</th>
                             <th>Cambio</th>
                             <th>Estado</th>
                             <th>Canal</th>
@@ -2198,6 +2354,7 @@ export default function ConfiguracionPage() {
                             return (
                               <tr key={`sa-plan-${item.id}`}>
                                 <td>{new Date(item.fecha).toLocaleString()}</td>
+                                <td>{item.usuario_id ?? "-"}</td>
                                 <td>{nombrePlan(item.plan_actual)} a {nombrePlan(item.plan_solicitado)}</td>
                                 <td>{item.estado}</td>
                                 <td>{item.canal_pago}</td>

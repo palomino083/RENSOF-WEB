@@ -12,11 +12,16 @@ export default function ProtectedRoute({
 }) {
 
   const pathname = usePathname();
+  const APP_PREFIX = "/alven/app";
 
   const normalizeRoute = (value: string) => {
-    let route = String(value || "").replace(/\/+$/, "") || "/";
-    while (route.startsWith("/alven/app")) {
-      route = route.replace("/alven/app", "") || "/";
+    const raw = String(value || "").trim();
+    const noOrigin = raw.replace(/^https?:\/\/[^/]+/i, "");
+    const [pathOnly] = noOrigin.split(/[?#]/);
+    let route = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
+    route = route.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
+    while (route.startsWith(APP_PREFIX)) {
+      route = route.slice(APP_PREFIX.length) || "/";
     }
     return route || "/";
   };

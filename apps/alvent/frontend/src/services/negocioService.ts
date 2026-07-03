@@ -247,6 +247,7 @@ export const negocioService = {
     const res = await api.get(`/negocios/${negocioId}/planes/historial`);
     return res.data as Array<{
       id: number;
+      usuario_id?: number | null;
       plan_actual: string;
       plan_solicitado: string;
       canal_pago: string;
@@ -256,6 +257,42 @@ export const negocioService = {
       estado: string;
       fecha: string;
     }>;
+  },
+
+  getPaymentDestinations: async (negocioId: number) => {
+    const res = await api.get(`/negocios/${negocioId}/planes/cuentas-cobro`);
+    return res.data as {
+      negocio_id: number;
+      cuentas: {
+        transferencia: { titulo: string; detalle: string[] };
+        tarjeta: { titulo: string; detalle: string[] };
+        yape: { titulo: string; detalle: string[] };
+        plin: { titulo: string; detalle: string[] };
+      };
+    };
+  },
+
+  updatePaymentDestinations: async (
+    negocioId: number,
+    cuentas: {
+      transferencia: { titulo: string; detalle: string[] };
+      tarjeta: { titulo: string; detalle: string[] };
+      yape: { titulo: string; detalle: string[] };
+      plin: { titulo: string; detalle: string[] };
+    }
+  ) => {
+    const res = await api.put(`/negocios/${negocioId}/planes/cuentas-cobro`, cuentas);
+    return res.data as {
+      ok: boolean;
+      mensaje: string;
+      negocio_id: number;
+      cuentas: {
+        transferencia: { titulo: string; detalle: string[] };
+        tarjeta: { titulo: string; detalle: string[] };
+        yape: { titulo: string; detalle: string[] };
+        plin: { titulo: string; detalle: string[] };
+      };
+    };
   },
 
   validatePlanPayment: async (

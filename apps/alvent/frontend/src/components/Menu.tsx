@@ -143,19 +143,25 @@ export default function Menu() {
   const [usuario, setUsuario] = useState<Usuario>({});
   const pathname = usePathname();
 
-  const normalizePath = (value: string) => {
-    let clean = String(value || "").replace(/\/+$/, "") || "/";
-    while (clean.startsWith("/alven/app")) {
-      clean = clean.replace("/alven/app", "") || "/";
+  const APP_PREFIX = "/alven/app";
+
+  const cleanRoute = (value: string) => {
+    const raw = String(value || "").trim();
+    const noOrigin = raw.replace(/^https?:\/\/[^/]+/i, "");
+    const [pathOnly] = noOrigin.split(/[?#]/);
+    let path = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
+    path = path.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
+    while (path.startsWith(APP_PREFIX)) {
+      path = path.slice(APP_PREFIX.length) || "/";
     }
-    return clean || "/";
+    return path || "/";
   };
 
+  const normalizePath = (value: string) => cleanRoute(value);
+
   const toAppHref = (href: string) => {
-    const normalizedHref = href.startsWith("/") ? href : `/${href}`;
-    return normalizedHref.startsWith("/alven/app")
-      ? normalizedHref
-      : `/alven/app${normalizedHref}`;
+    const route = cleanRoute(href);
+    return route;
   };
 
   useEffect(() => {

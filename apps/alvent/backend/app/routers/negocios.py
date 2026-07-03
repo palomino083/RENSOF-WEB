@@ -91,6 +91,18 @@ class PlanPagoValidacionUpdate(BaseModel):
     accion: str = Field(min_length=7, max_length=10)
 
 
+class CuentaCobroCanalUpdate(BaseModel):
+    titulo: str = Field(min_length=3, max_length=120)
+    detalle: List[str] = Field(default_factory=list, min_length=1, max_length=8)
+
+
+class CuentasCobroUpdate(BaseModel):
+    transferencia: CuentaCobroCanalUpdate
+    tarjeta: CuentaCobroCanalUpdate
+    yape: CuentaCobroCanalUpdate
+    plin: CuentaCobroCanalUpdate
+
+
 PLAN_MONTOS_DEFAULT = {
     "GRATUITO": 0.0,
     "PRUEBA": 15.0,
@@ -99,6 +111,90 @@ PLAN_MONTOS_DEFAULT = {
     "PRO": 45.0,
     "PREMIUM": 65.0,
 }
+
+
+CUENTAS_COBRO_DEFAULT: dict[str, dict[str, object]] = {
+    "transferencia": {
+        "titulo": "Cuenta bancaria para transferencia",
+        "detalle": [
+            "Banco: BCP",
+            "Titular: RENSOF S.A.C.",
+            "Cuenta corriente: 191-2587456-0-21",
+            "CCI: 00219100258745602137",
+        ],
+    },
+    "tarjeta": {
+        "titulo": "Pago con tarjeta (alineado a cuenta bancaria)",
+        "detalle": [
+            "Deposita el abono en la misma cuenta bancaria oficial de ALVENT ERP PRO.",
+            "Banco: BCP - Cuenta corriente 191-2587456-0-21",
+            "CCI: 00219100258745602137",
+        ],
+    },
+    "yape": {
+        "titulo": "Yape",
+        "detalle": [
+            "Numero de abono Yape: 987 654 321",
+            "Titular: RENSOF S.A.C.",
+        ],
+    },
+    "plin": {
+        "titulo": "Plin",
+        "detalle": [
+            "Numero de abono Plin: 987 654 321",
+            "Titular: RENSOF S.A.C.",
+        ],
+    },
+}
+
+
+def _leer_plan_catalogo_custom(negocio: Negocio) -> dict:
+    raw_custom = str(getattr(negocio, "plan_catalogo_custom", "") or "").strip()
+    try:
+        custom_map = json.loads(raw_custom) if raw_custom else {}
+    except json.JSONDecodeError:
+        custom_map = {}
+    if not isinstance(custom_map, dict):
+        custom_map = {}
+    return custom_map
+
+
+def _normalizar_detalle_cuenta(value: object, fallback: list[str]) -> list[str]:
+    if not isinstance(value, list):
+        return list(fallback)
+    salida = [str(item).strip() for item in value if str(item).strip()]
+    if not salida:
+        return list(fallback)
+    return salida[:8]
+
+
+def _resolver_cuentas_cobro(negocio: Negocio) -> dict[str, dict[str, object]]:
+    custom_map = _leer_plan_catalogo_custom(negocio)
+    raw = custom_map.get("__cuentas_cobro__", {})
+    raw = raw if isinstance(raw, dict) else {}
+
+    cuentas: dict[str, dict[str, object]] = {}
+    for canal, base in CUENTAS_COBRO_DEFAULT.items():
+        cfg = raw.get(canal, {})
+        cfg = cfg if isinstance(cfg, dict) else {}
+
+        titulo = str(cfg.get("titulo") or base["titulo"]).strip()
+        if len(titulo) < 3:
+            titulo = str(base["titulo"])
+
+        detalle = _normalizar_detalle_cuenta(cfg.get("detalle"), list(base["detalle"]))
+        cuentas[canal] = {
+            "titulo": titulo,
+            "detalle": detalle,
+        }
+
+    return cuentas
+
+
+def _guardar_cuentas_cobro(negocio: Negocio, cuentas: dict[str, dict[str, object]]):
+    custom_map = _leer_plan_catalogo_custom(negocio)
+    custom_map["__cuentas_cobro__"] = cuentas
+    negocio.plan_catalogo_custom = json.dumps(custom_map, ensure_ascii=False)
 
 
 def _resolver_montos_planes(negocio: Negocio) -> dict[str, float]:
@@ -390,13 +486,7 @@ def actualizar_catalogo_planes_editable(
     if not negocio:
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
 
-    raw_custom = str(getattr(negocio, "plan_catalogo_custom", "") or "").strip()
-    try:
-        custom_map = json.loads(raw_custom) if raw_custom else {}
-    except json.JSONDecodeError:
-        custom_map = {}
-    if not isinstance(custom_map, dict):
-        custom_map = {}
+    custom_map = _leer_plan_catalogo_custom(negocio)
 
     for item in data.planes:
         codigo = _normalizar_plan(item.codigo)
@@ -430,6 +520,69 @@ def actualizar_catalogo_planes_editable(
         "ok": True,
         "mensaje": "Capacidades de planes actualizadas",
         "planes": obtener_catalogo_planes_para_negocio(negocio),
+    }
+
+
+@router.get("/{negocio_id}/planes/cuentas-cobro")
+def obtener_cuentas_cobro_planes(
+    negocio_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin and current_user.get("negocio_id") != negocio_id:
+        raise HTTPException(status_code=403, detail="Sin permiso")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    return {
+        "negocio_id": negocio_id,
+        "cuentas": _resolver_cuentas_cobro(negocio),
+    }
+
+
+@router.put("/{negocio_id}/planes/cuentas-cobro")
+def actualizar_cuentas_cobro_planes(
+    negocio_id: int,
+    data: CuentasCobroUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin:
+        raise HTTPException(status_code=403, detail="Solo superadministrador")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    payload = data.model_dump()
+    cuentas: dict[str, dict[str, object]] = {}
+    for canal, base in CUENTAS_COBRO_DEFAULT.items():
+        item = payload.get(canal, {})
+        item = item if isinstance(item, dict) else {}
+
+        titulo = str(item.get("titulo") or "").strip()
+        if len(titulo) < 3:
+            raise HTTPException(status_code=400, detail=f"Titulo invalido para canal {canal}")
+
+        detalle = _normalizar_detalle_cuenta(item.get("detalle"), list(base["detalle"]))
+        cuentas[canal] = {
+            "titulo": titulo,
+            "detalle": detalle,
+        }
+
+    _guardar_cuentas_cobro(negocio, cuentas)
+    db.commit()
+    db.refresh(negocio)
+
+    return {
+        "ok": True,
+        "mensaje": "Cuentas para pago actualizadas",
+        "negocio_id": negocio_id,
+        "cuentas": _resolver_cuentas_cobro(negocio),
     }
 
 
@@ -887,6 +1040,12 @@ def validar_pago_plan(
 
     if str(pago.estado or "").upper() != "PENDIENTE_VALIDACION":
         raise HTTPException(status_code=400, detail="El pago ya fue procesado")
+
+    if accion == "APROBAR":
+        canal = str(getattr(pago, "canal_pago", "")).lower().strip()
+        comprobante = str(getattr(pago, "comprobante_url", "") or "").strip()
+        if canal != "efectivo" and not comprobante:
+            raise HTTPException(status_code=400, detail="No se puede aprobar sin comprobante adjunto")
 
     if accion == "APROBAR":
         negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
