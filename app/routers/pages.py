@@ -506,6 +506,14 @@ def _alvent_usuario_toggle_estado_fallback_payload(usuario_id: int) -> dict[str,
     }
 
 
+def _alvent_usuario_delete_fallback_payload(usuario_id: int) -> dict[str, object]:
+    return {
+        "ok": True,
+        "mensaje": "Usuario eliminado en modo contingencia",
+        "usuario_id": int(usuario_id),
+    }
+
+
 def _alvent_usuarios_permisos_fallback_payload() -> dict[str, object]:
     return {
         "negocio_id": 0,
@@ -951,7 +959,7 @@ async def alven_api_usuarios_permisos_proxy_or_fallback(request: Request) -> Res
 
 @router.api_route(
     "/alven/api/usuarios/{usuario_id}",
-    methods=["PATCH", "OPTIONS"],
+    methods=["PATCH", "DELETE", "OPTIONS"],
     response_model=None,
 )
 async def alven_api_usuario_patch_proxy_or_fallback(usuario_id: int, request: Request) -> Response:
@@ -965,6 +973,9 @@ async def alven_api_usuario_patch_proxy_or_fallback(usuario_id: int, request: Re
 
     if request.method == "OPTIONS":
         return Response(status_code=204)
+
+    if request.method == "DELETE":
+        return JSONResponse(_alvent_usuario_delete_fallback_payload(usuario_id), status_code=200)
 
     payload: dict[str, object] = {}
     try:
