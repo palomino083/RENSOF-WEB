@@ -2,10 +2,11 @@ import os
 import secrets
 import httpx
 from fastapi import APIRouter, Form, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.core.config import (
+    BASE_DIR,
     ALVENT_APP_URL,
     ALVENT_BACKEND_LOCAL_ORIGIN,
     ALVENT_BACKEND_ORIGIN,
@@ -22,6 +23,7 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 ALVENT_FALLBACK_USER = os.getenv("ALVENT_FALLBACK_USER", "Admin")
 ALVENT_FALLBACK_PASSWORD = os.getenv("ALVENT_FALLBACK_PASSWORD", "123456")
+ALVENT_FRONTEND_FAVICON_PATH = BASE_DIR / "apps" / "alvent" / "frontend" / "app" / "favicon.ico"
 
 
 def _alvent_frontend_url(path: str = "") -> str:
@@ -646,6 +648,17 @@ def alvent_legacy_redirect() -> Response:
 @router.get("/favicon.ico", response_model=None)
 def root_favicon_redirect() -> Response:
     return RedirectResponse("/alven/app/favicon.ico", status_code=308)
+
+
+@router.get("/alven/app/favicon.ico", response_model=None)
+def alven_app_favicon() -> Response:
+    if ALVENT_FRONTEND_FAVICON_PATH.is_file():
+        return FileResponse(
+            path=ALVENT_FRONTEND_FAVICON_PATH,
+            media_type="image/x-icon",
+            filename="favicon.ico",
+        )
+    return Response(status_code=404)
 
 
 @router.api_route(
