@@ -8,7 +8,7 @@ import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
 import Toolbar from "@/components/ui/Toolbar";
 import ModalCard from "@/components/ui/ModalCard";
 import StatusBadge from "@/components/ui/StatusBadge";
-import PlanVisualCards from "@/features/planes/components/PlanVisualCards";
+import PlanVisualCards, { type PlanVisualCardItem } from "@/features/planes/components/PlanVisualCards";
 import { systemService } from "@/services/systemService";
 import { API_URL } from "@/services/api";
 import { negocioService, type Negocio } from "@/services/negocioService";
@@ -1316,7 +1316,7 @@ export default function ConfiguracionPage() {
   const puedeAplicarSugerido = Boolean(planSugerido) && !planSugeridoActivo && !changingPlan && !simuladorOverride.habilitado && Boolean(negocioActivoId);
   const formatPrecio = (value: number) => `S/${Number(value || 0).toFixed(0)}`;
 
-  const planVisualCards = planCatalogoVisible.map((plan) => {
+  const planVisualCards: PlanVisualCardItem[] = planCatalogoVisible.map((plan) => {
     const codigo = normalizarPlan(plan.codigo);
     const meta = PLAN_VISUAL_META[codigo] || {
       subtitulo: "Alternativa configurable",
@@ -1329,7 +1329,7 @@ export default function ConfiguracionPage() {
     const esActual = normalizarPlan(businessForm.plan) === codigo;
     const esSugerido = Boolean(planSugerido) && normalizarPlan(planSugerido?.codigo) === codigo;
 
-    const beneficios = [
+    const beneficios: PlanVisualCardItem["beneficios"] = [
       { icon: "user", text: `Usuarios: ${formatLimite(planEfectivo.usuarios_limite)}` },
       {
         icon: "chart",
