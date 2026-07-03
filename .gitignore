@@ -2,3 +2,10 @@
 Thumbs.db
 *.log
 .vscode/
+
+# Python cache artifacts
+__pycache__/
+*.py[cod]
+
+# Local runtime state
+scripts/.alvent-local.pids.json
