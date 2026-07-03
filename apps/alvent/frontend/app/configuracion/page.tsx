@@ -1395,6 +1395,8 @@ export default function ConfiguracionPage() {
                           <option value="supermercado">Supermercado</option>
                           <option value="boutique">Boutique</option>
                           <option value="kiosko">Kiosko</option>
+                          <option value="desarrollo_software">Desarrollo de software</option>
+                          <option value="servicio_aplicativos">Servicio de aplicativos</option>
                           <option value="otro">Otro</option>
                         </select>
                       </div>

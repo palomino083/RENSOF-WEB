@@ -11,6 +11,8 @@ class TipoNegocio(str, enum.Enum):
     SUPERMERCADO = "supermercado"
     BOUTIQUE = "boutique"
     KIOSKO = "kiosko"
+    DESARROLLO_SOFTWARE = "desarrollo_software"
+    SERVICIO_APLICATIVOS = "servicio_aplicativos"
     OTRO = "otro"
 
 
