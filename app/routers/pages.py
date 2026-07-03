@@ -710,7 +710,9 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
 
     if full_path.strip("/") == "dashboard":
         return _render_alvent_dashboard_fallback(request)
-    return RedirectResponse("/alven/app/login", status_code=307)
+    # Evita ciclos al login cuando el frontend dedicado no esta disponible.
+    # Si no hay sesion, el propio dashboard fallback redirige al login en cliente.
+    return _render_alvent_dashboard_fallback(request)
 
 
 @router.api_route(
