@@ -16,6 +16,14 @@ const sanitizarDni = (value: string | null | undefined) =>
 const sanitizarCelular = (value: string | null | undefined) =>
   String(value || "").replace(/\D/g, "").slice(0, 9);
 
+const withTimeout = <T,>(promise: Promise<T>, ms = 10000): Promise<T> =>
+  Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error("Tiempo de espera agotado al cargar clientes")), ms);
+    }),
+  ]);
+
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [editId, setEditId] = useState<number | null>(null);
@@ -37,10 +45,11 @@ export default function ClientesPage() {
     try {
       setLoadingList(true);
       setError("");
-      const data = await clientesService.getAll();
+      const data = await withTimeout(clientesService.getAll(), 10000);
       setClientes(data);
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "Error cargando clientes"));
+      setClientes([]);
     } finally {
       setLoadingList(false);
     }
