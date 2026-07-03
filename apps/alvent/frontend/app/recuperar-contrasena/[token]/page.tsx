@@ -29,27 +29,27 @@ export default function ResetPasswordPage() {
     }
 
     if (password.length < 6) {
-      setError("La contrasena debe tener al menos 6 caracteres");
+      setError("La contraseña debe tener al menos 6 caracteres");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Las contrasenas no coinciden");
+      setError("Las contraseñas no coinciden");
       return;
     }
 
     if (!token) {
-      setError("Token de recuperacion invalido");
+      setError("Token de recuperación inválido");
       return;
     }
 
     try {
       setLoading(true);
       const res = await resetPassword(token, { password, confirmPassword });
-      setSuccess(res.mensaje || "Contrasena actualizada correctamente");
+      setSuccess(res.mensaje || "Contraseña actualizada correctamente");
       setTimeout(() => router.push("/login"), 1200);
     } catch (err: any) {
-      setError(getApiErrorMessage(err, "No se pudo actualizar la contrasena"));
+      setError(getApiErrorMessage(err, "No se pudo actualizar la contraseña"));
     } finally {
       setLoading(false);
     }
@@ -58,8 +58,8 @@ export default function ResetPasswordPage() {
   return (
     <main className={styles.shell}>
       <section className={styles.card}>
-        <h1>Actualizar contrasena</h1>
-        <p>Ingresa una nueva contrasena para recuperar tu acceso.</p>
+        <h1>Actualizar contraseña</h1>
+        <p>Ingresa una nueva contraseña para recuperar tu acceso.</p>
 
         {error ? <p className={styles.error}>{error}</p> : null}
         {success ? <p className={styles.success}>{success}</p> : null}
@@ -69,19 +69,19 @@ export default function ResetPasswordPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Nueva contrasena"
+            placeholder="Nueva contraseña"
             className="focus-ring"
           />
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirmar contrasena"
+            placeholder="Confirmar contraseña"
             className="focus-ring"
           />
 
           <button type="submit" disabled={loading} className={styles.submitBtn}>
-            {loading ? "Actualizando..." : "Actualizar contrasena"}
+            {loading ? "Actualizando..." : "Actualizar contraseña"}
           </button>
         </form>
 

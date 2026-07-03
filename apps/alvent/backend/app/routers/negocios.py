@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List
 from uuid import uuid4
 import json
+import re
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
@@ -710,17 +711,73 @@ def solicitar_cambio_plan(
     if plan_actual == plan_solicitado:
         raise HTTPException(status_code=400, detail="El negocio ya tiene ese plan")
 
-    referencia = str(data.referencia_pago).strip()
-    if len(referencia) < 3:
-        raise HTTPException(status_code=400, detail="Referencia de pago invalida")
+    referencia = str(data.referencia_pago).strip().upper()
+    if len(referencia) < 6 or not re.fullmatch(r"[A-Z0-9\-_/]+", referencia):
+        raise HTTPException(status_code=400, detail="Referencia de pago invalida. Usa al menos 6 caracteres alfanumericos")
 
     canal = str(data.canal_pago or "transferencia").strip().lower()
+    canales_permitidos = {"transferencia", "yape", "plin", "tarjeta", "efectivo"}
+    if canal not in canales_permitidos:
+        raise HTTPException(status_code=400, detail="Canal de pago no permitido")
+
+    validacion_modo = str(data.validacion_modo or "AUTO").strip().upper()
+    if validacion_modo not in {"AUTO", "MANUAL"}:
+        raise HTTPException(status_code=400, detail="Modo de validacion no valido")
+
+    if not bool(data.declaracion_anti_fraude):
+        raise HTTPException(status_code=400, detail="Debes aceptar la declaracion antifraude para continuar")
+
     observaciones = str(data.observaciones or "").strip()
     comprobante_url = str(data.comprobante_url or "").strip() or None
+    if canal != "efectivo" and not comprobante_url:
+        raise HTTPException(status_code=400, detail="Adjunta comprobante para validar el pago")
+
+    riesgo_score = 0
+    if canal == "efectivo":
+        riesgo_score += 4
+    if validacion_modo == "AUTO":
+        riesgo_score += 2
+    if not comprobante_url:
+        riesgo_score += 3
+    if len(observaciones) < 8:
+        riesgo_score += 1
+
+    referencia_lower = referencia.lower()
+    referencia_en_negocio = (
+        db.query(PlanPago.id)
+        .filter(PlanPago.negocio_id == negocio_id)
+        .filter(func.lower(PlanPago.referencia_pago) == referencia_lower)
+        .first()
+    )
+    if referencia_en_negocio:
+        riesgo_score += 8
+
+    referencia_en_otro_negocio = (
+        db.query(PlanPago.id)
+        .filter(PlanPago.negocio_id != negocio_id)
+        .filter(func.lower(PlanPago.referencia_pago) == referencia_lower)
+        .first()
+    )
+    if referencia_en_otro_negocio:
+        riesgo_score += 6
+
+    riesgo_nivel = "BAJO"
+    if riesgo_score >= 9:
+        riesgo_nivel = "ALTO"
+    elif riesgo_score >= 5:
+        riesgo_nivel = "MEDIO"
+
+    validacion_modo_aplicada = validacion_modo
+    if validacion_modo == "AUTO" and riesgo_score >= 5:
+        validacion_modo_aplicada = "MANUAL"
+
+    estado_pago = "APLICADO" if validacion_modo_aplicada == "AUTO" else "PENDIENTE_VALIDACION"
 
     descripcion = (
         f"solicitud_plan negocio={negocio_id} actual={plan_actual} "
-        f"solicitado={plan_solicitado} ref={referencia[:40]} canal={canal[:20]} obs={observaciones[:60]}"
+        f"solicitado={plan_solicitado} ref={referencia[:40]} canal={canal[:20]} "
+        f"validacion={validacion_modo}->{validacion_modo_aplicada} estado={estado_pago} "
+        f"riesgo={riesgo_nivel}:{riesgo_score} obs={observaciones[:60]}"
     )
 
     registrar_auditoria(
@@ -740,28 +797,44 @@ def solicitar_cambio_plan(
         referencia_pago=referencia,
         observaciones=observaciones[:120] or None,
         comprobante_url=comprobante_url,
-        estado="APLICADO",
+        estado=estado_pago,
     )
     db.add(pago)
 
-    negocio.plan = plan_solicitado
+    if estado_pago == "APLICADO":
+        negocio.plan = plan_solicitado
     db.commit()
     db.refresh(negocio)
 
-    registrar_auditoria(
-        db=db,
-        modulo="Planes",
-        accion="Activacion automatica por pago",
-        descripcion=f"Negocio {negocio_id}: {plan_actual} -> {plan_solicitado} ref={referencia[:40]}",
-        usuario=str(current_user.get("usuario_id") or "Sistema"),
+    if estado_pago == "APLICADO":
+        registrar_auditoria(
+            db=db,
+            modulo="Planes",
+            accion="Activacion automatica por pago",
+            descripcion=f"Negocio {negocio_id}: {plan_actual} -> {plan_solicitado} ref={referencia[:40]}",
+            usuario=str(current_user.get("usuario_id") or "Sistema"),
+        )
+
+    mensaje = (
+        "Pago registrado. Tu nuevo plan fue activado automaticamente."
+        if estado_pago == "APLICADO"
+        else "Pago registrado en revision manual. El plan se activara tras la validacion antifraude."
     )
+
+    if validacion_modo == "AUTO" and validacion_modo_aplicada == "MANUAL":
+        mensaje += " Se detecto riesgo y se forzo validacion manual de seguridad."
 
     return {
         "ok": True,
-        "mensaje": "Pago registrado. Tu nuevo plan fue activado automaticamente.",
+        "mensaje": mensaje,
         "plan_actual": plan_actual,
         "plan_solicitado": plan_solicitado,
         "referencia_pago": referencia,
+        "estado": estado_pago,
+        "validacion_modo_solicitada": validacion_modo,
+        "validacion_modo_aplicada": validacion_modo_aplicada,
+        "riesgo_score": riesgo_score,
+        "riesgo_nivel": riesgo_nivel,
     }
 
 

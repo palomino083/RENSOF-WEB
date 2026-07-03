@@ -97,9 +97,9 @@ export default function VentasPage() {
     <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>Analitica comercial</p>
+          <p className={styles.eyebrow}>Analítica comercial</p>
           <h1>Ventas premium</h1>
-          <p>Monitorea rendimiento diario y revisa cada venta en detalle sin friccion.</p>
+          <p>Monitorea rendimiento diario y revisa cada venta en detalle sin fricción.</p>
         </div>
         <ExecutiveThemeSwitch />
       </section>

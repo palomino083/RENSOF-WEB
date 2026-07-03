@@ -292,7 +292,7 @@ export default function Dashboard() {
             <section className={styles.globalBanner}>
               <div>
                 <strong>Modo Superadmin Global</strong>
-                <p>Estas viendo informacion consolidada de todas las empresas.</p>
+                <p>Estás viendo información consolidada de todas las empresas.</p>
               </div>
               <button
                 type="button"

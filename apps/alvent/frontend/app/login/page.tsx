@@ -46,9 +46,9 @@ export default function LoginPage() {
     if (status === 429) return "Demasiados intentos. Espera un momento y vuelve a intentar.";
     if (status >= 500) return "El servicio esta temporalmente no disponible. Intenta nuevamente en unos minutos.";
     if (status === 401 && detail.includes("usuario")) return "El usuario no existe o no esta habilitado.";
-    if (status === 401 && detail.includes("contrasena")) return "La contrasena es incorrecta. Revisa y vuelve a intentar.";
+    if (status === 401 && detail.includes("contrasena")) return "La contraseña es incorrecta. Revisa y vuelve a intentar.";
 
-    return getApiErrorMessage(err, "Usuario o contrasena incorrectos");
+    return getApiErrorMessage(err, "Usuario o contraseña incorrectos");
   };
 
   /* =========================
@@ -161,14 +161,14 @@ export default function LoginPage() {
           <div className={styles.featureGrid}>
             <div className={styles.feature}>Cierre de caja auditado</div>
             <div className={styles.feature}>Alertas de inventario en tiempo real</div>
-            <div className={styles.feature}>Reportes ejecutivos listos para accion</div>
+            <div className={styles.feature}>Reportes ejecutivos listos para acción</div>
             <div className={styles.feature}>Control multiusuario por roles</div>
           </div>
         </aside>
 
         <article className={styles.formCard}>
           <header className={styles.formHead}>
-            <h2>Iniciar sesion</h2>
+            <h2>Iniciar sesión</h2>
             <p>Accede con tus credenciales para continuar.</p>
             <StatusBadge text="Acceso seguro" variant="info" />
           </header>
@@ -192,11 +192,11 @@ export default function LoginPage() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Contrasena</label>
+              <label className={styles.label}>Contraseña</label>
               <div className={styles.inputWrap}>
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Ingresa tu contrasena"
+                  placeholder="Ingresa tu contraseña"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
@@ -216,7 +216,7 @@ export default function LoginPage() {
             </div>
 
             <button type="submit" disabled={loading} className={styles.submitBtn}>
-              {loading ? "Validando credenciales..." : "Iniciar sesion"}
+              {loading ? "Validando credenciales..." : "Iniciar sesión"}
             </button>
 
             <button
@@ -230,12 +230,12 @@ export default function LoginPage() {
                 setRecoveryEmail("");
               }}
             >
-              Olvide mi usuario o contrasena
+              Olvidé mi usuario o contraseña
             </button>
           </form>
 
           <p className={styles.footer}>
-            Eres nuevo?{" "}
+            ¿Eres nuevo?{" "}
             <Link href="/registro" className={styles.link}>
               Crear cuenta y negocio
             </Link>
@@ -248,7 +248,7 @@ export default function LoginPage() {
       <ModalCard
         open={openRecovery}
         title="Recuperar acceso"
-        subtitle="Te enviaremos un enlace para recuperar usuario y contrasena"
+        subtitle="Te enviaremos un enlace para recuperar usuario y contraseña"
         actions={(
           <>
             <button

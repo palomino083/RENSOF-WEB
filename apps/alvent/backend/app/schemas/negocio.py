@@ -162,6 +162,8 @@ class PlanSolicitudCreate(BaseModel):
     plan_objetivo: str = Field(..., min_length=3, max_length=20)
     referencia_pago: str = Field(..., min_length=3, max_length=80)
     canal_pago: Optional[str] = Field(default="transferencia", max_length=30)
+    validacion_modo: Optional[str] = Field(default="AUTO", max_length=20)
+    declaracion_anti_fraude: bool = False
     observaciones: Optional[str] = Field(default=None, max_length=120)
     comprobante_url: Optional[str] = Field(default=None, max_length=500)
 
@@ -172,6 +174,11 @@ class PlanSolicitudOut(BaseModel):
     plan_actual: str
     plan_solicitado: str
     referencia_pago: str
+    estado: str
+    validacion_modo_solicitada: str
+    validacion_modo_aplicada: str
+    riesgo_score: int
+    riesgo_nivel: str
 
 
 class PlanPagoHistorialOut(BaseModel):

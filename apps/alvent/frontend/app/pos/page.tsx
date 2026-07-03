@@ -408,7 +408,7 @@ export default function PosPage() {
     const doc = limpiarNumero(clienteDocumento);
     const resumen = [
       `Comprobante ${tipoComprobante}`,
-      ventaId ? `Operacion #${ventaId}` : "Operacion registrada",
+      ventaId ? `Operación #${ventaId}` : "Operación registrada",
       `Cliente: ${cliente}`,
       doc ? `Documento: ${doc}` : "",
       `Metodo: ${metodo_pago}`,
@@ -452,11 +452,11 @@ export default function PosPage() {
 
     if (tipoComprobante === "FACTURA") {
       if (!clienteNombre.trim()) {
-        alert("Para factura, ingresa nombre o razon social del cliente");
+        alert("Para factura, ingresa nombre o razón social del cliente");
         return;
       }
       if (documento.length !== 11) {
-        alert("Para factura, ingresa RUC valido de 11 digitos");
+        alert("Para factura, ingresa RUC válido de 11 dígitos");
         return;
       }
     }
@@ -495,7 +495,7 @@ export default function PosPage() {
     };
 
     if (!payload.usuario_id) {
-      alert("Sesion invalida. Vuelve a iniciar sesion.");
+      alert("Sesión inválida. Vuelve a iniciar sesión.");
       router.push("/login");
       return;
     }
@@ -602,9 +602,9 @@ export default function PosPage() {
     <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>Operacion en tiempo real</p>
+          <p className={styles.eyebrow}>Operación en tiempo real</p>
           <h1>POS premium</h1>
-          <p>Cobros fluidos, control de stock y cierre rapido con vista ejecutiva.</p>
+          <p>Cobros fluidos, control de stock y cierre rápido con vista ejecutiva.</p>
         </div>
         <ExecutiveThemeSwitch />
       </section>
@@ -633,7 +633,7 @@ export default function PosPage() {
                       setCodigoRapido("");
                     }
                   }}
-                  placeholder="Codigo rapido"
+                  placeholder="Código rápido"
                   className={`${styles.codeInput} focus-ring`}
                 />
                 <button

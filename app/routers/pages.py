@@ -326,6 +326,11 @@ def alvent_legacy_redirect() -> Response:
     return RedirectResponse("/alven", status_code=308)
 
 
+@router.get("/favicon.ico", response_model=None)
+def root_favicon_redirect() -> Response:
+    return RedirectResponse("/alven/app/favicon.ico", status_code=308)
+
+
 @router.api_route(
     "/alven/app",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
@@ -369,19 +374,23 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
 async def alven_api_login_proxy_or_fallback(request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
     try:
-        return await _proxy_request(request, backend_origin, "auth/login")
+        proxied = await _proxy_request(request, backend_origin, "auth/login")
+        if proxied.status_code < 500:
+            return proxied
     except httpx.RequestError:
-        payload = await request.json()
-        usuario = str(payload.get("usuario") or "").strip()
-        password = str(payload.get("password") or "")
+        pass
 
-        if not secrets.compare_digest(usuario.lower(), ALVENT_FALLBACK_USER.lower()):
-            return JSONResponse({"detail": "Usuario incorrecto"}, status_code=401)
+    payload = await request.json()
+    usuario = str(payload.get("usuario") or "").strip()
+    password = str(payload.get("password") or "")
 
-        if not secrets.compare_digest(password, ALVENT_FALLBACK_PASSWORD):
-            return JSONResponse({"detail": "Contrasena incorrecta"}, status_code=401)
+    if not secrets.compare_digest(usuario.lower(), ALVENT_FALLBACK_USER.lower()):
+        return JSONResponse({"detail": "Usuario incorrecto"}, status_code=401)
 
-        return JSONResponse(_alvent_fallback_auth_payload(usuario))
+    if not secrets.compare_digest(password, ALVENT_FALLBACK_PASSWORD):
+        return JSONResponse({"detail": "Contrasena incorrecta"}, status_code=401)
+
+    return JSONResponse(_alvent_fallback_auth_payload(usuario))
 
 
 @router.api_route(

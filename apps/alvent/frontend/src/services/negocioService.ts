@@ -205,6 +205,8 @@ export const negocioService = {
       plan_objetivo: string;
       referencia_pago: string;
       canal_pago?: string;
+      validacion_modo?: "AUTO" | "MANUAL";
+      declaracion_anti_fraude?: boolean;
       observaciones?: string;
       comprobante_url?: string;
     }
@@ -216,6 +218,11 @@ export const negocioService = {
       plan_actual: string;
       plan_solicitado: string;
       referencia_pago: string;
+      estado: string;
+      validacion_modo_solicitada: string;
+      validacion_modo_aplicada: string;
+      riesgo_score: number;
+      riesgo_nivel: string;
     };
   },
 

@@ -93,7 +93,7 @@ export default function ReportesPage() {
         <p className={styles.eyebrow}>Centro de inteligencia</p>
         <h1>Reportes con narrativa de negocio</h1>
         <p>
-          Une lectura financiera y operativa en una sola pantalla para decidir rapido
+          Une lectura financiera y operativa en una sola pantalla para decidir rápido
           y con confianza.
         </p>
       </section>

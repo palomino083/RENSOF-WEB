@@ -99,7 +99,7 @@
       <form class="contact-panel" action="/admin/cases/add" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <label>Titulo</label><input class="r-input" type="text" name="title" required>
-        <label>Descripcion</label><textarea class="r-textarea" name="description" rows="3" required></textarea>
+        <label>Descripción</label><textarea class="r-textarea" name="description" rows="3" required></textarea>
         <label>Media</label><input class="r-input" type="text" name="media" placeholder="/assets/img/figure-finance.svg" required>
         <label>Overlay</label><input class="r-input" type="text" name="overlay" placeholder="rgba(57,202,127,0.30)" required>
         <button class="r-btn r-btn-primary" type="submit">Agregar caso</button>

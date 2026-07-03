@@ -140,9 +140,9 @@ export default function ClientesPage() {
         <main className={`app-content ${styles.shell}`}>
           <section className={styles.hero}>
             <div>
-              <p className={styles.eyebrow}>Relacion con clientes</p>
+              <p className={styles.eyebrow}>Relación con clientes</p>
               <h1>Clientes premium</h1>
-              <p>Gestiona altas, edicion y busqueda de clientes con un flujo mas rapido.</p>
+              <p>Gestiona altas, edición y búsqueda de clientes con un flujo más rápido.</p>
             </div>
             <ExecutiveThemeSwitch />
           </section>

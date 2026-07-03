@@ -16,7 +16,7 @@ import styles from "./page.module.css";
 
 const PLAN_OPTIONS = [
   { value: "GRATUITO", label: "Gratuito" },
-  { value: "BASICO", label: "Basico" },
+  { value: "BASICO", label: "Básico" },
   { value: "PRO", label: "Pro" },
   { value: "PREMIUM", label: "Premium" },
 ] as const;
@@ -111,14 +111,14 @@ const PLAN_VISUAL_PROPUESTA = [
   },
   {
     key: "BASICO",
-    titulo: "Plan Basico",
+    titulo: "Plan Básico",
     precio: "S/20",
-    subtitulo: "Operacion estable",
+    subtitulo: "Operación estable",
     lema: "Control diario para negocios en crecimiento",
     beneficios: [
       { icon: "check", text: "Mas usuarios" },
       { icon: "spark", text: "Flujo comercial continuo" },
-      { icon: "chart", text: "Operacion ordenada" },
+      { icon: "chart", text: "Operación ordenada" },
       { icon: "briefcase", text: "Base para escalar" },
     ],
     accentClass: "basic",
@@ -128,7 +128,7 @@ const PLAN_VISUAL_PROPUESTA = [
     titulo: "Plan Pro",
     precio: "S/45",
     subtitulo: "Escala comercial",
-    lema: "Mayor velocidad y analitica",
+    lema: "Mayor velocidad y analítica",
     beneficios: [
       { icon: "check", text: "Todo lo del gratuito" },
       { icon: "spark", text: "Mayor velocidad" },
@@ -141,10 +141,10 @@ const PLAN_VISUAL_PROPUESTA = [
     key: "PREMIUM",
     titulo: "Plan Premium",
     precio: "S/65",
-    subtitulo: "Maximo rendimiento",
-    lema: "Operacion con prioridad total",
+    subtitulo: "Máximo rendimiento",
+    lema: "Operación con prioridad total",
     beneficios: [
-      { icon: "crown", text: "Rendimiento maximo" },
+      { icon: "crown", text: "Rendimiento máximo" },
       { icon: "shield", text: "Acceso prioritario" },
       { icon: "chart", text: "Marketing y ventas" },
       { icon: "briefcase", text: "Uso profesional" },
@@ -254,6 +254,7 @@ export default function ConfiguracionPage() {
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [negocioSeleccionadoId, setNegocioSeleccionadoId] = useState<number>(0);
   const [negociosDisponibles, setNegociosDisponibles] = useState<Negocio[]>([]);
+  const [negocioTipoFiltro, setNegocioTipoFiltro] = useState<string>("todos");
   const [savingLogo, setSavingLogo] = useState(false);
   const [savingBusiness, setSavingBusiness] = useState(false);
   const [changingPlan, setChangingPlan] = useState(false);
@@ -311,6 +312,8 @@ export default function ConfiguracionPage() {
     plan_objetivo: "PRO",
     referencia_pago: "",
     canal_pago: "transferencia",
+    validacion_modo: "MANUAL" as "AUTO" | "MANUAL",
+    declaracion_anti_fraude: false,
     observaciones: "",
   });
   const [sendingSolicitudPlan, setSendingSolicitudPlan] = useState(false);
@@ -1214,6 +1217,16 @@ export default function ConfiguracionPage() {
       return;
     }
 
+    if (!solicitudPlan.declaracion_anti_fraude) {
+      setError("Debes aceptar la declaracion antifraude para continuar");
+      return;
+    }
+
+    if (solicitudPlan.canal_pago !== "efectivo" && !comprobantePagoFile) {
+      setError("Adjunta el comprobante para validar el pago");
+      return;
+    }
+
     try {
       setSendingSolicitudPlan(true);
       setError("");
@@ -1229,14 +1242,17 @@ export default function ConfiguracionPage() {
         plan_objetivo: planPagoObjetivo,
         referencia_pago: solicitudPlan.referencia_pago.trim(),
         canal_pago: solicitudPlan.canal_pago,
+        validacion_modo: solicitudPlan.validacion_modo,
+        declaracion_anti_fraude: solicitudPlan.declaracion_anti_fraude,
         observaciones: solicitudPlan.observaciones.trim() || undefined,
         comprobante_url,
       });
 
-      setSuccess(resp.mensaje);
+      const detalleSeguridad = `Nivel de riesgo: ${resp.riesgo_nivel} (score ${resp.riesgo_score}). Validacion aplicada: ${resp.validacion_modo_aplicada}.`;
+      setSuccess(`${resp.mensaje} ${detalleSeguridad}`);
       setShowPagoPlanModal(false);
       setComprobantePagoFile(null);
-      setSolicitudPlan((prev) => ({ ...prev, referencia_pago: "", observaciones: "" }));
+      setSolicitudPlan((prev) => ({ ...prev, referencia_pago: "", observaciones: "", declaracion_anti_fraude: false }));
       await cargarBranding(negocioId);
       await cargarPlanStats();
       await cargarHistorialPlanes(negocioId);
@@ -1260,6 +1276,10 @@ export default function ConfiguracionPage() {
   const estadoBackups = planStats?.backups.habilitado ? "Habilitado" : "Bloqueado";
   const estadoReportes = planStats?.reportes.habilitado ? "Habilitado" : "Bloqueado";
   const negocioActivoId = getNegocioIdActivo();
+  const negociosObjetivoFiltrados = negociosDisponibles.filter((item) => {
+    if (negocioTipoFiltro === "todos") return true;
+    return String(item.tipo || "").trim().toLowerCase() === negocioTipoFiltro;
+  });
   const planSugeridoActivo = planSugerido
     ? normalizarPlan(planSugerido.codigo) === normalizarPlan(businessForm.plan)
     : false;
@@ -1315,7 +1335,7 @@ export default function ConfiguracionPage() {
               disabled={loadingBackup}
               className={`${styles.backupBtn} focus-ring`}
             >
-              {loadingBackup ? "Generando backup..." : "Backup rapido"}
+              {loadingBackup ? "Generando backup..." : "Backup rápido"}
             </button>
           </section>
 
@@ -1350,7 +1370,7 @@ export default function ConfiguracionPage() {
                   onClick={() => setEmpresaTab("ubicacion")}
                   className={`${styles.tabBtn} ${empresaTab === "ubicacion" ? styles.tabBtnActive : ""}`}
                 >
-                  Ubicacion
+                  Ubicación
                 </button>
                 <button
                   type="button"
@@ -1365,6 +1385,19 @@ export default function ConfiguracionPage() {
                 {isSuperadmin ? (
                   <div className={styles.companyBlock}>
                     <div className={styles.formRow}>
+                      <label htmlFor="empresa-negocio-tipo-filtro">Tipo de negocio (filtro)</label>
+                      <select
+                        id="empresa-negocio-tipo-filtro"
+                        className={`${styles.negocioSelect} focus-ring`}
+                        value={negocioTipoFiltro}
+                        onChange={(e) => setNegocioTipoFiltro(e.target.value)}
+                      >
+                        <option value="todos">Todos</option>
+                        {Object.entries(TIPO_NEGOCIO_LABELS).map(([value, label]) => (
+                          <option key={`tipo-filtro-${value}`} value={value}>{label}</option>
+                        ))}
+                      </select>
+
                       <label htmlFor="empresa-negocio-objetivo">Negocio objetivo</label>
                       <select
                         id="empresa-negocio-objetivo"
@@ -1373,7 +1406,7 @@ export default function ConfiguracionPage() {
                         onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
                       >
                         <option value="">Selecciona negocio objetivo</option>
-                        {negociosDisponibles.map((item) => (
+                        {negociosObjetivoFiltrados.map((item) => (
                           <option key={`empresa-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre} ({nombreTipoNegocio(item.tipo)})</option>
                         ))}
                       </select>
@@ -1386,7 +1419,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "general" ? (
                   <div className={styles.companyBlock}>
-                    <h3>Informacion general</h3>
+                    <h3>Información general</h3>
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-nombre">Nombre comercial</label>
@@ -1471,13 +1504,13 @@ export default function ConfiguracionPage() {
                           onChange={(e) => setBusinessForm({ ...businessForm, idioma: e.target.value })}
                           className="focus-ring"
                         >
-                          <option value="es">Espanol</option>
+                          <option value="es">Español</option>
                           <option value="en">Ingles</option>
                         </select>
                       </div>
 
                       <div className={`${styles.formRow} ${styles.fullRow}`}>
-                        <label htmlFor="empresa-descripcion">Descripcion del negocio</label>
+                        <label htmlFor="empresa-descripcion">Descripción del negocio</label>
                         <textarea
                           id="empresa-descripcion"
                           value={businessForm.descripcion}
@@ -1492,7 +1525,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "fiscal" ? (
                   <div className={styles.companyBlock}>
-                    <h3>Informacion fiscal</h3>
+                    <h3>Información fiscal</h3>
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-ruc">RUC</label>
@@ -1529,7 +1562,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "ubicacion" ? (
                   <div className={styles.companyBlock}>
-                    <h3>Contacto y ubicacion</h3>
+                    <h3>Contacto y ubicación</h3>
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-email">Correo</label>
@@ -1642,7 +1675,7 @@ export default function ConfiguracionPage() {
                           onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
                         >
                           <option value="">Selecciona negocio objetivo</option>
-                          {negociosDisponibles.map((item) => (
+                          {negociosObjetivoFiltrados.map((item) => (
                             <option key={`branding-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre} ({nombreTipoNegocio(item.tipo)})</option>
                           ))}
                         </select>
@@ -1732,7 +1765,7 @@ export default function ConfiguracionPage() {
             <article className={`${styles.card} ${styles.dangerCard}`}>
               <Toolbar
                 title="Reinicio de sistema"
-                right={<StatusBadge text="Operacion sensible" variant="danger" />}
+                right={<StatusBadge text="Operación sensible" variant="danger" />}
               />
 
               <p>
@@ -1796,7 +1829,7 @@ export default function ConfiguracionPage() {
               <div className={styles.planVisualCallout}>
                 <div className={styles.planVisualCalloutCopy}>
                   <strong>Activa ALVENT segun tu etapa comercial</strong>
-                  <p>Empieza con el gratuito y escala a Basico, Pro o Premium cuando tu operacion lo requiera.</p>
+                  <p>Empieza con el gratuito y escala a Básico, Pro o Premium cuando tu operación lo requiera.</p>
                   <div className={styles.planVisualMiniStrip} aria-label="Beneficios destacados">
                     <span title="Respuestas inteligentes">{renderBenefitIcon("spark")}</span>
                     <span title="Ahorro de tiempo">{renderBenefitIcon("rocket")}</span>
@@ -1960,7 +1993,7 @@ export default function ConfiguracionPage() {
                       onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
                     >
                       <option value="">Selecciona negocio objetivo</option>
-                      {negociosDisponibles.map((item) => (
+                      {negociosObjetivoFiltrados.map((item) => (
                         <option key={item.id} value={item.id}>{item.id} - {item.nombre} ({nombreTipoNegocio(item.tipo)})</option>
                       ))}
                     </select>
@@ -2078,6 +2111,7 @@ export default function ConfiguracionPage() {
                           <tr>
                             <th>Fecha</th>
                             <th>Cambio</th>
+                            <th>Estado</th>
                             <th>Canal</th>
                             <th>Referencia</th>
                             <th>Comprobante</th>
@@ -2088,6 +2122,7 @@ export default function ConfiguracionPage() {
                             <tr key={item.id}>
                               <td>{new Date(item.fecha).toLocaleString()}</td>
                               <td>{nombrePlan(item.plan_actual)} a {nombrePlan(item.plan_solicitado)}</td>
+                              <td>{item.estado}</td>
                               <td>{item.canal_pago}</td>
                               <td>{item.referencia_pago}</td>
                               <td>
@@ -2135,6 +2170,17 @@ export default function ConfiguracionPage() {
               </>
             )}
           >
+            <label htmlFor="cliente-validacion-modo">Validacion antifraude</label>
+            <select
+              id="cliente-validacion-modo"
+              className="focus-ring"
+              value={solicitudPlan.validacion_modo}
+              onChange={(e) => setSolicitudPlan((prev) => ({ ...prev, validacion_modo: e.target.value as "AUTO" | "MANUAL" }))}
+            >
+              <option value="MANUAL">Manual (recomendada, activacion tras revision)</option>
+              <option value="AUTO">Automatica (si cumple controles de seguridad)</option>
+            </select>
+
             <select
               id="cliente-canal-pago"
               className="focus-ring"
@@ -2171,6 +2217,15 @@ export default function ConfiguracionPage() {
               accept="image/png,image/jpeg,image/webp,application/pdf"
               onChange={(e) => setComprobantePagoFile(e.target.files?.[0] || null)}
             />
+
+            <label className={styles.inlineCheck}>
+              <input
+                type="checkbox"
+                checked={solicitudPlan.declaracion_anti_fraude}
+                onChange={(e) => setSolicitudPlan((prev) => ({ ...prev, declaracion_anti_fraude: e.target.checked }))}
+              />
+              Declaro que el pago es legitimo y autorizo validacion antifraude de la evidencia.
+            </label>
           </ModalCard>
 
           <ModalCard

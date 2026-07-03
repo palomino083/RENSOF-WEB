@@ -268,7 +268,7 @@ export default function FinanzasPage() {
             <Toolbar title="Gastos operativos" right={<StatusBadge text={loading ? "Cargando" : `${gastos.length} gastos`} variant="warning" />} />
             <div className={styles.formGrid}>
               <label>
-                Categoria
+                Categoría
                 <select value={form.categoria} onChange={(e) => setForm((prev) => ({ ...prev, categoria: e.target.value }))} className="focus-ring">
                   {categorias.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -280,7 +280,7 @@ export default function FinanzasPage() {
                 <input type="date" value={form.fecha_gasto} onChange={(e) => setForm((prev) => ({ ...prev, fecha_gasto: e.target.value }))} className="focus-ring" />
               </label>
               <label className={styles.fullRow}>
-                Descripcion
+                Descripción
                 <input type="text" value={form.descripcion} onChange={(e) => setForm((prev) => ({ ...prev, descripcion: e.target.value }))} className="focus-ring" placeholder="Ej. Servicio de hosting" />
               </label>
               <label>
@@ -299,7 +299,7 @@ export default function FinanzasPage() {
               </button>
               {editingId ? (
                 <button type="button" className={`${styles.actionBtn} focus-ring`} onClick={limpiarFormulario} disabled={saving || loading}>
-                  Cancelar edicion
+                  Cancelar edición
                 </button>
               ) : null}
             </div>
@@ -309,8 +309,8 @@ export default function FinanzasPage() {
                 <thead>
                   <tr>
                     <th>Fecha</th>
-                    <th>Categoria</th>
-                    <th>Descripcion</th>
+                    <th>Categoría</th>
+                    <th>Descripción</th>
                     <th>Proveedor</th>
                     <th>Monto</th>
                     <th>Comprobante</th>
