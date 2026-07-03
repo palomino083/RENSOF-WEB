@@ -8,7 +8,6 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { appPath } from "@/utils/appPath";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
 import Toolbar from "@/components/ui/Toolbar";
-import DataTable from "@/components/ui/DataTable";
 import ModalCard from "@/components/ui/ModalCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import styles from "./page.module.css";
@@ -69,11 +68,11 @@ const TIPOS_NEGOCIO_OPTIONS: Array<{ value: TipoNegocio; label: string }> = [
 ];
 
 const COLUMNAS_POR_TIPO: Record<TipoNegocio, ColumnaPresetKey[]> = {
-  tienda: ["categoria", "marca", "talla", "color", "sexo"],
-  restaurante: ["categoria", "marca"],
-  farmacia: ["categoria", "marca"],
-  supermercado: ["categoria", "marca", "color"],
-  otro: ["categoria", "marca"],
+  tienda: ["talla", "color", "sexo"],
+  restaurante: [],
+  farmacia: [],
+  supermercado: ["color"],
+  otro: [],
 };
 
 const LABEL_COLUMNA: Record<ColumnaPresetKey, string> = {
@@ -98,6 +97,39 @@ const CORE_COLUMNS_AFTER: Array<{ key: ColumnaCoreKey; label: string; locked?: b
   { key: "stock", label: "Stock" },
   { key: "estado", label: "Estado" },
   { key: "acciones", label: "Acciones", locked: true },
+];
+
+const ATRIBUTOS_SUGERIDOS_CATALOGO = [
+  "Proveedor",
+  "Modelo",
+  "SKU fabricante",
+  "Codigo barras",
+  "Unidad medida",
+  "Presentacion",
+  "Contenido neto",
+  "Peso",
+  "Volumen",
+  "Material",
+  "Sabor",
+  "Fragancia",
+  "Temporada",
+  "Coleccion",
+  "Genero",
+  "Lote",
+  "Fecha vencimiento",
+  "Registro sanitario",
+  "Laboratorio",
+  "Ubicacion almacen",
+  "Pasillo",
+  "Estante",
+  "Nivel",
+  "Garantia",
+  "Compatibilidad",
+  "Origen",
+  "Pais",
+  "Linea",
+  "Subcategoria",
+  "Notas internas",
 ];
 
 type FormProducto = {
@@ -130,6 +162,10 @@ export default function Productos() {
   const [columnasCustom, setColumnasCustom] = useState<ColumnaCustom[]>([]);
   const [columnasVisibles, setColumnasVisibles] = useState<string[]>([]);
   const [newColumnLabel, setNewColumnLabel] = useState("");
+  const [selectedCatalogAttribute, setSelectedCatalogAttribute] = useState("");
+  const [showPersonalizacion, setShowPersonalizacion] = useState(false);
+  const [draggingColumnKey, setDraggingColumnKey] = useState<string | null>(null);
+  const [dragOverColumnKey, setDragOverColumnKey] = useState<string | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState<FormProducto>({
@@ -449,6 +485,12 @@ export default function Productos() {
       return;
     }
 
+    const existeEnColumnasBaseActivas = columnasDisponibles.some((col) => col.key === key);
+    if (existeEnColumnasBaseActivas) {
+      setError("Ese atributo ya existe en la configuracion actual de tabla");
+      return;
+    }
+
     if (columnasCustom.some((c) => c.key === key)) {
       setError("Ya existe una columna personalizada con ese nombre");
       return;
@@ -465,6 +507,7 @@ export default function Productos() {
       },
     }));
     setNewColumnLabel("");
+    setSelectedCatalogAttribute("");
   };
 
   const agregarTipoNegocioCustom = () => {
@@ -499,49 +542,6 @@ export default function Productos() {
     });
   };
 
-  const toggleColumnaVisible = (key: string) => {
-    const columna = columnasDisponiblesMap.get(key);
-    if (columna?.locked) return;
-
-    setColumnasVisibles((prev) => {
-      const base = prev.length > 0 ? [...prev] : columnasDisponibles.map((c) => c.key);
-      if (base.includes(key)) {
-        return base.filter((item) => item !== key);
-      }
-      return [...base, key];
-    });
-  };
-
-  const moverColumna = (key: string, direction: -1 | 1) => {
-    const columnaActual = columnasDisponiblesMap.get(key);
-    if (columnaActual?.locked) return;
-
-    setColumnasVisibles((prev) => {
-      const base = prev.length > 0 ? [...prev] : columnasDisponibles.map((c) => c.key);
-      const index = base.indexOf(key);
-      if (index < 0) return base;
-      const target = index + direction;
-      if (target < 0 || target >= base.length) return base;
-      const columnaTarget = columnasDisponiblesMap.get(base[target]);
-      if (columnaTarget?.locked) return base;
-      const next = [...base];
-      const aux = next[target];
-      next[target] = next[index];
-      next[index] = aux;
-      return next;
-    });
-  };
-
-  const aplicarPresetReporteImagen = async () => {
-    const ordered = columnasDisponibles
-      .map((c) => c.key)
-      .filter((key) => !COLUMNAS_FIJAS_TABLERO.includes(key as ColumnaCoreKey));
-    const visibles = [...COLUMNAS_FIJAS_TABLERO, ...ordered];
-
-    setColumnasVisibles(visibles);
-    await guardarConfigTabla({ visibles });
-    setSuccess("Preset pro aplicado: codigo, foto, costo, precio y utilidad quedan fijos en tablero");
-  };
 
   const cambiarValorAtributoExtra = (key: string, value: string) => {
     setForm((prev) => ({
@@ -556,7 +556,12 @@ export default function Productos() {
   useEffect(() => {
     if (columnasDisponibles.length === 0) return;
     setColumnasVisibles((prev) => {
-      if (prev.length === 0) return columnasDisponibles.map((c) => c.key);
+      if (prev.length === 0) {
+        const ordered = columnasDisponibles.map((c) => c.key);
+        const resto = ordered.filter((key) => !COLUMNAS_FIJAS_TABLERO.includes(key as ColumnaCoreKey));
+        return [...COLUMNAS_FIJAS_TABLERO, ...resto];
+      }
+
       const available = new Set(columnasDisponibles.map((c) => c.key));
       const merged = prev.filter((key) => available.has(key));
       columnasDisponibles.forEach((col) => {
@@ -564,7 +569,9 @@ export default function Productos() {
           merged.push(col.key);
         }
       });
-      return merged;
+
+      const resto = merged.filter((key) => !COLUMNAS_FIJAS_TABLERO.includes(key as ColumnaCoreKey));
+      return [...COLUMNAS_FIJAS_TABLERO, ...resto];
     });
   }, [columnasDisponibles]);
 
@@ -572,7 +579,42 @@ export default function Productos() {
 
   const tableMinWidth = 980 + Math.max(0, columnasTabla.length - 10) * 92;
 
-  const esColumnaVisible = (key: string) => columnasTabla.some((col) => col.key === key);
+  const mostrarCampoConfigurado = (key: ColumnaPresetKey) =>
+    columnasDisponiblesMap.has(key);
+
+  const moverColumnaPorDrag = (fromKey: string, toKey: string) => {
+    if (!fromKey || !toKey || fromKey === toKey) return;
+
+    setColumnasVisibles((prev) => {
+      const base = prev.length > 0 ? [...prev] : columnasTabla.map((col) => col.key);
+      const fromIndex = base.indexOf(fromKey);
+      const toIndex = base.indexOf(toKey);
+      if (fromIndex < 0 || toIndex < 0) return base;
+
+      const next = [...base];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  };
+
+  const iniciarDragColumna = (key: string) => {
+    setDraggingColumnKey(key);
+    setDragOverColumnKey(null);
+  };
+
+  const finalizarDragColumna = () => {
+    setDraggingColumnKey(null);
+    setDragOverColumnKey(null);
+  };
+
+  const soltarDragEnColumna = (targetKey: string) => {
+    if (!draggingColumnKey || draggingColumnKey === targetKey) return;
+    moverColumnaPorDrag(draggingColumnKey, targetKey);
+    setSuccess("Orden de columnas actualizado");
+    setError("");
+    finalizarDragColumna();
+  };
 
   const renderCell = (p: Producto, col: TableColumn) => {
     const utilidad = p.precio - (p.costo ?? 0);
@@ -698,151 +740,138 @@ export default function Productos() {
       {success ? <p className={styles.successBox}>{success}</p> : null}
 
       <section className={styles.configPanel}>
-        <div className={styles.configBlock}>
-          <label htmlFor="tipo-negocio-productos">Tipo de negocio aplicado en tabla</label>
-          <div className={styles.configInline}>
-            <select
-              id="tipo-negocio-productos"
-              value={tipoNegocio}
-              onChange={(e) => setTipoNegocio(e.target.value)}
-              className="focus-ring"
-            >
-              <option value="">Seleccionar tipo...</option>
-              {allTiposOptions.map((item) => (
-                <option key={item.value} value={item.value}>{item.label}</option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              disabled={savingTableConfig || !tipoNegocio}
-              onClick={() => void guardarConfigTabla({ tipo: tipoNegocio })}
-            >
-              {savingTableConfig ? "Guardando..." : "Guardar tipo"}
-            </button>
+        <div className={styles.configPanelHeader}>
+          <div>
+            <strong>Personalizacion de tabla</strong>
+            <p className={styles.hint}>Administra tipo, columnas y orden cuando lo necesites.</p>
           </div>
-          {!tipoNegocioValido ? (
-            <p className={styles.hintWarning}>
-              Si no encuentras el tipo de negocio en la lista, crea uno nuevo y guárdalo.
-            </p>
-          ) : null}
-          <div className={styles.configInline}>
-            <input
-              value={newTipoNegocio}
-              onChange={(e) => setNewTipoNegocio(e.target.value)}
-              placeholder="Nuevo tipo (ej. ferreteria, libreria, veterinaria)"
-              className="focus-ring"
-            />
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={agregarTipoNegocioCustom}
-            >
-              Crear tipo
-            </button>
-          </div>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={() => setShowPersonalizacion((prev) => !prev)}
+          >
+            {showPersonalizacion ? "Ocultar personalizacion" : "Abrir personalizacion"}
+          </button>
         </div>
 
-        <div className={styles.configBlock}>
-          <label htmlFor="nueva-columna-custom">Agregar columna personalizada</label>
-          <div className={styles.configInline}>
-            <input
-              id="nueva-columna-custom"
-              value={newColumnLabel}
-              onChange={(e) => setNewColumnLabel(e.target.value)}
-              placeholder="Ejemplo: Laboratorio, Sabor, Presentacion"
-              className="focus-ring"
-            />
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={agregarColumnaCustom}
-            >
-              Agregar
-            </button>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              disabled={savingTableConfig}
-              onClick={() => void guardarConfigTabla({ columnas: columnasCustom })}
-            >
-              {savingTableConfig ? "Guardando..." : "Guardar estructura"}
-            </button>
-          </div>
-
-          {columnasCustom.length > 0 ? (
-            <div className={styles.chipsRow}>
-              {columnasCustom.map((col) => (
-                <button
-                  key={col.key}
-                  type="button"
-                  className={styles.chipButton}
-                  onClick={() => removerColumnaCustom(col.key)}
-                  title="Quitar columna"
+        {showPersonalizacion ? (
+          <div className={styles.configPanelContent}>
+            <div className={styles.configBlock}>
+              <label htmlFor="tipo-negocio-productos">Tipo de negocio aplicado en tabla</label>
+              <div className={styles.configInline}>
+                <select
+                  id="tipo-negocio-productos"
+                  value={tipoNegocio}
+                  onChange={(e) => setTipoNegocio(e.target.value)}
+                  className="focus-ring"
                 >
-                  {col.label} x
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className={styles.hint}>No hay columnas personalizadas todavia.</p>
-          )}
-        </div>
-
-        <div className={styles.configBlock}>
-          <label>Editar columnas visibles y orden</label>
-          <p className={styles.hint}>Activa, oculta y ordena las columnas sin actualizar el aplicativo.</p>
-          <div className={styles.configInline}>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              disabled={savingTableConfig}
-              onClick={() => void aplicarPresetReporteImagen()}
-            >
-              {savingTableConfig ? "Aplicando..." : "Personalizar reporte de imagen (Pro)"}
-            </button>
-            <span className={styles.hint}>Columnas fijas: Codigo, Foto, Costo, Precio y Utilidad.</span>
-          </div>
-          <div className={styles.columnEditorGrid}>
-            {columnasTabla.map((col) => (
-              <div key={`layout-${col.key}`} className={styles.columnEditorItem}>
+                  <option value="">Seleccionar tipo...</option>
+                  {allTiposOptions.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
                 <button
                   type="button"
-                  className={`${styles.columnToggleBtn} ${esColumnaVisible(col.key) ? styles.columnToggleActive : ""}`}
-                  onClick={() => toggleColumnaVisible(col.key)}
-                  disabled={Boolean(col.locked)}
-                  title={col.locked ? "Columna bloqueada" : "Mostrar u ocultar columna"}
+                  className={styles.secondaryButton}
+                  disabled={savingTableConfig || !tipoNegocio}
+                  onClick={() => void guardarConfigTabla({ tipo: tipoNegocio })}
                 >
-                  {col.label}
+                  {savingTableConfig ? "Guardando..." : "Guardar tipo"}
                 </button>
-                <div className={styles.columnMoveActions}>
-                  <button type="button" className={styles.columnMoveBtn} onClick={() => moverColumna(col.key, -1)}>
-                    ←
-                  </button>
-                  <button type="button" className={styles.columnMoveBtn} onClick={() => moverColumna(col.key, 1)}>
-                    →
-                  </button>
-                </div>
               </div>
-            ))}
+              {!tipoNegocioValido ? (
+                <p className={styles.hintWarning}>
+                  Si no encuentras el tipo de negocio en la lista, crea uno nuevo y guárdalo.
+                </p>
+              ) : null}
+              <div className={styles.configInline}>
+                <input
+                  value={newTipoNegocio}
+                  onChange={(e) => setNewTipoNegocio(e.target.value)}
+                  placeholder="Nuevo tipo (ej. ferreteria, libreria, veterinaria)"
+                  className="focus-ring"
+                />
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={agregarTipoNegocioCustom}
+                >
+                  Crear tipo
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.configBlock}>
+              <label htmlFor="nueva-columna-custom">Agregar columna personalizada</label>
+              <div className={styles.configInline}>
+                <select
+                  value={selectedCatalogAttribute}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setSelectedCatalogAttribute(next);
+                    setNewColumnLabel(next);
+                  }}
+                  className="focus-ring"
+                >
+                  <option value="">Seleccionar atributo sugerido...</option>
+                  {ATRIBUTOS_SUGERIDOS_CATALOGO.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+                <span className={styles.hint}>Puedes elegir del listado o escribir uno nuevo.</span>
+              </div>
+              <div className={styles.configInline}>
+                <input
+                  id="nueva-columna-custom"
+                  value={newColumnLabel}
+                  onChange={(e) => setNewColumnLabel(e.target.value)}
+                  placeholder="Ejemplo: Laboratorio, Sabor, Presentacion"
+                  className="focus-ring"
+                />
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={agregarColumnaCustom}
+                >
+                  Agregar
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  disabled={savingTableConfig}
+                  onClick={() => void guardarConfigTabla({ columnas: columnasCustom })}
+                >
+                  {savingTableConfig ? "Guardando..." : "Guardar estructura"}
+                </button>
+              </div>
+
+              {columnasCustom.length > 0 ? (
+                <div className={styles.chipsRow}>
+                  {columnasCustom.map((col) => (
+                    <button
+                      key={col.key}
+                      type="button"
+                      className={styles.chipButton}
+                      onClick={() => removerColumnaCustom(col.key)}
+                      title="Quitar columna"
+                    >
+                      {col.label} x
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className={styles.hint}>No hay columnas personalizadas todavia.</p>
+              )}
+            </div>
+
           </div>
-          <div className={styles.configInline}>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              disabled={savingTableConfig}
-              onClick={() => void guardarConfigTabla()}
-            >
-              {savingTableConfig ? "Guardando..." : "Guardar layout de tabla"}
-            </button>
-          </div>
-        </div>
+        ) : null}
       </section>
 
       <ModalCard
         open={openModal}
         title={editMode ? "Editar producto" : "Nuevo producto"}
-        subtitle="Completa los datos comerciales y de stock"
+        subtitle="Completa los datos base y los campos definidos en la configuracion de tabla"
         actions={(
           <>
             <button type="button" onClick={guardarProducto} className={styles.saveButton}>
@@ -867,41 +896,51 @@ export default function Productos() {
           onChange={(e) => setForm({ ...form, nombre: e.target.value })}
           className="focus-ring"
         />
-        <input
-          placeholder="Categoria"
-          value={form.categoria}
-          onChange={(e) => setForm({ ...form, categoria: e.target.value })}
-          className="focus-ring"
-        />
-        <input
-          placeholder="Marca"
-          value={form.marca}
-          onChange={(e) => setForm({ ...form, marca: e.target.value })}
-          className="focus-ring"
-        />
-        <input
-          placeholder="Talla (ej. 38, M, L, 40)"
-          value={form.talla}
-          onChange={(e) => setForm({ ...form, talla: e.target.value })}
-          className="focus-ring"
-        />
-        <input
-          placeholder="Color"
-          value={form.color}
-          onChange={(e) => setForm({ ...form, color: e.target.value })}
-          className="focus-ring"
-        />
-        <select
-          value={form.sexo}
-          onChange={(e) => setForm({ ...form, sexo: e.target.value })}
-          className="focus-ring"
-        >
-          <option value="UNISEX">Unisex</option>
-          <option value="MUJER">Mujer</option>
-          <option value="HOMBRE">Hombre</option>
-          <option value="NINA">Nina</option>
-          <option value="NINO">Nino</option>
-        </select>
+        {mostrarCampoConfigurado("categoria") ? (
+          <input
+            placeholder="Categoria"
+            value={form.categoria}
+            onChange={(e) => setForm({ ...form, categoria: e.target.value })}
+            className="focus-ring"
+          />
+        ) : null}
+        {mostrarCampoConfigurado("marca") ? (
+          <input
+            placeholder="Marca"
+            value={form.marca}
+            onChange={(e) => setForm({ ...form, marca: e.target.value })}
+            className="focus-ring"
+          />
+        ) : null}
+        {mostrarCampoConfigurado("talla") ? (
+          <input
+            placeholder="Talla (ej. 38, M, L, 40)"
+            value={form.talla}
+            onChange={(e) => setForm({ ...form, talla: e.target.value })}
+            className="focus-ring"
+          />
+        ) : null}
+        {mostrarCampoConfigurado("color") ? (
+          <input
+            placeholder="Color"
+            value={form.color}
+            onChange={(e) => setForm({ ...form, color: e.target.value })}
+            className="focus-ring"
+          />
+        ) : null}
+        {mostrarCampoConfigurado("sexo") ? (
+          <select
+            value={form.sexo}
+            onChange={(e) => setForm({ ...form, sexo: e.target.value })}
+            className="focus-ring"
+          >
+            <option value="UNISEX">Unisex</option>
+            <option value="MUJER">Mujer</option>
+            <option value="HOMBRE">Hombre</option>
+            <option value="NINA">Nina</option>
+            <option value="NINO">Nino</option>
+          </select>
+        ) : null}
         <input
           type="number"
           placeholder="Costo"
@@ -971,21 +1010,52 @@ export default function Productos() {
 
       <section className={`${styles.tableCard} uiEnter`} data-stagger="3">
         {loading ? <p>Cargando productos...</p> : null}
-        <DataTable
-          headers={tableHeaders}
-          minWidth={tableMinWidth}
-          density="executive"
-        >
-          {productosFiltrados.map((p) => {
-            return (
-              <tr key={p.codigo}>
-                {columnasTabla.map((col) => (
-                  <td key={`${p.codigo}-${col.key}`}>{renderCell(p, col)}</td>
-                ))}
+        <div className={styles.tableWrap}>
+          <table style={{ minWidth: tableMinWidth }}>
+            <thead>
+              <tr>
+                {columnasTabla.map((col) => {
+                  const isDragging = draggingColumnKey === col.key;
+                  const isDragOver = dragOverColumnKey === col.key;
+                  return (
+                    <th
+                      key={`header-${col.key}`}
+                      draggable
+                      onDragStart={() => iniciarDragColumna(col.key)}
+                      onDragEnd={finalizarDragColumna}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        if (dragOverColumnKey !== col.key) {
+                          setDragOverColumnKey(col.key);
+                        }
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        soltarDragEnColumna(col.key);
+                      }}
+                      className={`${styles.draggableHeader} ${isDragging ? styles.draggingHeader : ""} ${isDragOver ? styles.dragOverHeader : ""}`}
+                      title="Arrastra para mover esta columna"
+                    >
+                      <span className={styles.dragHandle} aria-hidden="true">↔</span>
+                      {col.label}
+                    </th>
+                  );
+                })}
               </tr>
-            );
-          })}
-        </DataTable>
+            </thead>
+            <tbody>
+              {productosFiltrados.map((p) => {
+                return (
+                  <tr key={p.codigo}>
+                    {columnasTabla.map((col) => (
+                      <td key={`${p.codigo}-${col.key}`}>{renderCell(p, col)}</td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
   );

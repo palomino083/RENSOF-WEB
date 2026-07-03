@@ -90,6 +90,81 @@
   gap: 8px;
 }
 
+.demoVisualBar {
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.96));
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.demoVisualBar strong {
+  color: #0c4a6e;
+}
+
+.demoVisualMetaRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.demoVisualPill {
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  background: #f0f9ff;
+  color: #075985;
+  font-weight: 700;
+  font-size: 0.76rem;
+  padding: 4px 10px;
+}
+
+.demoVisualFixedRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.demoFixedPill {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.demoFixedPillOn {
+  border: 1px solid #34d399;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.demoFixedPillOff {
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.configPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 1px dashed #bae6fd;
+  border-radius: 12px;
+  background: #f0f9ff;
+  padding: 10px;
+}
+
+.configPanelHeader strong {
+  color: #0c4a6e;
+}
+
+.configPanelContent {
+  display: grid;
+  gap: 12px;
+}
+
 .configBlock label {
   color: #0f172a;
   font-size: 0.85rem;
@@ -278,6 +353,29 @@
   color: #475569;
 }
 
+.draggableHeader {
+  cursor: grab;
+  user-select: none;
+  transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.draggingHeader {
+  opacity: 0.65;
+  cursor: grabbing;
+}
+
+.dragOverHeader {
+  background: #ecfeff;
+  border-bottom: 2px solid #0d9488;
+}
+
+.dragHandle {
+  display: inline-block;
+  margin-right: 6px;
+  color: #0891b2;
+  font-weight: 800;
+}
+
 .tableImage {
   width: 56px;
   height: 56px;
@@ -327,6 +425,50 @@
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
+.optionBoard {
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #f0f9ff, #ffffff);
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.optionBoardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.optionBoardHeader strong {
+  color: #0c4a6e;
+  text-transform: capitalize;
+}
+
+.optionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.optionChip {
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+
+.optionChipActive {
+  border-color: #0f766e;
+  background: #ccfbf1;
+  color: #115e59;
+}
+
 .columnEditorItem {
   display: flex;
   align-items: center;
@@ -372,6 +514,11 @@
   padding: 4px 8px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.columnMoveBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 @media (max-width: 980px) {
