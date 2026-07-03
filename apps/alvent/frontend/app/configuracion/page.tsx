@@ -588,11 +588,17 @@ export default function ConfiguracionPage() {
     }
   }, [getNegocioIdActivo]);
 
-  const guardarMontosPlanes = async () => {
+  const resolverNegocioObjetivo = async (accion: string) => {
     const negocioId = getNegocioIdActivo();
+    if (negocioId) return negocioId;
+    return 0;
+  };
+
+  const guardarMontosPlanes = async () => {
     if (!isSuperadmin) return;
+    const negocioId = await resolverNegocioObjetivo("guardar montos");
     if (!negocioId) {
-      setError("Selecciona un negocio para guardar montos");
+      setError("Selecciona explicitamente el negocio objetivo para guardar montos");
       return;
     }
 
@@ -629,10 +635,10 @@ export default function ConfiguracionPage() {
   };
 
   const guardarLimitesPlanes = async () => {
-    const negocioId = getNegocioIdActivo();
     if (!isSuperadmin) return;
+    const negocioId = await resolverNegocioObjetivo("guardar limites");
     if (!negocioId) {
-      setError("Selecciona un negocio para guardar limites");
+      setError("Selecciona explicitamente el negocio objetivo para guardar limites");
       return;
     }
 
@@ -696,10 +702,10 @@ export default function ConfiguracionPage() {
   };
 
   const cambiarPlanNegocio = async (planCodigo: string) => {
-    const negocioId = getNegocioIdActivo();
     if (!isSuperadmin) return;
+    const negocioId = await resolverNegocioObjetivo("aplicar el plan");
     if (!negocioId) {
-      setError("Selecciona un negocio para aplicar cambios de plan");
+      setError("Selecciona explicitamente el negocio objetivo para aplicar cambios de plan");
       return;
     }
     if (normalizarPlan(planCodigo) === normalizarPlan(businessForm.plan)) return;
@@ -1917,10 +1923,11 @@ export default function ConfiguracionPage() {
                           <button
                             type="button"
                             className={`${styles.planPickBtn} focus-ring`}
-                            disabled={activo || changingPlan}
+                            disabled={activo || changingPlan || !negocioActivoId}
                             onClick={() => void cambiarPlanNegocio(plan.codigo)}
+                            title={!negocioActivoId ? "Selecciona primero el negocio objetivo" : ""}
                           >
-                            {activo ? "Plan activo" : changingPlan ? "Aplicando..." : "Aplicar plan"}
+                            {activo ? "Plan activo" : changingPlan ? "Aplicando..." : !negocioActivoId ? "Selecciona negocio" : "Aplicar plan"}
                           </button>
                         </div>
                       </article>
