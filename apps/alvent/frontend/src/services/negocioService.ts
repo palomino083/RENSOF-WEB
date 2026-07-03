@@ -79,6 +79,49 @@ export const negocioService = {
     };
   },
 
+  getEditablePlanCatalog: async (negocioId: number) => {
+    const res = await api.get(`/negocios/${negocioId}/planes/catalogo-editable`);
+    return res.data as {
+      negocio_id: number;
+      planes: Array<{
+        codigo: string;
+        nombre: string;
+        usuarios_limite: number | null;
+        reportes_habilitado: boolean;
+        reportes_limite: number | null;
+        backups_habilitado: boolean;
+        backups_limite: number | null;
+      }>;
+    };
+  },
+
+  updateEditablePlanCatalog: async (
+    negocioId: number,
+    planes: Array<{
+      codigo: string;
+      usuarios_limite: number | null;
+      reportes_habilitado: boolean;
+      reportes_limite: number | null;
+      backups_habilitado: boolean;
+      backups_limite: number | null;
+    }>
+  ) => {
+    const res = await api.put(`/negocios/${negocioId}/planes/catalogo-editable`, { planes });
+    return res.data as {
+      ok: boolean;
+      mensaje: string;
+      planes: Array<{
+        codigo: string;
+        nombre: string;
+        usuarios_limite: number | null;
+        reportes_habilitado: boolean;
+        reportes_limite: number | null;
+        backups_habilitado: boolean;
+        backups_limite: number | null;
+      }>;
+    };
+  },
+
   getFreePlanPerks: async (negocioId: number) => {
     const res = await api.get(`/negocios/${negocioId}/plan-gratuito-bondades`);
     return res.data as {

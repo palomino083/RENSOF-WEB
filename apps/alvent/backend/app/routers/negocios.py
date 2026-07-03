@@ -33,7 +33,13 @@ from app.schemas.negocio import (
 
 from app.services.auditoria import registrar_auditoria
 from app.utils.dependencies import get_current_user
-from app.utils.planes import obtener_catalogo_planes, obtener_plan_config, normalizar_plan
+from app.utils.planes import (
+    normalizar_plan,
+    obtener_catalogo_planes,
+    obtener_catalogo_planes_para_negocio,
+    obtener_plan_config,
+    resolver_config_plan_negocio,
+)
 
 router = APIRouter(prefix="/negocios", tags=["Negocios"])
 
@@ -53,6 +59,19 @@ class PlanMontosUpdate(BaseModel):
     lite: float = Field(ge=0)
     pro: float = Field(ge=0)
     premium: float = Field(ge=0)
+
+
+class PlanCatalogoEditableItem(BaseModel):
+    codigo: str = Field(min_length=3, max_length=20)
+    usuarios_limite: int | None = Field(default=None, ge=0)
+    reportes_habilitado: bool = False
+    reportes_limite: int | None = Field(default=None, ge=0)
+    backups_habilitado: bool = False
+    backups_limite: int | None = Field(default=None, ge=0)
+
+
+class PlanCatalogoEditableUpdate(BaseModel):
+    planes: List[PlanCatalogoEditableItem] = Field(default_factory=list)
 
 
 class SimuladorEscenarioItem(BaseModel):
@@ -149,16 +168,14 @@ def _aplicar_bondades_gratuito(negocio: Negocio, base_config):
 
 
 def _resolver_config_plan_para_negocio(negocio: Negocio, plan: str):
-    base = obtener_plan_config(plan)
-    if plan != "GRATUITO":
-        return {
-            "usuarios_limite": base.usuarios_limite,
-            "reportes_habilitado": base.reportes_habilitado,
-            "reportes_limite": base.reportes_limite,
-            "backups_habilitado": base.backups_habilitado,
-            "backups_limite": base.backups_limite,
-        }
-    return _aplicar_bondades_gratuito(negocio, base)
+    cfg = resolver_config_plan_negocio(negocio, plan)
+    return {
+        "usuarios_limite": cfg.usuarios_limite,
+        "reportes_habilitado": cfg.reportes_habilitado,
+        "reportes_limite": cfg.reportes_limite,
+        "backups_habilitado": cfg.backups_habilitado,
+        "backups_limite": cfg.backups_limite,
+    }
 
 
 def _normalizar_plan(plan: str | None) -> str:
@@ -330,6 +347,84 @@ def obtener_catalogo_planes_endpoint(
 ):
     return {
         "planes": obtener_catalogo_planes(),
+    }
+
+
+@router.get("/{negocio_id}/planes/catalogo-editable")
+def obtener_catalogo_planes_editable(
+    negocio_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin and current_user.get("negocio_id") != negocio_id:
+        raise HTTPException(status_code=403, detail="Sin permiso")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    return {
+        "negocio_id": negocio_id,
+        "planes": obtener_catalogo_planes_para_negocio(negocio),
+    }
+
+
+@router.put("/{negocio_id}/planes/catalogo-editable")
+def actualizar_catalogo_planes_editable(
+    negocio_id: int,
+    data: PlanCatalogoEditableUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin:
+        raise HTTPException(status_code=403, detail="Solo superadministrador")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    raw_custom = str(getattr(negocio, "plan_catalogo_custom", "") or "").strip()
+    try:
+        custom_map = json.loads(raw_custom) if raw_custom else {}
+    except json.JSONDecodeError:
+        custom_map = {}
+    if not isinstance(custom_map, dict):
+        custom_map = {}
+
+    for item in data.planes:
+        codigo = _normalizar_plan(item.codigo)
+        usuarios_limite = item.usuarios_limite
+        reportes_habilitado = bool(item.reportes_habilitado)
+        reportes_limite = item.reportes_limite if reportes_habilitado else 0
+        backups_habilitado = bool(item.backups_habilitado)
+        backups_limite = item.backups_limite if backups_habilitado else 0
+
+        if codigo == "GRATUITO":
+            negocio.plan_gratuito_usuarios_limite = usuarios_limite
+            negocio.plan_gratuito_reportes_habilitado = reportes_habilitado
+            negocio.plan_gratuito_reportes_limite = reportes_limite
+            negocio.plan_gratuito_backups_habilitado = backups_habilitado
+            negocio.plan_gratuito_backups_limite = backups_limite
+            continue
+
+        custom_map[codigo] = {
+            "usuarios_limite": usuarios_limite,
+            "reportes_habilitado": reportes_habilitado,
+            "reportes_limite": reportes_limite,
+            "backups_habilitado": backups_habilitado,
+            "backups_limite": backups_limite,
+        }
+
+    negocio.plan_catalogo_custom = json.dumps(custom_map, ensure_ascii=False)
+    db.commit()
+    db.refresh(negocio)
+
+    return {
+        "ok": True,
+        "mensaje": "Capacidades de planes actualizadas",
+        "planes": obtener_catalogo_planes_para_negocio(negocio),
     }
 
 

@@ -12,7 +12,7 @@ from app.models.usuario import Usuario
 from app.schemas.usuario import UsuarioCreate, UsuarioOut
 from app.utils.dependencies import get_current_user_with_negocio
 from app.utils.jwt_utils import hash_password
-from app.utils.planes import obtener_plan_config, normalizar_plan
+from app.utils.planes import normalizar_plan, resolver_config_plan_negocio
 
 #ROUTER
 router = APIRouter(
@@ -66,7 +66,7 @@ def _validar_limite_plan_usuarios(db: Session, current_user: dict) -> None:
         plan = normalizar_plan(getattr(negocio, "plan", "BASICO"))
     except ValueError:
         plan = "BASICO"
-    limite = obtener_plan_config(plan).usuarios_limite
+    limite = resolver_config_plan_negocio(negocio, plan).usuarios_limite
     if limite is None:
         return
 

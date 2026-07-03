@@ -18,7 +18,7 @@ from app.models.negocio import Negocio
 from app.models.usuario import Usuario
 from app.services.auditoria import registrar_auditoria
 from app.utils.dependencies import get_current_user_with_negocio
-from app.utils.planes import obtener_plan_config, normalizar_plan
+from app.utils.planes import normalizar_plan, resolver_config_plan_negocio
 
 router = APIRouter()
 
@@ -197,7 +197,7 @@ def descargar_backup(
             plan = normalizar_plan(getattr(negocio, "plan", "BASICO"))
         except ValueError:
             plan = "BASICO"
-        config = obtener_plan_config(plan)
+        config = resolver_config_plan_negocio(negocio, plan)
         if not config.backups_habilitado:
             raise HTTPException(
                 status_code=402,

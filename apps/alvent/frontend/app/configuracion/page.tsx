@@ -260,7 +260,7 @@ export default function ConfiguracionPage() {
     backups_limite: number | null;
   }>>([]);
   const [planControlSeleccionado, setPlanControlSeleccionado] = useState<string>("GRATUITO");
-  const [planControlAccion, setPlanControlAccion] = useState<"simular" | "aplicar" | "guardar_monto" | "bondades">("simular");
+  const [planControlAccion, setPlanControlAccion] = useState<"simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades">("simular");
   const [planSimulado, setPlanSimulado] = useState<string>("BASICO");
   const [simuladorOverride, setSimuladorOverride] = useState({
     habilitado: false,
@@ -299,6 +299,7 @@ export default function ConfiguracionPage() {
   const [sendingSolicitudPlan, setSendingSolicitudPlan] = useState(false);
   const [savingFreePlanBoost, setSavingFreePlanBoost] = useState(false);
   const [savingPlanAmounts, setSavingPlanAmounts] = useState(false);
+  const [savingPlanLimits, setSavingPlanLimits] = useState(false);
   const [planAmounts, setPlanAmounts] = useState({
     gratuito: 0,
     prueba: 15,
@@ -494,14 +495,17 @@ export default function ConfiguracionPage() {
     }
   };
 
-  const cargarCatalogoPlanes = useCallback(async () => {
+  const cargarCatalogoPlanes = useCallback(async (negocioIdArg?: number) => {
     try {
-      const data = await negocioService.getPlanCatalog();
+      const negocioId = negocioIdArg || getNegocioIdActivo();
+      const data = negocioId
+        ? await negocioService.getEditablePlanCatalog(negocioId)
+        : await negocioService.getPlanCatalog();
       setPlanCatalogo(Array.isArray(data.planes) ? data.planes : []);
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar el catalogo de planes"));
     }
-  }, []);
+  }, [getNegocioIdActivo]);
 
   const cargarNegociosSuperadmin = useCallback(async () => {
     if (!isSuperadmin) return;
@@ -603,6 +607,55 @@ export default function ConfiguracionPage() {
       setError(getApiErrorMessage(err, "No se pudo actualizar montos de planes"));
     } finally {
       setSavingPlanAmounts(false);
+    }
+  };
+
+  const actualizarCampoPlanCatalogo = (
+    codigo: string,
+    campo: "usuarios_limite" | "reportes_habilitado" | "reportes_limite" | "backups_habilitado" | "backups_limite",
+    valor: number | boolean | null,
+  ) => {
+    setPlanCatalogo((prev) => prev.map((plan) => {
+      if (plan.codigo !== codigo) return plan;
+      const next = { ...plan, [campo]: valor };
+      if (campo === "reportes_habilitado" && !Boolean(valor)) {
+        next.reportes_limite = 0;
+      }
+      if (campo === "backups_habilitado" && !Boolean(valor)) {
+        next.backups_limite = 0;
+      }
+      return next;
+    }));
+  };
+
+  const guardarLimitesPlanes = async () => {
+    const negocioId = getNegocioIdActivo();
+    if (!isSuperadmin) return;
+    if (!negocioId) {
+      setError("Selecciona un negocio para guardar limites");
+      return;
+    }
+
+    try {
+      setSavingPlanLimits(true);
+      setError("");
+      setSuccess("");
+      const payload = planCatalogo.map((plan) => ({
+        codigo: plan.codigo,
+        usuarios_limite: plan.usuarios_limite,
+        reportes_habilitado: Boolean(plan.reportes_habilitado),
+        reportes_limite: plan.reportes_habilitado ? plan.reportes_limite : 0,
+        backups_habilitado: Boolean(plan.backups_habilitado),
+        backups_limite: plan.backups_habilitado ? plan.backups_limite : 0,
+      }));
+      const data = await negocioService.updateEditablePlanCatalog(negocioId, payload);
+      setPlanCatalogo(Array.isArray(data.planes) ? data.planes : []);
+      setSuccess(data.mensaje || "Limites de planes actualizados");
+      await cargarPlanStats();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo actualizar limites de planes"));
+    } finally {
+      setSavingPlanLimits(false);
     }
   };
 
@@ -848,7 +901,7 @@ export default function ConfiguracionPage() {
 
   const ejecutarAccionPlanEjecutiva = async () => {
     if (!planControlSeleccionadoData) return;
-    if ((planControlAccion === "aplicar" || planControlAccion === "guardar_monto") && !negocioActivoId) {
+    if ((planControlAccion === "aplicar" || planControlAccion === "guardar_monto" || planControlAccion === "guardar_limites") && !negocioActivoId) {
       setError("Selecciona un negocio para ejecutar esta accion");
       return;
     }
@@ -862,6 +915,10 @@ export default function ConfiguracionPage() {
     }
     if (planControlAccion === "guardar_monto") {
       await guardarMontosPlanes();
+      return;
+    }
+    if (planControlAccion === "guardar_limites") {
+      await guardarLimitesPlanes();
       return;
     }
     if (planControlAccion === "bondades") {
@@ -1032,6 +1089,7 @@ export default function ConfiguracionPage() {
     void cargarBranding(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
+    void cargarCatalogoPlanes(negocioId);
     void cargarBondadesPlanGratuito(negocioId);
     void cargarMontosPlanes(negocioId);
   }, [
@@ -1041,6 +1099,7 @@ export default function ConfiguracionPage() {
     cargarBranding,
     cargarPlanStats,
     cargarHistorialPlanes,
+    cargarCatalogoPlanes,
     cargarBondadesPlanGratuito,
     cargarMontosPlanes,
   ]);
@@ -1063,8 +1122,9 @@ export default function ConfiguracionPage() {
     void cargarBranding(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
+    void cargarCatalogoPlanes(negocioId);
     void cargarMontosPlanes(negocioId);
-  }, [isSuperadmin, cargarBranding, cargarPlanStats, cargarHistorialPlanes, cargarMontosPlanes]);
+  }, [isSuperadmin, cargarBranding, cargarPlanStats, cargarHistorialPlanes, cargarCatalogoPlanes, cargarMontosPlanes]);
 
   useEffect(() => {
     void cargarEscenariosSimulador();
@@ -1734,11 +1794,12 @@ export default function ConfiguracionPage() {
                       <select
                         className="focus-ring"
                         value={planControlAccion}
-                        onChange={(e) => setPlanControlAccion(e.target.value as "simular" | "aplicar" | "guardar_monto" | "bondades")}
+                        onChange={(e) => setPlanControlAccion(e.target.value as "simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades")}
                       >
                         <option value="simular">Simular</option>
                         <option value="aplicar">Aplicar</option>
                         <option value="guardar_monto">Guardar monto</option>
+                        <option value="guardar_limites">Guardar limites</option>
                         <option value="bondades">Editar bondades gratuitas</option>
                       </select>
                     </label>
@@ -1747,7 +1808,7 @@ export default function ConfiguracionPage() {
                       type="button"
                       className={`${styles.planApplyMainBtn} focus-ring`}
                       onClick={() => void ejecutarAccionPlanEjecutiva()}
-                      disabled={changingPlan || savingPlanAmounts}
+                      disabled={changingPlan || savingPlanAmounts || savingPlanLimits}
                     >
                       Ejecutar accion
                     </button>
@@ -1805,6 +1866,85 @@ export default function ConfiguracionPage() {
                       disabled={savingPlanAmounts}
                     >
                       {savingPlanAmounts ? "Guardando..." : "Guardar montos"}
+                    </button>
+                  </div>
+                </section>
+
+                <section className={styles.planAmountsBox}>
+                  <div>
+                    <h4>Limites editables por plan</h4>
+                    <p>Define usuarios, reportes y backups por plan. Estos limites se aplican al negocio seleccionado.</p>
+                  </div>
+
+                  <div className={styles.planAmountsGrid}>
+                    {planCatalogoVisible.map((plan) => (
+                      <div key={`limits-${plan.codigo}`} className={styles.formRow}>
+                        <span>{nombrePlan(plan.codigo)}</span>
+
+                        <label className={styles.inlineCheck}>
+                          <span>Usuarios</span>
+                          <input
+                            type="number"
+                            min={0}
+                            step="1"
+                            className="focus-ring"
+                            value={plan.usuarios_limite ?? ""}
+                            onChange={(e) => {
+                              const raw = e.target.value.trim();
+                              actualizarCampoPlanCatalogo(plan.codigo, "usuarios_limite", raw === "" ? null : Number(raw));
+                            }}
+                            placeholder="Ilimitado"
+                          />
+                        </label>
+
+                        <label className={styles.inlineCheck}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(plan.reportes_habilitado)}
+                            onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "reportes_habilitado", e.target.checked)}
+                          />
+                          Reportes
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          step="1"
+                          className="focus-ring"
+                          value={plan.reportes_limite ?? 0}
+                          onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "reportes_limite", Number(e.target.value || 0))}
+                          disabled={!plan.reportes_habilitado}
+                        />
+
+                        <label className={styles.inlineCheck}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(plan.backups_habilitado)}
+                            onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "backups_habilitado", e.target.checked)}
+                          />
+                          Backups
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          step="1"
+                          className="focus-ring"
+                          value={plan.backups_limite ?? 0}
+                          onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "backups_limite", Number(e.target.value || 0))}
+                          disabled={!plan.backups_habilitado}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className={styles.freePlanBoostQuickActions}>
+                    <span>Guardar limites efectivos del catalogo:</span>
+                    <button
+                      type="button"
+                      className={`${styles.saveBusinessBtn} focus-ring`}
+                      onClick={() => void guardarLimitesPlanes()}
+                      disabled={savingPlanLimits}
+                    >
+                      {savingPlanLimits ? "Guardando..." : "Guardar limites"}
                     </button>
                   </div>
                 </section>

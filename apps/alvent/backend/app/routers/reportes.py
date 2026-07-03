@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.models.negocio import Negocio
-from app.utils.planes import obtener_plan_config, normalizar_plan
+from app.utils.planes import resolver_config_plan_negocio
 from app.utils.dependencies import get_current_user_with_negocio
 
 from app.services.reportes import (
@@ -33,11 +33,8 @@ def _validar_plan_reportes(current_user: dict, db: Session) -> None:
 
     negocio_id = int(current_user.get("negocio_id") or 0)
     negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
-    try:
-        plan = normalizar_plan(getattr(negocio, "plan", "BASICO"))
-    except ValueError:
-        plan = "BASICO"
-    config = obtener_plan_config(plan)
+    config = resolver_config_plan_negocio(negocio)
+    plan = str(getattr(negocio, "plan", "BASICO") or "BASICO")
 
     if not config.reportes_habilitado:
         raise HTTPException(

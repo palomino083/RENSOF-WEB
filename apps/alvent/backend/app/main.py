@@ -250,6 +250,10 @@ def _ensure_multitenant_columns() -> None:
             conn.exec_driver_sql(
                 "ALTER TABLE negocios ADD COLUMN plan_monto_premium REAL"
             )
+        if "plan_catalogo_custom" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_catalogo_custom TEXT"
+            )
         if "plan_simulador_escenarios" not in negocio_columns:
             conn.exec_driver_sql(
                 "ALTER TABLE negocios ADD COLUMN plan_simulador_escenarios TEXT"

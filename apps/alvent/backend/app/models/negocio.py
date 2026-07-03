@@ -33,6 +33,7 @@ class Negocio(Base):
     plan_monto_lite = Column(Float, nullable=True)
     plan_monto_pro = Column(Float, nullable=True)
     plan_monto_premium = Column(Float, nullable=True)
+    plan_catalogo_custom = Column(Text, nullable=True)
     plan_simulador_escenarios = Column(Text, nullable=True)
     descripcion = Column(Text, nullable=True)
     logo_url = Column(String(500), nullable=True)
