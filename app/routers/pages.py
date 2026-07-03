@@ -290,6 +290,41 @@ def _alvent_productos_fallback_payload() -> list[dict[str, object]]:
     return []
 
 
+def _alvent_producto_created_fallback_payload(payload: dict[str, object]) -> dict[str, object]:
+    codigo = str(payload.get("codigo") or "TEMP-0001").strip() or "TEMP-0001"
+    nombre = str(payload.get("nombre") or "Producto contingencia").strip() or "Producto contingencia"
+
+    def _num(name: str, default: float = 0.0) -> float:
+        raw = payload.get(name)
+        try:
+            return float(raw) if raw is not None else float(default)
+        except Exception:
+            return float(default)
+
+    return {
+        "id": 0,
+        "codigo": codigo,
+        "nombre": nombre,
+        "categoria": str(payload.get("categoria") or "").strip(),
+        "marca": str(payload.get("marca") or "").strip(),
+        "talla": str(payload.get("talla") or "").strip() or None,
+        "color": str(payload.get("color") or "").strip() or None,
+        "sexo": str(payload.get("sexo") or "").strip() or None,
+        "costo": _num("costo", 0),
+        "precio": _num("precio", 0),
+        "stock": int(_num("stock", 0)),
+        "stock_minimo": int(_num("stock_minimo", 0)),
+        "foto": str(payload.get("foto") or "").strip(),
+        "atributos_extra": payload.get("atributos_extra") if isinstance(payload.get("atributos_extra"), dict) else {},
+    }
+
+
+def _alvent_producto_upload_fallback_payload() -> dict[str, object]:
+    return {
+        "url": "/uploads/productos/contingencia.png",
+    }
+
+
 def _alvent_productos_tabla_config_fallback_payload(overrides: dict[str, object] | None = None) -> dict[str, object]:
     default_config: dict[str, object] = {
         "ok": True,
@@ -600,7 +635,7 @@ async def alven_api_dashboard_overview_proxy_or_fallback(request: Request) -> Re
 
 @router.api_route(
     "/alven/api/productos/",
-    methods=["GET"],
+    methods=["GET", "POST", "OPTIONS"],
     response_model=None,
 )
 async def alven_api_productos_proxy_or_fallback(request: Request) -> Response:
@@ -612,7 +647,38 @@ async def alven_api_productos_proxy_or_fallback(request: Request) -> Response:
     except httpx.RequestError:
         pass
 
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    if request.method == "POST":
+        payload: dict[str, object] = {}
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {}
+        return JSONResponse(_alvent_producto_created_fallback_payload(payload), status_code=200)
+
     return JSONResponse(_alvent_productos_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/productos/upload",
+    methods=["POST", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_productos_upload_proxy_or_fallback(request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, "productos/upload")
+        if proxied.status_code < 500:
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    return JSONResponse(_alvent_producto_upload_fallback_payload(), status_code=200)
 
 
 @router.api_route(
