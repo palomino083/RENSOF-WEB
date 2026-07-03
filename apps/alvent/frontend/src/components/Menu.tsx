@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
-import { appPath } from "@/utils/appPath";
-
 /* =========================
    🔐 TIPOS ERP
 ========================= */
@@ -146,13 +144,19 @@ export default function Menu() {
   const pathname = usePathname();
 
   const normalizePath = (value: string) => {
-    const clean = String(value || "").replace(/\/+$/, "") || "/";
-    return clean.startsWith("/alven/app")
-      ? clean.replace("/alven/app", "") || "/"
-      : clean;
+    let clean = String(value || "").replace(/\/+$/, "") || "/";
+    while (clean.startsWith("/alven/app")) {
+      clean = clean.replace("/alven/app", "") || "/";
+    }
+    return clean || "/";
   };
 
-  const toAppHref = (href: string) => appPath(href.replace(/^\/+/, ""));
+  const toAppHref = (href: string) => {
+    const normalizedHref = href.startsWith("/") ? href : `/${href}`;
+    return normalizedHref.startsWith("/alven/app")
+      ? normalizedHref
+      : `/alven/app${normalizedHref}`;
+  };
 
   useEffect(() => {
     const cargarUsuario = () => {

@@ -13,6 +13,14 @@ export default function ProtectedRoute({
 
   const pathname = usePathname();
 
+  const normalizeRoute = (value: string) => {
+    let route = String(value || "").replace(/\/+$/, "") || "/";
+    while (route.startsWith("/alven/app")) {
+      route = route.replace("/alven/app", "") || "/";
+    }
+    return route || "/";
+  };
+
   useEffect(() => {
     const rawUsuario = localStorage.getItem("usuario");
     let usuario: Record<string, any> = {};
@@ -44,7 +52,7 @@ export default function ProtectedRoute({
     const autorizado =
       tieneAcceso(
         rolNormalizado,
-        pathname,
+        normalizeRoute(pathname),
         rolesNormalizados
       );
 
