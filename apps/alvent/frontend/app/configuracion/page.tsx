@@ -422,9 +422,9 @@ export default function ConfiguracionPage() {
       return;
     }
 
-    const negocioId = getNegocioIdActivo();
+    const negocioId = await resolverNegocioObjetivo("guardar logotipo");
     if (!negocioId) {
-      setError("No se encontro negocio asociado");
+      setError("Selecciona explicitamente el negocio objetivo antes de guardar logotipo");
       return;
     }
 
@@ -1593,6 +1593,23 @@ export default function ConfiguracionPage() {
                       Carga el logotipo oficial para usarlo en boletas y facturas PDF.
                     </p>
 
+                    {isSuperadmin ? (
+                      <div className={styles.formRow}>
+                        <label htmlFor="branding-negocio-objetivo">Negocio objetivo</label>
+                        <select
+                          id="branding-negocio-objetivo"
+                          className={`${styles.negocioSelect} focus-ring`}
+                          value={negocioSeleccionadoId || ""}
+                          onChange={(e) => setNegocioSeleccionadoId(Number(e.target.value))}
+                        >
+                          <option value="">Selecciona negocio objetivo</option>
+                          {negociosDisponibles.map((item) => (
+                            <option key={`branding-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : null}
+
                     <div className={styles.identityGrid}>
                       <div className={styles.logoFrame}>
                         {logoPreviewUrl ? (
@@ -1626,10 +1643,11 @@ export default function ConfiguracionPage() {
                         <button
                           type="button"
                           onClick={guardarLogo}
-                          disabled={!logoFile || savingLogo}
+                          disabled={!logoFile || savingLogo || !negocioActivoId}
                           className={`${styles.saveLogoBtn} focus-ring`}
+                          title={!negocioActivoId ? "Selecciona primero el negocio objetivo" : ""}
                         >
-                          {savingLogo ? "Guardando..." : "Guardar logotipo"}
+                          {savingLogo ? "Guardando..." : !negocioActivoId ? "Selecciona negocio" : "Guardar logotipo"}
                         </button>
                       </div>
                     </div>
