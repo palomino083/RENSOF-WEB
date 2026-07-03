@@ -166,6 +166,9 @@ export default function VentasPage() {
         />
 
         {loading ? <p className={styles.empty}>Cargando ventas...</p> : null}
+        {!loading && ventasFiltradas.length === 0 ? (
+          <p className={styles.empty}>No hay ventas para los filtros seleccionados.</p>
+        ) : null}
 
         <DataTable
           headers={["ID", "Fecha", "Metodo", "Estado", "Total", "Acciones"]}
