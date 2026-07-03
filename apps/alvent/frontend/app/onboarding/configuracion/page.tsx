@@ -20,12 +20,51 @@ export default function ConfiguracionNegocioPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    const id = localStorage.getItem("negocio_id");
-    if (id) {
-      setNegocioId(parseInt(id));
-      cargarDatos(parseInt(id));
+  const resolverNegocioIdSesion = () => {
+    const fromStorage = Number(localStorage.getItem("negocio_id") || 0);
+    if (Number.isFinite(fromStorage) && fromStorage > 0) {
+      return fromStorage;
     }
+
+    const rawUsuario = localStorage.getItem("usuario");
+    if (!rawUsuario) return 0;
+
+    try {
+      const parsed = JSON.parse(rawUsuario);
+      const fromUsuario = Number(parsed?.negocio_id || 0);
+      return Number.isFinite(fromUsuario) && fromUsuario > 0 ? fromUsuario : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  useEffect(() => {
+    const inicializar = async () => {
+      let id = resolverNegocioIdSesion();
+
+      if (!id) {
+        try {
+          const resMe = await api.get("/auth/me");
+          id = Number(resMe.data?.negocio_id || 0);
+          if (Number.isFinite(id) && id > 0) {
+            localStorage.setItem("negocio_id", String(id));
+          }
+        } catch {
+          id = 0;
+        }
+      }
+
+      if (id) {
+        setNegocioId(id);
+        await cargarDatos(id);
+        return;
+      }
+
+      setError("No se encontro negocio asociado para autocompletar la empresa");
+      setLoading(false);
+    };
+
+    void inicializar();
   }, []);
 
   const cargarDatos = async (id: number) => {

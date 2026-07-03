@@ -91,6 +91,21 @@ const getStorageItem = (key: string) => {
   return window.localStorage.getItem(key);
 };
 
+const getNegocioIdFromSession = () => {
+  const fromStorage = parseNumero(getStorageItem("negocio_id"));
+  if (fromStorage) return fromStorage;
+
+  const rawUsuario = getStorageItem("usuario");
+  if (!rawUsuario) return 0;
+
+  try {
+    const parsed = JSON.parse(rawUsuario);
+    return parseNumero(String(parsed?.negocio_id || 0));
+  } catch {
+    return 0;
+  }
+};
+
 const normalizarApiUrl = (baseUrl: string) => baseUrl.replace(/\/$/, "");
 
 const toAbsoluteUrl = (url?: string | null) => {
@@ -397,10 +412,10 @@ export default function ConfiguracionPage() {
 
   const getNegocioIdActivo = useCallback(() => {
     if (isSuperadmin) {
-      const negocioSesion = parseNumero(getStorageItem("negocio_id"));
+      const negocioSesion = getNegocioIdFromSession();
       return negocioSeleccionadoId || negocioSesion;
     }
-    return parseNumero(getStorageItem("negocio_id"));
+    return getNegocioIdFromSession();
   }, [isSuperadmin, negocioSeleccionadoId]);
 
   const cargarBranding = useCallback(async (negocioIdArg?: number) => {
@@ -1143,12 +1158,12 @@ export default function ConfiguracionPage() {
       setIsSuperadmin(esSuper);
 
       if (!esSuper) {
-        const negocioIdLocal = parseNumero(getStorageItem("negocio_id"));
+        const negocioIdLocal = getNegocioIdFromSession();
         setNegocioSeleccionadoId(negocioIdLocal);
       }
     } catch {
       setIsSuperadmin(false);
-      setNegocioSeleccionadoId(parseNumero(getStorageItem("negocio_id")));
+      setNegocioSeleccionadoId(getNegocioIdFromSession());
     }
   }, []);
 
@@ -1201,7 +1216,7 @@ export default function ConfiguracionPage() {
 
   useEffect(() => {
     if (isSuperadmin) return;
-    const negocioId = parseNumero(getStorageItem("negocio_id"));
+    const negocioId = getNegocioIdFromSession();
     if (!negocioId) return;
     void cargarBranding(negocioId);
     void cargarPlanStats();
