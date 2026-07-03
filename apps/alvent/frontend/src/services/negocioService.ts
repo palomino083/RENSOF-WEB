@@ -44,7 +44,11 @@ export const negocioService = {
     const formData = new FormData();
     formData.append("archivo", file);
 
-    const res = await api.post(`/negocios/${negocioId}/logo`, formData);
+    const res = await api.post(`/negocios/${negocioId}/logo`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
     return res.data as Negocio;
   },

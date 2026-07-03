@@ -58,6 +58,8 @@ type TableColumn = {
 
 type TipoNegocio = "tienda" | "restaurante" | "farmacia" | "supermercado" | "otro";
 
+const COLUMNAS_FIJAS_TABLERO: ColumnaCoreKey[] = ["codigo", "foto", "costo", "precio", "utilidad"];
+
 const TIPOS_NEGOCIO_OPTIONS: Array<{ value: TipoNegocio; label: string }> = [
   { value: "tienda", label: "Tienda" },
   { value: "restaurante", label: "Restaurante" },
@@ -89,9 +91,9 @@ const CORE_COLUMNS_BEFORE: Array<{ key: ColumnaCoreKey; label: string; locked?: 
 ];
 
 const CORE_COLUMNS_AFTER: Array<{ key: ColumnaCoreKey; label: string; locked?: boolean }> = [
-  { key: "costo", label: "Costo" },
-  { key: "precio", label: "Precio" },
-  { key: "utilidad", label: "Utilidad" },
+  { key: "costo", label: "Costo", locked: true },
+  { key: "precio", label: "Precio", locked: true },
+  { key: "utilidad", label: "Utilidad", locked: true },
   { key: "margen", label: "Margen" },
   { key: "stock", label: "Stock" },
   { key: "estado", label: "Estado" },
@@ -217,7 +219,7 @@ export default function Productos() {
     return [...base, ...custom];
   }, [tiposCustom]);
 
-  const guardarConfigTabla = async (next?: { tipo?: string; columnas?: ColumnaCustom[]; tipos?: string[] }) => {
+  const guardarConfigTabla = async (next?: { tipo?: string; columnas?: ColumnaCustom[]; tipos?: string[]; visibles?: string[] }) => {
     try {
       setSavingTableConfig(true);
       setError("");
@@ -226,7 +228,7 @@ export default function Productos() {
       const tipoPayload = (next?.tipo ?? tipoNegocio) || "";
       const columnasPayload = next?.columnas ?? columnasCustom;
       const tiposPayload = next?.tipos ?? tiposCustom;
-      const visiblesPayload = columnasVisibles;
+      const visiblesPayload = next?.visibles ?? columnasVisibles;
 
       const resp = await productosService.updateTableConfig({
         tipo_negocio: tipoPayload || undefined,
@@ -511,18 +513,34 @@ export default function Productos() {
   };
 
   const moverColumna = (key: string, direction: -1 | 1) => {
+    const columnaActual = columnasDisponiblesMap.get(key);
+    if (columnaActual?.locked) return;
+
     setColumnasVisibles((prev) => {
       const base = prev.length > 0 ? [...prev] : columnasDisponibles.map((c) => c.key);
       const index = base.indexOf(key);
       if (index < 0) return base;
       const target = index + direction;
       if (target < 0 || target >= base.length) return base;
+      const columnaTarget = columnasDisponiblesMap.get(base[target]);
+      if (columnaTarget?.locked) return base;
       const next = [...base];
       const aux = next[target];
       next[target] = next[index];
       next[index] = aux;
       return next;
     });
+  };
+
+  const aplicarPresetReporteImagen = async () => {
+    const ordered = columnasDisponibles
+      .map((c) => c.key)
+      .filter((key) => !COLUMNAS_FIJAS_TABLERO.includes(key as ColumnaCoreKey));
+    const visibles = [...COLUMNAS_FIJAS_TABLERO, ...ordered];
+
+    setColumnasVisibles(visibles);
+    await guardarConfigTabla({ visibles });
+    setSuccess("Preset pro aplicado: codigo, foto, costo, precio y utilidad quedan fijos en tablero");
   };
 
   const cambiarValorAtributoExtra = (key: string, value: string) => {
@@ -774,6 +792,17 @@ export default function Productos() {
         <div className={styles.configBlock}>
           <label>Editar columnas visibles y orden</label>
           <p className={styles.hint}>Activa, oculta y ordena las columnas sin actualizar el aplicativo.</p>
+          <div className={styles.configInline}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              disabled={savingTableConfig}
+              onClick={() => void aplicarPresetReporteImagen()}
+            >
+              {savingTableConfig ? "Aplicando..." : "Personalizar reporte de imagen (Pro)"}
+            </button>
+            <span className={styles.hint}>Columnas fijas: Codigo, Foto, Costo, Precio y Utilidad.</span>
+          </div>
           <div className={styles.columnEditorGrid}>
             {columnasTabla.map((col) => (
               <div key={`layout-${col.key}`} className={styles.columnEditorItem}>

@@ -127,6 +127,57 @@ const MODULOS_BASE = [
 
 const PLAN_BONDAD_SOURCES = PLANES_VISIBLES_EN_SECCION;
 
+type CanalPago = "transferencia" | "tarjeta" | "yape" | "plin";
+
+const CANALES_PAGO: Array<{ value: CanalPago; label: string }> = [
+  { value: "transferencia", label: "Transferencia" },
+  { value: "tarjeta", label: "Tarjeta" },
+  { value: "yape", label: "Yape" },
+  { value: "plin", label: "Plin" },
+];
+
+const DESTINOS_COBRO_ALVENT: Record<CanalPago, { titulo: string; detalle: string[] }> = {
+  transferencia: {
+    titulo: "Cuenta bancaria para transferencia",
+    detalle: [
+      "Banco: BCP",
+      "Titular: RENSOF S.A.C.",
+      "Cuenta corriente: 191-2587456-0-21",
+      "CCI: 00219100258745602137",
+    ],
+  },
+  tarjeta: {
+    titulo: "Pago con tarjeta (alineado a cuenta bancaria)",
+    detalle: [
+      "Deposita el abono en la misma cuenta bancaria oficial de ALVENT ERP PRO.",
+      "Banco: BCP - Cuenta corriente 191-2587456-0-21",
+      "CCI: 00219100258745602137",
+    ],
+  },
+  yape: {
+    titulo: "Yape",
+    detalle: [
+      "Numero de abono Yape: 987 654 321",
+      "Titular: RENSOF S.A.C.",
+    ],
+  },
+  plin: {
+    titulo: "Plin",
+    detalle: [
+      "Numero de abono Plin: 987 654 321",
+      "Titular: RENSOF S.A.C.",
+    ],
+  },
+};
+
+const esCanalPago = (value: string): value is CanalPago =>
+  CANALES_PAGO.some((item) => item.value === value);
+
+const normalizarCanalPago = (value?: string | null): CanalPago => {
+  const raw = String(value || "").trim().toLowerCase();
+  return esCanalPago(raw) ? raw : "transferencia";
+};
+
 const renderBenefitIcon = (icon: string) => {
   if (icon === "spark") {
     return (
@@ -432,9 +483,9 @@ export default function ConfiguracionPage() {
       setLogoFile(null);
       setSuccess("Logotipo actualizado correctamente");
       await cargarPlanStats();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      setError("No se pudo guardar el logotipo");
+      setError(getApiErrorMessage(err, "No se pudo guardar el logotipo"));
     } finally {
       setSavingLogo(false);
     }
@@ -542,10 +593,8 @@ export default function ConfiguracionPage() {
       const lista = Array.isArray(data) ? data : [];
       setHistorialPlanes(lista);
 
-      const ultimoCanal = String(lista[0]?.canal_pago || "").trim();
-      if (ultimoCanal) {
-        setSolicitudPlan((prev) => ({ ...prev, canal_pago: ultimoCanal }));
-      }
+      const ultimoCanal = normalizarCanalPago(String(lista[0]?.canal_pago || ""));
+      setSolicitudPlan((prev) => ({ ...prev, canal_pago: ultimoCanal }));
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar historial de planes"));
     } finally {
@@ -911,6 +960,8 @@ export default function ConfiguracionPage() {
   const planControlAccionRequiereNegocio =
     (planControlAccion === "aplicar" || planControlAccion === "guardar_monto" || planControlAccion === "guardar_limites")
     && !negocioActivoId;
+  const canalPagoSeleccionado = normalizarCanalPago(solicitudPlan.canal_pago);
+  const destinoCobroSeleccionado = DESTINOS_COBRO_ALVENT[canalPagoSeleccionado];
 
   const copiarBondadesDesdePlan = (codigoPlan: string) => {
     const plan = planCatalogo.find((p) => p.codigo === normalizarPlan(codigoPlan));
@@ -1222,7 +1273,7 @@ export default function ConfiguracionPage() {
       return;
     }
 
-    if (solicitudPlan.canal_pago !== "efectivo" && !comprobantePagoFile) {
+    if (!comprobantePagoFile) {
       setError("Adjunta el comprobante para validar el pago");
       return;
     }
@@ -1241,7 +1292,7 @@ export default function ConfiguracionPage() {
       const resp = await negocioService.requestPlanChange(negocioId, {
         plan_objetivo: planPagoObjetivo,
         referencia_pago: solicitudPlan.referencia_pago.trim(),
-        canal_pago: solicitudPlan.canal_pago,
+        canal_pago: canalPagoSeleccionado,
         validacion_modo: "MANUAL",
         declaracion_anti_fraude: true,
         observaciones: solicitudPlan.observaciones.trim() || undefined,
@@ -2331,15 +2382,26 @@ export default function ConfiguracionPage() {
             <select
               id="cliente-canal-pago"
               className="focus-ring"
-              value={solicitudPlan.canal_pago}
-              onChange={(e) => setSolicitudPlan((prev) => ({ ...prev, canal_pago: e.target.value }))}
+              value={canalPagoSeleccionado}
+              onChange={(e) => {
+                const canal = normalizarCanalPago(e.target.value);
+                setSolicitudPlan((prev) => ({ ...prev, canal_pago: canal }));
+              }}
             >
-              <option value="transferencia">Transferencia</option>
-              <option value="yape">Yape</option>
-              <option value="plin">Plin</option>
-              <option value="tarjeta">Tarjeta</option>
-              <option value="efectivo">Efectivo</option>
+              {CANALES_PAGO.map((canal) => (
+                <option key={`canal-${canal.value}`} value={canal.value}>{canal.label}</option>
+              ))}
             </select>
+
+            <div className={styles.paymentDestinationBox}>
+              <strong>{destinoCobroSeleccionado.titulo}</strong>
+              <ul>
+                {destinoCobroSeleccionado.detalle.map((linea) => (
+                  <li key={`destino-${linea}`}>{linea}</li>
+                ))}
+              </ul>
+              <small>Efectivo no aplica para ALVENT ERP PRO.</small>
+            </div>
 
             <input
               id="cliente-referencia"

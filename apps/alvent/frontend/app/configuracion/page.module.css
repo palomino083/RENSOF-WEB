@@ -296,6 +296,36 @@
   color: #0f172a;
 }
 
+.paymentDestinationBox {
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.96));
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.paymentDestinationBox strong {
+  color: #0c4a6e;
+}
+
+.paymentDestinationBox ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.paymentDestinationBox li {
+  color: #334155;
+  font-size: 0.84rem;
+}
+
+.paymentDestinationBox small {
+  color: #b45309;
+  font-weight: 700;
+}
+
 .identityGrid {
   display: grid;
   gap: 12px;
