@@ -16,6 +16,12 @@ const sanitizarDni = (value: string | null | undefined) =>
 const sanitizarCelular = (value: string | null | undefined) =>
   String(value || "").replace(/\D/g, "").slice(0, 9);
 
+const normalizarId = (value: number | string | null | undefined): number | null => {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+
 const withTimeout = <T,>(promise: Promise<T>, ms = 10000): Promise<T> =>
   Promise.race([
     promise,
@@ -74,7 +80,7 @@ export default function ClientesPage() {
   // EDITAR
   // ======================
   const handleEdit = (c: Cliente) => {
-    setEditId(c.id ?? null);
+    setEditId(normalizarId(c.id));
     setNombre(c.nombre);
     setDni(sanitizarDni(c.dni));
     setTelefono(sanitizarCelular(c.telefono || ""));
@@ -116,9 +122,10 @@ export default function ClientesPage() {
       const isEditing = editId !== null;
 
       if (isEditing) {
+        const targetId = normalizarId(editId);
         setClientes((prev) =>
           prev.map((c) =>
-            c.id === editId ? { ...c, ...result } : c
+            normalizarId(c.id) === targetId ? { ...c, ...result } : c
           )
         );
       } else {
@@ -137,17 +144,18 @@ export default function ClientesPage() {
   // ELIMINAR
   // ======================
   const handleDelete = async (id?: number) => {
-    if (id == null) return;
+    const targetId = normalizarId(id);
+    if (targetId === null) return;
 
     const ok = confirm("¿Eliminar cliente?");
     if (!ok) return;
 
     try {
-      await clientesService.delete(id);
+      await clientesService.delete(targetId);
 
-      setClientes((prev) => prev.filter((c) => c.id !== id));
+      setClientes((prev) => prev.filter((c) => normalizarId(c.id) !== targetId));
 
-      if (editId === id) limpiar();
+      if (editId === targetId) limpiar();
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "Error eliminando cliente"));
     }
