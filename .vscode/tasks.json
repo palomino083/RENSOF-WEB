@@ -1,0 +1,70 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ALVENT: Start Local (Backend + Frontend)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/start-alvent-local.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ALVENT: Stop Local (Backend + Frontend)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/stop-alvent-local.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ALVENT: Frontend Lint",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "lint"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/alvent/frontend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ALVENT: Frontend Build",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "build"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/alvent/frontend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ALVENT: Health Check (Login + Dashboard)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/health-check-alvent.ps1"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
