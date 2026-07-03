@@ -35,6 +35,23 @@ const nombrePlan = (plan?: string | null) => {
   return PLAN_OPTIONS.find((p) => p.value === normalizado)?.label || normalizado;
 };
 
+const TIPO_NEGOCIO_LABELS: Record<string, string> = {
+  tienda: "Tienda",
+  restaurante: "Restaurante",
+  farmacia: "Farmacia",
+  supermercado: "Supermercado",
+  boutique: "Boutique",
+  kiosko: "Kiosko",
+  desarrollo_software: "Desarrollo de software",
+  servicio_aplicativos: "Servicio de aplicativos",
+  otro: "Otro",
+};
+
+const nombreTipoNegocio = (tipo?: string | null) => {
+  const key = String(tipo || "").trim().toLowerCase();
+  return TIPO_NEGOCIO_LABELS[key] || (tipo ? String(tipo) : "No definido");
+};
+
 const normalizarRol = (rol: string) => {
   const raw = String(rol || "").toUpperCase().trim();
   const compact = raw.replace(/[^A-Z0-9]/g, "");
@@ -1357,7 +1374,7 @@ export default function ConfiguracionPage() {
                       >
                         <option value="">Selecciona negocio objetivo</option>
                         {negociosDisponibles.map((item) => (
-                          <option key={`empresa-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre}</option>
+                          <option key={`empresa-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre} ({nombreTipoNegocio(item.tipo)})</option>
                         ))}
                       </select>
                       {!negocioActivoId ? (
@@ -1626,7 +1643,7 @@ export default function ConfiguracionPage() {
                         >
                           <option value="">Selecciona negocio objetivo</option>
                           {negociosDisponibles.map((item) => (
-                            <option key={`branding-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre}</option>
+                            <option key={`branding-neg-${item.id}`} value={item.id}>{item.id} - {item.nombre} ({nombreTipoNegocio(item.tipo)})</option>
                           ))}
                         </select>
                       </div>
@@ -1944,7 +1961,7 @@ export default function ConfiguracionPage() {
                     >
                       <option value="">Selecciona negocio objetivo</option>
                       {negociosDisponibles.map((item) => (
-                        <option key={item.id} value={item.id}>{item.id} - {item.nombre}</option>
+                        <option key={item.id} value={item.id}>{item.id} - {item.nombre} ({nombreTipoNegocio(item.tipo)})</option>
                       ))}
                     </select>
                     {!negocioActivoId ? (
