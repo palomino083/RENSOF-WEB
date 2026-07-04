@@ -6,8 +6,8 @@ const PLACEHOLDER_IMAGE =
 
 const trimTrailingSlash = (value: string) => value.replace(/\/$/, "");
 const apiBase = trimTrailingSlash(API_URL);
-const apiOrigin = apiBase.replace(/\/alven\/api\/?$/i, "");
-const localMediaOrigin = apiOrigin.replace(/:8000$/i, ":8001");
+const apiOriginFromApiBase = apiBase.replace(/\/alven\/api\/?$/i, "");
+const localMediaOrigin = apiOriginFromApiBase.replace(/:8000$/i, ":8001");
 const isLocalApiBase = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\b/i.test(apiBase);
 
 const isLocalHost = (host: string) => host === "127.0.0.1" || host === "localhost";
@@ -18,6 +18,15 @@ const normalizeUploadsPath = (value: string) => {
   if (/^https?:\/\//i.test(raw)) {
     try {
       const parsed = new URL(raw);
+      const normalizedPath = parsed.pathname
+        .replace(/^\/alven\/api\/uploads\/uploads\//i, "/uploads/")
+        .replace(/^\/alven\/api\/uploads\//i, "/uploads/")
+        .replace(/^\/uploads\/uploads\//i, "/uploads/");
+
+      if (/^\/uploads\//i.test(normalizedPath)) {
+        return `${parsed.origin}${normalizedPath}`;
+      }
+
       if (isLocalHost(parsed.hostname) && /\/uploads\//i.test(parsed.pathname)) {
         const fromUploads = parsed.pathname.match(/\/uploads\/.*/i);
         return fromUploads ? fromUploads[0] : parsed.pathname;
@@ -38,6 +47,18 @@ const normalizeUploadsPath = (value: string) => {
     .replace(/^\/uploads\/uploads\//i, "/uploads/");
 };
 
+const getApiOrigin = () => {
+  if (/^https?:\/\//i.test(apiOriginFromApiBase)) {
+    return apiOriginFromApiBase;
+  }
+
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin;
+  }
+
+  return "";
+};
+
 export const toMediaUrl = (value?: string | null) => {
   const normalized = normalizeUploadsPath(String(value || ""));
   if (!normalized) return "";
@@ -48,8 +69,13 @@ export const toMediaUrl = (value?: string | null) => {
     if (isLocalApiBase && localMediaOrigin) {
       return `${localMediaOrigin}${normalized}`;
     }
-    // En producción, /uploads vive en el origen del backend (no bajo /alven/api).
-    return `${apiOrigin || apiBase}${normalized}`;
+    // En producción priorizamos el prefijo API porque suele ser la ruta proxy estable.
+    if (apiBase) {
+      return `${apiBase}${normalized}`;
+    }
+
+    const apiOrigin = getApiOrigin();
+    return apiOrigin ? `${apiOrigin}${normalized}` : normalized;
   }
 
   return `${apiBase}${normalized}`;
@@ -57,6 +83,36 @@ export const toMediaUrl = (value?: string | null) => {
 
 export const applyFallbackImage = (event: SyntheticEvent<HTMLImageElement>) => {
   const img = event.currentTarget;
+  const retryCount = Number(img.dataset.mediaRetryCount || "0");
+  const src = img.currentSrc || img.src || "";
+
+  if (retryCount < 3) {
+    const candidates: string[] = [];
+
+    if (/\/alven\/api\/uploads\//i.test(src)) {
+      candidates.push(src.replace(/\/alven\/api\/uploads\//i, "/uploads/"));
+    }
+
+    if (/\/uploads\//i.test(src) && !/\/alven\/api\/uploads\//i.test(src)) {
+      candidates.push(src.replace(/\/uploads\//i, "/alven/api/uploads/"));
+    }
+
+    if (/:8000\b/.test(src)) {
+      candidates.push(src.replace(/:8000\b/g, ":8001"));
+    }
+
+    if (/:8001\b/.test(src)) {
+      candidates.push(src.replace(/:8001\b/g, ":8000"));
+    }
+
+    const next = candidates.find((candidate) => candidate && candidate !== src);
+    if (next) {
+      img.dataset.mediaRetryCount = String(retryCount + 1);
+      img.src = next;
+      return;
+    }
+  }
+
   img.onerror = null;
   img.src = PLACEHOLDER_IMAGE;
 };

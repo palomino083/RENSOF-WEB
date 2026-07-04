@@ -1,6 +1,7 @@
 import os
 import secrets
 import httpx
+from urllib.parse import urlparse
 from datetime import datetime
 from fastapi import APIRouter, Form, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -32,6 +33,32 @@ def _alvent_frontend_url(path: str = "") -> str:
     # Mantener navegacion dentro del mismo host (rensof.pe) para evitar saltos a Render.
     normalized_path = f"/{path.lstrip('/')}" if path else ""
     return normalized_path or "/alven/app/login"
+
+
+def _alvent_direct_frontend_url(request: Request, full_path: str = "") -> str:
+    base_origin = ALVENT_FRONTEND_ORIGIN.rstrip("/")
+    base_path = ALVENT_FRONTEND_BASE_PATH.strip("/")
+    normalized = full_path.strip("/")
+
+    path = "/" + "/".join(part for part in (base_path, normalized) if part)
+    target = f"{base_origin}{path}"
+
+    if request.url.query:
+        target = f"{target}?{request.url.query}"
+
+    return target
+
+
+def _redirect_to_real_alvent_frontend(request: Request, full_path: str = "") -> Response:
+    target = _alvent_direct_frontend_url(request, full_path)
+    target_host = (urlparse(target).hostname or "").lower()
+    current_host = request.headers.get("host", "").split(":", 1)[0].lower()
+
+    # Evita bucles si el origen directo coincide con el host actual.
+    if target_host and current_host and target_host == current_host:
+        return _frontend_unavailable_response()
+
+    return _disable_cache(RedirectResponse(target, status_code=307))
 
 
 def _is_html_navigation_request(request: Request) -> bool:
@@ -884,19 +911,9 @@ async def alven_app_login(request: Request) -> Response:
 
     if not _is_html_navigation_request(request):
         return _frontend_unavailable_response()
-
-    return templates.TemplateResponse(
-        request,
-        "alvent_login_fallback.html",
-        {
-            "active_page": "servicios",
-            "page_title": "Login ALVENT ERP PRO | RENSOF",
-            "page_description": "Acceso de contingencia a ALVENT ERP PRO cuando el frontend dedicado no esta disponible.",
-            "alvent_login_url": _alvent_frontend_url("alven/app/login"),
-            "alvent_dashboard_url": _alvent_frontend_url("alven/app/dashboard"),
-        },
-        headers=_fallback_headers(fallback_reason),
-    )
+    response = _redirect_to_real_alvent_frontend(request, "login")
+    response.headers.update(_fallback_headers(fallback_reason))
+    return response
 
 
 @router.get("/alvent", response_model=None)
@@ -948,7 +965,9 @@ async def alven_app_root_proxy(request: Request) -> Response:
 
     if not _is_html_navigation_request(request):
         return _frontend_unavailable_response()
-    return _disable_cache(_render_alvent_dashboard_fallback(request, reason=fallback_reason))
+    response = _redirect_to_real_alvent_frontend(request)
+    response.headers.update(_fallback_headers(fallback_reason))
+    return response
 
 
 @router.api_route(
@@ -1000,11 +1019,9 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
     if not _is_html_navigation_request(request):
         return _frontend_unavailable_response()
 
-    if full_path.strip("/") == "dashboard":
-        return _disable_cache(_render_alvent_dashboard_fallback(request, reason=fallback_reason))
-    # Evita ciclos al login cuando el frontend dedicado no esta disponible.
-    # Si no hay sesion, el propio dashboard fallback redirige al login en cliente.
-    return _disable_cache(_render_alvent_dashboard_fallback(request, reason=fallback_reason))
+    response = _redirect_to_real_alvent_frontend(request, full_path)
+    response.headers.update(_fallback_headers(fallback_reason))
+    return response
 
 
 @router.api_route(
