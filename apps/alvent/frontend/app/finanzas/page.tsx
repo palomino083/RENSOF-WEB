@@ -35,6 +35,13 @@ const periodoActual = () => {
   return `${hoy.getFullYear()}-${mm}`;
 };
 
+const parseNegocioId = (value: unknown) => {
+  const raw = String(value ?? "").trim();
+  if (!/^\d+$/.test(raw)) return 0;
+  const id = Number(raw);
+  return Number.isSafeInteger(id) && id > 0 ? id : 0;
+};
+
 export default function FinanzasPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -112,7 +119,7 @@ export default function FinanzasPage() {
       try {
         const lista = await negocioService.list();
         setNegocios(Array.isArray(lista) ? lista : []);
-        const fallback = Number(lista?.[0]?.id || 0);
+        const fallback = parseNegocioId(lista?.[0]?.id || 0);
         setNegocioObjetivoId((prev) => prev || fallback);
       } catch {
         setNegocios([]);
@@ -335,7 +342,7 @@ export default function FinanzasPage() {
                 Empresa objetivo para lectura de montos
                 <select
                   value={negocioObjetivoId || ""}
-                  onChange={(e) => setNegocioObjetivoId(Number(e.target.value || 0))}
+                  onChange={(e) => setNegocioObjetivoId(parseNegocioId(e.target.value))}
                   className="focus-ring"
                 >
                   <option value="">Seleccionar empresa</option>

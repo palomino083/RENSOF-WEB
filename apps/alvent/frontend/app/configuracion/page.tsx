@@ -74,8 +74,10 @@ const normalizarRol = (rol: string) => {
 };
 
 const parseNumero = (value: string | null | undefined) => {
-  const num = Number(value || 0);
-  return Number.isFinite(num) ? num : 0;
+  const raw = String(value ?? "").trim();
+  if (!/^\d+$/.test(raw)) return 0;
+  const num = Number(raw);
+  return Number.isSafeInteger(num) && num > 0 ? num : 0;
 };
 
 const sanitizarRuc = (value: string | null | undefined) =>
@@ -1679,14 +1681,6 @@ export default function ConfiguracionPage() {
               <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-operaciones")}>Operaciones</button>
               <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-plan")}>Plan</button>
             </div>
-            <button
-              type="button"
-              onClick={descargarBackup}
-              disabled={loadingBackup}
-              className={`${styles.backupBtn} focus-ring`}
-            >
-              {loadingBackup ? "Generando backup..." : "Backup rápido"}
-            </button>
           </section>
 
           <section id="cfg-empresa" className={`${styles.card} ${styles.companyCard} uiEnter`} data-stagger="4">

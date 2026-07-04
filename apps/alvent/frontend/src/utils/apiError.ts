@@ -20,15 +20,28 @@ function formatValidationDetail(items: ValidationDetailItem[]): string {
   return messages.length > 0 ? messages.join(" | ") : "Error de validacion";
 }
 
+function isNegocioIdPathValidationMessage(message: string): boolean {
+  const normalized = String(message || "").toLowerCase();
+  return normalized.includes("path.negocio_id") ||
+    (normalized.includes("negocio_id") && normalized.includes("valid integer"));
+}
+
 export function getApiErrorMessage(error: any, fallback: string): string {
   const detail = error?.response?.data?.detail;
 
   if (typeof detail === "string") {
+    if (isNegocioIdPathValidationMessage(detail)) {
+      return fallback;
+    }
     return detail;
   }
 
   if (Array.isArray(detail)) {
-    return formatValidationDetail(detail);
+    const formatted = formatValidationDetail(detail);
+    if (isNegocioIdPathValidationMessage(formatted)) {
+      return fallback;
+    }
+    return formatted;
   }
 
   if (detail && typeof detail === "object") {
