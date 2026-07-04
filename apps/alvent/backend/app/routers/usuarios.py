@@ -253,7 +253,18 @@ def crear_usuario(
     _validar_limite_plan_usuarios(db, current_user)
 
     is_superadmin = bool(current_user.get("is_superadmin"))
-    negocio_id = None if is_superadmin else int(current_user.get("negocio_id"))
+    if is_superadmin:
+        negocio_id = int(data.negocio_id or 0)
+        if not negocio_id:
+            raise HTTPException(status_code=400, detail="Superadministrador debe indicar negocio_id")
+    else:
+        negocio_id = int(current_user.get("negocio_id") or 0)
+        if not negocio_id:
+            raise HTTPException(status_code=400, detail="Negocio no encontrado en sesion")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
 
     rol, roles_csv = _normalizar_roles(data.rol, data.roles)
 
@@ -341,7 +352,7 @@ def actualizar_usuario(
     _asegurar_actor_admin(db, current_user)
 
     is_superadmin = bool(current_user.get("is_superadmin"))
-    negocio_id = None if is_superadmin else int(current_user.get("negocio_id"))
+    negocio_id = None if is_superadmin else int(current_user.get("negocio_id") or 0)
 
     rol, roles_csv = _normalizar_roles(data.rol, data.roles)
 
@@ -352,6 +363,14 @@ def actualizar_usuario(
 
     if _es_superadmin_fijo(usuario):
         raise HTTPException(status_code=403, detail="La cuenta superadministrador unica no puede editarse desde este modulo")
+
+    negocio_destino = int(data.negocio_id or usuario.negocio_id or 0)
+    if not negocio_destino:
+        raise HTTPException(status_code=400, detail="Debes asignar un negocio valido")
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_destino).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
 
     duplicado = (
         db.query(Usuario)
@@ -364,7 +383,7 @@ def actualizar_usuario(
         db.query(Usuario)
         .filter(
             Usuario.usuario == data.usuario,
-            Usuario.negocio_id == negocio_id,
+            Usuario.negocio_id == negocio_destino,
             Usuario.id != usuario_id
         )
         .first()
@@ -381,6 +400,7 @@ def actualizar_usuario(
         usuario.password = hash_password(data.password)
     usuario.rol = rol
     usuario.roles = roles_csv
+    usuario.negocio_id = negocio_destino
 
     db.commit()
     db.refresh(usuario)

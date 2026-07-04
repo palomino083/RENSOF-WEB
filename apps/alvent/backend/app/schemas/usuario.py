@@ -13,6 +13,7 @@ class UsuarioCreate(BaseModel):
     password: str
     rol: str
     roles: Optional[list[str]] = None
+    negocio_id: Optional[int] = None
 
     @field_validator("dni")
     @classmethod
@@ -36,6 +37,7 @@ class UsuarioOut(BaseModel):
     email: Optional[str]
     rol: str
     roles: Optional[list[str]] = None
+    negocio_id: Optional[int] = None
     activo: bool
 
     @field_validator("roles", mode="before")

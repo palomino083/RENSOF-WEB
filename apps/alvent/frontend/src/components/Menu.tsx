@@ -151,9 +151,11 @@ export default function Menu() {
     const [pathOnly] = noOrigin.split(/[?#]/);
     let path = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
     path = path.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
+    // Evita prefijos duplicados como /alven/app/alven/app/... en builds desfasados.
     while (path.startsWith(APP_PREFIX)) {
       path = path.slice(APP_PREFIX.length) || "/";
     }
+    path = path.replace(new RegExp(`^(?:${APP_PREFIX})+`), "") || path;
     return path || "/";
   };
 
@@ -161,7 +163,7 @@ export default function Menu() {
 
   const toAppHref = (href: string) => {
     const route = cleanRoute(href);
-    return route;
+    return route.startsWith("/") ? route : `/${route}`;
   };
 
   useEffect(() => {

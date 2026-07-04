@@ -143,6 +143,15 @@ def _backend_origin_for_request(request: Request) -> str:
     return ALVENT_BACKEND_ORIGIN.rstrip("/")
 
 
+def _is_local_request(request: Request) -> bool:
+    host = request.headers.get("host", "").lower()
+    return host.startswith("127.0.0.1") or host.startswith("localhost")
+
+
+def _upstream_unavailable_response() -> Response:
+    return JSONResponse({"detail": "ALVENT backend unavailable"}, status_code=503)
+
+
 def _is_usable_upstream_response(status_code: int) -> bool:
     return status_code < 500 and status_code != 429
 
@@ -948,12 +957,16 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
 )
 async def alven_api_login_proxy_or_fallback(request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
+    is_local = _is_local_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "auth/login")
         if _is_usable_upstream_response(proxied.status_code):
             return proxied
+        if not is_local:
+            return proxied
     except httpx.RequestError:
-        pass
+        if not is_local:
+            return _upstream_unavailable_response()
 
     payload = await request.json()
     usuario = str(payload.get("usuario") or "").strip()
@@ -1352,12 +1365,16 @@ async def alven_api_negocios_planes_catalogo_proxy_or_fallback(request: Request)
 )
 async def alven_api_usuarios_proxy_or_fallback(request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
+    is_local = _is_local_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "usuarios/")
         if _is_usable_upstream_response(proxied.status_code):
             return proxied
+        if not is_local:
+            return proxied
     except httpx.RequestError:
-        pass
+        if not is_local:
+            return _upstream_unavailable_response()
 
     if request.method == "OPTIONS":
         return Response(status_code=204)
@@ -1380,12 +1397,16 @@ async def alven_api_usuarios_proxy_or_fallback(request: Request) -> Response:
 )
 async def alven_api_usuarios_permisos_proxy_or_fallback(request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
+    is_local = _is_local_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, "usuarios/permisos-matriz")
         if _is_usable_upstream_response(proxied.status_code):
             return proxied
+        if not is_local:
+            return proxied
     except httpx.RequestError:
-        pass
+        if not is_local:
+            return _upstream_unavailable_response()
 
     if request.method == "OPTIONS":
         return Response(status_code=204)
@@ -1421,12 +1442,16 @@ async def alven_api_usuarios_permisos_proxy_or_fallback(request: Request) -> Res
 )
 async def alven_api_usuario_patch_proxy_or_fallback(usuario_id: int, request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
+    is_local = _is_local_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, f"usuarios/{usuario_id}")
         if _is_usable_upstream_response(proxied.status_code):
             return proxied
+        if not is_local:
+            return proxied
     except httpx.RequestError:
-        pass
+        if not is_local:
+            return _upstream_unavailable_response()
 
     if request.method == "OPTIONS":
         return Response(status_code=204)
@@ -1450,12 +1475,16 @@ async def alven_api_usuario_patch_proxy_or_fallback(usuario_id: int, request: Re
 )
 async def alven_api_usuario_estado_patch_proxy_or_fallback(usuario_id: int, request: Request) -> Response:
     backend_origin = _backend_origin_for_request(request)
+    is_local = _is_local_request(request)
     try:
         proxied = await _proxy_request(request, backend_origin, f"usuarios/{usuario_id}/estado")
         if _is_usable_upstream_response(proxied.status_code):
             return proxied
+        if not is_local:
+            return proxied
     except httpx.RequestError:
-        pass
+        if not is_local:
+            return _upstream_unavailable_response()
 
     if request.method == "OPTIONS":
         return Response(status_code=204)
