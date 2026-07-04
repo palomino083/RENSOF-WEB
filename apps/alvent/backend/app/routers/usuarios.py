@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
@@ -191,16 +191,26 @@ def _asegurar_actor_admin(db: Session, current_user: dict) -> None:
 
 @router.get("/permisos-matriz")
 def obtener_matriz_permisos(
+    negocio_id: int | None = Query(default=None),
     current_user: dict = Depends(get_current_user_with_negocio),
     db: Session = Depends(get_db),
 ):
     _asegurar_actor_admin(db, current_user)
 
-    negocio_id = int(current_user.get("negocio_id") or 0)
-    if not negocio_id:
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    negocio_objetivo = int(negocio_id or current_user.get("negocio_id") or 0)
+
+    # El superadmin global puede consultar la matriz default aunque no tenga negocio fijo.
+    if is_superadmin and not negocio_objetivo:
+        return {
+            "negocio_id": None,
+            "matriz": _normalizar_matriz_permisos(PERMISOS_POR_ROL_DEFAULT),
+        }
+
+    if not negocio_objetivo:
         raise HTTPException(status_code=400, detail="Negocio no encontrado en sesion")
 
-    config = _obtener_config_negocio(db, negocio_id)
+    config = _obtener_config_negocio(db, negocio_objetivo)
     raw = str(getattr(config, "permisos_roles_json", "") or "").strip()
     if not raw:
         matriz = PERMISOS_POR_ROL_DEFAULT
@@ -212,7 +222,7 @@ def obtener_matriz_permisos(
         matriz = parsed if isinstance(parsed, dict) else {}
 
     return {
-        "negocio_id": negocio_id,
+        "negocio_id": negocio_objetivo,
         "matriz": _normalizar_matriz_permisos(matriz),
     }
 
@@ -220,16 +230,17 @@ def obtener_matriz_permisos(
 @router.put("/permisos-matriz")
 def actualizar_matriz_permisos(
     data: PermisosMatrizUpdate,
+    negocio_id: int | None = Query(default=None),
     current_user: dict = Depends(get_current_user_with_negocio),
     db: Session = Depends(get_db),
 ):
     _asegurar_actor_admin(db, current_user)
 
-    negocio_id = int(current_user.get("negocio_id") or 0)
-    if not negocio_id:
+    negocio_objetivo = int(negocio_id or current_user.get("negocio_id") or 0)
+    if not negocio_objetivo:
         raise HTTPException(status_code=400, detail="Negocio no encontrado en sesion")
 
-    config = _obtener_config_negocio(db, negocio_id)
+    config = _obtener_config_negocio(db, negocio_objetivo)
     matriz = _normalizar_matriz_permisos(data.matriz)
     config.permisos_roles_json = json.dumps(matriz, ensure_ascii=False)
 
@@ -238,7 +249,7 @@ def actualizar_matriz_permisos(
     return {
         "ok": True,
         "mensaje": "Matriz de permisos actualizada",
-        "negocio_id": negocio_id,
+        "negocio_id": negocio_objetivo,
         "matriz": matriz,
     }
 
