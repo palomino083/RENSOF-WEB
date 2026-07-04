@@ -2119,6 +2119,27 @@
   cursor: not-allowed;
 }
 
+.supportInteligenteBtn {
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #0f766e, #0d9488);
+  color: #ecfeff;
+  font-weight: 800;
+  padding: 10px 14px;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.supportInteligentePanel {
+  margin-top: 10px;
+  border: 1px solid rgba(203, 213, 225, 0.75);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+
 .guardianPanel {
   border: 1px solid rgba(14, 116, 144, 0.36);
   border-radius: 12px;

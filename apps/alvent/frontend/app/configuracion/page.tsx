@@ -430,6 +430,7 @@ export default function ConfiguracionPage() {
     estado: "EN_PROCESO",
     respuesta: "",
   });
+  const [showSoporteInteligente, setShowSoporteInteligente] = useState(false);
   const [guardianStatus, setGuardianStatus] = useState<GuardianStatus | null>(null);
   const [guardianIncidents, setGuardianIncidents] = useState<GuardianIncident[]>([]);
   const [loadingGuardian, setLoadingGuardian] = useState(false);
@@ -2727,104 +2728,113 @@ export default function ConfiguracionPage() {
               <p>
                 Atención de incidencias centralizada para RENSOF. Abre la ventana de soporte para conversar con el chat bot y escalar tickets.
               </p>
+              <button
+                type="button"
+                className={`${styles.supportInteligenteBtn} focus-ring`}
+                onClick={() => setShowSoporteInteligente((prev) => !prev)}
+              >
+                Soporte inteligente {showSoporteInteligente ? "▲" : "▼"}
+              </button>
 
-              <div className={styles.supportActions}>
-                <button
-                  type="button"
-                  className={`${styles.saveBusinessBtn} focus-ring`}
-                  onClick={() => {
-                    setConfigAccessMode("soporte");
-                    setShowSoporteChatModal(true);
-                  }}
-                >
-                  Abrir ventana de soporte
-                </button>
-              </div>
-
-              {isSuperadmin ? (
-                <section id="cfg-guardian" className={styles.guardianPanel}>
-                  <div className={styles.guardianHead}>
-                    <strong>Guardian Runtime en vivo</strong>
-                    <StatusBadge
-                      text={guardianStatus?.safe_mode?.enabled ? "SAFE MODE ON" : "SAFE MODE OFF"}
-                      variant={guardianStatus?.safe_mode?.enabled ? "danger" : "success"}
-                    />
-                  </div>
-
-                  <p className={styles.helperText}>
-                    Vigilancia activa de errores y latencia con autocuración controlada para el núcleo ALVENT.
-                  </p>
-
-                  <div className={styles.guardianMetrics}>
-                    <span>Req: <strong>{guardianStatus?.metrics?.requests_total ?? 0}</strong></span>
-                    <span>5xx: <strong>{guardianStatus?.metrics?.requests_5xx ?? 0}</strong></span>
-                    <span>Excepciones: <strong>{guardianStatus?.metrics?.exceptions_total ?? 0}</strong></span>
-                    <span>Abiertos: <strong>{guardianStatus?.open_incidents ?? 0}</strong></span>
-                  </div>
-
+              {showSoporteInteligente ? (
+                <div className={styles.supportInteligentePanel}>
                   <div className={styles.supportActions}>
                     <button
                       type="button"
-                      className={`${styles.actionBtn} focus-ring`}
-                      onClick={() => void cargarGuardianRuntime()}
-                      disabled={loadingGuardian || loadingGuardianIncidents}
-                    >
-                      {loadingGuardian || loadingGuardianIncidents ? "Consultando..." : "Probar GET estado"}
-                    </button>
-
-                    <button
-                      type="button"
                       className={`${styles.saveBusinessBtn} focus-ring`}
-                      onClick={() => void actualizarSafeModeGuardian(!Boolean(guardianStatus?.safe_mode?.enabled))}
-                      disabled={guardianSafeModeBusy || !guardianStatus}
+                      onClick={() => {
+                        setConfigAccessMode("soporte");
+                        setShowSoporteChatModal(true);
+                      }}
                     >
-                      {guardianSafeModeBusy
-                        ? "Aplicando..."
-                        : guardianStatus?.safe_mode?.enabled
-                          ? "Desactivar Safe Mode"
-                          : "Activar Safe Mode"}
+                      Abrir ventana de soporte
                     </button>
                   </div>
 
-                  <div className={styles.guardianIncidentList}>
-                    {guardianIncidents.length === 0 ? (
-                      <small className={styles.helperText}>Sin incidentes recientes en Guardian.</small>
-                    ) : (
-                      guardianIncidents.slice(0, 8).map((incident) => (
-                        <article key={`guardian-${incident.id}`} className={styles.supportTicketItem}>
-                          <div className={styles.supportTicketHead}>
-                            <strong>{incident.title}</strong>
-                            <StatusBadge text={incident.severity.toUpperCase()} variant={severityToBadgeVariant(incident.severity)} />
-                          </div>
-                          <small className={styles.helperText}>
-                            {new Date(incident.timestamp).toLocaleString()} | fuente: {incident.source}
-                          </small>
-                          {incident.details?.reason ? (
-                            <small className={styles.helperText}>Detalle: {String(incident.details.reason)}</small>
-                          ) : null}
-                          {incident.auto_action ? (
-                            <small className={styles.helperText}>Auto acción: {incident.auto_action}</small>
-                          ) : null}
+                  {isSuperadmin ? (
+                    <section id="cfg-guardian" className={styles.guardianPanel}>
+                      <div className={styles.guardianHead}>
+                        <strong>Guardian Runtime en vivo</strong>
+                        <StatusBadge
+                          text={guardianStatus?.safe_mode?.enabled ? "SAFE MODE ON" : "SAFE MODE OFF"}
+                          variant={guardianStatus?.safe_mode?.enabled ? "danger" : "success"}
+                        />
+                      </div>
 
-                          <div className={styles.supportActions}>
-                            <StatusBadge text={incident.acked ? "ACK" : "PENDIENTE"} variant={incident.acked ? "success" : "warning"} />
-                            <button
-                              type="button"
-                              className={`${styles.actionBtn} focus-ring`}
-                              disabled={incident.acked || ackingGuardianIncidentId === incident.id}
-                              onClick={() => void confirmarIncidenteGuardian(incident.id)}
-                            >
-                              {ackingGuardianIncidentId === incident.id ? "Confirmando..." : "Confirmar incidente"}
-                            </button>
-                          </div>
-                        </article>
-                      ))
-                    )}
-                  </div>
-                </section>
-              ) : null}
+                      <p className={styles.helperText}>
+                        Vigilancia activa de errores y latencia con autocuración controlada para el núcleo ALVENT.
+                      </p>
 
-              <div className={styles.supportList}>
+                      <div className={styles.guardianMetrics}>
+                        <span>Req: <strong>{guardianStatus?.metrics?.requests_total ?? 0}</strong></span>
+                        <span>5xx: <strong>{guardianStatus?.metrics?.requests_5xx ?? 0}</strong></span>
+                        <span>Excepciones: <strong>{guardianStatus?.metrics?.exceptions_total ?? 0}</strong></span>
+                        <span>Abiertos: <strong>{guardianStatus?.open_incidents ?? 0}</strong></span>
+                      </div>
+
+                      <div className={styles.supportActions}>
+                        <button
+                          type="button"
+                          className={`${styles.actionBtn} focus-ring`}
+                          onClick={() => void cargarGuardianRuntime()}
+                          disabled={loadingGuardian || loadingGuardianIncidents}
+                        >
+                          {loadingGuardian || loadingGuardianIncidents ? "Consultando..." : "Probar GET estado"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`${styles.saveBusinessBtn} focus-ring`}
+                          onClick={() => void actualizarSafeModeGuardian(!Boolean(guardianStatus?.safe_mode?.enabled))}
+                          disabled={guardianSafeModeBusy || !guardianStatus}
+                        >
+                          {guardianSafeModeBusy
+                            ? "Aplicando..."
+                            : guardianStatus?.safe_mode?.enabled
+                              ? "Desactivar Safe Mode"
+                              : "Activar Safe Mode"}
+                        </button>
+                      </div>
+
+                      <div className={styles.guardianIncidentList}>
+                        {guardianIncidents.length === 0 ? (
+                          <small className={styles.helperText}>Sin incidentes recientes en Guardian.</small>
+                        ) : (
+                          guardianIncidents.slice(0, 8).map((incident) => (
+                            <article key={`guardian-${incident.id}`} className={styles.supportTicketItem}>
+                              <div className={styles.supportTicketHead}>
+                                <strong>{incident.title}</strong>
+                                <StatusBadge text={incident.severity.toUpperCase()} variant={severityToBadgeVariant(incident.severity)} />
+                              </div>
+                              <small className={styles.helperText}>
+                                {new Date(incident.timestamp).toLocaleString()} | fuente: {incident.source}
+                              </small>
+                              {incident.details?.reason ? (
+                                <small className={styles.helperText}>Detalle: {String(incident.details.reason)}</small>
+                              ) : null}
+                              {incident.auto_action ? (
+                                <small className={styles.helperText}>Auto acción: {incident.auto_action}</small>
+                              ) : null}
+
+                              <div className={styles.supportActions}>
+                                <StatusBadge text={incident.acked ? "ACK" : "PENDIENTE"} variant={incident.acked ? "success" : "warning"} />
+                                <button
+                                  type="button"
+                                  className={`${styles.actionBtn} focus-ring`}
+                                  disabled={incident.acked || ackingGuardianIncidentId === incident.id}
+                                  onClick={() => void confirmarIncidenteGuardian(incident.id)}
+                                >
+                                  {ackingGuardianIncidentId === incident.id ? "Confirmando..." : "Confirmar incidente"}
+                                </button>
+                              </div>
+                            </article>
+                          ))
+                        )}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  <div className={styles.supportList}>
                 <div className={styles.supportFilterBar}>
                   <label>
                     Estado
@@ -2919,7 +2929,9 @@ export default function ConfiguracionPage() {
                     Siguiente
                   </button>
                 </div>
-              </div>
+                  </div>
+                </div>
+              ) : null}
             </article>
 
             <article className={`${styles.card} ${styles.dangerCard}`}>
