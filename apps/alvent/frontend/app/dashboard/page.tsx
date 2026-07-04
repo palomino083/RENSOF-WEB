@@ -106,6 +106,7 @@ export default function Dashboard() {
 
   const esSuperadminTecnico = Number(usuario?.id || 0) === 1;
   const mostrarBannerGlobal = Boolean(data?.contexto?.modo_global || esSuperadminTecnico);
+  const nombreVisible = esSuperadminTecnico ? "RENSOF" : (usuario?.nombres ?? "Administrador");
 
   const formatMoney = (value: number) =>
     new Intl.NumberFormat("es-PE", {
@@ -259,7 +260,8 @@ export default function Dashboard() {
     ventas: item.ventas,
   }));
 
-  const topProductosData = (data?.top_productos || []).slice(0, 6).map((item) => ({
+  const topProductosData = (data?.top_productos || []).slice(0, 6).map((item, index) => ({
+    rowKey: `${item.id || item.codigo || "prod"}-${index}`,
     nombre: item.nombre,
     cantidad: item.cantidad,
   }));
@@ -278,7 +280,7 @@ export default function Dashboard() {
               <p className={styles.eyebrow}>Centro de mando</p>
               <h1>Dashboard premium</h1>
               <p>
-                Bienvenido {usuario?.nombres ?? "Administrador"}. Aqui tienes una vision
+                Bienvenido {nombreVisible}. Aqui tienes una vision
                 ejecutiva de ventas, caja e inventario en tiempo real.
               </p>
             </div>
@@ -313,7 +315,7 @@ export default function Dashboard() {
           {mostrarBannerGlobal ? (
             <section className={styles.globalBanner}>
               <div>
-                <strong>Modo Superadmin Global</strong>
+                <strong>Modo RENSOF Global</strong>
                 <p>Estás viendo información consolidada de todas las empresas.</p>
               </div>
               <button
@@ -473,7 +475,7 @@ export default function Dashboard() {
             <Toolbar title="Top productos (tabla ejecutiva)" />
             <DataTable headers={["Producto", "Cantidad"]} density="executive" minWidth={560}>
               {topProductosData.map((item) => (
-                <tr key={item.nombre}>
+                <tr key={item.rowKey}>
                   <td>{item.nombre}</td>
                   <td>{item.cantidad}</td>
                 </tr>
@@ -483,7 +485,7 @@ export default function Dashboard() {
 
             {mostrarBannerGlobal && (
             <p className={styles.helperText}>
-              Estatus global activo para superadmin tecnico.
+              Estatus global activo para RENSOF.
             </p>
           )}
 

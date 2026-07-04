@@ -65,6 +65,32 @@
         "${workspaceFolder}/scripts/health-check-alvent.ps1"
       ],
       "problemMatcher": []
+    },
+    {
+      "label": "ALVENT: Smoke Plan (Deploy Gate)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/alvent-plan-smoke.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ALVENT: Smoke UI (Console Clean Gate)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/alvent-ui-smoke.ps1"
+      ],
+      "problemMatcher": []
     }
   ]
 }
