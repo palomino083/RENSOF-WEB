@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { appPath } from "@/utils/appPath";
 
 /* =========================
@@ -172,7 +172,6 @@ export default function Menu() {
   const [usuario, setUsuario] = useState<Usuario>({});
   const [configMenuFocus, setConfigMenuFocus] = useState<"soporte" | "configuracion">("configuracion");
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   const toAppHref = (href: string) => {
     const route = cleanRoute(href);
@@ -242,7 +241,7 @@ export default function Menu() {
       return;
     }
 
-    const querySupport = searchParams?.get("support") === "1";
+    const querySupport = new URLSearchParams(window.location.search).get("support") === "1";
     const stored = window.localStorage.getItem("alvent_menu_focus_config");
 
     if (querySupport) {
@@ -258,7 +257,7 @@ export default function Menu() {
 
     setConfigMenuFocus("configuracion");
     window.localStorage.setItem("alvent_menu_focus_config", "configuracion");
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   /* =========================
      🔐 FILTRO POR PERMISOS

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -305,7 +304,6 @@ export default function ConfiguracionPage() {
   // ==========================
   // STATE CENTRALIZADO
   // ==========================
-  const searchParams = useSearchParams();
   const [showResetModal, setShowResetModal] = useState(false);
   const [password, setPassword] = useState("");
   const [modo, setModo] = useState<"parcial" | "completo">("parcial");
@@ -1629,7 +1627,7 @@ export default function ConfiguracionPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const querySupport = searchParams?.get("support") === "1";
+    const querySupport = new URLSearchParams(window.location.search).get("support") === "1";
     const storedFocus = window.localStorage.getItem("alvent_menu_focus_config");
 
     if (querySupport || storedFocus === "soporte") {
@@ -1638,10 +1636,10 @@ export default function ConfiguracionPage() {
     }
 
     setConfigAccessMode("configuracion");
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
-    const byQuery = searchParams?.get("support") === "1";
+    const byQuery = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("support") === "1";
     const byStorage = typeof window !== "undefined" && window.localStorage.getItem("alvent_open_support_modal") === "1";
     if (!byQuery && !byStorage) return;
 
@@ -1654,7 +1652,7 @@ export default function ConfiguracionPage() {
     if (typeof window !== "undefined") {
       window.localStorage.removeItem("alvent_open_support_modal");
     }
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     const openSupportModal = () => {
