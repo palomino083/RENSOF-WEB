@@ -43,6 +43,25 @@ class Venta(Base):
         default="Efectivo"
     )
 
+    tipo_comprobante = Column(
+        String(20),
+        default="NINGUNO"
+    )
+
+    cliente_nombre = Column(String(255), nullable=True)
+    cliente_documento = Column(String(20), nullable=True)
+    cliente_email = Column(String(120), nullable=True)
+
+    serie_comprobante = Column(String(10), nullable=True)
+    numero_comprobante = Column(String(20), nullable=True)
+
+    sunat_estado = Column(String(30), nullable=True)
+    sunat_codigo = Column(String(80), nullable=True)
+    sunat_mensaje = Column(String(500), nullable=True)
+    sunat_hash = Column(String(120), nullable=True)
+    sunat_ticket = Column(String(120), nullable=True)
+    sunat_cdr_url = Column(String(500), nullable=True)
+
     estado = Column(
         String(20),
         default="pagada"

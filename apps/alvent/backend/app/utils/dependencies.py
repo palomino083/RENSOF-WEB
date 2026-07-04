@@ -6,7 +6,7 @@ from app.database.database import get_db
 from app.models.negocio import Negocio
 from app.models.usuario import Usuario
 from app.utils.jwt_utils import get_token_data
-from app.utils.planes import normalizar_plan
+from app.utils.planes import normalizar_plan, resolver_plan_vigente
 
 security = HTTPBearer()
 
@@ -79,8 +79,13 @@ async def get_current_user(
     negocio_id = int(token_data.get("negocio_id") or 0)
     if negocio_id:
         negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+        plan_vigente, vencio = resolver_plan_vigente(negocio)
+        if negocio and vencio and getattr(negocio, "plan", None) != "GRATUITO":
+            negocio.plan = "GRATUITO"
+            negocio.plan_vigente_hasta = None
+            db.commit()
         try:
-            token_data["plan"] = normalizar_plan(getattr(negocio, "plan", "BASICO"))
+            token_data["plan"] = normalizar_plan(plan_vigente)
         except ValueError:
             token_data["plan"] = "BASICO"
     else:

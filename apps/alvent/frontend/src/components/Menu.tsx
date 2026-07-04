@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { appPath } from "@/utils/appPath";
 
 /* =========================
@@ -28,6 +28,26 @@ type MenuSection = {
 
 type MenuBlock = MenuItem | MenuSection;
 
+const APP_PREFIX = "/alven/app";
+
+function cleanRoute(value: string) {
+  const raw = String(value || "").trim();
+  const noOrigin = raw.replace(/^https?:\/\/[^/]+/i, "");
+  const [pathOnly] = noOrigin.split(/[?#]/);
+  let path = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
+  path = path.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
+  // Evita prefijos duplicados como /alven/app/alven/app/... en builds desfasados.
+  while (path.startsWith(APP_PREFIX)) {
+    path = path.slice(APP_PREFIX.length) || "/";
+  }
+  path = path.replace(new RegExp(`^(?:${APP_PREFIX})+`), "") || path;
+  return path || "/";
+}
+
+function normalizePath(value: string) {
+  return cleanRoute(value);
+}
+
 /* =========================
    🔐 PERMISOS POR ROL
 ========================= */
@@ -44,6 +64,7 @@ const PERMISOS: Record<string, string[]> = {
     "exportacion",
     "usuarios",
     "configuracion",
+    "soporte",
   ],
 
   ADMIN: [
@@ -58,6 +79,7 @@ const PERMISOS: Record<string, string[]> = {
     "exportacion",
     "usuarios",
     "configuracion",
+    "soporte",
   ],
 
   SUPERADMIN: [
@@ -73,6 +95,7 @@ const PERMISOS: Record<string, string[]> = {
     "usuarios",
     "configuracion",
     "finanzas",
+    "soporte",
   ],
 
   CAJERO: ["pos", "ventas", "clientes"],
@@ -138,6 +161,7 @@ const MENU: MenuBlock[] = [
     section: "SISTEMA",
     items: [
       { label: "Usuarios", href: "/usuarios", icon: "👤", key: "usuarios" },
+      { label: "Soporte", href: "/configuracion", icon: "🤖", key: "soporte" },
       { label: "Configuración", href: "/configuracion", icon: "⚙️", key: "configuracion" },
       { label: "Finanzas", href: "/finanzas", icon: "🧾", key: "finanzas" },
     ],
@@ -146,25 +170,9 @@ const MENU: MenuBlock[] = [
 
 export default function Menu() {
   const [usuario, setUsuario] = useState<Usuario>({});
+  const [configMenuFocus, setConfigMenuFocus] = useState<"soporte" | "configuracion">("configuracion");
   const pathname = usePathname();
-
-  const APP_PREFIX = "/alven/app";
-
-  const cleanRoute = (value: string) => {
-    const raw = String(value || "").trim();
-    const noOrigin = raw.replace(/^https?:\/\/[^/]+/i, "");
-    const [pathOnly] = noOrigin.split(/[?#]/);
-    let path = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
-    path = path.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
-    // Evita prefijos duplicados como /alven/app/alven/app/... en builds desfasados.
-    while (path.startsWith(APP_PREFIX)) {
-      path = path.slice(APP_PREFIX.length) || "/";
-    }
-    path = path.replace(new RegExp(`^(?:${APP_PREFIX})+`), "") || path;
-    return path || "/";
-  };
-
-  const normalizePath = (value: string) => cleanRoute(value);
+  const searchParams = useSearchParams();
 
   const toAppHref = (href: string) => {
     const route = cleanRoute(href);
@@ -209,9 +217,48 @@ export default function Menu() {
     ? usuario.roles.map((r) => String(r || "").toUpperCase())
     : [];
   const esSuperadmin = rol === "SUPERADMIN" || roles.includes("SUPERADMIN");
-  const rolEtiqueta = esSuperadmin ? "SUPERADMINISTRADOR" : rol;
+  const rolEtiqueta = esSuperadmin ? "RENSOF" : rol;
+  const nombreVisible = esSuperadmin ? "RENSOF" : (usuario.nombres || "Usuario");
 
-  const isActive = (href: string) => normalizePath(pathname) === normalizePath(href);
+  const isItemActive = (item: MenuItem) => {
+    const currentPath = normalizePath(pathname);
+    const isConfigRoute = currentPath === "/configuracion";
+
+    if (item.key === "soporte") {
+      return isConfigRoute && configMenuFocus === "soporte";
+    }
+
+    if (item.key === "configuracion") {
+      return isConfigRoute && configMenuFocus !== "soporte";
+    }
+
+    return currentPath === normalizePath(item.href);
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (normalizePath(pathname) !== "/configuracion") {
+      return;
+    }
+
+    const querySupport = searchParams?.get("support") === "1";
+    const stored = window.localStorage.getItem("alvent_menu_focus_config");
+
+    if (querySupport) {
+      setConfigMenuFocus("soporte");
+      window.localStorage.setItem("alvent_menu_focus_config", "soporte");
+      return;
+    }
+
+    if (stored === "soporte" || stored === "configuracion") {
+      setConfigMenuFocus(stored);
+      return;
+    }
+
+    setConfigMenuFocus("configuracion");
+    window.localStorage.setItem("alvent_menu_focus_config", "configuracion");
+  }, [pathname, searchParams]);
 
   /* =========================
      🔐 FILTRO POR PERMISOS
@@ -273,21 +320,40 @@ const menuFiltrado = useMemo(() => {
 
               {block.items.map((item: MenuItem) => (
                 <Link
-                  key={item.href}
+                  key={`${item.key}-${item.href}`}
                   href={toAppHref(item.href)}
+                  onClick={() => {
+                    if (typeof window === "undefined") return;
+
+                    if (item.key === "soporte") {
+                      window.localStorage.setItem("alvent_open_support_modal", "1");
+                      window.localStorage.setItem("alvent_menu_focus_config", "soporte");
+                      setConfigMenuFocus("soporte");
+                      window.dispatchEvent(new CustomEvent("alvent-config-menu-focus", { detail: { mode: "soporte" } }));
+                      if (normalizePath(pathname) === "/configuracion") {
+                        window.dispatchEvent(new Event("alvent-open-support-modal"));
+                      }
+                    }
+
+                    if (item.key === "configuracion") {
+                      window.localStorage.setItem("alvent_menu_focus_config", "configuracion");
+                      setConfigMenuFocus("configuracion");
+                      window.dispatchEvent(new CustomEvent("alvent-config-menu-focus", { detail: { mode: "configuracion" } }));
+                    }
+                  }}
                   style={{
                     display: "flex",
                     padding: "10px",
                     marginBottom: "5px",
                     borderRadius: "8px",
                     textDecoration: "none",
-                    background: isActive(item.href)
+                    background: isItemActive(item)
                       ? "#FACC15"
                       : "transparent",
-                    color: isActive(item.href)
+                    color: isItemActive(item)
                       ? "#111827"
                       : "white",
-                    fontWeight: isActive(item.href)
+                    fontWeight: isItemActive(item)
                       ? "bold"
                       : "normal",
                   }}
@@ -307,13 +373,13 @@ const menuFiltrado = useMemo(() => {
                 padding: "10px",
                 borderRadius: "8px",
                 textDecoration: "none",
-                background: isActive(block.href)
+                background: isItemActive(block)
                   ? "#FACC15"
                   : "transparent",
-                color: isActive(block.href)
+                color: isItemActive(block)
                   ? "#111827"
                   : "white",
-                fontWeight: isActive(block.href)
+                fontWeight: isItemActive(block)
                   ? "bold"
                   : "normal",
               }}
@@ -331,7 +397,7 @@ const menuFiltrado = useMemo(() => {
 
       {/* USUARIO */}
       <div style={{ marginTop: "20px" }}>
-        <strong>{usuario.nombres || "Usuario"}</strong>
+        <strong>{nombreVisible}</strong>
 
         <p style={{ color: "#94A3B8", marginBottom: esSuperadmin ? "2px" : "10px" }}>{rolEtiqueta}</p>
         {esSuperadmin ? (

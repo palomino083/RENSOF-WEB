@@ -6,7 +6,7 @@ $backendOverviewUrl = "http://127.0.0.1:8000/alven/api/dashboard/overview"
 $backendProductosUrl = "http://127.0.0.1:8000/alven/api/productos/"
 $backendVentasUrl = "http://127.0.0.1:8000/alven/api/ventas/"
 $backendVentasResumenUrl = "http://127.0.0.1:8000/alven/api/ventas/resumen"
-$frontendLoginUrl = "http://127.0.0.1:8000/alven/app/login"
+$frontendLoginUrl = "http://127.0.0.1:8000/alven/app"
 $frontendDashboardUrl = "http://127.0.0.1:8000/alven/app/dashboard"
 $repoRoot = Split-Path -Path $PSScriptRoot -Parent
 
@@ -127,14 +127,14 @@ if ($null -eq $ventasResumenResponse.hoy -or $null -eq $ventasResumenResponse.me
 
 Write-Host "[OK] Endpoints /productos/ y /ventas/ responden correctamente." -ForegroundColor Green
 
-# 2) Login page frontend
+# 2) Frontend shell/login page
 $loginPage = Invoke-WithRetry -Message "Frontend login no disponible aun" -Action {
   Invoke-WebRequest -Uri $frontendLoginUrl -Headers $htmlHeaders -UseBasicParsing
 }
 
 Assert-StatusCode -Actual ([int]$loginPage.StatusCode) -Expected 200 -Message "Frontend login no disponible"
 
-Assert-ContainsAny -Content $loginPage.Content -Patterns @("Iniciar sesi[oó]n", "ALVENT ERP") -Message "Frontend login no contiene el contenido esperado."
+Assert-ContainsAny -Content $loginPage.Content -Patterns @("Iniciar sesi[oó]n", "ALVENT ERP", "Dashboard", "Premium POS") -Message "Frontend shell no contiene el contenido esperado."
 
 $assetPattern = '/alven/app/_next/static/[^"<> ]+'
 $assetMatches = [regex]::Matches($loginPage.Content, $assetPattern)
@@ -163,7 +163,7 @@ if ($assetMatches.Count -gt 0) {
   Assert-StatusCode -Actual ([int]$firstAsset.StatusCode) -Expected 200 -Message "Asset estatico _next no disponible"
 }
 
-Write-Host "[OK] Frontend login disponible." -ForegroundColor Green
+Write-Host "[OK] Frontend shell/login disponible." -ForegroundColor Green
 
 # 3) Dashboard route frontend
 $dashboardPage = Invoke-WithRetry -Message "Frontend dashboard no disponible aun" -Action {

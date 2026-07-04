@@ -8,10 +8,10 @@ import { productosService } from "@/services/productosService";
 import { ventasService } from "@/services/ventasService";
 import { clientesService } from "@/services/clientesService";
 import { negocioService } from "@/services/negocioService";
-import { API_URL } from "@/services/api";
 import { generarComprobanteHtml, imprimirComprobanteHtml } from "@/utils/comprobantePdf";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { appPath } from "@/utils/appPath";
+import { applyFallbackImage, toMediaUrl } from "@/utils/mediaUrl";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -101,11 +101,8 @@ export default function PosPage() {
     cargarVentasRecientes();
   }, []);
 
-  const normalizarApiUrl = (baseUrl: string) => baseUrl.replace(/\/$/, "");
-
   const toAbsoluteUrl = (url: string) => {
-    if (/^https?:\/\//i.test(url)) return url;
-    return `${normalizarApiUrl(API_URL)}${url.startsWith("/") ? "" : "/"}${url}`;
+    return toMediaUrl(url) || url;
   };
 
   const cargarBrandingNegocio = async () => {
@@ -220,30 +217,7 @@ export default function PosPage() {
   };
 
   const getImageUrl = (foto?: string) => {
-    if (!foto) return "";
-    const limpia = String(foto).trim().replace(/\\/g, "/");
-    if (!limpia) return "";
-    if (/^https?:\/\//i.test(limpia)) return limpia;
-    const ruta = (limpia.startsWith("/") ? limpia : `/${limpia}`).replace(/^\/uploads\/uploads\//, "/uploads/");
-    return `${normalizarApiUrl(API_URL)}${ruta}`;
-  };
-
-  const fallbackImage = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    const src = img.getAttribute("src") || "";
-
-    if (src.includes("127.0.0.1")) {
-      img.src = src.replace("127.0.0.1", "localhost");
-      return;
-    }
-
-    if (src.includes("localhost")) {
-      img.src = src.replace("localhost", "127.0.0.1");
-      return;
-    }
-
-    img.onerror = null;
-    img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='100%25' height='100%25' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2364758b' font-size='11'%3EIMG%3C/text%3E%3C/svg%3E";
+    return toMediaUrl(foto) || "";
   };
 
   useEffect(() => {
@@ -521,6 +495,12 @@ export default function PosPage() {
       subtotal,
       descuento,
       metodo_pago,
+      comprobante: {
+        tipo_comprobante: tipoComprobante,
+        cliente_nombre: clienteNombre.trim() || undefined,
+        cliente_documento: documento || undefined,
+        cliente_email: clienteEmail.trim() || undefined,
+      },
       items: carrito.map((item) => ({
         producto_id: item.id,
         cantidad: item.cantidad,
@@ -546,6 +526,19 @@ export default function PosPage() {
           : typeof ventaCreada?.id === "number"
             ? ventaCreada.id
             : null;
+      const sunatInfo = ventaCreada?.sunat as
+        | {
+          tipo_comprobante?: string;
+          serie?: string;
+          numero?: string;
+          estado?: string;
+          mensaje?: string;
+          codigo?: string;
+          hash?: string;
+          ticket?: string;
+          cdr_url?: string;
+        }
+        | undefined;
 
       let comprobantePdfUrl: string | undefined;
       if (requiereComprobante) {
@@ -596,7 +589,7 @@ export default function PosPage() {
       const comprobanteLabel = tipoComprobante === "NINGUNO" ? "Sin comprobante" : tipoComprobante;
 
       alert(
-        `Venta registrada\nComprobante: ${comprobanteLabel}\nMetodo: ${metodo_pago}\nTotal: S/${total.toFixed(2)}${comprobantePdfUrl ? `\nPDF: ${comprobantePdfUrl}` : ""}`
+        `Venta registrada\nComprobante: ${comprobanteLabel}${sunatInfo?.serie && sunatInfo?.numero ? ` (${sunatInfo.serie}-${sunatInfo.numero})` : ""}\nMetodo: ${metodo_pago}\nTotal: S/${total.toFixed(2)}${sunatInfo?.estado ? `\nSUNAT: ${sunatInfo.estado}` : ""}${sunatInfo?.mensaje ? `\nDetalle SUNAT: ${sunatInfo.mensaje}` : ""}${comprobantePdfUrl ? `\nPDF: ${comprobantePdfUrl}` : ""}`
       );
 
       setCarrito([]);
@@ -723,7 +716,7 @@ export default function PosPage() {
                       height={64}
                       unoptimized
                       className={styles.productThumb}
-                      onError={fallbackImage}
+                                      onError={applyFallbackImage}
                     />
                   ) : (
                     <div className={styles.productThumbFallback}>IMG</div>

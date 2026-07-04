@@ -11,6 +11,12 @@ export type VentaCreate = {
   subtotal: number;
   descuento: number;
   metodo_pago: string;
+  comprobante?: {
+    tipo_comprobante: "NINGUNO" | "BOLETA" | "FACTURA";
+    cliente_nombre?: string;
+    cliente_documento?: string;
+    cliente_email?: string;
+  };
   items: VentaItem[];
 };
 

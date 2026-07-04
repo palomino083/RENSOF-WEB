@@ -5,11 +5,11 @@
 }
 
 .planVisualCard {
-  border: 1px solid rgba(59, 130, 246, 0.4);
+  border: 1px solid rgba(34, 211, 238, 0.4);
   border-radius: 16px;
   padding: 14px;
-  background: linear-gradient(176deg, rgba(8, 22, 45, 0.97), rgba(10, 27, 54, 0.96));
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.14), inset 0 0 24px rgba(14, 116, 144, 0.14), 0 14px 32px rgba(2, 6, 23, 0.5);
+  background: linear-gradient(176deg, rgba(8, 22, 45, 0.97), rgba(12, 30, 56, 0.96));
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.16), inset 0 0 24px rgba(34, 211, 238, 0.1), 0 14px 32px rgba(2, 6, 23, 0.5);
   display: grid;
   gap: 8px;
   min-height: 296px;
@@ -24,7 +24,7 @@
   inset: -1px;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow: inset 0 0 24px rgba(59, 130, 246, 0.18);
+  box-shadow: inset 0 0 24px rgba(34, 211, 238, 0.16);
 }
 
 .planVisualCard::after {
@@ -35,8 +35,8 @@
   top: 0;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(125, 211, 252, 0.16), rgba(56, 189, 248, 0.95), rgba(125, 211, 252, 0.16));
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.8);
+  background: linear-gradient(90deg, rgba(103, 232, 249, 0.16), rgba(34, 211, 238, 0.95), rgba(103, 232, 249, 0.16));
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.8);
 }
 
 .planVisualCardHead {
@@ -45,7 +45,7 @@
 }
 
 .planVisualCardHead small {
-  color: #bae6fd;
+  color: #c7f9ff;
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -85,8 +85,8 @@
 
 .planVisualPriceDivider {
   height: 1px;
-  background: linear-gradient(90deg, rgba(125, 211, 252, 0.06), rgba(125, 211, 252, 0.42), rgba(125, 211, 252, 0.06));
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  background: linear-gradient(90deg, rgba(103, 232, 249, 0.06), rgba(103, 232, 249, 0.42), rgba(103, 232, 249, 0.06));
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.2);
 }
 
 .planVisualList {
@@ -114,15 +114,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(14, 165, 233, 0.18);
-  border: 1px solid rgba(125, 211, 252, 0.35);
+  background: rgba(34, 211, 238, 0.16);
+  border: 1px solid rgba(103, 232, 249, 0.35);
 }
 
 .planVisualIcon svg {
   width: 12px;
   height: 12px;
   fill: none;
-  stroke: #7dd3fc;
+  stroke: #67e8f9;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -130,7 +130,7 @@
 
 .planVisualPill {
   width: fit-content;
-  border: 1px solid rgba(125, 211, 252, 0.5);
+  border: 1px solid rgba(103, 232, 249, 0.5);
   border-radius: 999px;
   padding: 4px 10px;
   color: #dbeafe;
@@ -145,7 +145,7 @@
 }
 
 .planVisualCard_free {
-  border-color: rgba(52, 211, 153, 0.72);
+  border-color: rgba(16, 185, 129, 0.72);
   box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.24), inset 0 0 24px rgba(16, 185, 129, 0.16), 0 14px 32px rgba(2, 6, 23, 0.5);
 }
 
@@ -159,8 +159,8 @@
 }
 
 .planVisualCard_pro {
-  border-color: rgba(56, 189, 248, 0.72);
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.26), inset 0 0 24px rgba(59, 130, 246, 0.14), 0 14px 32px rgba(2, 6, 23, 0.5);
+  border-color: rgba(34, 211, 238, 0.72);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.26), inset 0 0 24px rgba(34, 211, 238, 0.14), 0 14px 32px rgba(2, 6, 23, 0.5);
 }
 
 .planVisualCard_basic {
@@ -178,17 +178,17 @@
 }
 
 .planVisualCard_premium {
-  border-color: rgba(192, 132, 252, 0.76);
-  box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.28), inset 0 0 24px rgba(192, 132, 252, 0.16), 0 14px 32px rgba(2, 6, 23, 0.5);
+  border-color: rgba(16, 185, 129, 0.76);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.28), inset 0 0 24px rgba(16, 185, 129, 0.16), 0 14px 32px rgba(2, 6, 23, 0.5);
 }
 
 .planVisualCard_premium::before {
-  box-shadow: inset 0 0 26px rgba(192, 132, 252, 0.24);
+  box-shadow: inset 0 0 26px rgba(16, 185, 129, 0.24);
 }
 
 .planVisualCard_premium::after {
-  background: linear-gradient(90deg, rgba(221, 214, 254, 0.2), rgba(192, 132, 252, 0.98), rgba(221, 214, 254, 0.2));
-  box-shadow: 0 0 15px rgba(192, 132, 252, 0.86);
+  background: linear-gradient(90deg, rgba(110, 231, 183, 0.2), rgba(16, 185, 129, 0.98), rgba(110, 231, 183, 0.2));
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.86);
 }
 
 @media (max-width: 1180px) {

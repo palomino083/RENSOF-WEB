@@ -149,6 +149,7 @@ class NegocioOut(NegocioBase):
     id: int
     activo: bool = True
     verificado: bool = False
+    plan_vigente_hasta: Optional[datetime] = None
     fecha_creacion: Optional[datetime] = None
     fecha_actualizacion: Optional[datetime] = None
     
@@ -200,6 +201,14 @@ class ConfiguracionNegocioBase(BaseModel):
     requiere_lote: bool = False
     requiere_vencimiento: bool = False
     stock_minimo_alerta: bool = True
+    integracion_sunat: bool = False
+    sunat_proveedor: str = "NUBEFACT"
+    sunat_api_url: Optional[str] = None
+    sunat_usuario_sol: Optional[str] = None
+    sunat_emisor_ruc: Optional[str] = None
+    sunat_modo: str = "beta"
+    sunat_serie_boleta: Optional[str] = None
+    sunat_serie_factura: Optional[str] = None
 
 
 class ConfiguracionNegocioUpdate(BaseModel):
@@ -208,21 +217,43 @@ class ConfiguracionNegocioUpdate(BaseModel):
     margen_minimo: Optional[float] = None
     permitir_descuentos: Optional[bool] = None
     descuento_maximo_porcentaje: Optional[float] = None
+    integracion_sunat: Optional[bool] = None
+    sunat_proveedor: Optional[str] = None
+    sunat_api_url: Optional[str] = None
+    sunat_api_token: Optional[str] = None
+    sunat_usuario_sol: Optional[str] = None
+    sunat_clave_sol: Optional[str] = None
+    sunat_emisor_ruc: Optional[str] = None
+    sunat_modo: Optional[str] = None
+    sunat_serie_boleta: Optional[str] = None
+    sunat_serie_factura: Optional[str] = None
 
 
 class ConfiguracionNegocioOut(ConfiguracionNegocioBase):
     """Respuesta de configuración"""
     id: int
     negocio_id: int
+    sunat_has_api_token: bool = False
+    sunat_has_clave_sol: bool = False
     fecha_creacion: datetime
     fecha_actualizacion: datetime
     
     model_config = ConfigDict(from_attributes=True)
 
 
+class SunatConexionTestOut(BaseModel):
+    ok: bool
+    status_code: int
+    endpoint: str
+    proveedor: str
+    mensaje: str
+    detalle: Optional[str] = None
+
+
 class PlanSolicitudCreate(BaseModel):
     plan_objetivo: str = Field(..., min_length=3, max_length=20)
     referencia_pago: str = Field(..., min_length=3, max_length=80)
+    duracion_dias: Optional[int] = Field(default=None, ge=1, le=3650)
     canal_pago: Optional[str] = Field(default="transferencia", max_length=30)
     validacion_modo: Optional[str] = Field(default="AUTO", max_length=20)
     declaracion_anti_fraude: bool = False
@@ -235,6 +266,9 @@ class PlanSolicitudOut(BaseModel):
     mensaje: str
     plan_actual: str
     plan_solicitado: str
+    duracion_dias_aplicada: Optional[int] = None
+    plan_vigente_desde: Optional[datetime] = None
+    plan_vigente_hasta: Optional[datetime] = None
     referencia_pago: str
     estado: str
     validacion_modo_solicitada: str
@@ -248,6 +282,9 @@ class PlanPagoHistorialOut(BaseModel):
     usuario_id: Optional[int] = None
     plan_actual: str
     plan_solicitado: str
+    duracion_dias: Optional[int] = None
+    plan_vigente_desde: Optional[datetime] = None
+    plan_vigente_hasta: Optional[datetime] = None
     canal_pago: str
     referencia_pago: str
     observaciones: Optional[str] = None

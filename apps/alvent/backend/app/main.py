@@ -5,6 +5,8 @@
 
 from contextlib import asynccontextmanager
 from pathlib import Path
+import os
+import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -73,8 +75,10 @@ for carpeta in [
 
 limiter = Limiter(key_func=get_remote_address)
 
-SUPERADMIN_USERNAME = "Admin"
-SUPERADMIN_PASSWORD = "123456"
+logger = logging.getLogger(__name__)
+
+SUPERADMIN_USERNAME = (os.getenv("ALVENT_SUPERADMIN_USERNAME") or "admin").strip()
+SUPERADMIN_PASSWORD = os.getenv("ALVENT_SUPERADMIN_PASSWORD")
 
 
 def _normalizar_rol(valor: str | None) -> str:
@@ -106,6 +110,10 @@ def _ensure_unique_superadmin_account() -> None:
         )
 
         if not admin_user:
+            if not SUPERADMIN_PASSWORD:
+                raise RuntimeError(
+                    "Debe definir ALVENT_SUPERADMIN_PASSWORD para inicializar la cuenta superadmin"
+                )
             admin_user = Usuario(
                 nombres="Super Administrador",
                 usuario=SUPERADMIN_USERNAME,
@@ -120,11 +128,14 @@ def _ensure_unique_superadmin_account() -> None:
             db.flush()
         else:
             admin_user.nombres = admin_user.nombres or "Super Administrador"
-            admin_user.password = hash_password(SUPERADMIN_PASSWORD)
             admin_user.rol = "SUPERADMIN"
             admin_user.roles = "SUPERADMIN"
             admin_user.activo = True
             admin_user.negocio_id = None
+
+            # Rotación opcional por entorno, nunca forzada en cada arranque.
+            if SUPERADMIN_PASSWORD:
+                admin_user.password = hash_password(SUPERADMIN_PASSWORD)
 
         usuarios = db.query(Usuario).all()
         for usuario in usuarios:
@@ -148,6 +159,7 @@ def _ensure_unique_superadmin_account() -> None:
                 usuario.roles = usuario.rol
 
         db.commit()
+        logger.info("Cuenta superadmin verificada correctamente")
     finally:
         db.close()
 
@@ -256,6 +268,10 @@ def _ensure_multitenant_columns() -> None:
             conn.exec_driver_sql(
                 "ALTER TABLE negocios ADD COLUMN plan_monto_premium REAL"
             )
+        if "plan_vigente_hasta" not in negocio_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE negocios ADD COLUMN plan_vigente_hasta DATETIME"
+            )
         if "plan_catalogo_custom" not in negocio_columns:
             conn.exec_driver_sql(
                 "ALTER TABLE negocios ADD COLUMN plan_catalogo_custom TEXT"
@@ -277,6 +293,119 @@ def _ensure_multitenant_columns() -> None:
             conn.exec_driver_sql(
                 "ALTER TABLE configuracion_negocio ADD COLUMN productos_columnas_json TEXT"
             )
+        if "sunat_api_url" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_api_url VARCHAR(500)"
+            )
+        if "sunat_proveedor" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_proveedor VARCHAR(30) DEFAULT 'NUBEFACT'"
+            )
+        if "sunat_api_token" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_api_token VARCHAR(255)"
+            )
+        if "sunat_usuario_sol" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_usuario_sol VARCHAR(80)"
+            )
+        if "sunat_clave_sol" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_clave_sol VARCHAR(120)"
+            )
+        if "sunat_emisor_ruc" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_emisor_ruc VARCHAR(11)"
+            )
+        if "sunat_modo" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_modo VARCHAR(20) DEFAULT 'beta'"
+            )
+        if "sunat_serie_boleta" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_serie_boleta VARCHAR(10)"
+            )
+        if "sunat_serie_factura" not in configuracion_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_serie_factura VARCHAR(10)"
+            )
+
+        venta_columns = {
+            row[1]
+            for row in conn.exec_driver_sql("PRAGMA table_info(ventas)")
+        }
+        if "tipo_comprobante" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN tipo_comprobante VARCHAR(20) DEFAULT 'NINGUNO'"
+            )
+        if "cliente_nombre" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN cliente_nombre VARCHAR(255)"
+            )
+        if "cliente_documento" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN cliente_documento VARCHAR(20)"
+            )
+        if "cliente_email" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN cliente_email VARCHAR(120)"
+            )
+        if "serie_comprobante" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN serie_comprobante VARCHAR(10)"
+            )
+        if "numero_comprobante" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN numero_comprobante VARCHAR(20)"
+            )
+        if "sunat_estado" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN sunat_estado VARCHAR(30)"
+            )
+        if "sunat_codigo" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN sunat_codigo VARCHAR(80)"
+            )
+        if "sunat_mensaje" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN sunat_mensaje VARCHAR(500)"
+            )
+        if "sunat_hash" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN sunat_hash VARCHAR(120)"
+            )
+        if "sunat_ticket" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN sunat_ticket VARCHAR(120)"
+            )
+        if "sunat_cdr_url" not in venta_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE ventas ADD COLUMN sunat_cdr_url VARCHAR(500)"
+            )
+
+        planes_pago_columns = {
+            row[1]
+            for row in conn.exec_driver_sql("PRAGMA table_info(planes_pagos)")
+        }
+        if "duracion_dias" not in planes_pago_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE planes_pagos ADD COLUMN duracion_dias INTEGER"
+            )
+        if "plan_vigente_desde" not in planes_pago_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE planes_pagos ADD COLUMN plan_vigente_desde DATETIME"
+            )
+        if "plan_vigente_hasta" not in planes_pago_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE planes_pagos ADD COLUMN plan_vigente_hasta DATETIME"
+            )
+        if "token_idempotencia" not in planes_pago_columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE planes_pagos ADD COLUMN token_idempotencia VARCHAR(80)"
+            )
+        conn.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS ix_planes_pagos_token_idempotencia ON planes_pagos(token_idempotencia)"
+        )
 
 
 def _solo_digitos_exactos(value: str | None, largo: int) -> str | None:

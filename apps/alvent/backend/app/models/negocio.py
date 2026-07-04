@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Float, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import relationship
 from app.database.database import Base
 import enum
@@ -35,6 +35,7 @@ class Negocio(Base):
     plan_monto_lite = Column(Float, nullable=True)
     plan_monto_pro = Column(Float, nullable=True)
     plan_monto_premium = Column(Float, nullable=True)
+    plan_vigente_hasta = Column(DateTime, nullable=True)
     plan_catalogo_custom = Column(Text, nullable=True)
     plan_simulador_escenarios = Column(Text, nullable=True)
     descripcion = Column(Text, nullable=True)

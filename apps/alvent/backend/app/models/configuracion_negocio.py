@@ -35,8 +35,17 @@ class ConfiguracionNegocio(Base):
 
     # API y integraciones
     integracion_sunat = Column(Boolean, default=False)
+    sunat_proveedor = Column(String(30), default="NUBEFACT")
     integracion_whatsapp = Column(Boolean, default=False)
     integracion_email = Column(Boolean, default=True)
+    sunat_api_url = Column(String(500), nullable=True)
+    sunat_api_token = Column(String(255), nullable=True)
+    sunat_usuario_sol = Column(String(80), nullable=True)
+    sunat_clave_sol = Column(String(120), nullable=True)
+    sunat_emisor_ruc = Column(String(11), nullable=True)
+    sunat_modo = Column(String(20), default="beta")
+    sunat_serie_boleta = Column(String(10), nullable=True)
+    sunat_serie_factura = Column(String(10), nullable=True)
 
     # Seguridad
     bloquear_caja_diferencia = Column(Boolean, default=True)

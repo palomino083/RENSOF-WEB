@@ -3,6 +3,8 @@ from typing import List
 from uuid import uuid4
 import json
 import re
+import hashlib
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
@@ -17,6 +19,8 @@ from app.models.negocio import Negocio
 from app.models.sucursal import Sucursal
 from app.models.configuracion_negocio import ConfiguracionNegocio
 from app.models.plan_pago import PlanPago
+from app.models.producto import Producto
+from app.models.soporte_ticket import SoporteTicket
 from app.models.usuario import Usuario
 
 from app.schemas.negocio import (
@@ -30,19 +34,111 @@ from app.schemas.negocio import (
     SucursalOut,
     ConfiguracionNegocioOut,
     ConfiguracionNegocioUpdate,
+    SunatConexionTestOut,
 )
+from app.services.sunat import probar_conexion_sunat, homologar_error_nubefact, NUBEFACT_DEFAULT_URL
 
 from app.services.auditoria import registrar_auditoria
 from app.utils.dependencies import get_current_user
 from app.utils.planes import (
     normalizar_plan,
+    obtener_dias_vigencia_plan,
     obtener_catalogo_planes,
     obtener_catalogo_planes_para_negocio,
     obtener_plan_config,
+    resolver_plan_vigente,
     resolver_config_plan_negocio,
 )
 
 router = APIRouter(prefix="/negocios", tags=["Negocios"])
+
+MIN_DURACION_DIAS_PLAN = 1
+MAX_DURACION_DIAS_PLAN = 3650
+
+
+def _vigencia_hasta_para_plan(plan_codigo: str) -> datetime | None:
+    dias = obtener_dias_vigencia_plan(plan_codigo)
+    if dias is None:
+        return None
+    return datetime.utcnow() + timedelta(days=int(dias))
+
+
+def _resolver_duracion_dias(plan_codigo: str, duracion_solicitada: int | None = None) -> int | None:
+    default_dias = obtener_dias_vigencia_plan(plan_codigo)
+    if duracion_solicitada is None:
+        return default_dias
+
+    dias = int(duracion_solicitada)
+    if dias < MIN_DURACION_DIAS_PLAN or dias > MAX_DURACION_DIAS_PLAN:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Duracion invalida. Usa entre {MIN_DURACION_DIAS_PLAN} y {MAX_DURACION_DIAS_PLAN} dias",
+        )
+    return dias
+
+
+def _fecha_inicio_vigencia(negocio: Negocio, plan_objetivo: str) -> datetime:
+    ahora = datetime.utcnow()
+    plan_actual = _normalizar_plan(getattr(negocio, "plan", "GRATUITO"))
+    vigente_hasta = getattr(negocio, "plan_vigente_hasta", None)
+
+    if (
+        plan_actual == plan_objetivo
+        and isinstance(vigente_hasta, datetime)
+        and vigente_hasta > ahora
+    ):
+        return vigente_hasta
+
+    return ahora
+
+
+def _calcular_rango_vigencia(inicio: datetime, duracion_dias: int | None) -> tuple[datetime | None, datetime | None]:
+    if duracion_dias is None:
+        return None, None
+    return inicio, inicio + timedelta(days=int(duracion_dias))
+
+
+def _token_idempotencia_pago(
+    negocio_id: int,
+    plan_solicitado: str,
+    referencia: str,
+    canal: str,
+    duracion_dias: int | None,
+) -> str:
+    raw = f"{negocio_id}|{plan_solicitado}|{referencia.lower()}|{canal.lower()}|{duracion_dias or 'N'}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:64]
+
+
+def _sincronizar_plan_vigente(negocio: Negocio, db: Session, *, persist: bool = True) -> str:
+    plan_vigente, vencio = resolver_plan_vigente(negocio)
+    if vencio and getattr(negocio, "plan", None) != "GRATUITO":
+        plan_anterior = _normalizar_plan(getattr(negocio, "plan", "GRATUITO"))
+        negocio.plan = "GRATUITO"
+        negocio.plan_vigente_hasta = None
+        registrar_auditoria(
+            db=db,
+            modulo="Planes",
+            accion="Vencimiento automatico",
+            descripcion=f"Negocio {negocio.id}: {plan_anterior} -> GRATUITO (vigencia vencida)",
+            usuario="Sistema",
+        )
+        if persist:
+            db.commit()
+            db.refresh(negocio)
+        return "GRATUITO"
+    return plan_vigente
+
+
+def _sincronizar_planes_lote(negocios: list[Negocio], db: Session) -> None:
+    hubo_cambios = False
+    for negocio in negocios:
+        plan_inicial = _normalizar_plan(getattr(negocio, "plan", "GRATUITO"))
+        plan_resultante = _sincronizar_plan_vigente(negocio, db, persist=False)
+        if plan_resultante != plan_inicial:
+            hubo_cambios = True
+
+    if hubo_cambios:
+        db.commit()
 
 
 class PlanGratuitoBondadesUpdate(BaseModel):
@@ -69,6 +165,9 @@ class PlanCatalogoEditableItem(BaseModel):
     reportes_limite: int | None = Field(default=None, ge=0)
     backups_habilitado: bool = False
     backups_limite: int | None = Field(default=None, ge=0)
+    soporte_habilitado: bool = True
+    productos_limite: int | None = Field(default=None, ge=0)
+    sunat_habilitado: bool = False
 
 
 class PlanCatalogoEditableUpdate(BaseModel):
@@ -276,6 +375,9 @@ def _resolver_config_plan_para_negocio(negocio: Negocio, plan: str):
         "reportes_limite": cfg.reportes_limite,
         "backups_habilitado": cfg.backups_habilitado,
         "backups_limite": cfg.backups_limite,
+        "soporte_habilitado": cfg.soporte_habilitado,
+        "productos_limite": cfg.productos_limite,
+        "sunat_habilitado": cfg.sunat_habilitado,
     }
 
 
@@ -284,6 +386,34 @@ def _normalizar_plan(plan: str | None) -> str:
         return normalizar_plan(plan)
     except ValueError:
         raise HTTPException(status_code=400, detail="Plan no valido")
+
+
+def _configuracion_out_payload(config: ConfiguracionNegocio) -> dict:
+    return {
+        "id": config.id,
+        "negocio_id": config.negocio_id,
+        "impuesto_predeterminado": config.impuesto_predeterminado,
+        "margen_minimo": config.margen_minimo,
+        "permitir_venta_negativo": config.permitir_venta_negativo,
+        "permitir_descuentos": config.permitir_descuentos,
+        "descuento_maximo_porcentaje": config.descuento_maximo_porcentaje,
+        "numero_caja": config.numero_caja,
+        "requiere_lote": config.requiere_lote,
+        "requiere_vencimiento": config.requiere_vencimiento,
+        "stock_minimo_alerta": config.stock_minimo_alerta,
+        "integracion_sunat": bool(getattr(config, "integracion_sunat", False)),
+        "sunat_proveedor": str(getattr(config, "sunat_proveedor", "NUBEFACT") or "NUBEFACT").upper(),
+        "sunat_api_url": getattr(config, "sunat_api_url", None) or NUBEFACT_DEFAULT_URL,
+        "sunat_usuario_sol": getattr(config, "sunat_usuario_sol", None),
+        "sunat_emisor_ruc": getattr(config, "sunat_emisor_ruc", None),
+        "sunat_modo": getattr(config, "sunat_modo", "beta"),
+        "sunat_serie_boleta": getattr(config, "sunat_serie_boleta", None),
+        "sunat_serie_factura": getattr(config, "sunat_serie_factura", None),
+        "sunat_has_api_token": bool(str(getattr(config, "sunat_api_token", "") or "").strip()),
+        "sunat_has_clave_sol": bool(str(getattr(config, "sunat_clave_sol", "") or "").strip()),
+        "fecha_creacion": config.fecha_creacion,
+        "fecha_actualizacion": config.fecha_actualizacion,
+    }
 
 
 # =====================================================
@@ -301,10 +431,25 @@ def crear_negocio(
             raise HTTPException(status_code=400, detail="RUC ya registrado")
 
     payload = data.model_dump()
+    plan_solicitado = _normalizar_plan(payload.get("plan"))
+
+    # Regla de onboarding: en el primer negocio del usuario registrado
+    # el plan siempre inicia en GRATUITO. El cambio de plan se gestiona luego.
+    usuario_actual = (
+        db.query(Usuario)
+        .filter(Usuario.id == int(current_user.get("usuario_id") or 0))
+        .first()
+    )
+    es_creacion_inicial = bool(usuario_actual and not usuario_actual.negocio_id)
+    forzar_plan_gratuito = bool(not current_user.get("is_superadmin") and es_creacion_inicial)
+
+    plan_inicial = "GRATUITO" if forzar_plan_gratuito else plan_solicitado
+
     negocio = Negocio(
         nombre=payload.get("nombre"),
         tipo=payload.get("tipo"),
-        plan=_normalizar_plan(payload.get("plan")),
+        plan=plan_inicial,
+        plan_vigente_hasta=_vigencia_hasta_para_plan(plan_inicial),
         descripcion=payload.get("descripcion"),
     )
     db.add(negocio)
@@ -345,12 +490,16 @@ def listar_negocios(
 ):
     is_superadmin = bool(current_user.get("is_superadmin"))
     if is_superadmin:
-        return db.query(Negocio).order_by(Negocio.id.asc()).all()
+        negocios = db.query(Negocio).order_by(Negocio.id.asc()).all()
+        _sincronizar_planes_lote(negocios, db)
+        return negocios
 
     negocio_id = int(current_user.get("negocio_id") or 0)
     if not negocio_id:
         return []
-    return db.query(Negocio).filter(Negocio.id == negocio_id).all()
+    negocios = db.query(Negocio).filter(Negocio.id == negocio_id).all()
+    _sincronizar_planes_lote(negocios, db)
+    return negocios
 
 
 # =====================================================
@@ -366,6 +515,8 @@ def obtener_negocio(
 
     if not negocio:
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    _sincronizar_plan_vigente(negocio, db)
 
     return negocio
 
@@ -430,6 +581,9 @@ def actualizar_negocio(
 
     plan_actual = _normalizar_plan(getattr(negocio, "plan", "BASICO"))
     if plan_anterior != plan_actual:
+        negocio.plan_vigente_hasta = _vigencia_hasta_para_plan(plan_actual)
+        db.commit()
+        db.refresh(negocio)
         actor = str(current_user.get("usuario_id") or "Sistema")
         registrar_auditoria(
             db=db,
@@ -495,6 +649,9 @@ def actualizar_catalogo_planes_editable(
         reportes_limite = item.reportes_limite if reportes_habilitado else 0
         backups_habilitado = bool(item.backups_habilitado)
         backups_limite = item.backups_limite if backups_habilitado else 0
+        soporte_habilitado = bool(item.soporte_habilitado)
+        productos_limite = item.productos_limite
+        sunat_habilitado = bool(item.sunat_habilitado)
 
         if codigo == "GRATUITO":
             negocio.plan_gratuito_usuarios_limite = usuarios_limite
@@ -502,15 +659,29 @@ def actualizar_catalogo_planes_editable(
             negocio.plan_gratuito_reportes_limite = reportes_limite
             negocio.plan_gratuito_backups_habilitado = backups_habilitado
             negocio.plan_gratuito_backups_limite = backups_limite
+            current = custom_map.get(codigo, {})
+            current = current if isinstance(current, dict) else {}
+            current.update({
+                "soporte_habilitado": soporte_habilitado,
+                "productos_limite": productos_limite,
+                "sunat_habilitado": sunat_habilitado,
+            })
+            custom_map[codigo] = current
             continue
 
-        custom_map[codigo] = {
+        current = custom_map.get(codigo, {})
+        current = current if isinstance(current, dict) else {}
+        current.update({
             "usuarios_limite": usuarios_limite,
             "reportes_habilitado": reportes_habilitado,
             "reportes_limite": reportes_limite,
             "backups_habilitado": backups_habilitado,
             "backups_limite": backups_limite,
-        }
+            "soporte_habilitado": soporte_habilitado,
+            "productos_limite": productos_limite,
+            "sunat_habilitado": sunat_habilitado,
+        })
+        custom_map[codigo] = current
 
     negocio.plan_catalogo_custom = json.dumps(custom_map, ensure_ascii=False)
     db.commit()
@@ -795,7 +966,7 @@ def obtener_resumen_plan(
     if not negocio:
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
 
-    plan = _normalizar_plan(getattr(negocio, "plan", "BASICO"))
+    plan = _sincronizar_plan_vigente(negocio, db)
     config = _resolver_config_plan_para_negocio(negocio, plan)
 
     usuarios_consumidos = (
@@ -814,10 +985,23 @@ def obtener_resumen_plan(
     backup_dir = Path(__file__).resolve().parent.parent / "uploads" / "backups"
     backup_dir.mkdir(parents=True, exist_ok=True)
     backups_consumidos = len(list(backup_dir.glob(f"backup_negocio_{negocio_id}_*.db")))
+    productos_consumidos = (
+        db.query(Producto)
+        .filter(Producto.negocio_id == negocio_id)
+        .count()
+    )
+    soporte_consumidos = (
+        db.query(SoporteTicket)
+        .filter(SoporteTicket.negocio_id == negocio_id)
+        .count()
+    )
 
     usuarios_limite = config["usuarios_limite"]
     reportes_limite = config["reportes_limite"]
     backups_limite = config["backups_limite"]
+    productos_limite = config["productos_limite"]
+    soporte_limite = None
+    sunat_limite = None
 
     def _disponibles(limite: int | None, consumidos: int) -> int | None:
         if limite is None:
@@ -845,6 +1029,24 @@ def obtener_resumen_plan(
             "disponibles": _disponibles(backups_limite, backups_consumidos),
             "habilitado": config["backups_habilitado"],
         },
+        "productos": {
+            "consumidos": productos_consumidos,
+            "limite": productos_limite,
+            "disponibles": _disponibles(productos_limite, productos_consumidos),
+            "habilitado": True,
+        },
+        "soporte": {
+            "consumidos": int(soporte_consumidos),
+            "limite": soporte_limite,
+            "disponibles": _disponibles(soporte_limite, int(soporte_consumidos)),
+            "habilitado": config["soporte_habilitado"],
+        },
+        "sunat": {
+            "consumidos": 0,
+            "limite": sunat_limite,
+            "disponibles": _disponibles(sunat_limite, 0),
+            "habilitado": config["sunat_habilitado"],
+        },
     }
 
 
@@ -863,10 +1065,9 @@ def solicitar_cambio_plan(
     if not negocio:
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
 
-    plan_actual = _normalizar_plan(getattr(negocio, "plan", "BASICO"))
+    plan_actual = _sincronizar_plan_vigente(negocio, db)
     plan_solicitado = _normalizar_plan(data.plan_objetivo)
-    if plan_actual == plan_solicitado:
-        raise HTTPException(status_code=400, detail="El negocio ya tiene ese plan")
+    es_renovacion = plan_actual == plan_solicitado
 
     referencia = str(data.referencia_pago).strip().upper()
     if len(referencia) < 6 or not re.fullmatch(r"[A-Z0-9\-_/]+", referencia):
@@ -876,6 +1077,47 @@ def solicitar_cambio_plan(
     canales_permitidos = {"transferencia", "yape", "plin", "tarjeta", "efectivo"}
     if canal not in canales_permitidos:
         raise HTTPException(status_code=400, detail="Canal de pago no permitido")
+
+    duracion_dias = _resolver_duracion_dias(plan_solicitado, data.duracion_dias)
+    token_idempotencia = _token_idempotencia_pago(
+        negocio_id=negocio_id,
+        plan_solicitado=plan_solicitado,
+        referencia=referencia,
+        canal=canal,
+        duracion_dias=duracion_dias,
+    )
+
+    pago_existente = (
+        db.query(PlanPago)
+        .filter(
+            PlanPago.negocio_id == negocio_id,
+            PlanPago.token_idempotencia == token_idempotencia,
+            PlanPago.estado.in_(["PENDIENTE_VALIDACION", "APLICADO"]),
+        )
+        .order_by(PlanPago.id.desc())
+        .first()
+    )
+    if pago_existente:
+        mensaje_existente = (
+            "Solicitud ya registrada y aplicada previamente."
+            if str(pago_existente.estado).upper() == "APLICADO"
+            else "Solicitud ya registrada y en revision manual."
+        )
+        return {
+            "ok": True,
+            "mensaje": mensaje_existente,
+            "plan_actual": plan_actual,
+            "plan_solicitado": plan_solicitado,
+            "duracion_dias_aplicada": getattr(pago_existente, "duracion_dias", duracion_dias),
+            "plan_vigente_desde": getattr(pago_existente, "plan_vigente_desde", None),
+            "plan_vigente_hasta": getattr(pago_existente, "plan_vigente_hasta", None),
+            "referencia_pago": referencia,
+            "estado": pago_existente.estado,
+            "validacion_modo_solicitada": "AUTO",
+            "validacion_modo_aplicada": "AUTO" if str(pago_existente.estado).upper() == "APLICADO" else "MANUAL",
+            "riesgo_score": 0,
+            "riesgo_nivel": "BAJO",
+        }
 
     validacion_modo = str(data.validacion_modo or "AUTO").strip().upper()
     if validacion_modo not in {"AUTO", "MANUAL"}:
@@ -932,7 +1174,9 @@ def solicitar_cambio_plan(
 
     descripcion = (
         f"solicitud_plan negocio={negocio_id} actual={plan_actual} "
-        f"solicitado={plan_solicitado} ref={referencia[:40]} canal={canal[:20]} "
+        f"solicitado={plan_solicitado} tipo={'RENOVACION' if es_renovacion else 'CAMBIO'} "
+        f"dias={duracion_dias if duracion_dias is not None else 'SIN_LIMITE'} "
+        f"ref={referencia[:40]} canal={canal[:20]} "
         f"validacion={validacion_modo}->{validacion_modo_aplicada} estado={estado_pago} "
         f"riesgo={riesgo_nivel}:{riesgo_score} obs={observaciones[:60]}"
     )
@@ -954,12 +1198,21 @@ def solicitar_cambio_plan(
         referencia_pago=referencia,
         observaciones=observaciones[:120] or None,
         comprobante_url=comprobante_url,
+        duracion_dias=duracion_dias,
+        token_idempotencia=token_idempotencia,
         estado=estado_pago,
     )
     db.add(pago)
 
+    plan_vigente_desde = None
+    plan_vigente_hasta = None
     if estado_pago == "APLICADO":
+        inicio_vigencia = _fecha_inicio_vigencia(negocio, plan_solicitado)
+        plan_vigente_desde, plan_vigente_hasta = _calcular_rango_vigencia(inicio_vigencia, duracion_dias)
         negocio.plan = plan_solicitado
+        negocio.plan_vigente_hasta = plan_vigente_hasta
+        pago.plan_vigente_desde = plan_vigente_desde
+        pago.plan_vigente_hasta = plan_vigente_hasta
     db.commit()
     db.refresh(negocio)
 
@@ -968,7 +1221,11 @@ def solicitar_cambio_plan(
             db=db,
             modulo="Planes",
             accion="Activacion automatica por pago",
-            descripcion=f"Negocio {negocio_id}: {plan_actual} -> {plan_solicitado} ref={referencia[:40]}",
+            descripcion=(
+                f"Negocio {negocio_id}: {plan_actual} -> {plan_solicitado} "
+                f"dias={duracion_dias if duracion_dias is not None else 'SIN_LIMITE'} "
+                f"ref={referencia[:40]}"
+            ),
             usuario=str(current_user.get("usuario_id") or "Sistema"),
         )
 
@@ -986,6 +1243,9 @@ def solicitar_cambio_plan(
         "mensaje": mensaje,
         "plan_actual": plan_actual,
         "plan_solicitado": plan_solicitado,
+        "duracion_dias_aplicada": duracion_dias,
+        "plan_vigente_desde": plan_vigente_desde,
+        "plan_vigente_hasta": plan_vigente_hasta,
         "referencia_pago": referencia,
         "estado": estado_pago,
         "validacion_modo_solicitada": validacion_modo,
@@ -1052,9 +1312,16 @@ def validar_pago_plan(
         if not negocio:
             raise HTTPException(status_code=404, detail="Negocio no encontrado")
 
-        plan_anterior = _normalizar_plan(getattr(negocio, "plan", "GRATUITO"))
+        plan_anterior = _sincronizar_plan_vigente(negocio, db)
         plan_nuevo = _normalizar_plan(getattr(pago, "plan_solicitado", plan_anterior))
+        duracion_dias = _resolver_duracion_dias(plan_nuevo, getattr(pago, "duracion_dias", None))
+        inicio_vigencia = _fecha_inicio_vigencia(negocio, plan_nuevo)
+        plan_vigente_desde, plan_vigente_hasta = _calcular_rango_vigencia(inicio_vigencia, duracion_dias)
         negocio.plan = plan_nuevo
+        negocio.plan_vigente_hasta = plan_vigente_hasta
+        pago.duracion_dias = duracion_dias
+        pago.plan_vigente_desde = plan_vigente_desde
+        pago.plan_vigente_hasta = plan_vigente_hasta
         pago.estado = "APLICADO"
 
         registrar_auditoria(
@@ -1063,7 +1330,8 @@ def validar_pago_plan(
             accion="Validacion manual de pago",
             descripcion=(
                 f"Pago {pago.id} aprobado para negocio {negocio_id}: "
-                f"{plan_anterior} -> {plan_nuevo} ref={str(pago.referencia_pago)[:40]}"
+                f"{plan_anterior} -> {plan_nuevo} dias={duracion_dias if duracion_dias is not None else 'SIN_LIMITE'} "
+                f"ref={str(pago.referencia_pago)[:40]}"
             ),
             usuario=str(current_user.get("usuario_id") or "Sistema"),
         )
@@ -1232,7 +1500,8 @@ def obtener_configuracion(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.get("negocio_id") != negocio_id:
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin and current_user.get("negocio_id") != negocio_id:
         raise HTTPException(status_code=403, detail="Sin acceso")
 
     config = db.query(ConfiguracionNegocio).filter(
@@ -1242,7 +1511,7 @@ def obtener_configuracion(
     if not config:
         raise HTTPException(status_code=404, detail="Configuración no encontrada")
 
-    return config
+    return _configuracion_out_payload(config)
 
 
 # =====================================================
@@ -1255,7 +1524,8 @@ def actualizar_configuracion(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.get("negocio_id") != negocio_id:
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin and current_user.get("negocio_id") != negocio_id:
         raise HTTPException(status_code=403, detail="Sin acceso")
 
     config = db.query(ConfiguracionNegocio).filter(
@@ -1265,10 +1535,63 @@ def actualizar_configuracion(
     if not config:
         raise HTTPException(status_code=404, detail="Configuración no encontrada")
 
-    for key, value in data.model_dump(exclude_unset=True).items():
+    payload = data.model_dump(exclude_unset=True)
+    for key, value in payload.items():
+        if key == "sunat_proveedor":
+            proveedor = str(value or "NUBEFACT").strip().upper()
+            setattr(config, key, "NUBEFACT" if proveedor != "NUBEFACT" else proveedor)
+            continue
+        if key in {"sunat_api_token", "sunat_clave_sol"}:
+            # Si llega vacío, limpiamos; si llega con valor, actualizamos.
+            setattr(config, key, (str(value or "").strip() or None))
+            continue
         setattr(config, key, value)
+
+    if not str(getattr(config, "sunat_api_url", "") or "").strip():
+        config.sunat_api_url = NUBEFACT_DEFAULT_URL
 
     db.commit()
     db.refresh(config)
 
-    return config
+    return _configuracion_out_payload(config)
+
+
+@router.post("/{negocio_id}/configuracion/sunat/test", response_model=SunatConexionTestOut)
+def probar_conexion_config_sunat(
+    negocio_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin and current_user.get("negocio_id") != negocio_id:
+        raise HTTPException(status_code=403, detail="Sin acceso")
+
+    config = db.query(ConfiguracionNegocio).filter(
+        ConfiguracionNegocio.negocio_id == negocio_id
+    ).first()
+
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuración no encontrada")
+
+    proveedor = str(getattr(config, "sunat_proveedor", "NUBEFACT") or "NUBEFACT").upper()
+    if proveedor != "NUBEFACT":
+        raise HTTPException(status_code=400, detail="Proveedor SUNAT no soportado")
+
+    endpoint = str(getattr(config, "sunat_api_url", "") or "").strip() or NUBEFACT_DEFAULT_URL
+    token = str(getattr(config, "sunat_api_token", "") or "").strip() or None
+
+    try:
+        return probar_conexion_sunat(
+            endpoint_url=endpoint,
+            api_token=token,
+        )
+    except Exception as exc:
+        mapped = homologar_error_nubefact(exc)
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "codigo": mapped.get("codigo"),
+                "mensaje": mapped.get("mensaje"),
+                "detalle": mapped.get("detalle"),
+            },
+        )

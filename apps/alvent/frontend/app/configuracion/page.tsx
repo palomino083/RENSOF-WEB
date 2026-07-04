@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -9,9 +10,10 @@ import Toolbar from "@/components/ui/Toolbar";
 import ModalCard from "@/components/ui/ModalCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import PlanVisualCards, { type PlanVisualCardItem } from "@/features/planes/components/PlanVisualCards";
-import { systemService } from "@/services/systemService";
+import { systemService, type SoporteEstado, type SoportePrioridad, type SoporteTicket } from "@/services/systemService";
 import { API_URL } from "@/services/api";
 import { negocioService, type Negocio } from "@/services/negocioService";
+import { productosService } from "@/services/productosService";
 import {
   PLANES_VISIBLES_EN_SECCION,
   PLAN_PRICE_MAP,
@@ -64,6 +66,11 @@ const nombreTipoNegocio = (tipo?: string | null) => {
   const key = normalizarTipoNegocio(tipo);
   return TIPO_NEGOCIO_LABELS[key] || (tipo ? String(tipo) : "No definido");
 };
+
+const etiquetaTipoPersonalizado = (tipo: string) =>
+  String(tipo || "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
 
 const normalizarRol = (rol: string) => {
   const raw = String(rol || "").toUpperCase().trim();
@@ -269,6 +276,8 @@ const renderBenefitIcon = (icon: string) => {
 
 
 export default function ConfiguracionPage() {
+  type ConfigAccessMode = "soporte" | "configuracion";
+
   type SimuladorEscenario = {
     id: string;
     nombre: string;
@@ -287,9 +296,16 @@ export default function ConfiguracionPage() {
     fecha: string;
   };
 
+  type SoporteChatMessage = {
+    id: string;
+    role: "user" | "bot";
+    text: string;
+  };
+
   // ==========================
   // STATE CENTRALIZADO
   // ==========================
+  const searchParams = useSearchParams();
   const [showResetModal, setShowResetModal] = useState(false);
   const [password, setPassword] = useState("");
   const [modo, setModo] = useState<"parcial" | "completo">("parcial");
@@ -304,6 +320,10 @@ export default function ConfiguracionPage() {
   const [negocioTipoFiltro, setNegocioTipoFiltro] = useState<string>("todos");
   const [savingLogo, setSavingLogo] = useState(false);
   const [savingBusiness, setSavingBusiness] = useState(false);
+  const [vincularComprobantesSunat, setVincularComprobantesSunat] = useState(false);
+  const [tiposNegocioProductos, setTiposNegocioProductos] = useState<string[]>([]);
+  const [nuevoTipoNegocioEmpresa, setNuevoTipoNegocioEmpresa] = useState("");
+  const [savingTipoNegocioEmpresa, setSavingTipoNegocioEmpresa] = useState(false);
   const [changingPlan, setChangingPlan] = useState(false);
   const [loadingBackup, setLoadingBackup] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -313,6 +333,9 @@ export default function ConfiguracionPage() {
     usuarios: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
     reportes: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
     backups: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
+    productos: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
+    soporte: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
+    sunat: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
   } | null>(null);
   const [empresaTab, setEmpresaTab] = useState<"general" | "fiscal" | "ubicacion" | "branding">("general");
   const [planCatalogo, setPlanCatalogo] = useState<Array<{
@@ -323,6 +346,9 @@ export default function ConfiguracionPage() {
     reportes_limite: number | null;
     backups_habilitado: boolean;
     backups_limite: number | null;
+    soporte_habilitado: boolean;
+    productos_limite: number | null;
+    sunat_habilitado: boolean;
   }>>([]);
   const [planControlSeleccionado, setPlanControlSeleccionado] = useState<string>("GRATUITO");
   const [planControlAccion, setPlanControlAccion] = useState<"simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades">("simular");
@@ -375,6 +401,34 @@ export default function ConfiguracionPage() {
   const [savingFreePlanBoost, setSavingFreePlanBoost] = useState(false);
   const [savingPlanAmounts, setSavingPlanAmounts] = useState(false);
   const [savingPlanLimits, setSavingPlanLimits] = useState(false);
+  const [soporteTickets, setSoporteTickets] = useState<SoporteTicket[]>([]);
+  const [loadingSoporte, setLoadingSoporte] = useState(false);
+  const [creatingSoporte, setCreatingSoporte] = useState(false);
+  const [updatingSoporteId, setUpdatingSoporteId] = useState<number | null>(null);
+  const [loadingSugerenciaIa, setLoadingSugerenciaIa] = useState(false);
+  const [soporteFiltroEstado, setSoporteFiltroEstado] = useState<"TODOS" | SoporteEstado>("TODOS");
+  const [soporteFiltroPrioridad, setSoporteFiltroPrioridad] = useState<"TODAS" | SoportePrioridad>("TODAS");
+  const [soportePage, setSoportePage] = useState(1);
+  const [soportePageSize] = useState(5);
+  const [soporteTotal, setSoporteTotal] = useState(0);
+  const [soporteTotalPages, setSoporteTotalPages] = useState(1);
+  const [showAtencionSoporteModal, setShowAtencionSoporteModal] = useState(false);
+  const [ticketAtencion, setTicketAtencion] = useState<SoporteTicket | null>(null);
+  const [atencionForm, setAtencionForm] = useState<{ estado: SoporteEstado; respuesta: string }>({
+    estado: "EN_PROCESO",
+    respuesta: "",
+  });
+  const [showSoporteChatModal, setShowSoporteChatModal] = useState(false);
+  const [configAccessMode, setConfigAccessMode] = useState<ConfigAccessMode>("configuracion");
+  const [soporteChatInput, setSoporteChatInput] = useState("");
+  const [soporteChatPrioridad, setSoporteChatPrioridad] = useState<SoportePrioridad>("MEDIA");
+  const [soporteChatMessages, setSoporteChatMessages] = useState<SoporteChatMessage[]>([
+    {
+      id: "soporte-bot-welcome",
+      role: "bot",
+      text: "Hola, soy el chat bot de soporte de ALVENT. Cuéntame tu incidencia y te recomiendo una solución inicial.",
+    },
+  ]);
   const [planAmounts, setPlanAmounts] = useState({
     gratuito: 0,
     prueba: 15,
@@ -414,6 +468,29 @@ export default function ConfiguracionPage() {
     zona_horaria: "America/Lima",
     idioma: "es",
   });
+
+  const opcionesTipoNegocioEmpresa = useMemo(() => {
+    const base = Object.entries(TIPO_NEGOCIO_LABELS).map(([value, label]) => ({ value, label }));
+    const baseValues = new Set(base.map((item) => item.value));
+
+    const custom = tiposNegocioProductos
+      .map((tipo) => normalizarTipoNegocio(tipo))
+      .filter((tipo) => Boolean(tipo) && !baseValues.has(tipo))
+      .map((tipo) => ({ value: tipo, label: etiquetaTipoPersonalizado(tipo) }));
+
+    return [...base, ...custom];
+  }, [tiposNegocioProductos]);
+
+  const opcionesTipoFiltroEmpresa = useMemo(() => {
+    return Object.entries(TIPO_NEGOCIO_LABELS)
+      .map(([value, label]) => ({ value, label }))
+      .concat(
+        tiposNegocioProductos
+          .map((tipo) => normalizarTipoNegocio(tipo))
+          .filter((tipo) => Boolean(tipo) && !TIPO_NEGOCIO_LABELS[tipo])
+          .map((tipo) => ({ value: tipo, label: etiquetaTipoPersonalizado(tipo) }))
+      );
+  }, [tiposNegocioProductos]);
 
   const historialPlanesFiltrado =
     filtroEstadoHistorialPlan === "TODOS"
@@ -463,7 +540,7 @@ export default function ConfiguracionPage() {
       const tipoNormalizado = normalizarTipoNegocio(data.tipo);
       setBusinessForm({
         nombre: data.nombre || "",
-        tipo: TIPO_NEGOCIO_LABELS[tipoNormalizado] ? tipoNormalizado : "otro",
+        tipo: tipoNormalizado || "otro",
         plan: normalizarPlan(data.plan),
         descripcion: data.descripcion || "",
         ruc: sanitizarRuc(data.ruc),
@@ -489,6 +566,89 @@ export default function ConfiguracionPage() {
       setLoadingBranding(false);
     }
   }, [getNegocioIdActivo]);
+
+  const cargarTiposNegocioDesdeProductos = useCallback(async () => {
+    try {
+      const cfg = await productosService.getTableConfig();
+      const tipos = Array.isArray(cfg?.tipos_custom) ? cfg.tipos_custom : [];
+      setTiposNegocioProductos(tipos);
+    } catch {
+      setTiposNegocioProductos([]);
+    }
+  }, []);
+
+  const guardarTipoNegocioEmpresaEnProductos = async (tipoValue?: string) => {
+    const tipo = normalizarTipoNegocio(tipoValue || businessForm.tipo);
+    if (!tipo) {
+      setError("Selecciona un tipo de negocio válido");
+      return false;
+    }
+
+    try {
+      setSavingTipoNegocioEmpresa(true);
+      setError("");
+      setSuccess("");
+
+      const cfg = await productosService.getTableConfig();
+      const columnasCustom = Array.isArray(cfg?.columnas_custom) ? cfg.columnas_custom : [];
+      const columnasVisibles = Array.isArray(cfg?.columnas_visibles) ? cfg.columnas_visibles : [];
+
+      const tiposPrevios = Array.isArray(cfg?.tipos_custom)
+        ? cfg.tipos_custom.map((item) => normalizarTipoNegocio(item)).filter(Boolean)
+        : [];
+
+      const tiposMerged = [...new Set([
+        ...tiposPrevios,
+        ...(TIPO_NEGOCIO_LABELS[tipo] ? [] : [tipo]),
+      ])];
+
+      await productosService.updateTableConfig({
+        tipo_negocio: tipo,
+        columnas_custom: columnasCustom,
+        tipos_custom: tiposMerged,
+        columnas_visibles: columnasVisibles,
+      });
+
+      setBusinessForm((prev) => ({ ...prev, tipo }));
+      setTiposNegocioProductos(tiposMerged);
+      setSuccess("Tipo de negocio guardado y sincronizado con Productos");
+      return true;
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo guardar el tipo de negocio"));
+      return false;
+    } finally {
+      setSavingTipoNegocioEmpresa(false);
+    }
+  };
+
+  const crearTipoNegocioEmpresa = async () => {
+    const tipo = normalizarTipoNegocio(nuevoTipoNegocioEmpresa);
+    if (!tipo) {
+      setError("Ingresa un tipo de negocio válido");
+      return;
+    }
+
+    const creado = await guardarTipoNegocioEmpresaEnProductos(tipo);
+    if (creado) {
+      setNuevoTipoNegocioEmpresa("");
+    }
+  };
+
+  const aplicarPlantillaRensofSac = () => {
+    setBusinessForm((prev) => ({
+      ...prev,
+      nombre: "RENSOF SAC",
+      tipo: "desarrollo_software",
+      descripcion: "Servicios de tecnología, software empresarial y transformación digital.",
+      razon_social: "RENSOF S.A.C.",
+      pais: "Peru",
+      moneda: "PEN",
+      zona_horaria: "America/Lima",
+      idioma: "es",
+    }));
+    setSuccess("Plantilla RENSOF SAC aplicada. Revisa y guarda los datos de empresa.");
+    setError("");
+  };
 
   const seleccionarLogo = (file: File | null) => {
     setLogoFile(file);
@@ -595,8 +755,21 @@ export default function ConfiguracionPage() {
         idioma: businessForm.idioma.trim() || undefined,
       });
 
+      let configSunatGuardada = true;
+      try {
+        await negocioService.updateConfiguracion(negocioId, {
+          integracion_sunat: vincularComprobantesSunat,
+        });
+      } catch {
+        configSunatGuardada = false;
+      }
+
       setNegocio(actualizado);
-      setSuccess("Datos de la empresa actualizados correctamente");
+      setSuccess(
+        configSunatGuardada
+          ? "Datos de la empresa actualizados correctamente"
+          : "Datos de la empresa actualizados, pero no se pudo guardar la vinculación SUNAT"
+      );
       await cargarPlanStats();
     } catch (err) {
       console.error(err);
@@ -607,14 +780,32 @@ export default function ConfiguracionPage() {
   };
 
   const cargarCatalogoPlanes = useCallback(async (negocioIdArg?: number) => {
+    const negocioId = negocioIdArg || getNegocioIdActivo();
+    if (!negocioId) {
+      setPlanCatalogo([]);
+      return;
+    }
+
     try {
-      const negocioId = negocioIdArg || getNegocioIdActivo();
-      const data = negocioId
-        ? await negocioService.getEditablePlanCatalog(negocioId)
-        : await negocioService.getPlanCatalog();
+      const data = await negocioService.getEditablePlanCatalog(negocioId);
       setPlanCatalogo(Array.isArray(data.planes) ? data.planes : []);
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "No se pudo cargar el catalogo de planes"));
+      setError(getApiErrorMessage(err, "No se pudo cargar el catálogo de planes"));
+    }
+  }, [getNegocioIdActivo]);
+
+  const cargarConfiguracionSunat = useCallback(async (negocioIdArg?: number) => {
+    const negocioId = negocioIdArg || getNegocioIdActivo();
+    if (!negocioId) {
+      setVincularComprobantesSunat(false);
+      return;
+    }
+
+    try {
+      const cfg = await negocioService.getConfiguracion(negocioId);
+      setVincularComprobantesSunat(Boolean(cfg?.integracion_sunat));
+    } catch {
+      setVincularComprobantesSunat(false);
     }
   }, [getNegocioIdActivo]);
 
@@ -812,7 +1003,7 @@ export default function ConfiguracionPage() {
 
   const actualizarCampoPlanCatalogo = (
     codigo: string,
-    campo: "usuarios_limite" | "reportes_habilitado" | "reportes_limite" | "backups_habilitado" | "backups_limite",
+    campo: "usuarios_limite" | "reportes_habilitado" | "reportes_limite" | "backups_habilitado" | "backups_limite" | "soporte_habilitado" | "productos_limite" | "sunat_habilitado",
     valor: number | boolean | null,
   ) => {
     setPlanCatalogo((prev) => prev.map((plan) => {
@@ -847,6 +1038,9 @@ export default function ConfiguracionPage() {
         reportes_limite: plan.reportes_habilitado ? plan.reportes_limite : 0,
         backups_habilitado: Boolean(plan.backups_habilitado),
         backups_limite: plan.backups_habilitado ? plan.backups_limite : 0,
+        soporte_habilitado: Boolean(plan.soporte_habilitado),
+        productos_limite: plan.productos_limite,
+        sunat_habilitado: Boolean(plan.sunat_habilitado),
       }));
       const data = await negocioService.updateEditablePlanCatalog(negocioId, payload);
       setPlanCatalogo(Array.isArray(data.planes) ? data.planes : []);
@@ -935,6 +1129,9 @@ export default function ConfiguracionPage() {
     reportes_limite: freePlanBoost.habilitar_reportes ? (freePlanBoost.reportes_limite ?? 0) : 0,
     backups_habilitado: freePlanBoost.habilitar_backups,
     backups_limite: freePlanBoost.habilitar_backups ? (freePlanBoost.backups_limite ?? 0) : 0,
+    soporte_habilitado: Boolean(datosPlanBaseGratuito?.soporte_habilitado ?? true),
+    productos_limite: datosPlanBaseGratuito?.productos_limite ?? 100,
+    sunat_habilitado: Boolean(datosPlanBaseGratuito?.sunat_habilitado ?? false),
   };
 
   const datosPlanSimuladoBase = normalizarPlan(planSimulado) === "GRATUITO"
@@ -1011,6 +1208,9 @@ export default function ConfiguracionPage() {
     reportes_limite: number | null;
     backups_habilitado: boolean;
     backups_limite: number | null;
+    soporte_habilitado: boolean;
+    productos_limite: number | null;
+    sunat_habilitado: boolean;
   }) => {
     // Superadmin debe ver exactamente el catalogo editable guardado en esta pantalla.
     if (plan.codigo === "GRATUITO" && !isSuperadmin) return datosPlanGratuitoPromocional;
@@ -1020,6 +1220,9 @@ export default function ConfiguracionPage() {
   const consumoUsuarios = planStats?.usuarios.consumidos ?? 0;
   const consumoReportes = planStats?.reportes.consumidos ?? 0;
   const consumoBackups = planStats?.backups.consumidos ?? 0;
+  const consumoProductos = planStats?.productos?.consumidos ?? 0;
+  const consumoSoporte = planStats?.soporte?.consumidos ?? 0;
+  const sunatRequeridoPorNegocio = Boolean(vincularComprobantesSunat);
 
   const planSugerido = planCatalogoVisible
     .map((plan) => obtenerPlanEfectivo(plan))
@@ -1031,11 +1234,14 @@ export default function ConfiguracionPage() {
       const backupsOk = plan.backups_habilitado
         ? (plan.backups_limite == null || plan.backups_limite >= consumoBackups)
         : consumoBackups === 0;
-      return usuariosOk && reportesOk && backupsOk;
+      const productosOk = plan.productos_limite == null || plan.productos_limite >= consumoProductos;
+      const soporteOk = plan.soporte_habilitado || consumoSoporte === 0;
+      const sunatOk = !sunatRequeridoPorNegocio || plan.sunat_habilitado;
+      return usuariosOk && reportesOk && backupsOk && productosOk && soporteOk && sunatOk;
     }) || null;
 
   const resumenSugerencia = planSugerido
-    ? `Sugerido: ${nombrePlan(planSugerido.codigo)} para ${consumoUsuarios} usuarios, ${consumoReportes} reportes y ${consumoBackups} backups consumidos.`
+    ? `Sugerido: ${nombrePlan(planSugerido.codigo)} para ${consumoUsuarios} usuarios, ${consumoReportes} reportes, ${consumoProductos} productos y ${consumoSoporte} casos de soporte.`
     : "No hay un plan visible que cubra totalmente el consumo actual. Revisa limites y montos.";
 
   const evaluarSemaforoPlan = (plan: {
@@ -1046,6 +1252,9 @@ export default function ConfiguracionPage() {
     reportes_limite: number | null;
     backups_habilitado: boolean;
     backups_limite: number | null;
+    soporte_habilitado: boolean;
+    productos_limite: number | null;
+    sunat_habilitado: boolean;
   }) => {
     const objetivo = obtenerPlanEfectivo(plan);
     const actual = datosPlanActualEfectivo;
@@ -1296,8 +1505,7 @@ export default function ConfiguracionPage() {
     if (isSuperadmin) {
       void cargarNegociosSuperadmin();
     }
-    void cargarCatalogoPlanes();
-  }, [isSuperadmin, cargarNegociosSuperadmin, cargarCatalogoPlanes]);
+  }, [isSuperadmin, cargarNegociosSuperadmin]);
 
   useEffect(() => {
     if (!isSuperadmin || negociosDisponibles.length === 0) return;
@@ -1319,6 +1527,8 @@ export default function ConfiguracionPage() {
     const negocioId = getNegocioIdActivo();
     if (!negocioId) return;
     void cargarBranding(negocioId);
+    void cargarTiposNegocioDesdeProductos();
+    void cargarConfiguracionSunat(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
     void cargarCuentasCobro(negocioId);
@@ -1330,6 +1540,8 @@ export default function ConfiguracionPage() {
     isSuperadmin,
     getNegocioIdActivo,
     cargarBranding,
+    cargarTiposNegocioDesdeProductos,
+    cargarConfiguracionSunat,
     cargarPlanStats,
     cargarHistorialPlanes,
     cargarCuentasCobro,
@@ -1354,12 +1566,14 @@ export default function ConfiguracionPage() {
     const negocioId = getNegocioIdFromSession();
     if (!negocioId) return;
     void cargarBranding(negocioId);
+    void cargarTiposNegocioDesdeProductos();
+    void cargarConfiguracionSunat(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
     void cargarCuentasCobro(negocioId);
     void cargarCatalogoPlanes(negocioId);
     void cargarMontosPlanes(negocioId);
-  }, [isSuperadmin, cargarBranding, cargarPlanStats, cargarHistorialPlanes, cargarCuentasCobro, cargarCatalogoPlanes, cargarMontosPlanes]);
+  }, [isSuperadmin, cargarBranding, cargarTiposNegocioDesdeProductos, cargarConfiguracionSunat, cargarPlanStats, cargarHistorialPlanes, cargarCuentasCobro, cargarCatalogoPlanes, cargarMontosPlanes]);
 
   useEffect(() => {
     void cargarEscenariosSimulador();
@@ -1411,6 +1625,226 @@ export default function ConfiguracionPage() {
 
     return () => window.clearInterval(intervalId);
   }, [isSuperadmin, negocioSeleccionadoId, getNegocioIdActivo, cargarHistorialPlanes]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const querySupport = searchParams?.get("support") === "1";
+    const storedFocus = window.localStorage.getItem("alvent_menu_focus_config");
+
+    if (querySupport || storedFocus === "soporte") {
+      setConfigAccessMode("soporte");
+      return;
+    }
+
+    setConfigAccessMode("configuracion");
+  }, [searchParams]);
+
+  useEffect(() => {
+    const byQuery = searchParams?.get("support") === "1";
+    const byStorage = typeof window !== "undefined" && window.localStorage.getItem("alvent_open_support_modal") === "1";
+    if (!byQuery && !byStorage) return;
+
+    setConfigAccessMode("soporte");
+    setShowSoporteChatModal(true);
+    setTimeout(() => {
+      irASeccion("cfg-operaciones");
+    }, 80);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("alvent_open_support_modal");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const openSupportModal = () => {
+      setConfigAccessMode("soporte");
+      setShowSoporteChatModal(true);
+      setTimeout(() => {
+        irASeccion("cfg-operaciones");
+      }, 80);
+    };
+
+    const handleMenuFocusConfig = (event: Event) => {
+      const customEvent = event as CustomEvent<{ mode?: ConfigAccessMode }>;
+      const mode = customEvent.detail?.mode;
+      if (mode === "soporte" || mode === "configuracion") {
+        setConfigAccessMode(mode);
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("alvent-open-support-modal", openSupportModal);
+      window.addEventListener("alvent-config-menu-focus", handleMenuFocusConfig as EventListener);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("alvent-open-support-modal", openSupportModal);
+        window.removeEventListener("alvent-config-menu-focus", handleMenuFocusConfig as EventListener);
+      }
+    };
+  }, []);
+
+  const cargarTicketsSoporte = useCallback(async (negocioIdArg?: number) => {
+    try {
+      setLoadingSoporte(true);
+      const negocioId = negocioIdArg || getNegocioIdActivo();
+      const resp = await systemService.listarTicketsSoporte({
+        negocioId: negocioId || undefined,
+        estado: soporteFiltroEstado,
+        prioridad: soporteFiltroPrioridad,
+        page: soportePage,
+        pageSize: soportePageSize,
+      });
+      setSoporteTickets(Array.isArray(resp?.tickets) ? resp.tickets : []);
+      setSoporteTotal(Number(resp?.pagination?.total || 0));
+      setSoporteTotalPages(Math.max(1, Number(resp?.pagination?.total_pages || 1)));
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo cargar el soporte técnico"));
+    } finally {
+      setLoadingSoporte(false);
+    }
+  }, [getNegocioIdActivo, soporteFiltroEstado, soporteFiltroPrioridad, soportePage, soportePageSize]);
+
+  useEffect(() => {
+    setSoportePage(1);
+  }, [soporteFiltroEstado, soporteFiltroPrioridad, negocioSeleccionadoId]);
+
+  useEffect(() => {
+    const negocioId = getNegocioIdActivo();
+    if (!negocioId && !isSuperadmin) {
+      setSoporteTickets([]);
+      return;
+    }
+    void cargarTicketsSoporte(negocioId || undefined);
+  }, [isSuperadmin, negocioSeleccionadoId, getNegocioIdActivo, cargarTicketsSoporte, soportePage]);
+
+  const enviarMensajeSoporteChat = async () => {
+    const consulta = soporteChatInput.trim();
+    if (consulta.length < 8) {
+      setError("Describe mejor la consulta para usar el chat bot");
+      return;
+    }
+
+    const userMessage: SoporteChatMessage = {
+      id: `soporte-user-${Date.now()}`,
+      role: "user",
+      text: consulta,
+    };
+    setSoporteChatMessages((prev) => [...prev, userMessage]);
+    setSoporteChatInput("");
+
+    try {
+      setLoadingSugerenciaIa(true);
+      setError("");
+      const resp = await systemService.sugerenciaIaSoporte({
+        asunto: "Consulta desde ventana de soporte",
+        consulta,
+      });
+      setSoporteChatMessages((prev) => [
+        ...prev,
+        {
+          id: `soporte-bot-${Date.now()}`,
+          role: "bot",
+          text: `${resp.recomendacion} (${resp.origen})`,
+        },
+      ]);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo generar sugerencia IA"));
+      setSoporteChatMessages((prev) => [
+        ...prev,
+        {
+          id: `soporte-bot-error-${Date.now()}`,
+          role: "bot",
+          text: "No pude generar la recomendación IA en este momento.",
+        },
+      ]);
+    } finally {
+      setLoadingSugerenciaIa(false);
+    }
+  };
+
+  const escalarChatSoporte = async () => {
+    const negocioId = getNegocioIdActivo();
+    if (!negocioId && !isSuperadmin) {
+      setError("Selecciona un negocio para registrar la consulta");
+      return;
+    }
+
+    const ultimaConsulta = [...soporteChatMessages].reverse().find((m) => m.role === "user")?.text?.trim() || "";
+    if (ultimaConsulta.length < 8) {
+      setError("Primero envía una consulta en el chat bot");
+      return;
+    }
+
+    try {
+      setCreatingSoporte(true);
+      setError("");
+      const asuntoBase = ultimaConsulta.slice(0, 64);
+      const asunto = asuntoBase.length >= 4 ? asuntoBase : "Consulta de soporte";
+
+      const resp = await systemService.crearTicketSoporte({
+        asunto,
+        consulta: ultimaConsulta,
+        prioridad: soporteChatPrioridad,
+        negocio_id: negocioId || undefined,
+      });
+
+      setSoporteChatMessages((prev) => [
+        ...prev,
+        {
+          id: `soporte-bot-ticket-${Date.now()}`,
+          role: "bot",
+          text: `Ticket #${resp.ticket.id} escalado a RENSOF con prioridad ${resp.ticket.prioridad}.`,
+        },
+      ]);
+
+      setSuccess(resp.mensaje || "Consulta registrada");
+      setSoportePage(1);
+      await cargarTicketsSoporte(negocioId || undefined);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo registrar la consulta"));
+    } finally {
+      setCreatingSoporte(false);
+    }
+  };
+
+  const abrirModalAtencionSoporte = (ticket: SoporteTicket, estadoInicial: SoporteEstado) => {
+    if (!isSuperadmin) return;
+    setTicketAtencion(ticket);
+    setAtencionForm({
+      estado: estadoInicial,
+      respuesta: String(ticket.respuesta_superadmin || "").trim(),
+    });
+    setShowAtencionSoporteModal(true);
+  };
+
+  const atenderTicketSoporte = async () => {
+    if (!isSuperadmin || !ticketAtencion) return;
+
+    if (atencionForm.respuesta.trim().length < 4) {
+      setError("Debes ingresar una respuesta mínima para atender el ticket");
+      return;
+    }
+
+    try {
+      setUpdatingSoporteId(ticketAtencion.id);
+      setError("");
+      const resp = await systemService.atenderTicketSoporte(ticketAtencion.id, {
+        estado: atencionForm.estado,
+        respuesta_superadmin: atencionForm.respuesta.trim(),
+      });
+      setSuccess(resp.mensaje || "Ticket actualizado");
+      setShowAtencionSoporteModal(false);
+      setTicketAtencion(null);
+      await cargarTicketsSoporte(getNegocioIdActivo() || undefined);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo actualizar el ticket"));
+    } finally {
+      setUpdatingSoporteId(null);
+    }
+  };
 
   
 
@@ -1598,12 +2032,22 @@ export default function ConfiguracionPage() {
       },
       {
         icon: "shield",
-        text: planEfectivo.backups_habilitado
-          ? `Backups: ${formatLimite(planEfectivo.backups_limite)}`
-          : "Backups: no incluidos",
+        text: planEfectivo.soporte_habilitado
+          ? "Soporte: incluido"
+          : "Soporte: no incluido",
+      },
+      {
+        icon: "briefcase",
+        text: planEfectivo.sunat_habilitado
+          ? "SUNAT: habilitado"
+          : "SUNAT: no habilitado",
       },
       {
         icon: esSugerido ? "spark" : "briefcase",
+        text: `Productos: ${formatLimite(planEfectivo.productos_limite)}`,
+      },
+      {
+        icon: esSugerido ? "rocket" : "crown",
         text: esSugerido ? "Recomendado por consumo actual" : "Escalable por negocio",
       },
     ];
@@ -1628,10 +2072,30 @@ export default function ConfiguracionPage() {
 
         <main className={`app-content ${styles.shell}`}>
           <section className={styles.hero}>
-            <div>
+            <div className={styles.heroContent}>
               <p className={styles.eyebrow}>Centro de control</p>
-              <h1>Configuracion empresarial</h1>
+              <h1>Configuración empresarial</h1>
               <p>Gestiona acciones sensibles del sistema con mayor claridad y seguridad.</p>
+              <div className={styles.modeChipRow}>
+                <span className={`${styles.modeChip} ${configAccessMode === "soporte" ? styles.modeChipSupport : styles.modeChipConfig}`}>
+                  <span className={styles.modeChipIcon} aria-hidden="true">
+                    {configAccessMode === "soporte" ? "🤖" : "⚙️"}
+                  </span>
+
+                  <span className={styles.modeChipDesktop}>
+                    <strong>Modo: {configAccessMode === "soporte" ? "Soporte" : "Configuración"}</strong>
+                    <small>
+                      {configAccessMode === "soporte"
+                        ? "Atención asistida por IA y escalamiento a RENSOF"
+                        : "Administración general del sistema y controles de negocio"}
+                    </small>
+                  </span>
+
+                  <span className={styles.modeChipMobile}>
+                    {configAccessMode === "soporte" ? "Soporte" : "Configuración"}
+                  </span>
+                </span>
+              </div>
             </div>
             <ExecutiveThemeSwitch />
           </section>
@@ -1734,19 +2198,6 @@ export default function ConfiguracionPage() {
                 {isSuperadmin ? (
                   <div className={styles.companyBlock}>
                     <div className={styles.formRow}>
-                      <label htmlFor="empresa-negocio-tipo-filtro">Filtrar empresas por tipo</label>
-                      <select
-                        id="empresa-negocio-tipo-filtro"
-                        className={`${styles.negocioSelect} focus-ring`}
-                        value={negocioTipoFiltro}
-                        onChange={(e) => setNegocioTipoFiltro(e.target.value)}
-                      >
-                        <option value="todos">Todos</option>
-                        {Object.entries(TIPO_NEGOCIO_LABELS).map(([value, label]) => (
-                          <option key={`tipo-filtro-${value}`} value={value}>{label}</option>
-                        ))}
-                      </select>
-
                       <label htmlFor="empresa-negocio-objetivo">Empresa cliente</label>
                       <select
                         id="empresa-negocio-objetivo"
@@ -1762,8 +2213,6 @@ export default function ConfiguracionPage() {
                       </select>
                       {negociosDisponibles.length === 0 ? (
                         <small className={styles.helperText}>No hay empresas cliente para el tipo seleccionado.</small>
-                      ) : (negocioTipoFiltro !== "todos" && negociosObjetivoFiltrados.length === 0) ? (
-                        <small className={styles.helperText}>No hubo coincidencias exactas para este tipo; se muestran todas las empresas disponibles.</small>
                       ) : null}
                       {!negocioActivoId ? (
                         <small className={styles.helperText}>Selecciona una empresa cliente para guardar cambios.</small>
@@ -1775,6 +2224,20 @@ export default function ConfiguracionPage() {
                 {empresaTab === "general" ? (
                   <div className={styles.companyBlock}>
                     <h3>Información general</h3>
+                    <div className={styles.presetActions}>
+                      <button
+                        type="button"
+                        className={`${styles.presetBtn} focus-ring`}
+                        onClick={aplicarPlantillaRensofSac}
+                        disabled={!negocioActivoId}
+                        title={!negocioActivoId ? "Selecciona primero el negocio objetivo" : ""}
+                      >
+                        Usar datos RENSOF SAC
+                      </button>
+                      <small className={styles.helperText}>
+                        Completa automáticamente los campos base para registrar la empresa como RENSOF SAC.
+                      </small>
+                    </div>
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-nombre">Nombre comercial</label>
@@ -1788,22 +2251,47 @@ export default function ConfiguracionPage() {
 
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-tipo">Tipo de negocio de la empresa</label>
-                        <select
-                          id="empresa-tipo"
-                          value={businessForm.tipo}
-                          onChange={(e) => setBusinessForm({ ...businessForm, tipo: e.target.value })}
-                          className="focus-ring"
-                        >
-                          <option value="tienda">Tienda</option>
-                          <option value="restaurante">Restaurante</option>
-                          <option value="farmacia">Farmacia</option>
-                          <option value="supermercado">Supermercado</option>
-                          <option value="boutique">Boutique</option>
-                          <option value="kiosko">Kiosko</option>
-                          <option value="desarrollo_software">Desarrollo de software</option>
-                          <option value="servicio_aplicativos">Servicio de aplicativos</option>
-                          <option value="otro">Otro</option>
-                        </select>
+                        <div className={styles.tipoNegocioBox}>
+                          <div className={styles.tipoNegocioInline}>
+                            <select
+                              id="empresa-tipo"
+                              value={businessForm.tipo}
+                              onChange={(e) => setBusinessForm({ ...businessForm, tipo: e.target.value })}
+                              className="focus-ring"
+                            >
+                              {opcionesTipoNegocioEmpresa.map((item) => (
+                                <option key={`empresa-tipo-${item.value}`} value={item.value}>{item.label}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              className={styles.tipoNegocioBtn}
+                              onClick={() => void guardarTipoNegocioEmpresaEnProductos()}
+                              disabled={savingTipoNegocioEmpresa || !negocioActivoId}
+                            >
+                              {savingTipoNegocioEmpresa ? "Guardando..." : "Guardar tipo"}
+                            </button>
+                          </div>
+                          <small className={styles.helperText}>
+                            Si no encuentras el tipo en la lista, crea uno nuevo y guárdalo.
+                          </small>
+                          <div className={styles.tipoNegocioInline}>
+                            <input
+                              value={nuevoTipoNegocioEmpresa}
+                              onChange={(e) => setNuevoTipoNegocioEmpresa(e.target.value)}
+                              placeholder="Nuevo tipo (ej. ferreteria, libreria)"
+                              className="focus-ring"
+                            />
+                            <button
+                              type="button"
+                              className={styles.tipoNegocioBtn}
+                              onClick={() => void crearTipoNegocioEmpresa()}
+                              disabled={savingTipoNegocioEmpresa || !negocioActivoId}
+                            >
+                              {savingTipoNegocioEmpresa ? "Creando..." : "Crear tipo"}
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
                       <div className={styles.formRow}>
@@ -1922,6 +2410,22 @@ export default function ConfiguracionPage() {
                           onChange={(e) => setBusinessForm({ ...businessForm, documento_propietario: e.target.value })}
                           className="focus-ring"
                         />
+                      </div>
+
+                      <div className={styles.formRow}>
+                        <label htmlFor="empresa-vincular-sunat">Vincular comprobantes a SUNAT</label>
+                        <select
+                          id="empresa-vincular-sunat"
+                          value={vincularComprobantesSunat ? "si" : "no"}
+                          onChange={(e) => setVincularComprobantesSunat(e.target.value === "si")}
+                          className="focus-ring"
+                        >
+                          <option value="no">No vincular</option>
+                          <option value="si">Si, vincular comprobantes</option>
+                        </select>
+                        <small className={styles.helperText}>
+                          Si se activa, las boletas y facturas intentarán enviarse a SUNAT mediante la integración configurada.
+                        </small>
                       </div>
                     </div>
                   </div>
@@ -2122,6 +2626,127 @@ export default function ConfiguracionPage() {
               </article>
             ) : null}
 
+            <article className={styles.card}>
+              <Toolbar
+                title="Soporte técnico inteligente"
+                right={<StatusBadge text={loadingSoporte ? "Cargando" : `${soporteTotal} tickets`} variant="info" />}
+              />
+
+              <p>
+                Atención de incidencias centralizada para RENSOF. Abre la ventana de soporte para conversar con el chat bot y escalar tickets.
+              </p>
+
+              <div className={styles.supportActions}>
+                <button
+                  type="button"
+                  className={`${styles.saveBusinessBtn} focus-ring`}
+                  onClick={() => {
+                    setConfigAccessMode("soporte");
+                    setShowSoporteChatModal(true);
+                  }}
+                >
+                  Abrir ventana de soporte
+                </button>
+              </div>
+
+              <div className={styles.supportList}>
+                <div className={styles.supportFilterBar}>
+                  <label>
+                    Estado
+                    <select
+                      className="focus-ring"
+                      value={soporteFiltroEstado}
+                      onChange={(e) => setSoporteFiltroEstado(e.target.value as "TODOS" | SoporteEstado)}
+                    >
+                      <option value="TODOS">Todos</option>
+                      <option value="ABIERTO">Abierto</option>
+                      <option value="EN_PROCESO">En proceso</option>
+                      <option value="RESUELTO">Resuelto</option>
+                    </select>
+                  </label>
+                  <label>
+                    Prioridad
+                    <select
+                      className="focus-ring"
+                      value={soporteFiltroPrioridad}
+                      onChange={(e) => setSoporteFiltroPrioridad(e.target.value as "TODAS" | SoportePrioridad)}
+                    >
+                      <option value="TODAS">Todas</option>
+                      <option value="ALTA">Alta</option>
+                      <option value="MEDIA">Media</option>
+                      <option value="BAJA">Baja</option>
+                    </select>
+                  </label>
+                </div>
+
+                {soporteTickets.length === 0 ? (
+                  <p className={styles.helperText}>Aún no hay consultas registradas.</p>
+                ) : (
+                  soporteTickets.map((ticket) => (
+                    <article key={`soporte-ticket-${ticket.id}`} className={styles.supportTicketItem}>
+                      <div className={styles.supportTicketHead}>
+                        <strong>#{ticket.id} {ticket.asunto}</strong>
+                        <StatusBadge text={ticket.estado} variant={ticket.estado === "RESUELTO" ? "success" : ticket.estado === "EN_PROCESO" ? "warning" : "neutral"} />
+                      </div>
+                      <p>{ticket.consulta}</p>
+                      <small className={styles.helperText}>
+                        Prioridad: {ticket.prioridad} | Usuario: {ticket.usuario_nombre}
+                      </small>
+                      {ticket.recomendacion_ia ? (
+                        <small className={styles.helperText}>IA: {ticket.recomendacion_ia}</small>
+                      ) : null}
+                      {ticket.respuesta_superadmin ? (
+                        <small className={styles.helperText}>Respuesta RENSOF: {ticket.respuesta_superadmin}</small>
+                      ) : null}
+
+                      {isSuperadmin ? (
+                        <div className={styles.supportActions}>
+                          <button
+                            type="button"
+                            className={`${styles.actionBtn} focus-ring`}
+                            onClick={() => abrirModalAtencionSoporte(ticket, "EN_PROCESO")}
+                            disabled={updatingSoporteId === ticket.id}
+                          >
+                            {updatingSoporteId === ticket.id ? "Actualizando..." : "Marcar en proceso"}
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.saveBusinessBtn} focus-ring`}
+                            onClick={() => abrirModalAtencionSoporte(ticket, "RESUELTO")}
+                            disabled={updatingSoporteId === ticket.id}
+                          >
+                            {updatingSoporteId === ticket.id ? "Actualizando..." : "Marcar resuelto"}
+                          </button>
+                        </div>
+                      ) : null}
+                    </article>
+                  ))
+                )}
+
+                <div className={styles.supportPagination}>
+                  <button
+                    type="button"
+                    className={`${styles.actionBtn} focus-ring`}
+                    onClick={() => setSoportePage((prev) => Math.max(1, prev - 1))}
+                    disabled={soportePage <= 1 || loadingSoporte}
+                  >
+                    Anterior
+                  </button>
+                  <span>
+                    Página {soportePage} de {soporteTotalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className={`${styles.actionBtn} focus-ring`}
+                    onClick={() => setSoportePage((prev) => Math.min(soporteTotalPages, prev + 1))}
+                    disabled={soportePage >= soporteTotalPages || loadingSoporte}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            </article>
+
             <article className={`${styles.card} ${styles.dangerCard}`}>
               <Toolbar
                 title="Reinicio de sistema"
@@ -2149,7 +2774,7 @@ export default function ConfiguracionPage() {
             />
 
             <p>
-              Resumen en tiempo real de limites consumidos para usuarios, reportes y backups.
+              Resumen en tiempo real de limites consumidos para usuarios, reportes, soporte y productos.
             </p>
 
             <div className={styles.planVisualBoard}>
@@ -2214,7 +2839,7 @@ export default function ConfiguracionPage() {
                   </div>
 
                   <div className={styles.freePlanBoostQuickActions}>
-                    <span>Guardar todo el catalogo de montos:</span>
+                    <span>Guardar todo el catálogo de montos:</span>
                     <button
                       type="button"
                       className={`${styles.saveBusinessBtn} focus-ring`}
@@ -2228,11 +2853,11 @@ export default function ConfiguracionPage() {
 
                 <section className={styles.planAmountsBox}>
                   <div>
-                    <h4>Limites editables por plan</h4>
-                    <p>Define usuarios, reportes y backups por plan. Estos limites se aplican al negocio seleccionado.</p>
+                    <h4>Límites editables por plan</h4>
+                    <p>Define usuarios, reportes, soporte y cantidad de productos por plan. Estos límites se aplican al negocio seleccionado.</p>
                     {!negocioActivoId ? (
                       <small className={styles.helperText}>
-                        Sin negocio objetivo seleccionado: puedes seleccionar plan para analisis, pero aplicar requiere elegir una empresa.
+                        Sin negocio objetivo seleccionado: puedes seleccionar plan para análisis, pero aplicar requiere elegir una empresa.
                       </small>
                     ) : null}
                   </div>
@@ -2279,26 +2904,42 @@ export default function ConfiguracionPage() {
                         <label className={styles.inlineCheck}>
                           <input
                             type="checkbox"
-                            checked={Boolean(plan.backups_habilitado)}
-                            onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "backups_habilitado", e.target.checked)}
+                            checked={Boolean(plan.soporte_habilitado)}
+                            onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "soporte_habilitado", e.target.checked)}
                           />
-                          Backups
+                          Soporte
                         </label>
-                        <input
-                          type="number"
-                          min={0}
-                          step="1"
-                          className="focus-ring"
-                          value={plan.backups_limite ?? 0}
-                          onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "backups_limite", Number(e.target.value || 0))}
-                          disabled={!plan.backups_habilitado}
-                        />
+
+                        <label className={styles.inlineCheck}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(plan.sunat_habilitado)}
+                            onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "sunat_habilitado", e.target.checked)}
+                          />
+                          SUNAT
+                        </label>
+
+                        <label className={styles.inlineCheck}>
+                          <span>Cantidad de productos</span>
+                          <input
+                            type="number"
+                            min={0}
+                            step="1"
+                            className="focus-ring"
+                            value={plan.productos_limite ?? ""}
+                            onChange={(e) => {
+                              const raw = e.target.value.trim();
+                              actualizarCampoPlanCatalogo(plan.codigo, "productos_limite", raw === "" ? null : Number(raw));
+                            }}
+                            placeholder="Ilimitado"
+                          />
+                        </label>
                       </div>
                     ))}
                   </div>
 
                   <div className={styles.freePlanBoostQuickActions}>
-                    <span>Guardar limites efectivos del catalogo:</span>
+                    <span>Guardar límites efectivos del catálogo:</span>
                     <button
                       type="button"
                       className={`${styles.saveBusinessBtn} focus-ring`}
@@ -2313,7 +2954,7 @@ export default function ConfiguracionPage() {
                 <section className={styles.planAmountsBox}>
                   <div>
                     <h4>Empresa cliente para aplicar plan</h4>
-                    <p>Usa la empresa cliente seleccionada en la seccion Empresa para ejecutar cambios de plan.</p>
+                    <p>Usa la empresa cliente seleccionada en la sección Empresa para ejecutar cambios de plan.</p>
                   </div>
                   {!negocioActivoId ? (
                     <small className={styles.helperText}>Sin empresa cliente seleccionada, aplicar plan estara bloqueado.</small>
@@ -2350,7 +2991,7 @@ export default function ConfiguracionPage() {
                         <option value="simular">Simular plan</option>
                         <option value="aplicar">Aplicar plan al negocio</option>
                         <option value="guardar_monto">Guardar montos</option>
-                        <option value="guardar_limites">Guardar limites</option>
+                        <option value="guardar_limites">Guardar límites</option>
                         <option value="bondades">Ir a bondades del gratuito</option>
                       </select>
                     </label>
@@ -2360,12 +3001,12 @@ export default function ConfiguracionPage() {
                       className={`${styles.planPickBtn} focus-ring`}
                       onClick={() => void ejecutarAccionPlanEjecutiva()}
                       disabled={!planControlSeleccionadoData || changingPlan || savingPlanAmounts || savingPlanLimits || Boolean(planControlAccionRequiereNegocio)}
-                      title={planControlAccionRequiereNegocio ? "Selecciona una empresa cliente en la seccion Empresa" : ""}
+                      title={planControlAccionRequiereNegocio ? "Selecciona una empresa cliente en la sección Empresa" : ""}
                     >
-                      {planControlAccion === "simular" ? "Ejecutar simulacion" :
+                      {planControlAccion === "simular" ? "Ejecutar simulación" :
                         planControlAccion === "aplicar" ? (changingPlan ? "Aplicando..." : "Aplicar plan") :
                         planControlAccion === "guardar_monto" ? (savingPlanAmounts ? "Guardando..." : "Guardar montos") :
-                        planControlAccion === "guardar_limites" ? (savingPlanLimits ? "Guardando..." : "Guardar limites") :
+                        planControlAccion === "guardar_limites" ? (savingPlanLimits ? "Guardando..." : "Guardar límites") :
                         "Ir a bondades"}
                     </button>
                   </div>
@@ -2392,7 +3033,7 @@ export default function ConfiguracionPage() {
                           <article key={`cuenta-${canal.value}`} className={styles.paymentAccountCard}>
                             <h5>{canal.label}</h5>
                             <label>
-                              Titulo
+                              Título
                               <input
                                 type="text"
                                 className="focus-ring"
@@ -2401,7 +3042,7 @@ export default function ConfiguracionPage() {
                               />
                             </label>
                             <label>
-                              Detalle (una linea por dato)
+                              Detalle (una línea por dato)
                               <textarea
                                 className="focus-ring"
                                 value={(cuenta?.detalle || []).join("\n")}
@@ -2429,7 +3070,7 @@ export default function ConfiguracionPage() {
 
                 <section id="cfg-plan-validaciones" className={styles.planHistoryBox}>
                   <div className={styles.planHistoryHead}>
-                    <h4>Validacion de pagos de planes</h4>
+                    <h4>Validación de pagos de planes</h4>
                     <label className={styles.planHistoryFilter}>
                       Estado
                       <select
@@ -2462,7 +3103,7 @@ export default function ConfiguracionPage() {
                             <th>Canal</th>
                             <th>Referencia</th>
                             <th>Comprobante</th>
-                            <th>Accion</th>
+                            <th>Acción</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2700,6 +3341,148 @@ export default function ConfiguracionPage() {
               accept="image/png,image/jpeg,image/webp,application/pdf"
               onChange={(e) => setComprobantePagoFile(e.target.files?.[0] || null)}
             />
+          </ModalCard>
+
+          <ModalCard
+            open={showAtencionSoporteModal}
+            title="Atención RENSOF - Soporte"
+            subtitle={ticketAtencion ? `Ticket #${ticketAtencion.id} - ${ticketAtencion.asunto}` : "Atender consulta"}
+            actions={(
+              <>
+                <button
+                  type="button"
+                  onClick={() => void atenderTicketSoporte()}
+                  className={styles.confirmBtn}
+                  disabled={updatingSoporteId !== null || !ticketAtencion}
+                >
+                  {updatingSoporteId !== null ? "Guardando..." : "Enviar respuesta"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAtencionSoporteModal(false);
+                    setTicketAtencion(null);
+                  }}
+                  className={styles.cancelBtn}
+                  disabled={updatingSoporteId !== null}
+                >
+                  Cancelar
+                </button>
+              </>
+            )}
+          >
+            {ticketAtencion ? (
+              <div className={styles.supportChatModal}>
+                <div className={styles.chatBubbleUser}>
+                  <strong>Usuario</strong>
+                  <p>{ticketAtencion.consulta}</p>
+                </div>
+
+                {ticketAtencion.recomendacion_ia ? (
+                  <div className={styles.chatBubbleIa}>
+                    <strong>IA</strong>
+                    <p>{ticketAtencion.recomendacion_ia}</p>
+                  </div>
+                ) : null}
+
+                <label className={styles.formRow}>
+                  Estado de atención
+                  <select
+                    className="focus-ring"
+                    value={atencionForm.estado}
+                    onChange={(e) => setAtencionForm((prev) => ({ ...prev, estado: e.target.value as SoporteEstado }))}
+                  >
+                    <option value="EN_PROCESO">En proceso</option>
+                    <option value="RESUELTO">Resuelto</option>
+                  </select>
+                </label>
+
+                <label className={styles.formRow}>
+                  Respuesta de RENSOF
+                  <textarea
+                    className="focus-ring"
+                    rows={4}
+                    value={atencionForm.respuesta}
+                    onChange={(e) => setAtencionForm((prev) => ({ ...prev, respuesta: e.target.value }))}
+                    placeholder="Escribe diagnóstico, pasos aplicados y recomendación final"
+                  />
+                </label>
+              </div>
+            ) : null}
+          </ModalCard>
+
+          <ModalCard
+            open={showSoporteChatModal}
+            title="Ventana de Soporte"
+            subtitle="Chat bot asistido por IA con escalamiento a RENSOF"
+            actions={(
+              <>
+                <button
+                  type="button"
+                  onClick={() => void enviarMensajeSoporteChat()}
+                  className={styles.confirmBtn}
+                  disabled={loadingSugerenciaIa || creatingSoporte}
+                >
+                  {loadingSugerenciaIa ? "Consultando IA..." : "Consultar IA"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void escalarChatSoporte()}
+                  className={styles.actionBtn}
+                  disabled={loadingSugerenciaIa || creatingSoporte}
+                >
+                  {creatingSoporte ? "Escalando..." : "Escalar a RENSOF"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSoporteChatModal(false)}
+                  className={styles.cancelBtn}
+                  disabled={loadingSugerenciaIa || creatingSoporte}
+                >
+                  Cerrar
+                </button>
+              </>
+            )}
+          >
+            <div className={styles.supportChatWindow}>
+              <div className={styles.supportChatMessages}>
+                {soporteChatMessages.slice(-12).map((message) => (
+                  <div
+                    key={message.id}
+                    className={message.role === "user" ? styles.chatBubbleUser : styles.chatBubbleIa}
+                  >
+                    <strong>{message.role === "user" ? "Usuario" : "Chat bot"}</strong>
+                    <p>{message.text}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.supportChatComposer}>
+                <label className={styles.formRow}>
+                  Prioridad para escalar ticket
+                  <select
+                    className="focus-ring"
+                    value={soporteChatPrioridad}
+                    onChange={(e) => setSoporteChatPrioridad(e.target.value as SoportePrioridad)}
+                  >
+                    <option value="BAJA">Baja</option>
+                    <option value="MEDIA">Media</option>
+                    <option value="ALTA">Alta</option>
+                  </select>
+                </label>
+
+                <label className={styles.formRow}>
+                  Tu consulta
+                  <textarea
+                    className="focus-ring"
+                    rows={3}
+                    value={soporteChatInput}
+                    onChange={(e) => setSoporteChatInput(e.target.value)}
+                    placeholder="Describe incidencia, mensaje de error y resultado esperado"
+                  />
+                </label>
+              </div>
+            </div>
           </ModalCard>
 
           <ModalCard

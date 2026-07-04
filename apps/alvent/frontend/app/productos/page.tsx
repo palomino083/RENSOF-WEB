@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { productosService } from "@/services/productosService";
-import { API_URL } from "@/services/api";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { appPath } from "@/utils/appPath";
+import { applyFallbackImage, toMediaUrl } from "@/utils/mediaUrl";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
 import Toolbar from "@/components/ui/Toolbar";
 import ModalCard from "@/components/ui/ModalCard";
@@ -57,15 +57,7 @@ type TableColumn = {
 
 type TipoNegocio = "tienda" | "restaurante" | "farmacia" | "supermercado" | "otro";
 
-const COLUMNAS_FIJAS_TABLERO: ColumnaCoreKey[] = ["codigo", "foto", "costo", "precio", "utilidad"];
-
-const TIPOS_NEGOCIO_OPTIONS: Array<{ value: TipoNegocio; label: string }> = [
-  { value: "tienda", label: "Tienda" },
-  { value: "restaurante", label: "Restaurante" },
-  { value: "farmacia", label: "Farmacia" },
-  { value: "supermercado", label: "Supermercado" },
-  { value: "otro", label: "Otro" },
-];
+const COLUMNAS_FIJAS_TABLERO: ColumnaCoreKey[] = ["codigo", "foto", "nombre"];
 
 const COLUMNAS_POR_TIPO: Record<TipoNegocio, ColumnaPresetKey[]> = {
   tienda: ["talla", "color", "sexo"],
@@ -90,11 +82,11 @@ const CORE_COLUMNS_BEFORE: Array<{ key: ColumnaCoreKey; label: string; locked?: 
 ];
 
 const CORE_COLUMNS_AFTER: Array<{ key: ColumnaCoreKey; label: string; locked?: boolean }> = [
+  { key: "stock", label: "Stock" },
   { key: "costo", label: "Costo", locked: true },
   { key: "precio", label: "Precio", locked: true },
-  { key: "utilidad", label: "Utilidad", locked: true },
   { key: "margen", label: "Margen" },
-  { key: "stock", label: "Stock" },
+  { key: "utilidad", label: "Utilidad", locked: true },
   { key: "estado", label: "Estado" },
   { key: "acciones", label: "Acciones", locked: true },
 ];
@@ -157,7 +149,6 @@ export default function Productos() {
   const [success, setSuccess] = useState("");
   const [tipoNegocio, setTipoNegocio] = useState<string>("");
   const [tiposCustom, setTiposCustom] = useState<string[]>([]);
-  const [newTipoNegocio, setNewTipoNegocio] = useState("");
   const [savingTableConfig, setSavingTableConfig] = useState(false);
   const [columnasCustom, setColumnasCustom] = useState<ColumnaCustom[]>([]);
   const [columnasVisibles, setColumnasVisibles] = useState<string[]>([]);
@@ -202,7 +193,12 @@ export default function Productos() {
       .replace(/[^a-z0-9_]/g, "")
       .slice(0, 40);
 
-  const tipoNegocioValido = useMemo(() => String(tipoNegocio || "").trim().length > 0, [tipoNegocio]);
+  const insertarAntesDeStock = (keys: string[], newKey: string) => {
+    if (keys.includes(newKey)) return keys;
+    const stockIndex = keys.indexOf("stock");
+    if (stockIndex < 0) return [...keys, newKey];
+    return [...keys.slice(0, stockIndex), newKey, ...keys.slice(stockIndex)];
+  };
 
   const columnasPresetActivas = useMemo<ColumnaPresetKey[]>(() => {
     const fallback: TipoNegocio = "otro";
@@ -244,17 +240,6 @@ export default function Productos() {
     return ordered;
   }, [columnasVisibles, columnasDisponibles, columnasDisponiblesMap]);
 
-  const allTiposOptions = useMemo(() => {
-    const base = TIPOS_NEGOCIO_OPTIONS.map((item) => ({ value: item.value, label: item.label }));
-    const custom = tiposCustom
-      .filter((tipo) => !TIPOS_NEGOCIO_OPTIONS.some((item) => item.value === tipo))
-      .map((tipo) => ({
-        value: tipo,
-        label: tipo.replace(/_/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase()),
-      }));
-    return [...base, ...custom];
-  }, [tiposCustom]);
-
   const guardarConfigTabla = async (next?: { tipo?: string; columnas?: ColumnaCustom[]; tipos?: string[]; visibles?: string[] }) => {
     try {
       setSavingTableConfig(true);
@@ -290,35 +275,9 @@ export default function Productos() {
 
     const normalized = normalizeFotoPath(foto);
     if (!normalized) return "/no-image.png";
-    if (/^https?:\/\//i.test(normalized)) return normalized;
 
-    const envBase = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
-    const base =
-      /^https?:\/\//i.test(envBase)
-        ? envBase
-        : (typeof window !== "undefined" && (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"))
-          ? "http://127.0.0.1:8000/alven/api"
-          : envBase;
-
-    return `${base}${normalized}`;
-  };
-
-  const fallbackImage = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    const src = img.getAttribute("src") || "";
-
-    if (src.includes("127.0.0.1")) {
-      img.src = src.replace("127.0.0.1", "localhost");
-      return;
-    }
-
-    if (src.includes("localhost")) {
-      img.src = src.replace("localhost", "127.0.0.1");
-      return;
-    }
-
-    img.onerror = null;
-    img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80'%3E%3Crect width='100%25' height='100%25' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2364758b' font-size='12'%3ESin imagen%3C/text%3E%3C/svg%3E";
+    const resolved = toMediaUrl(normalized);
+    return resolved || "/no-image.png";
   };
 
   /* =========================
@@ -507,6 +466,11 @@ export default function Productos() {
     setError("");
     setSuccess("");
     setColumnasCustom((prev) => [...prev, { key, label }]);
+    setColumnasVisibles((prev) => {
+      const target = `custom:${key}`;
+      if (prev.length === 0) return prev;
+      return insertarAntesDeStock(prev, target);
+    });
     setForm((prev) => ({
       ...prev,
       atributos_extra: {
@@ -516,24 +480,6 @@ export default function Productos() {
     }));
     setNewColumnLabel("");
     setSelectedCatalogAttribute("");
-  };
-
-  const agregarTipoNegocioCustom = () => {
-    const normalizado = normalizarKeyColumna(newTipoNegocio);
-    if (!normalizado) {
-      setError("Ingresa un nombre valido para el nuevo tipo de negocio");
-      return;
-    }
-    if (allTiposOptions.some((item) => item.value === normalizado)) {
-      setError("Ese tipo de negocio ya existe en la lista");
-      return;
-    }
-
-    setError("");
-    setSuccess("");
-    setTiposCustom((prev) => [...prev, normalizado]);
-    setTipoNegocio(normalizado);
-    setNewTipoNegocio("");
   };
 
   const removerColumnaCustom = (key: string) => {
@@ -574,7 +520,12 @@ export default function Productos() {
       const merged = prev.filter((key) => available.has(key));
       columnasDisponibles.forEach((col) => {
         if (!merged.includes(col.key)) {
-          merged.push(col.key);
+          if (col.key.startsWith("custom:")) {
+            const next = insertarAntesDeStock(merged, col.key);
+            merged.splice(0, merged.length, ...next);
+          } else {
+            merged.push(col.key);
+          }
         }
       });
 
@@ -639,7 +590,7 @@ export default function Productos() {
           height={80}
           unoptimized
           className={styles.tableImage}
-          onError={fallbackImage}
+                              onError={applyFallbackImage}
         />
       ) : (
         <span className={styles.fallback}>IMG</span>
@@ -764,51 +715,6 @@ export default function Productos() {
 
         {showPersonalizacion ? (
           <div className={styles.configPanelContent}>
-            <div className={styles.configBlock}>
-              <label htmlFor="tipo-negocio-productos">Tipo de negocio aplicado en tabla</label>
-              <div className={styles.configInline}>
-                <select
-                  id="tipo-negocio-productos"
-                  value={tipoNegocio}
-                  onChange={(e) => setTipoNegocio(e.target.value)}
-                  className="focus-ring"
-                >
-                  <option value="">Seleccionar tipo...</option>
-                  {allTiposOptions.map((item) => (
-                    <option key={item.value} value={item.value}>{item.label}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  disabled={savingTableConfig || !tipoNegocio}
-                  onClick={() => void guardarConfigTabla({ tipo: tipoNegocio })}
-                >
-                  {savingTableConfig ? "Guardando..." : "Guardar tipo"}
-                </button>
-              </div>
-              {!tipoNegocioValido ? (
-                <p className={styles.hintWarning}>
-                  Si no encuentras el tipo de negocio en la lista, crea uno nuevo y guárdalo.
-                </p>
-              ) : null}
-              <div className={styles.configInline}>
-                <input
-                  value={newTipoNegocio}
-                  onChange={(e) => setNewTipoNegocio(e.target.value)}
-                  placeholder="Nuevo tipo (ej. ferreteria, libreria, veterinaria)"
-                  className="focus-ring"
-                />
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  onClick={agregarTipoNegocioCustom}
-                >
-                  Crear tipo
-                </button>
-              </div>
-            </div>
-
             <div className={styles.configBlock}>
               <label htmlFor="nueva-columna-custom">Agregar columna personalizada</label>
               <div className={styles.configInline}>
@@ -1011,7 +917,7 @@ export default function Productos() {
             height={80}
             unoptimized
             className={styles.preview}
-            onError={fallbackImage}
+            onError={applyFallbackImage}
           />
         ) : null}
       </ModalCard>

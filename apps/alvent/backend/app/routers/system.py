@@ -3,6 +3,7 @@ from pathlib import Path
 import sqlite3
 import shutil
 import tempfile
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from fastapi.responses import FileResponse
@@ -16,6 +17,7 @@ from app.models.caja import Caja
 from app.models.cliente import Cliente
 from app.models.negocio import Negocio
 from app.models.usuario import Usuario
+from app.models.soporte_ticket import SoporteTicket
 from app.services.auditoria import registrar_auditoria
 from app.utils.dependencies import get_current_user_with_negocio
 from app.utils.planes import normalizar_plan, resolver_config_plan_negocio
@@ -32,6 +34,146 @@ class RestoreResponse(BaseModel):
     ok: bool
     mensaje: str
     archivo: str
+
+
+class SoporteTicketCreate(BaseModel):
+    asunto: str
+    consulta: str
+    prioridad: str = "MEDIA"
+    negocio_id: Optional[int] = None
+
+
+class SoporteTicketResponder(BaseModel):
+    estado: str = "EN_PROCESO"
+    respuesta_superadmin: str
+
+
+class SoporteAiRequest(BaseModel):
+    consulta: str
+    asunto: Optional[str] = None
+
+
+def _normalizar_prioridad(value: str | None) -> str:
+    prioridad = str(value or "MEDIA").strip().upper()
+    if prioridad not in {"ALTA", "MEDIA", "BAJA"}:
+        return "MEDIA"
+    return prioridad
+
+
+def _normalizar_estado_ticket(value: str | None) -> str:
+    estado = str(value or "ABIERTO").strip().upper()
+    if estado not in {"ABIERTO", "EN_PROCESO", "RESUELTO"}:
+        return "ABIERTO"
+    return estado
+
+
+def _normalizar_estado_filtro(value: str | None) -> Optional[str]:
+    if value is None:
+        return None
+    estado = str(value).strip().upper()
+    if not estado or estado == "TODOS":
+        return None
+    if estado in {"ABIERTO", "EN_PROCESO", "RESUELTO"}:
+        return estado
+    return None
+
+
+def _normalizar_prioridad_filtro(value: str | None) -> Optional[str]:
+    if value is None:
+        return None
+    prioridad = str(value).strip().upper()
+    if not prioridad or prioridad == "TODAS":
+        return None
+    if prioridad in {"ALTA", "MEDIA", "BAJA"}:
+        return prioridad
+    return None
+
+
+def _sugerir_respuesta_ia(asunto: str | None, consulta: str) -> dict:
+    texto = f"{asunto or ''} {consulta or ''}".lower()
+
+    if any(word in texto for word in ["sunat", "nubefact", "boleta", "factura", "comprobante"]):
+        return {
+            "categoria": "fiscal",
+            "recomendacion": (
+                "Verifica en Configuración/Fiscal: integración SUNAT activa, RUC emisor válido, token API vigente y series B/F configuradas. "
+                "Luego prueba una boleta en POS y revisa el estado SUNAT devuelto por la venta."
+            ),
+        }
+
+    if any(word in texto for word in ["no carga", "error 500", "distors", "estilo", "css", "hydration"]):
+        return {
+            "categoria": "frontend",
+            "recomendacion": (
+                "Reinicia frontend local, limpia caché .next y recarga la página. Si persiste, valida consola del navegador y ejecuta lint/build para detectar inconsistencias."
+            ),
+        }
+
+    if any(word in texto for word in ["stock", "inventario", "producto", "venta", "caja"]):
+        return {
+            "categoria": "operacion",
+            "recomendacion": (
+                "Confirma que la caja esté abierta y que el producto tenga stock suficiente. Revisa en POS si el usuario pertenece al negocio correcto y que no tenga restricciones de rol."
+            ),
+        }
+
+    return {
+        "categoria": "general",
+        "recomendacion": (
+            "Recopila contexto mínimo: módulo, acción, resultado esperado, mensaje de error y hora del incidente. "
+            "Con eso el superadministrador puede diagnosticar y responder más rápido."
+        ),
+    }
+
+
+def _resolver_negocio_soporte(current_user: dict, negocio_id_payload: Optional[int]) -> Optional[int]:
+    if current_user.get("is_superadmin"):
+        return int(negocio_id_payload) if negocio_id_payload else None
+    return int(current_user.get("negocio_id") or 0) or None
+
+
+def _validar_plan_soporte(db: Session, current_user: dict, negocio_id: Optional[int] = None) -> None:
+    if bool(current_user.get("is_superadmin")):
+        return
+
+    negocio_objetivo = int(negocio_id or current_user.get("negocio_id") or 0)
+    if not negocio_objetivo:
+        return
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_objetivo).first()
+    if not negocio:
+        return
+
+    try:
+        plan = normalizar_plan(getattr(negocio, "plan", "BASICO"))
+    except ValueError:
+        plan = "BASICO"
+
+    config = resolver_config_plan_negocio(negocio, plan)
+    if not config.soporte_habilitado:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Soporte no disponible en plan {plan}. Mejora tu plan para continuar.",
+        )
+
+
+def _ticket_to_dict(ticket: SoporteTicket, autor: Usuario | None, atendido_por: Usuario | None) -> dict:
+    return {
+        "id": ticket.id,
+        "negocio_id": ticket.negocio_id,
+        "usuario_id": ticket.usuario_id,
+        "usuario_nombre": getattr(autor, "nombres", None) or getattr(autor, "usuario", "Usuario"),
+        "asunto": ticket.asunto,
+        "consulta": ticket.consulta,
+        "prioridad": ticket.prioridad,
+        "estado": ticket.estado,
+        "recomendacion_ia": ticket.recomendacion_ia,
+        "respuesta_superadmin": ticket.respuesta_superadmin,
+        "atendido_por_usuario_id": ticket.atendido_por_usuario_id,
+        "atendido_por_nombre": (getattr(atendido_por, "nombres", None) or getattr(atendido_por, "usuario", None)) if atendido_por else None,
+        "fecha_creacion": ticket.fecha_creacion,
+        "fecha_actualizacion": ticket.fecha_actualizacion,
+    }
 
 
 @router.delete("/system/reset")
@@ -236,3 +378,201 @@ def descargar_backup(
         filename=backup_name,
         media_type="application/octet-stream",
     )
+
+
+@router.post("/system/soporte/ia/sugerencia")
+def sugerir_soporte_ia(
+    data: SoporteAiRequest,
+    current_user: dict = Depends(get_current_user_with_negocio),
+    db: Session = Depends(get_db),
+):
+    _validar_plan_soporte(db, current_user)
+
+    consulta = str(data.consulta or "").strip()
+    if len(consulta) < 8:
+        raise HTTPException(status_code=400, detail="Describe mejor la consulta para sugerir una solución")
+
+    result = _sugerir_respuesta_ia(data.asunto, consulta)
+    return {
+        "ok": True,
+        "categoria": result["categoria"],
+        "recomendacion": result["recomendacion"],
+        "origen": "IA_LOCAL",
+    }
+
+
+@router.get("/system/soporte/tickets")
+def listar_tickets_soporte(
+    negocio_id: Optional[int] = None,
+    estado: Optional[str] = None,
+    prioridad: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 8,
+    current_user: dict = Depends(get_current_user_with_negocio),
+    db: Session = Depends(get_db),
+):
+    page = max(1, int(page or 1))
+    page_size = min(50, max(1, int(page_size or 8)))
+
+    query = db.query(SoporteTicket)
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    negocio_objetivo = int(negocio_id or 0) if negocio_id else None
+    estado_filtro = _normalizar_estado_filtro(estado)
+    prioridad_filtro = _normalizar_prioridad_filtro(prioridad)
+
+    if is_superadmin:
+        if negocio_objetivo:
+            query = query.filter(SoporteTicket.negocio_id == negocio_objetivo)
+    else:
+        negocio_usuario = int(current_user.get("negocio_id") or 0)
+        query = query.filter(SoporteTicket.negocio_id == negocio_usuario)
+
+    if estado_filtro:
+        query = query.filter(SoporteTicket.estado == estado_filtro)
+    if prioridad_filtro:
+        query = query.filter(SoporteTicket.prioridad == prioridad_filtro)
+
+    total = query.count()
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    if page > total_pages:
+        page = total_pages
+
+    tickets = (
+        query
+        .order_by(SoporteTicket.fecha_creacion.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    usuario_ids = {int(t.usuario_id) for t in tickets if t.usuario_id}
+    atendidos_ids = {int(t.atendido_por_usuario_id) for t in tickets if t.atendido_por_usuario_id}
+    ids_total = list(usuario_ids.union(atendidos_ids))
+
+    usuarios_map = {}
+    if ids_total:
+        usuarios = db.query(Usuario).filter(Usuario.id.in_(ids_total)).all()
+        usuarios_map = {u.id: u for u in usuarios}
+
+    return {
+        "tickets": [
+            _ticket_to_dict(
+                t,
+                usuarios_map.get(t.usuario_id),
+                usuarios_map.get(t.atendido_por_usuario_id) if t.atendido_por_usuario_id else None,
+            )
+            for t in tickets
+        ],
+        "pagination": {
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": total_pages,
+        },
+        "filtros": {
+            "estado": estado_filtro,
+            "prioridad": prioridad_filtro,
+        },
+    }
+
+
+@router.post("/system/soporte/tickets")
+def crear_ticket_soporte(
+    data: SoporteTicketCreate,
+    current_user: dict = Depends(get_current_user_with_negocio),
+    db: Session = Depends(get_db),
+):
+    asunto = str(data.asunto or "").strip()
+    consulta = str(data.consulta or "").strip()
+    if len(asunto) < 4:
+        raise HTTPException(status_code=400, detail="El asunto debe tener al menos 4 caracteres")
+    if len(consulta) < 8:
+        raise HTTPException(status_code=400, detail="La consulta debe tener al menos 8 caracteres")
+
+    negocio_ticket = _resolver_negocio_soporte(current_user, data.negocio_id)
+    _validar_plan_soporte(db, current_user, negocio_ticket)
+    sugerencia = _sugerir_respuesta_ia(asunto, consulta)
+
+    ticket = SoporteTicket(
+        negocio_id=negocio_ticket,
+        usuario_id=int(current_user.get("usuario_id") or 0),
+        asunto=asunto,
+        consulta=consulta,
+        prioridad=_normalizar_prioridad(data.prioridad),
+        estado="ABIERTO",
+        recomendacion_ia=sugerencia["recomendacion"],
+    )
+
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+
+    try:
+        registrar_auditoria(
+            db=db,
+            modulo="Soporte",
+            accion="Crear ticket",
+            descripcion=f"Ticket #{ticket.id} | asunto={ticket.asunto} | prioridad={ticket.prioridad}",
+            usuario=str(current_user.get("usuario_id") or "Sistema"),
+        )
+    except Exception:
+        pass
+
+    autor = db.query(Usuario).filter(Usuario.id == ticket.usuario_id).first()
+
+    return {
+        "ok": True,
+        "mensaje": "Consulta registrada y derivada a superadministrador",
+        "ticket": _ticket_to_dict(ticket, autor, None),
+        "sugerencia_ia": {
+            "categoria": sugerencia["categoria"],
+            "recomendacion": sugerencia["recomendacion"],
+            "origen": "IA_LOCAL",
+        },
+    }
+
+
+@router.patch("/system/soporte/tickets/{ticket_id}/atender")
+def atender_ticket_soporte(
+    ticket_id: int,
+    data: SoporteTicketResponder,
+    current_user: dict = Depends(get_current_user_with_negocio),
+    db: Session = Depends(get_db),
+):
+    if not bool(current_user.get("is_superadmin")):
+        raise HTTPException(status_code=403, detail="Solo RENSOF puede atender tickets")
+
+    ticket = db.query(SoporteTicket).filter(SoporteTicket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+
+    respuesta = str(data.respuesta_superadmin or "").strip()
+    if len(respuesta) < 4:
+        raise HTTPException(status_code=400, detail="La respuesta debe tener al menos 4 caracteres")
+
+    ticket.respuesta_superadmin = respuesta
+    ticket.estado = _normalizar_estado_ticket(data.estado)
+    ticket.atendido_por_usuario_id = int(current_user.get("usuario_id") or 0)
+    ticket.fecha_actualizacion = datetime.utcnow()
+
+    db.commit()
+    db.refresh(ticket)
+
+    try:
+        registrar_auditoria(
+            db=db,
+            modulo="Soporte",
+            accion="Atender ticket",
+            descripcion=f"Ticket #{ticket.id} actualizado a {ticket.estado}",
+            usuario=str(current_user.get("usuario_id") or "Sistema"),
+        )
+    except Exception:
+        pass
+
+    autor = db.query(Usuario).filter(Usuario.id == ticket.usuario_id).first()
+    atendido_por = db.query(Usuario).filter(Usuario.id == ticket.atendido_por_usuario_id).first()
+
+    return {
+        "ok": True,
+        "mensaje": "Ticket atendido correctamente",
+        "ticket": _ticket_to_dict(ticket, autor, atendido_por),
+    }

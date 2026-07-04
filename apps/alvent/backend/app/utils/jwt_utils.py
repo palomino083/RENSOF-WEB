@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
+import os
+import logging
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 import secrets
@@ -7,7 +9,14 @@ import hashlib
 import bcrypt
 
 # Configuración
-SECRET_KEY = "alvent-erp-pos-pro-secret-key-2026"  # En producción, usar variable de entorno
+logger = logging.getLogger(__name__)
+
+SECRET_KEY = os.getenv("ALVENT_SECRET_KEY") or os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    # Fallback seguro para desarrollo local: en producción debe definirse por entorno.
+    SECRET_KEY = secrets.token_urlsafe(64)
+    logger.warning("ALVENT_SECRET_KEY no configurada; se genero una clave temporal para esta ejecucion.")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15  # 15 minutos (corta expiración)
 REFRESH_TOKEN_EXPIRE_DAYS = 30  # 30 días

@@ -19,6 +19,10 @@ class PlanPago(Base):
     referencia_pago = Column(String(80), nullable=False)
     observaciones = Column(String(120), nullable=True)
     comprobante_url = Column(String(500), nullable=True)
+    duracion_dias = Column(Integer, nullable=True)
+    plan_vigente_desde = Column(DateTime, nullable=True)
+    plan_vigente_hasta = Column(DateTime, nullable=True)
+    token_idempotencia = Column(String(80), nullable=True, index=True)
 
     estado = Column(String(20), nullable=False, default="APLICADO")
     fecha = Column(DateTime, default=datetime.utcnow)

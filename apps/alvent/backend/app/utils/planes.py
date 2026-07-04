@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 import json
 
 
@@ -11,6 +12,9 @@ class PlanConfig:
     reportes_limite: int | None
     backups_habilitado: bool
     backups_limite: int | None
+    soporte_habilitado: bool
+    productos_limite: int | None
+    sunat_habilitado: bool
 
 
 PLANES: dict[str, PlanConfig] = {
@@ -20,6 +24,9 @@ PLANES: dict[str, PlanConfig] = {
         reportes_limite=0,
         backups_habilitado=False,
         backups_limite=0,
+        soporte_habilitado=True,
+        productos_limite=100,
+        sunat_habilitado=False,
     ),
     "PRUEBA": PlanConfig(
         usuarios_limite=1,
@@ -27,6 +34,9 @@ PLANES: dict[str, PlanConfig] = {
         reportes_limite=25,
         backups_habilitado=False,
         backups_limite=0,
+        soporte_habilitado=True,
+        productos_limite=300,
+        sunat_habilitado=False,
     ),
     "BASICO": PlanConfig(
         usuarios_limite=2,
@@ -34,6 +44,9 @@ PLANES: dict[str, PlanConfig] = {
         reportes_limite=0,
         backups_habilitado=False,
         backups_limite=0,
+        soporte_habilitado=True,
+        productos_limite=500,
+        sunat_habilitado=False,
     ),
     "LITE": PlanConfig(
         usuarios_limite=4,
@@ -41,6 +54,9 @@ PLANES: dict[str, PlanConfig] = {
         reportes_limite=250,
         backups_habilitado=False,
         backups_limite=0,
+        soporte_habilitado=True,
+        productos_limite=1500,
+        sunat_habilitado=True,
     ),
     "PRO": PlanConfig(
         usuarios_limite=10,
@@ -48,6 +64,9 @@ PLANES: dict[str, PlanConfig] = {
         reportes_limite=2000,
         backups_habilitado=True,
         backups_limite=25,
+        soporte_habilitado=True,
+        productos_limite=5000,
+        sunat_habilitado=True,
     ),
     "PREMIUM": PlanConfig(
         usuarios_limite=None,
@@ -55,6 +74,9 @@ PLANES: dict[str, PlanConfig] = {
         reportes_limite=None,
         backups_habilitado=True,
         backups_limite=None,
+        soporte_habilitado=True,
+        productos_limite=None,
+        sunat_habilitado=True,
     ),
 }
 
@@ -67,6 +89,15 @@ PLAN_LABELS = {
     "LITE": "Lite",
     "PRO": "Pro",
     "PREMIUM": "Premium",
+}
+
+PLAN_VIGENCIA_DIAS = {
+    "GRATUITO": None,
+    "PRUEBA": 7,
+    "BASICO": 30,
+    "LITE": 30,
+    "PRO": 30,
+    "PREMIUM": 30,
 }
 
 
@@ -85,6 +116,11 @@ def normalizar_plan(plan: str | None, default: str = "GRATUITO") -> str:
 
 def obtener_plan_config(plan: str | None) -> PlanConfig:
     return PLANES[normalizar_plan(plan)]
+
+
+def obtener_dias_vigencia_plan(plan: str | None) -> int | None:
+    codigo = normalizar_plan(plan)
+    return PLAN_VIGENCIA_DIAS.get(codigo)
 
 
 def plan_habilita_reportes(plan: str | None) -> bool:
@@ -108,6 +144,9 @@ def obtener_catalogo_planes() -> list[dict]:
                 "reportes_limite": cfg.reportes_limite,
                 "backups_habilitado": cfg.backups_habilitado,
                 "backups_limite": cfg.backups_limite,
+                "soporte_habilitado": cfg.soporte_habilitado,
+                "productos_limite": cfg.productos_limite,
+                "sunat_habilitado": cfg.sunat_habilitado,
             }
         )
     return catalogo
@@ -134,10 +173,16 @@ def _parse_catalogo_custom(raw_value: str | None) -> dict[str, dict]:
 
 
 def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None) -> PlanConfig:
-    codigo = normalizar_plan(plan or getattr(negocio, "plan", "GRATUITO"))
+    if plan is None:
+        codigo, _ = resolver_plan_vigente(negocio)
+    else:
+        codigo = normalizar_plan(plan)
     base = PLANES[codigo]
 
     if codigo == "GRATUITO":
+        custom_map = _parse_catalogo_custom(getattr(negocio, "plan_catalogo_custom", ""))
+        override = custom_map.get(codigo, {})
+
         usuarios_limite = (
             getattr(negocio, "plan_gratuito_usuarios_limite", None)
             if getattr(negocio, "plan_gratuito_usuarios_limite", None) is not None
@@ -166,12 +211,19 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
         if backups_habilitado and backups_limite is None:
             backups_limite = base.backups_limite
 
+        soporte_habilitado = bool(override.get("soporte_habilitado", base.soporte_habilitado))
+        productos_limite = override.get("productos_limite", base.productos_limite)
+        sunat_habilitado = bool(override.get("sunat_habilitado", base.sunat_habilitado))
+
         return PlanConfig(
             usuarios_limite=usuarios_limite,
             reportes_habilitado=reportes_habilitado,
             reportes_limite=reportes_limite,
             backups_habilitado=backups_habilitado,
             backups_limite=backups_limite,
+            soporte_habilitado=soporte_habilitado,
+            productos_limite=productos_limite,
+            sunat_habilitado=sunat_habilitado,
         )
 
     custom_map = _parse_catalogo_custom(getattr(negocio, "plan_catalogo_custom", ""))
@@ -182,6 +234,9 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
     reportes_limite = override.get("reportes_limite", base.reportes_limite)
     backups_habilitado = bool(override.get("backups_habilitado", base.backups_habilitado))
     backups_limite = override.get("backups_limite", base.backups_limite)
+    soporte_habilitado = bool(override.get("soporte_habilitado", base.soporte_habilitado))
+    productos_limite = override.get("productos_limite", base.productos_limite)
+    sunat_habilitado = bool(override.get("sunat_habilitado", base.sunat_habilitado))
 
     if not reportes_habilitado:
         reportes_limite = 0
@@ -194,7 +249,30 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
         reportes_limite=reportes_limite,
         backups_habilitado=backups_habilitado,
         backups_limite=backups_limite,
+        soporte_habilitado=soporte_habilitado,
+        productos_limite=productos_limite,
+        sunat_habilitado=sunat_habilitado,
     )
+
+
+def resolver_plan_vigente(negocio: object | None) -> tuple[str, bool]:
+    """
+    Retorna (plan_vigente, vencio).
+    - Si el plan es GRATUITO, nunca se considera vencido.
+    - Si hay plan de pago y su vigencia terminó, cae automáticamente a GRATUITO.
+    """
+    plan_actual = normalizar_plan(getattr(negocio, "plan", "GRATUITO"))
+    if plan_actual == "GRATUITO":
+        return "GRATUITO", False
+
+    vigente_hasta = getattr(negocio, "plan_vigente_hasta", None)
+    if not vigente_hasta:
+        return plan_actual, False
+
+    if isinstance(vigente_hasta, datetime) and vigente_hasta <= datetime.utcnow():
+        return "GRATUITO", True
+
+    return plan_actual, False
 
 
 def obtener_catalogo_planes_para_negocio(negocio: object | None) -> list[dict]:
@@ -212,6 +290,9 @@ def obtener_catalogo_planes_para_negocio(negocio: object | None) -> list[dict]:
                 "reportes_limite": cfg.reportes_limite,
                 "backups_habilitado": cfg.backups_habilitado,
                 "backups_limite": cfg.backups_limite,
+                "soporte_habilitado": cfg.soporte_habilitado,
+                "productos_limite": cfg.productos_limite,
+                "sunat_habilitado": cfg.sunat_habilitado,
             }
         )
     return salida

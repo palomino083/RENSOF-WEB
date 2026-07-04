@@ -11,6 +11,7 @@ from app.models.negocio import Negocio
 from app.models.producto import Producto
 from app.schemas.producto import ProductoCreate, ProductoOut
 from app.utils.dependencies import get_current_user_with_negocio
+from app.utils.planes import normalizar_plan, resolver_config_plan_negocio
 
 from pathlib import Path
 from uuid import uuid4
@@ -149,6 +150,34 @@ def _obtener_o_crear_config(db: Session, negocio_id: int) -> ConfiguracionNegoci
     return config
 
 
+def _validar_limite_plan_productos(db: Session, negocio_id: int) -> None:
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        return
+
+    try:
+        plan = normalizar_plan(getattr(negocio, "plan", "BASICO"))
+    except ValueError:
+        plan = "BASICO"
+
+    config = resolver_config_plan_negocio(negocio, plan)
+    limite = config.productos_limite
+    if limite is None:
+        return
+
+    total = (
+        db.query(Producto)
+        .filter(Producto.negocio_id == negocio_id)
+        .count()
+    )
+
+    if total >= limite:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Plan {plan} permite hasta {limite} productos. Mejora tu plan para continuar.",
+        )
+
+
 @router.get("/tabla-config")
 def get_tabla_productos_config(
     current_user: dict = Depends(get_current_user_with_negocio),
@@ -241,7 +270,10 @@ def create_producto(
 ):
     is_superadmin = bool(current_user.get("is_superadmin"))
     negocio_id = None if is_superadmin else int(current_user.get("negocio_id"))
-    print("RECIBIDO:", data.model_dump())
+
+    if not is_superadmin and negocio_id:
+        _validar_limite_plan_productos(db, negocio_id)
+
     existe = (
         db.query(Producto)
         .filter(Producto.codigo == data.codigo)

@@ -51,6 +51,7 @@ export default function ExportacionPage() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
+  const [autoPrintOnOpen, setAutoPrintOnOpen] = useState(false);
 
   const formatDateTime = (value: string) => {
     const parsed = new Date(value);
@@ -255,16 +256,33 @@ export default function ExportacionPage() {
       .replace(/\"/g, "&quot;")
       .replace(/'/g, "&#39;");
 
-  const exportarConsolidadoPdf = async (all: boolean) => {
+  const exportarConsolidadoPdf = async (all: boolean, openInNewPage = false) => {
     const keys = all ? EXPORT_KEYS : getSelectedExportKeys();
     const dateRange: DateRangeFilter = { from: fechaInicio, to: fechaFin };
+
+    let previewWindow: Window | null = null;
+    if (openInNewPage) {
+      // Abrimos la pestaña dentro del gesto del usuario para evitar bloqueo del navegador.
+      previewWindow = window.open("", "_blank");
+      if (!previewWindow) {
+        alert("No se pudo abrir la nueva página. Habilita popups e intenta nuevamente.");
+        return;
+      }
+    }
+
     if (keys.length === 0) {
       alert("Selecciona al menos un modulo para exportar.");
+      if (previewWindow) {
+        previewWindow.close();
+      }
       return;
     }
 
     if (!isDateRangeValid(dateRange)) {
       alert("El rango de fechas es inválido. La fecha Desde no puede ser mayor que Hasta.");
+      if (previewWindow) {
+        previewWindow.close();
+      }
       return;
     }
 
@@ -328,9 +346,22 @@ export default function ExportacionPage() {
             <p>Generado: ${new Date().toLocaleString("es-PE")} | Modulos: ${sections.length}</p>
             <p>${rangeLabel}</p>
             ${sectionsHtml}
+            ${
+              previewWindow && autoPrintOnOpen
+                ? `<script>window.addEventListener("load", function(){ setTimeout(function(){ window.print(); }, 700); });</script>`
+                : ""
+            }
           </body>
         </html>
       `;
+
+      if (previewWindow) {
+        previewWindow.document.open();
+        previewWindow.document.write(printableHtml);
+        previewWindow.document.close();
+        previewWindow.focus();
+        return;
+      }
 
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
@@ -370,6 +401,9 @@ export default function ExportacionPage() {
         iframe.onload = runPrint;
       }
     } catch (err: any) {
+      if (previewWindow) {
+        previewWindow.close();
+      }
       if (process.env.NODE_ENV !== "production") {
         console.error(err);
       }
@@ -469,7 +503,24 @@ export default function ExportacionPage() {
               >
                 {exportingPdf ? "Generando PDF..." : "Exportar PDF"}
               </button>
+              <button
+                type="button"
+                className={`${styles.exportPrimaryBtn} focus-ring`}
+                onClick={() => void exportarConsolidadoPdf(false, true)}
+                disabled={exportingExcel || exportingPdf || !hasExportSelection}
+              >
+                {exportingPdf ? "Generando vista..." : "Abrir en nueva página"}
+              </button>
             </div>
+
+            <label className={styles.openOptionRow}>
+              <input
+                type="checkbox"
+                checked={autoPrintOnOpen}
+                onChange={(event) => setAutoPrintOnOpen(event.target.checked)}
+              />
+              <span>Imprimir automáticamente al abrir en nueva página</span>
+            </label>
 
             {!hasExportSelection ? (
               <p className={styles.exportHint}>Selecciona al menos un módulo para exportar.</p>

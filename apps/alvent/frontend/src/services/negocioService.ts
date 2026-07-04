@@ -40,6 +40,55 @@ export const negocioService = {
     return res.data as Negocio;
   },
 
+  getConfiguracion: async (negocioId: number) => {
+    const res = await api.get(`/negocios/${negocioId}/configuracion`);
+    return res.data as {
+      id: number;
+      negocio_id: number;
+      integracion_sunat: boolean;
+      sunat_proveedor: string;
+      sunat_api_url?: string | null;
+      sunat_usuario_sol?: string | null;
+      sunat_emisor_ruc?: string | null;
+      sunat_modo?: string | null;
+      sunat_serie_boleta?: string | null;
+      sunat_serie_factura?: string | null;
+      sunat_has_api_token: boolean;
+      sunat_has_clave_sol: boolean;
+    };
+  },
+
+  updateConfiguracion: async (
+    negocioId: number,
+    data: {
+      integracion_sunat?: boolean;
+      sunat_proveedor?: string;
+      sunat_api_url?: string;
+      sunat_api_token?: string;
+      sunat_usuario_sol?: string;
+      sunat_clave_sol?: string;
+      sunat_emisor_ruc?: string;
+      sunat_modo?: string;
+      sunat_serie_boleta?: string;
+      sunat_serie_factura?: string;
+    }
+  ) => {
+    const res = await api.put(`/negocios/${negocioId}/configuracion`, data);
+    return res.data;
+  },
+
+  testSunatConnection: async (negocioId: number) => {
+    const res = await api.post(`/negocios/${negocioId}/configuracion/sunat/test`);
+    return res.data as {
+      ok: boolean;
+      status_code: number;
+      endpoint: string;
+      proveedor: string;
+      mensaje: string;
+      detalle?: string;
+    };
+  },
+
   uploadLogo: async (negocioId: number, file: File) => {
     const formData = new FormData();
     formData.append("archivo", file);
@@ -61,6 +110,9 @@ export const negocioService = {
       usuarios: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
       reportes: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
       backups: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
+      productos: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
+      soporte: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
+      sunat: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
     };
   },
 
@@ -75,6 +127,9 @@ export const negocioService = {
         reportes_limite: number | null;
         backups_habilitado: boolean;
         backups_limite: number | null;
+        soporte_habilitado: boolean;
+        productos_limite: number | null;
+        sunat_habilitado: boolean;
       }>;
     };
   },
@@ -91,6 +146,9 @@ export const negocioService = {
         reportes_limite: number | null;
         backups_habilitado: boolean;
         backups_limite: number | null;
+        soporte_habilitado: boolean;
+        productos_limite: number | null;
+        sunat_habilitado: boolean;
       }>;
     };
   },
@@ -104,6 +162,9 @@ export const negocioService = {
       reportes_limite: number | null;
       backups_habilitado: boolean;
       backups_limite: number | null;
+      soporte_habilitado: boolean;
+      productos_limite: number | null;
+      sunat_habilitado: boolean;
     }>
   ) => {
     const res = await api.put(`/negocios/${negocioId}/planes/catalogo-editable`, { planes });
@@ -118,6 +179,9 @@ export const negocioService = {
         reportes_limite: number | null;
         backups_habilitado: boolean;
         backups_limite: number | null;
+        soporte_habilitado: boolean;
+        productos_limite: number | null;
+        sunat_habilitado: boolean;
       }>;
     };
   },

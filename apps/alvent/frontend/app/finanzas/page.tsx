@@ -95,10 +95,15 @@ export default function FinanzasPage() {
   };
 
   const cargarPlanes = async (negocioId: number) => {
+    if (!negocioId) {
+      setPlanCatalogo([]);
+      return;
+    }
+
     try {
       const [catalogo, montos] = await Promise.all([
-        negocioService.getPlanCatalog(),
-        negocioId ? negocioService.getPlanAmounts(negocioId) : Promise.resolve(null),
+        negocioService.getEditablePlanCatalog(negocioId),
+        negocioService.getPlanAmounts(negocioId),
       ]);
 
       setPlanCatalogo(Array.isArray(catalogo.planes) ? catalogo.planes : []);
@@ -288,7 +293,7 @@ export default function FinanzasPage() {
         <main className={`app-content ${styles.shell}`}>
           <section className={styles.hero}>
             <div>
-              <p className={styles.eyebrow}>Superadministrador</p>
+              <p className={styles.eyebrow}>RENSOF</p>
               <h1>Finanzas de planes</h1>
               <p>Panel contable completo con ingresos, gastos, comprobantes y cierre mensual.</p>
             </div>

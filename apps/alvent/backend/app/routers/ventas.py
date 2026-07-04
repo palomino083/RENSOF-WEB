@@ -14,10 +14,14 @@ from app.database.database import get_db
 from app.models.venta import Venta
 from app.models.venta_detalle import VentaDetalle
 from app.models.producto import Producto
+from app.models.negocio import Negocio
 from app.models.usuario import Usuario
+from app.models.configuracion_negocio import ConfiguracionNegocio
 from app.schemas.venta import VentaCreate
 from app.services.auditoria import registrar_auditoria
+from app.services.sunat import construir_payload_sunat, emitir_en_sunat, homologar_error_nubefact, NUBEFACT_DEFAULT_URL
 from app.utils.dependencies import get_current_user_with_negocio
+from app.utils.planes import normalizar_plan, resolver_config_plan_negocio
 
 from app.services.caja import (
     obtener_caja_abierta,
@@ -75,6 +79,27 @@ def _restaurar_stock_venta(db: Session, venta: Venta, referencia: str) -> None:
                 cantidad=int(detalle.cantidad or 0),
                 referencia=referencia,
             )
+        )
+
+
+def _validar_habilitacion_sunat_plan(db: Session, negocio_id: int, tipo_comprobante: str) -> None:
+    if str(tipo_comprobante or "NINGUNO").upper() == "NINGUNO":
+        return
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        return
+
+    try:
+        plan = normalizar_plan(getattr(negocio, "plan", "BASICO"))
+    except ValueError:
+        plan = "BASICO"
+
+    config_plan = resolver_config_plan_negocio(negocio, plan)
+    if not config_plan.sunat_habilitado:
+        raise HTTPException(
+            status_code=402,
+            detail=f"SUNAT no disponible en plan {plan}. Mejora tu plan para emitir comprobantes.",
         )
 
 
@@ -138,6 +163,13 @@ def listar_ventas(
             "descuento": v.descuento or 0,
             "total": v.total or 0,
             "metodo_pago": v.metodo_pago,
+            "tipo_comprobante": v.tipo_comprobante or "NINGUNO",
+            "cliente_nombre": v.cliente_nombre,
+            "cliente_documento": v.cliente_documento,
+            "serie_comprobante": v.serie_comprobante,
+            "numero_comprobante": v.numero_comprobante,
+            "sunat_estado": v.sunat_estado,
+            "sunat_mensaje": v.sunat_mensaje,
             "estado": str(v.estado or "pagada").lower(),
             "items": [
                 {
@@ -297,6 +329,10 @@ def crear_venta(
             descuento=data.descuento or 0,
             total=0,
             metodo_pago=data.metodo_pago,
+            tipo_comprobante=(data.comprobante.tipo_comprobante if data.comprobante else "NINGUNO"),
+            cliente_nombre=(data.comprobante.cliente_nombre if data.comprobante else None),
+            cliente_documento=(data.comprobante.cliente_documento if data.comprobante else None),
+            cliente_email=(data.comprobante.cliente_email if data.comprobante else None),
             fecha=datetime.utcnow()
         )
 
@@ -368,6 +404,99 @@ def crear_venta(
         # ======================================
         venta.subtotal = total
         venta.total = max(0, total - (data.descuento or 0))
+
+        tipo_comprobante = str(venta.tipo_comprobante or "NINGUNO").upper()
+        if tipo_comprobante not in {"NINGUNO", "BOLETA", "FACTURA"}:
+            tipo_comprobante = "NINGUNO"
+            venta.tipo_comprobante = "NINGUNO"
+
+        if tipo_comprobante != "NINGUNO":
+            _validar_habilitacion_sunat_plan(db, int(negocio_id or 0), tipo_comprobante)
+
+            documento = "".join(ch for ch in str(venta.cliente_documento or "") if ch.isdigit())
+            nombre_cliente = str(venta.cliente_nombre or "").strip()
+            if not nombre_cliente:
+                raise HTTPException(status_code=400, detail="Nombre del cliente requerido para comprobante")
+
+            if tipo_comprobante == "FACTURA" and len(documento) != 11:
+                raise HTTPException(status_code=400, detail="Factura requiere RUC de 11 dígitos")
+            if tipo_comprobante == "BOLETA" and len(documento) not in {8, 11}:
+                raise HTTPException(status_code=400, detail="Boleta requiere DNI de 8 dígitos o RUC de 11 dígitos")
+
+            config = db.query(ConfiguracionNegocio).filter(ConfiguracionNegocio.negocio_id == negocio_id).first()
+            venta.serie_comprobante = (
+                str(getattr(config, "sunat_serie_factura", "F001") or "F001").strip().upper()
+                if tipo_comprobante == "FACTURA"
+                else str(getattr(config, "sunat_serie_boleta", "B001") or "B001").strip().upper()
+            )
+            venta.numero_comprobante = str(venta.id)
+
+            integracion_habilitada = bool(getattr(config, "integracion_sunat", False)) if config else False
+            if integracion_habilitada:
+                proveedor = str(getattr(config, "sunat_proveedor", "NUBEFACT") or "NUBEFACT").upper()
+                if proveedor != "NUBEFACT":
+                    raise HTTPException(status_code=400, detail="Proveedor SUNAT no soportado")
+
+                endpoint = str(getattr(config, "sunat_api_url", "") or "").strip() or NUBEFACT_DEFAULT_URL
+                emisor_ruc = "".join(ch for ch in str(getattr(config, "sunat_emisor_ruc", "") or "") if ch.isdigit())
+                if len(emisor_ruc) != 11:
+                    raise HTTPException(status_code=400, detail="Configura un RUC emisor SUNAT válido en Configuración")
+
+                token = str(getattr(config, "sunat_api_token", "") or "").strip()
+                if not token:
+                    raise HTTPException(status_code=400, detail="Configura el token API de Nubefact para emitir")
+
+                payload_sunat = construir_payload_sunat(
+                    emisor_ruc=emisor_ruc,
+                    tipo_comprobante=tipo_comprobante,
+                    serie=venta.serie_comprobante or ("F001" if tipo_comprobante == "FACTURA" else "B001"),
+                    correlativo=venta.numero_comprobante or str(venta.id),
+                    fecha_emision=venta.fecha or datetime.utcnow(),
+                    cliente_nombre=venta.cliente_nombre,
+                    cliente_documento=documento,
+                    cliente_email=venta.cliente_email,
+                    moneda="PEN",
+                    subtotal=float(venta.subtotal or 0),
+                    descuento=float(venta.descuento or 0),
+                    total=float(venta.total or 0),
+                    items=[
+                        {
+                            "descripcion": str(d.producto.nombre if d.producto else f"Producto {d.producto_id}"),
+                            "cantidad": d.cantidad,
+                            "precio_unitario": d.precio_unitario,
+                        }
+                        for d in venta.detalles
+                    ],
+                )
+
+                try:
+                    result = emitir_en_sunat(
+                        endpoint_url=endpoint,
+                        api_token=token,
+                        payload=payload_sunat,
+                        usuario_sol=str(getattr(config, "sunat_usuario_sol", "") or "") or None,
+                        clave_sol=str(getattr(config, "sunat_clave_sol", "") or "") or None,
+                    )
+                    venta.sunat_estado = str(result.get("estado") or "ENVIADO")
+                    venta.sunat_codigo = str(result.get("codigo") or "") or None
+                    venta.sunat_mensaje = str(result.get("mensaje") or "Comprobante enviado a SUNAT")
+                    venta.sunat_hash = str(result.get("hash") or "") or None
+                    venta.sunat_ticket = str(result.get("ticket") or "") or None
+                    venta.sunat_cdr_url = str(result.get("enlace_cdr") or result.get("cdr_url") or "") or None
+                except Exception as sunat_err:
+                    mapped = homologar_error_nubefact(sunat_err)
+                    raise HTTPException(
+                        status_code=502,
+                        detail={
+                            "codigo": mapped.get("codigo"),
+                            "mensaje": mapped.get("mensaje"),
+                            "detalle": mapped.get("detalle"),
+                        },
+                    )
+            else:
+                venta.sunat_estado = "PENDIENTE_CONFIGURACION"
+                venta.sunat_mensaje = "Integración SUNAT no habilitada"
+
         # Registrar ingreso en caja
         registrar_venta_en_caja(
             db=db,
@@ -390,7 +519,18 @@ def crear_venta(
         return {
             "mensaje": "Venta registrada correctamente",
             "venta_id": venta.id,
-            "total": venta.total
+            "total": venta.total,
+            "sunat": {
+                "tipo_comprobante": venta.tipo_comprobante,
+                "serie": venta.serie_comprobante,
+                "numero": venta.numero_comprobante,
+                "estado": venta.sunat_estado,
+                "mensaje": venta.sunat_mensaje,
+                "codigo": venta.sunat_codigo,
+                "hash": venta.sunat_hash,
+                "ticket": venta.sunat_ticket,
+                "cdr_url": venta.sunat_cdr_url,
+            },
         }
 
     except HTTPException:

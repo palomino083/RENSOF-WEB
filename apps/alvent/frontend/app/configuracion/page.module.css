@@ -21,6 +21,11 @@
   gap: 12px;
 }
 
+.heroContent {
+  min-width: 0;
+  max-width: 760px;
+}
+
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.13em;
@@ -33,6 +38,72 @@
 .hero h1 {
   font-family: var(--font-display);
   margin-bottom: 8px;
+}
+
+.modeChipRow {
+  margin-top: 10px;
+}
+
+.modeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.modeChipIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.2);
+  font-size: 0.86rem;
+  line-height: 1;
+}
+
+.modeChipDesktop {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  white-space: normal;
+}
+
+.modeChipDesktop strong {
+  font-size: 0.78rem;
+  line-height: 1.1;
+}
+
+.modeChipDesktop small {
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.9;
+  line-height: 1.2;
+}
+
+.modeChipMobile {
+  display: none;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.modeChipSupport {
+  background: rgba(251, 191, 36, 0.22);
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fef3c7;
+}
+
+.modeChipConfig {
+  background: rgba(125, 211, 252, 0.2);
+  border-color: rgba(125, 211, 252, 0.5);
+  color: #dbeafe;
 }
 
 .errorBox {
@@ -328,6 +399,123 @@
   padding: 9px 10px;
 }
 
+.supportActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.supportList {
+  display: grid;
+  gap: 8px;
+}
+
+.supportFilterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+
+.supportFilterBar label {
+  display: grid;
+  gap: 4px;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.supportFilterBar select {
+  min-width: 160px;
+}
+
+.supportTicketItem {
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.supportTicketHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.supportPagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.supportPagination span {
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.supportChatModal {
+  display: grid;
+  gap: 10px;
+}
+
+.supportChatWindow {
+  display: grid;
+  gap: 10px;
+}
+
+.supportChatMessages {
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.supportChatComposer {
+  display: grid;
+  gap: 8px;
+}
+
+.chatBubbleUser,
+.chatBubbleIa {
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.chatBubbleUser {
+  border: 1px solid rgba(148, 163, 184, 0.65);
+  background: #f8fafc;
+}
+
+.chatBubbleIa {
+  border: 1px dashed rgba(2, 132, 199, 0.45);
+  background: #eff6ff;
+}
+
+.chatBubbleUser strong,
+.chatBubbleIa strong {
+  color: #0f172a;
+  font-size: 0.8rem;
+}
+
+.chatBubbleUser p,
+.chatBubbleIa p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.88rem;
+}
+
 .confirmBtn,
 .cancelBtn {
   border: none;
@@ -525,6 +713,33 @@
   font-weight: 700;
 }
 
+.presetActions {
+  border: 1px dashed rgba(15, 118, 110, 0.35);
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  background: linear-gradient(160deg, rgba(240, 253, 250, 0.9), rgba(248, 250, 252, 0.95));
+}
+
+.presetBtn {
+  width: fit-content;
+  border: 1px solid #0f766e;
+  border-radius: 10px;
+  background: #ecfeff;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.presetBtn:disabled {
+  background: #cbd5e1;
+  border-color: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
 .planFold {
   border: 1px solid rgba(203, 213, 225, 0.9);
   border-radius: 12px;
@@ -555,6 +770,45 @@
   background: #fff;
   resize: vertical;
   min-height: 78px;
+}
+
+.tipoNegocioBox {
+  border: 1px dashed rgba(56, 189, 248, 0.5);
+  border-radius: 12px;
+  padding: 10px;
+  background: linear-gradient(160deg, rgba(248, 250, 252, 0.9), rgba(240, 249, 255, 0.82));
+  display: grid;
+  gap: 8px;
+}
+
+.tipoNegocioInline {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tipoNegocioInline select,
+.tipoNegocioInline input {
+  flex: 1;
+  min-width: 220px;
+}
+
+.tipoNegocioBtn {
+  border: 1px solid #0f766e;
+  border-radius: 10px;
+  background: #e6fffb;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.tipoNegocioBtn:disabled {
+  background: #cbd5e1;
+  border-color: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
 }
 
 .fullRow {
@@ -1872,8 +2126,44 @@
 
   .hero {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 
+  .heroContent {
+    max-width: 100%;
+  }
+
+  .modeChip {
+    font-size: 0.74rem;
+    padding: 4px 9px;
+  }
+
+  .modeChipDesktop small {
+    font-size: 0.66rem;
+  }
+
+
+@media (max-width: 640px) {
+  .modeChip {
+    gap: 6px;
+    padding: 5px 9px;
+  }
+
+  .modeChipIcon {
+    width: 22px;
+    height: 22px;
+    font-size: 0.82rem;
+  }
+
+  .modeChipDesktop {
+    display: none;
+  }
+
+  .modeChipMobile {
+    display: inline;
+  }
+}
   .overviewGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

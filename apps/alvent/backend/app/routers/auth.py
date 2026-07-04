@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -37,8 +38,7 @@ from app.utils.jwt_utils import (
     hash_refresh_token,
 )
 
-from datetime import datetime
-import os
+logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
 limiter = Limiter(key_func=get_remote_address)
@@ -48,7 +48,7 @@ router = APIRouter(
     tags=["Auth"]
 )
 
-SUPERADMIN_USERNAME = "admin"
+SUPERADMIN_USERNAME = (os.getenv("ALVENT_SUPERADMIN_USERNAME") or "admin").strip().lower()
 
 
 def _normalizar_rol(rol: str | None) -> str:
@@ -105,13 +105,7 @@ def register(
     
     # Hash de contraseña
     try:
-        print("=== INICIO REGISTER ===")
-
-        print("Paso 1 - Hash password")
         hashed_password = hash_password(data.password)
-        print("OK - Password hasheada")
-
-        print("Paso 2 - Crear objeto Usuario")
         nuevo_usuario = Usuario(
             nombres=data.nombres,
             usuario=data.usuario,
@@ -120,21 +114,9 @@ def register(
             rol="ADMINISTRADOR",
             activo=True
         )
-        print("OK - Usuario creado")
-
-        print("Paso 3 - db.add")
         db.add(nuevo_usuario)
-        print("OK - add")
-
-        print("Paso 4 - commit")
         db.commit()
-        print("OK - commit")
-
-        print("Paso 5 - refresh")
         db.refresh(nuevo_usuario)
-        print("OK - refresh")
-
-        print("Paso 6 - JWT")
         access_token = create_access_token(
             data={
                 "sub": str(nuevo_usuario.id),
@@ -143,7 +125,6 @@ def register(
                 "roles": _roles_usuario(nuevo_usuario),
             }
         )
-        print("OK - JWT")
 
         return {
             "id": nuevo_usuario.id,
@@ -153,10 +134,7 @@ def register(
         }
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(type(e).__name__)
-        print(str(e))
+        logger.exception("Error registrando usuario")
         raise
 
   
