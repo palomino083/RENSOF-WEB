@@ -51,6 +51,57 @@
   padding: 10px 12px;
 }
 
+.planApprovalAlert {
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fffbeb, #fff7ed);
+  color: #78350f;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.planApprovalAlert strong {
+  display: block;
+  font-size: 0.86rem;
+  color: #9a3412;
+}
+
+.planApprovalAlert p {
+  margin: 2px 0 0;
+  font-size: 0.84rem;
+  color: #92400e;
+}
+
+.planApprovalAlertBtn {
+  border: 1px solid rgba(180, 83, 9, 0.34);
+  border-radius: 10px;
+  background: #fef3c7;
+  color: #78350f;
+  font-weight: 700;
+  padding: 8px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.planApprovalAlertPulse {
+  animation: planApprovalPulse 0.9s ease-in-out 2;
+}
+
+@keyframes planApprovalPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.32);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
 .overviewGrid {
   display: grid;
   gap: 10px;

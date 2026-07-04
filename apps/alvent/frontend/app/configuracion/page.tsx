@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -357,6 +357,9 @@ export default function ConfiguracionPage() {
   const [paymentDestinations, setPaymentDestinations] = useState<PaymentDestinations>(PAYMENT_DESTINATIONS_DEFAULT);
   const [savingPaymentDestinations, setSavingPaymentDestinations] = useState(false);
   const [filtroEstadoHistorialPlan, setFiltroEstadoHistorialPlan] = useState<"TODOS" | "PENDIENTE_VALIDACION" | "APLICADO" | "RECHAZADO">("TODOS");
+  const [planApprovalAlertText, setPlanApprovalAlertText] = useState("");
+  const [planApprovalAlertPulse, setPlanApprovalAlertPulse] = useState(false);
+  const pendingPlanApprovalsRef = useRef(0);
   const [validatingPlanPagoId, setValidatingPlanPagoId] = useState<number | null>(null);
   const [solicitudPlan, setSolicitudPlan] = useState({
     plan_objetivo: "PRO",
@@ -416,19 +419,32 @@ export default function ConfiguracionPage() {
       : historialPlanes.filter(
         (item) => String(item.estado || "").toUpperCase() === filtroEstadoHistorialPlan
       );
+  const pendingPlanApprovals = historialPlanes.filter(
+    (item) => String(item.estado || "").toUpperCase() === "PENDIENTE_VALIDACION"
+  ).length;
 
   const irASeccion = (id: string) => {
     const node = document.getElementById(id);
     if (node) node.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const isNegocioDisponible = useCallback((negocioId: number) => {
+    if (!negocioId) return false;
+    return negociosDisponibles.some((item) => item.id === negocioId);
+  }, [negociosDisponibles]);
+
+  const getNegocioSesionSuperadminValido = useCallback(() => {
+    const negocioSesion = parseNumero(getStorageItem("negocio_id"));
+    return isNegocioDisponible(negocioSesion) ? negocioSesion : 0;
+  }, [isNegocioDisponible]);
+
   const getNegocioIdActivo = useCallback(() => {
     if (isSuperadmin) {
-      const negocioSesion = getNegocioIdFromSession();
-      return negocioSeleccionadoId || negocioSesion;
+      if (isNegocioDisponible(negocioSeleccionadoId)) return negocioSeleccionadoId;
+      return getNegocioSesionSuperadminValido();
     }
     return getNegocioIdFromSession();
-  }, [isSuperadmin, negocioSeleccionadoId]);
+  }, [isSuperadmin, negocioSeleccionadoId, isNegocioDisponible, getNegocioSesionSuperadminValido]);
 
   const cargarBranding = useCallback(async (negocioIdArg?: number) => {
     try {
@@ -604,9 +620,25 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) return;
     try {
       const items = await negocioService.list();
-      setNegociosDisponibles(items || []);
+      const lista = items || [];
+      setNegociosDisponibles(lista);
+
       const negocioSesion = parseNumero(getStorageItem("negocio_id"));
-      setNegocioSeleccionadoId((prev) => prev || negocioSesion);
+      const negocioSesionValido = lista.some((item) => item.id === negocioSesion) ? negocioSesion : 0;
+      const fallbackId = negocioSesionValido || Number(lista[0]?.id || 0);
+
+      setNegocioSeleccionadoId((prev) => {
+        if (prev && lista.some((item) => item.id === prev)) return prev;
+        return fallbackId;
+      });
+
+      if (typeof window !== "undefined") {
+        if (fallbackId) {
+          window.localStorage.setItem("negocio_id", String(fallbackId));
+        } else {
+          window.localStorage.removeItem("negocio_id");
+        }
+      }
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar negocios"));
     }
@@ -1269,7 +1301,15 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin || negociosDisponibles.length === 0) return;
     const existeSeleccion = negociosDisponibles.some((n) => n.id === negocioSeleccionadoId);
     if (!existeSeleccion) {
-      setNegocioSeleccionadoId(0);
+      const fallbackId = Number(negociosDisponibles[0]?.id || 0);
+      setNegocioSeleccionadoId(fallbackId);
+      if (typeof window !== "undefined") {
+        if (fallbackId) {
+          window.localStorage.setItem("negocio_id", String(fallbackId));
+        } else {
+          window.localStorage.removeItem("negocio_id");
+        }
+      }
     }
   }, [isSuperadmin, negociosDisponibles, negocioSeleccionadoId]);
 
@@ -1322,6 +1362,53 @@ export default function ConfiguracionPage() {
   useEffect(() => {
     void cargarEscenariosSimulador();
   }, [cargarEscenariosSimulador, negocioSeleccionadoId, isSuperadmin]);
+
+  useEffect(() => {
+    if (!isSuperadmin) {
+      pendingPlanApprovalsRef.current = pendingPlanApprovals;
+      if (pendingPlanApprovals > 0) {
+        setPlanApprovalAlertText(`Tu solicitud de plan sigue en validacion. Pendientes: ${pendingPlanApprovals}.`);
+      } else {
+        setPlanApprovalAlertText("");
+      }
+      setPlanApprovalAlertPulse(false);
+      return;
+    }
+
+    const prevPending = pendingPlanApprovalsRef.current;
+    if (pendingPlanApprovals > prevPending) {
+      const nuevos = pendingPlanApprovals - prevPending;
+      const label = nuevos === 1 ? "nueva solicitud" : `${nuevos} nuevas solicitudes`;
+      setPlanApprovalAlertText(`Alerta: ${label} de cambio de plan requieren aprobacion.`);
+      setPlanApprovalAlertPulse(true);
+    } else if (pendingPlanApprovals > 0) {
+      setPlanApprovalAlertText(`Hay ${pendingPlanApprovals} solicitud(es) de plan pendiente(s) por revisar.`);
+    } else {
+      setPlanApprovalAlertText("");
+      setPlanApprovalAlertPulse(false);
+    }
+    pendingPlanApprovalsRef.current = pendingPlanApprovals;
+  }, [isSuperadmin, pendingPlanApprovals]);
+
+  useEffect(() => {
+    if (!planApprovalAlertPulse) return;
+    const timeoutId = window.setTimeout(() => {
+      setPlanApprovalAlertPulse(false);
+    }, 2200);
+    return () => window.clearTimeout(timeoutId);
+  }, [planApprovalAlertPulse]);
+
+  useEffect(() => {
+    if (!isSuperadmin) return;
+    const negocioId = getNegocioIdActivo();
+    if (!negocioId) return;
+
+    const intervalId = window.setInterval(() => {
+      void cargarHistorialPlanes(negocioId);
+    }, 30000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isSuperadmin, negocioSeleccionadoId, getNegocioIdActivo, cargarHistorialPlanes]);
 
   
 
@@ -1544,6 +1631,28 @@ export default function ConfiguracionPage() {
 
           {error ? <p className={styles.errorBox}>{error}</p> : null}
           {success ? <p className={styles.successBox}>{success}</p> : null}
+          {planApprovalAlertText ? (
+            <section className={`${styles.planApprovalAlert} ${planApprovalAlertPulse ? styles.planApprovalAlertPulse : ""}`}>
+              <div>
+                <strong>{isSuperadmin ? "Alertas de aprobacion de planes" : "Estado de tu solicitud de plan"}</strong>
+                <p>{planApprovalAlertText}</p>
+              </div>
+              <button
+                type="button"
+                className={`${styles.planApprovalAlertBtn} focus-ring`}
+                onClick={() => {
+                  if (isSuperadmin) {
+                    setFiltroEstadoHistorialPlan("PENDIENTE_VALIDACION");
+                    irASeccion("cfg-plan-validaciones");
+                    return;
+                  }
+                  irASeccion("cfg-plan");
+                }}
+              >
+                {isSuperadmin ? "Revisar aprobaciones" : "Ver estado"}
+              </button>
+            </section>
+          ) : null}
 
           <section className={`${styles.overviewGrid} uiEnter`} data-stagger="2">
             <article className={styles.overviewCard}>
@@ -2317,7 +2426,7 @@ export default function ConfiguracionPage() {
                   </div>
                 </section>
 
-                <section className={styles.planHistoryBox}>
+                <section id="cfg-plan-validaciones" className={styles.planHistoryBox}>
                   <div className={styles.planHistoryHead}>
                     <h4>Validacion de pagos de planes</h4>
                     <label className={styles.planHistoryFilter}>
