@@ -33,6 +33,15 @@ export const api = axios.create({
 const shouldLogNetworkDebug =
   typeof window !== "undefined" && process.env.NODE_ENV !== "production";
 
+function isHtmlInsteadOfJsonError(error: any): boolean {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("unexpected token '<'") ||
+    message.includes("<!doctype") ||
+    message.includes("is not valid json")
+  );
+}
+
 function getLocalFallbackBaseUrls(currentBaseURL?: string): string[] {
   const candidates = [
     "/alven/api",
@@ -86,7 +95,7 @@ api.interceptors.response.use(
 
     // Fallback de red para desarrollo local:
     // si el backend no responde en baseURL actual, reintenta en hosts/puertos comunes.
-    if (!response && config) {
+    if ((!response && config) || (config && isHtmlInsteadOfJsonError(error))) {
       const currentBaseURL = (config.baseURL || API_URL || "").replace(/\/$/, "");
 
       if (!config.__networkFallbacks) {
@@ -107,6 +116,7 @@ api.interceptors.response.use(
             to: nextBaseURL,
             url: config.url,
             attempt: config.__networkRetryIndex,
+            reason: !response ? "network" : "html-instead-of-json",
           });
         }
 

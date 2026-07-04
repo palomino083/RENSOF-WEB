@@ -83,6 +83,98 @@
   margin-top: 4px;
 }
 
+.exportCenterCard {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.exportHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.exportHeader h2 {
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.exportHeader p {
+  color: #475569;
+  font-size: 0.88rem;
+  margin-top: 4px;
+}
+
+.exportQuickActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.exportGhostBtn {
+  border: 1px solid #38bdf8;
+  border-radius: 10px;
+  background: #f0f9ff;
+  color: #075985;
+  font-weight: 700;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.exportChecksGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.exportCheckItem {
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.exportActionsRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.exportHint {
+  color: #475569;
+  font-size: 0.84rem;
+}
+
+.exportBtn,
+.exportPrimaryBtn {
+  border: none;
+  border-radius: 10px;
+  color: #ecfeff;
+  font-weight: 700;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.exportBtn {
+  background: #0f766e;
+}
+
+.exportPrimaryBtn {
+  background: linear-gradient(120deg, #0c4a6e, #0369a1);
+}
+
 .onboardingBtn {
   border: none;
   border-radius: 10px;
@@ -375,6 +467,16 @@
 
   .mainGrid,
   .secondaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .exportChecksGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .exportChecksGrid {
     grid-template-columns: 1fr;
   }
 }

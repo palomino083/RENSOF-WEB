@@ -468,6 +468,7 @@ export default function Productos() {
       minimumFractionDigits: 2,
     }).format(Number.isFinite(value) ? value : 0);
 
+
   const manejarArchivoFoto = async (file?: File | null) => {
     if (!file) return;
     try {

@@ -99,6 +99,7 @@ export default function Inventario() {
       minimumFractionDigits: 2,
     }).format(Number.isFinite(value) ? value : 0);
 
+
   return (
     <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
@@ -209,6 +210,8 @@ export default function Inventario() {
 
       {!loading && !error ? (
         <section className={`${styles.tableCard} uiEnter`} data-stagger="3">
+          <Toolbar title="Inventario" />
+
           <DataTable
             headers={["Codigo", "Nombre", "Categoria", "Marca", "Costo", "Precio", "Utilidad", "Margen", "Stock", "Estado"]}
             minWidth={980}

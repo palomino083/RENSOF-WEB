@@ -9,7 +9,7 @@ import { ventasService } from "@/services/ventasService";
 import { clientesService } from "@/services/clientesService";
 import { negocioService } from "@/services/negocioService";
 import { API_URL } from "@/services/api";
-import { generarComprobantePdfBlob } from "@/utils/comprobantePdf";
+import { generarComprobanteHtml, imprimirComprobanteHtml } from "@/utils/comprobantePdf";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { appPath } from "@/utils/appPath";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
@@ -550,7 +550,7 @@ export default function PosPage() {
       let comprobantePdfUrl: string | undefined;
       if (requiereComprobante) {
         const empresa = nombreEmpresaComprobante();
-        const pdfBlob = await generarComprobantePdfBlob({
+        const comprobanteHtml = generarComprobanteHtml({
           tipoComprobante,
           ventaId,
           fechaIso: new Date().toISOString(),
@@ -571,14 +571,24 @@ export default function PosPage() {
           })),
         });
 
-        const pdfFile = new File(
-          [pdfBlob],
-          `${tipoComprobante.toLowerCase()}_${ventaId || "sin_id"}.pdf`,
-          { type: "application/pdf" }
-        );
+        imprimirComprobanteHtml(comprobanteHtml);
 
-        const upload = await ventasService.uploadComprobantePdf(pdfFile, ventaId);
-        comprobantePdfUrl = toAbsoluteUrl(upload.url);
+        // La carga es opcional: si falla, la venta igual se completa con el comprobante impreso localmente.
+        try {
+          const htmlBlob = new Blob([comprobanteHtml], { type: "text/html;charset=utf-8" });
+          const htmlFile = new File(
+            [htmlBlob],
+            `${tipoComprobante.toLowerCase()}_${ventaId || "sin_id"}.html`,
+            { type: "text/html" }
+          );
+
+          const upload = await ventasService.uploadComprobantePdf(htmlFile, ventaId);
+          comprobantePdfUrl = toAbsoluteUrl(upload.url);
+        } catch (uploadError) {
+          if (process.env.NODE_ENV !== "production") {
+            console.warn("No se pudo subir comprobante HTML:", uploadError);
+          }
+        }
       }
 
       compartirComprobante(ventaId, total, comprobantePdfUrl);

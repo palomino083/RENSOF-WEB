@@ -36,6 +36,15 @@ export default function LoginPage() {
   }, []);
 
   const mapLoginError = (err: any) => {
+    const message = String(err?.message || "").toLowerCase();
+    if (
+      message.includes("unexpected token '<'") ||
+      message.includes("<!doctype") ||
+      message.includes("is not valid json")
+    ) {
+      return "La API devolvió HTML en lugar de JSON (proxy o backend inestable). Reinicia servicios locales e intenta nuevamente.";
+    }
+
     if (!err?.response) {
       return "No hay conexion con la API de ALVENT. Verifica el proxy interno e intenta de nuevo.";
     }

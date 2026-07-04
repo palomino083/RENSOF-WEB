@@ -36,7 +36,6 @@ type Resumen = {
 export default function VentasPage() {
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [resumen, setResumen] = useState<Resumen | null>(null);
-  const [search, setSearch] = useState("");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -69,14 +68,7 @@ export default function VentasPage() {
     void cargarDatos();
   }, [cargarDatos]);
 
-  // ==========================
-  // FILTRO
-  // ==========================
-  const ventasFiltradas = ventas.filter((v) =>
-    (v.metodo_pago ?? "").toLowerCase().includes(search.toLowerCase()) ||
-    String(v.fecha ?? "").toLowerCase().includes(search.toLowerCase()) ||
-    String(v.id ?? "").includes(search)
-  );
+  const ventasFiltradas = ventas;
 
   // ==========================
   // TOTAL GENERAL
@@ -133,7 +125,7 @@ export default function VentasPage() {
         <Toolbar
           title="Historial de ventas"
           right={
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <div className={styles.toolbarActions}>
               <input
                 type="date"
                 value={fechaInicio}
@@ -155,12 +147,6 @@ export default function VentasPage() {
               >
                 Aplicar rango
               </button>
-              <input
-                placeholder="Buscar por id, fecha o metodo..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className={`focus-ring ${styles.search}`}
-              />
             </div>
           }
         />
@@ -189,13 +175,15 @@ export default function VentasPage() {
                 </td>
                 <td>{formatMoney(Number(venta.total ?? 0))}</td>
                 <td>
-                  <button
-                    type="button"
-                    className={`${styles.detailBtn} focus-ring`}
-                    onClick={() => setExpanded(expanded === venta.id ? null : venta.id)}
-                  >
-                    {expanded === venta.id ? "Ocultar" : "Ver detalle"}
-                  </button>
+                  <div className={styles.rowActions}>
+                    <button
+                      type="button"
+                      className={`${styles.detailBtn} focus-ring`}
+                      onClick={() => setExpanded(expanded === venta.id ? null : venta.id)}
+                    >
+                      {expanded === venta.id ? "Ocultar" : "Ver detalle"}
+                    </button>
+                  </div>
                 </td>
               </tr>
 

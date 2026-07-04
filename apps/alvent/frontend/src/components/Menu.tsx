@@ -41,6 +41,7 @@ const PERMISOS: Record<string, string[]> = {
     "clientes",
     "cajas",
     "reportes",
+    "exportacion",
     "usuarios",
     "configuracion",
   ],
@@ -54,6 +55,7 @@ const PERMISOS: Record<string, string[]> = {
     "clientes",
     "cajas",
     "reportes",
+    "exportacion",
     "usuarios",
     "configuracion",
   ],
@@ -67,6 +69,7 @@ const PERMISOS: Record<string, string[]> = {
     "clientes",
     "cajas",
     "reportes",
+    "exportacion",
     "usuarios",
     "configuracion",
     "finanzas",
@@ -76,7 +79,7 @@ const PERMISOS: Record<string, string[]> = {
   VENDEDOR: ["pos", "ventas", "clientes"],
   ALMACEN: ["dashboard", "productos", "inventario"],
 
-  CONTADOR: ["reportes", "cajas", "dashboard"],
+  CONTADOR: ["reportes", "exportacion", "cajas", "dashboard"],
 };
 
 function permisosPorRoles(rol: string, roles: string[] = []) {
@@ -127,6 +130,7 @@ const MENU: MenuBlock[] = [
     items: [
       { label: "Cajas", href: "/cajas", icon: "💰", key: "cajas" },
       { label: "Reportes", href: "/reportes", icon: "📈", key: "reportes" },
+      { label: "Exportación", href: "/exportacion", icon: "📤", key: "exportacion" },
     ],
   },
 
