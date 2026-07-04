@@ -19,6 +19,7 @@ from app.models.negocio import Negocio
 from app.models.usuario import Usuario
 from app.models.soporte_ticket import SoporteTicket
 from app.services.auditoria import registrar_auditoria
+from app.services.runtime_guardian import runtime_guardian
 from app.utils.dependencies import get_current_user_with_negocio
 from app.utils.planes import normalizar_plan, resolver_config_plan_negocio
 
@@ -51,6 +52,15 @@ class SoporteTicketResponder(BaseModel):
 class SoporteAiRequest(BaseModel):
     consulta: str
     asunto: Optional[str] = None
+
+
+class GuardianAckRequest(BaseModel):
+    note: Optional[str] = None
+
+
+class GuardianSafeModeRequest(BaseModel):
+    enabled: bool
+    reason: Optional[str] = None
 
 
 def _normalizar_prioridad(value: str | None) -> str:
@@ -575,4 +585,81 @@ def atender_ticket_soporte(
         "ok": True,
         "mensaje": "Ticket atendido correctamente",
         "ticket": _ticket_to_dict(ticket, autor, atendido_por),
+    }
+
+
+@router.get("/system/guardian/status")
+def guardian_status(
+    current_user: dict = Depends(get_current_user_with_negocio),
+):
+    return {
+        "ok": True,
+        "guardian": runtime_guardian.get_status(),
+        "viewer": {
+            "usuario_id": current_user.get("usuario_id"),
+            "is_superadmin": bool(current_user.get("is_superadmin")),
+        },
+    }
+
+
+@router.get("/system/guardian/incidentes")
+def guardian_incidentes(
+    limit: int = 50,
+    include_acked: bool = True,
+    current_user: dict = Depends(get_current_user_with_negocio),
+):
+    if not bool(current_user.get("is_superadmin")):
+        raise HTTPException(status_code=403, detail="Solo RENSOF puede listar incidentes del guardian")
+
+    items = runtime_guardian.list_incidents(limit=limit, include_acked=include_acked)
+    return {
+        "ok": True,
+        "items": items,
+        "count": len(items),
+    }
+
+
+@router.post("/system/guardian/incidentes/{incident_id}/ack")
+def guardian_ack_incidente(
+    incident_id: str,
+    data: GuardianAckRequest,
+    current_user: dict = Depends(get_current_user_with_negocio),
+):
+    if not bool(current_user.get("is_superadmin")):
+        raise HTTPException(status_code=403, detail="Solo RENSOF puede confirmar incidentes")
+
+    actor = f"user:{current_user.get('usuario_id') or 'unknown'}"
+    item = runtime_guardian.ack_incident(
+        incident_id=incident_id,
+        actor=actor,
+        note=data.note,
+    )
+    if not item:
+        raise HTTPException(status_code=404, detail="Incidente no encontrado")
+
+    return {
+        "ok": True,
+        "item": item,
+    }
+
+
+@router.post("/system/guardian/safe-mode")
+def guardian_safe_mode(
+    data: GuardianSafeModeRequest,
+    current_user: dict = Depends(get_current_user_with_negocio),
+):
+    if not bool(current_user.get("is_superadmin")):
+        raise HTTPException(status_code=403, detail="Solo RENSOF puede gestionar safe mode")
+
+    actor = f"user:{current_user.get('usuario_id') or 'unknown'}"
+    incident = runtime_guardian.set_safe_mode(
+        enabled=bool(data.enabled),
+        reason=str(data.reason or "manual").strip() or "manual",
+        actor=actor,
+    )
+
+    return {
+        "ok": True,
+        "safe_mode": runtime_guardian.get_status().get("safe_mode", {}),
+        "incident": incident,
     }

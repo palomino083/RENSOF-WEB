@@ -7,8 +7,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 import os
 import logging
+from time import perf_counter
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func
@@ -23,6 +24,7 @@ from app.models.cliente import Cliente
 from app.models.negocio import Negocio
 from app.models.usuario import Usuario
 from app.utils.jwt_utils import hash_password
+from app.services.runtime_guardian import runtime_guardian
 
 # Registrar modelos SQLAlchemy
 import app.models
@@ -472,9 +474,11 @@ async def lifespan(app: FastAPI):
     _normalize_legacy_identifiers()
     try:
         _ensure_unique_superadmin_account()
+        runtime_guardian.mark_startup(True, "Superadmin bootstrap ejecutado")
     except Exception:
         # El bootstrap de superadmin no debe tumbar el servicio en produccion.
         logger.exception("No se pudo verificar la cuenta superadmin durante el arranque")
+        runtime_guardian.mark_startup(False, "Error al verificar superadmin")
 
     print("Base de datos inicializada")
     print("Directorios verificados")
@@ -516,6 +520,36 @@ Módulos disponibles
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+
+@app.middleware("http")
+async def runtime_guardian_middleware(request: Request, call_next):
+    if not runtime_guardian.enabled:
+        return await call_next(request)
+
+    start = perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        runtime_guardian.record_exception(
+            path=request.url.path,
+            method=request.method,
+            duration_ms=(perf_counter() - start) * 1000,
+            error=exc,
+        )
+        raise
+
+    runtime_guardian.record_request(
+        path=request.url.path,
+        method=request.method,
+        status_code=response.status_code,
+        duration_ms=(perf_counter() - start) * 1000,
+    )
+
+    if runtime_guardian.safe_mode_enabled:
+        response.headers["X-ALVENT-Safe-Mode"] = "1"
+
+    return response
 
 # Agregar limiter a la app
 app.state.limiter = limiter
