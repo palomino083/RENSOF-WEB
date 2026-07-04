@@ -48,8 +48,8 @@ export const toMediaUrl = (value?: string | null) => {
     if (isLocalApiBase && localMediaOrigin) {
       return `${localMediaOrigin}${normalized}`;
     }
-    // En producción usamos el mismo prefijo de API para mantener el reverse-proxy.
-    return `${apiBase}${normalized}`;
+    // En producción, /uploads vive en el origen del backend (no bajo /alven/api).
+    return `${apiOrigin || apiBase}${normalized}`;
   }
 
   return `${apiBase}${normalized}`;

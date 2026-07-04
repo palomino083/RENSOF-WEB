@@ -2724,10 +2724,6 @@ export default function ConfiguracionPage() {
                 title="Soporte técnico inteligente"
                 right={<StatusBadge text={loadingSoporte ? "Cargando" : `${soporteTotal} tickets`} variant="info" />}
               />
-
-              <p>
-                Atención de incidencias centralizada para RENSOF. Abre la ventana de soporte para conversar con el chat bot y escalar tickets.
-              </p>
               <button
                 type="button"
                 className={`${styles.supportInteligenteBtn} focus-ring`}
@@ -2738,6 +2734,10 @@ export default function ConfiguracionPage() {
 
               {showSoporteInteligente ? (
                 <div className={styles.supportInteligentePanel}>
+                  <p className={styles.supportInteligenteIntro}>
+                    Atención de incidencias centralizada para RENSOF. Abre el soporte en línea para conversar con el chat bot y escalar tickets.
+                  </p>
+
                   <div className={styles.supportActions}>
                     <button
                       type="button"
@@ -2747,7 +2747,7 @@ export default function ConfiguracionPage() {
                         setShowSoporteChatModal(true);
                       }}
                     >
-                      Abrir ventana de soporte
+                      Soporte en línea
                     </button>
                   </div>
 

@@ -2140,6 +2140,11 @@
   gap: 10px;
 }
 
+.supportInteligenteIntro {
+  margin: 0;
+  color: #334155;
+}
+
 .guardianPanel {
   border: 1px solid rgba(14, 116, 144, 0.36);
   border-radius: 12px;
