@@ -2237,6 +2237,9 @@ export default function ConfiguracionPage() {
             <div className={styles.actionGroup}>
               <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-empresa")}>Empresa</button>
               <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-operaciones")}>Operaciones</button>
+              {isSuperadmin ? (
+                <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-guardian")}>Guardian</button>
+              ) : null}
               <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-plan")}>Plan</button>
             </div>
           </section>
@@ -2739,7 +2742,7 @@ export default function ConfiguracionPage() {
               </div>
 
               {isSuperadmin ? (
-                <div className={styles.guardianPanel}>
+                <section id="cfg-guardian" className={styles.guardianPanel}>
                   <div className={styles.guardianHead}>
                     <strong>Guardian Runtime en vivo</strong>
                     <StatusBadge
@@ -2766,7 +2769,7 @@ export default function ConfiguracionPage() {
                       onClick={() => void cargarGuardianRuntime()}
                       disabled={loadingGuardian || loadingGuardianIncidents}
                     >
-                      {loadingGuardian || loadingGuardianIncidents ? "Actualizando..." : "Actualizar Guardian"}
+                      {loadingGuardian || loadingGuardianIncidents ? "Consultando..." : "Probar GET estado"}
                     </button>
 
                     <button
@@ -2818,7 +2821,7 @@ export default function ConfiguracionPage() {
                       ))
                     )}
                   </div>
-                </div>
+                </section>
               ) : null}
 
               <div className={styles.supportList}>
