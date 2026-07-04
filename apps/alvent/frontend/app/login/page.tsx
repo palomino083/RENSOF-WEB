@@ -60,9 +60,10 @@ export default function LoginPage() {
     setError("");
 
     const usuarioLimpio = usuario.trim();
-    const passwordLimpio = password.trim();
+    // La contrasena no debe trimarse para respetar exactamente lo que el usuario escribe.
+    const passwordRaw = password;
     
-    if (!usuarioLimpio || !passwordLimpio) {
+    if (!usuarioLimpio || !passwordRaw) {
       setError("Por favor completa todos los campos");
       return;
     }
@@ -71,7 +72,7 @@ export default function LoginPage() {
     try {
       const res = await api.post("/auth/login", {
         usuario: usuarioLimpio,
-        password: passwordLimpio,
+        password: passwordRaw,
       });
 
       const rolServidor = normalizarRol(res.data.rol || "");
@@ -116,7 +117,9 @@ export default function LoginPage() {
         window.location.href = appPath("registro");
       }
     } catch (err: any) {
-      console.error("LOGIN ERROR:", err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("LOGIN ERROR:", err);
+      }
       setError(mapLoginError(err));
     } finally {
       setLoading(false);

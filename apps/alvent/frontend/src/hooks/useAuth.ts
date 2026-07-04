@@ -19,40 +19,59 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const clearAuthStorage = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("usuario_id");
+    localStorage.removeItem("negocio_id");
+    localStorage.removeItem("usuario");
+  };
+
   useEffect(() => {
+    let isMounted = true;
+
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          setLoading(false);
+          if (isMounted) {
+            setLoading(false);
+          }
           return;
         }
 
         const res = await api.get("/auth/me");
-        setUser(res.data);
+        if (isMounted) {
+          setUser(res.data);
+        }
       } catch (err: any) {
-        console.error("Error fetching user:", err);
-        setError(err?.response?.data?.detail || "Error al obtener usuario");
-        
-        // Si token inválido, limpiar localStorage
         if (err.response?.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("usuario_id");
-          localStorage.removeItem("negocio_id");
+          clearAuthStorage();
+          if (isMounted) {
+            setUser(null);
+          }
+        } else if (isMounted) {
+          if (process.env.NODE_ENV !== "production") {
+            console.error("Error fetching user:", err);
+          }
+          setError(err?.response?.data?.detail || "Error al obtener usuario");
         }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario_id");
-    localStorage.removeItem("negocio_id");
-    localStorage.removeItem("usuario");
+    clearAuthStorage();
     setUser(null);
     window.location.href = appPath("login");
   };

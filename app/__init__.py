@@ -1,6 +1,7 @@
 import os
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -27,6 +28,21 @@ def create_app() -> FastAPI:
         https_only=False,
         max_age=60 * 60 * 8,
     )
+
+    cors_origins_raw = os.getenv(
+        "RENSOF_CORS_ORIGINS",
+        "http://127.0.0.1:3001,http://localhost:3001,http://127.0.0.1:8000,http://localhost:8000,https://rensof.pe,https://www.rensof.pe",
+    )
+    cors_origins = [origin.strip() for origin in cors_origins_raw.split(",") if origin.strip()]
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.middleware("http")(security_headers_middleware)
 
     app.include_router(api.router)

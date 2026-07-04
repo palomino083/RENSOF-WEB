@@ -1437,6 +1437,11 @@ export default function ConfiguracionPage() {
   };
 
   const descargarBackup = async () => {
+    if (!isSuperadmin) {
+      setError("No tienes permisos para descargar backups.");
+      return;
+    }
+
     try {
       setLoadingBackup(true);
       setError("");
@@ -2095,25 +2100,27 @@ export default function ConfiguracionPage() {
           </section>
 
           <section id="cfg-operaciones" className={`${styles.operationsGrid} uiEnter`} data-stagger="5">
-            <article className={styles.card}>
-              <Toolbar
-                title="Backup del sistema"
-                right={<StatusBadge text="Segun plan" variant="warning" />}
-              />
+            {isSuperadmin ? (
+              <article className={styles.card}>
+                <Toolbar
+                  title="Backup del sistema"
+                  right={<StatusBadge text="Segun plan" variant="warning" />}
+                />
 
-              <p>
-                Genera una copia de seguridad de la base de datos y descargala en tu equipo.
-              </p>
+                <p>
+                  Genera una copia de seguridad de la base de datos y descargala en tu equipo.
+                </p>
 
-              <button
-                type="button"
-                onClick={descargarBackup}
-                disabled={loadingBackup}
-                className={`${styles.backupBtn} focus-ring`}
-              >
-                {loadingBackup ? "Generando backup..." : "Descargar backup"}
-              </button>
-            </article>
+                <button
+                  type="button"
+                  onClick={descargarBackup}
+                  disabled={loadingBackup}
+                  className={`${styles.backupBtn} focus-ring`}
+                >
+                  {loadingBackup ? "Generando backup..." : "Descargar backup"}
+                </button>
+              </article>
+            ) : null}
 
             <article className={`${styles.card} ${styles.dangerCard}`}>
               <Toolbar

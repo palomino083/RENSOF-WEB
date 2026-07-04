@@ -28,6 +28,14 @@ function isNegocioIdPathValidationMessage(message: string): boolean {
 
 export function getApiErrorMessage(error: any, fallback: string): string {
   const detail = error?.response?.data?.detail;
+  const data = error?.response?.data;
+
+  if (typeof data === "string") {
+    const preview = data.trim().slice(0, 32).toLowerCase();
+    if (preview.startsWith("<!doctype") || preview.startsWith("<html")) {
+      return fallback;
+    }
+  }
 
   if (typeof detail === "string") {
     if (isNegocioIdPathValidationMessage(detail)) {
@@ -50,6 +58,9 @@ export function getApiErrorMessage(error: any, fallback: string): string {
   }
 
   if (typeof error?.message === "string" && error.message.trim()) {
+    if (error.message.toLowerCase().includes("network error")) {
+      return "No hay conexion con el servidor. Verifica backend y proxy local.";
+    }
     return error.message;
   }
 

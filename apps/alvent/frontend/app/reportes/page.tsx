@@ -37,6 +37,25 @@ const resumenVacio: ResumenVentas = {
   anio: { ventas: 0, monto: 0 },
 };
 
+function normalizarResumen(input: unknown): ResumenVentas {
+  const raw = (input && typeof input === "object" ? input : {}) as Partial<ResumenVentas>;
+
+  const toBloque = (value: unknown): ResumenBloque => {
+    const source = (value && typeof value === "object" ? value : {}) as Partial<ResumenBloque>;
+    return {
+      ventas: Number(source.ventas || 0),
+      monto: Number(source.monto || 0),
+    };
+  };
+
+  return {
+    hoy: toBloque(raw.hoy),
+    semana: toBloque(raw.semana),
+    mes: toBloque(raw.mes),
+    anio: toBloque(raw.anio),
+  };
+}
+
 export default function ReportesPage() {
   const [resumen, setResumen] = useState<ResumenVentas>(resumenVacio);
   const [loading, setLoading] = useState(true);
@@ -47,7 +66,7 @@ export default function ReportesPage() {
       try {
         setError("");
         const data = await ventasService.resumenVentas();
-        setResumen(data as ResumenVentas);
+        setResumen(normalizarResumen(data));
       } catch (err: unknown) {
         setError(getApiErrorMessage(err, "No se pudo cargar el resumen"));
       } finally {

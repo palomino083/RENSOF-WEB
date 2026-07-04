@@ -292,7 +292,14 @@ export default function Productos() {
     if (!normalized) return "/no-image.png";
     if (/^https?:\/\//i.test(normalized)) return normalized;
 
-    const base = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
+    const envBase = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
+    const base =
+      /^https?:\/\//i.test(envBase)
+        ? envBase
+        : (typeof window !== "undefined" && (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"))
+          ? "http://127.0.0.1:8000/alven/api"
+          : envBase;
+
     return `${base}${normalized}`;
   };
 

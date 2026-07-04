@@ -1,5 +1,7 @@
 ﻿{
-    "startedAt":  "2026-07-04T07:19:26",
-    "backendPid":  12156,
-    "frontendPid":  8684
+    "startedAt":  "2026-07-04T07:45:00",
+    "gatewayPid":  16348,
+    "alventApiPid":  21008,
+    "backendPid":  16348,
+    "frontendPid":  9872
 }

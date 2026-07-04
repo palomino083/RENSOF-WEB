@@ -16,37 +16,78 @@ export default function Dashboard() {
   const [caja, setCaja] = useState<any>(null);
   const [topProductos, setTopProductos] = useState<any[]>([]);
   const [alertas, setAlertas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       try {
-        const [
-          kpisData,
-          ventasData,
-          cajaData,
-          topData,
-          alertasData
-        ] = await Promise.all([
-          dashboardService.getKPIs(),
-          dashboardService.getVentas(),
-          dashboardService.getCaja(),
-          dashboardService.getTopProductos(),
-          dashboardService.getAlertas()
-        ]);
+        setLoading(true);
+        setError("");
 
-        setKpis(kpisData);
-        setVentas(ventasData);
-        setCaja(cajaData);
-        setTopProductos(topData);
-        setAlertas(alertasData);
+        const overview = await dashboardService.getOverview();
+        if (cancelled) return;
 
+        setKpis(overview?.kpis || null);
+        setVentas(Array.isArray(overview?.ventas) ? overview.ventas : []);
+        setCaja(overview?.caja || null);
+        setTopProductos(Array.isArray(overview?.top_productos) ? overview.top_productos : []);
+        setAlertas(Array.isArray(overview?.alertas) ? overview.alertas : []);
       } catch (error) {
-        console.error("Error cargando dashboard:", error);
+        if (!cancelled) {
+          setError("No se pudo cargar el dashboard");
+
+          // Fallback de compatibilidad para instalaciones con backend legacy.
+          try {
+            const [
+              kpisData,
+              ventasData,
+              cajaData,
+              topData,
+              alertasData,
+            ] = await Promise.all([
+              dashboardService.getKPIs(),
+              dashboardService.getVentas(),
+              dashboardService.getCaja(),
+              dashboardService.getTopProductos(),
+              dashboardService.getAlertas(),
+            ]);
+
+            if (cancelled) return;
+
+            setKpis(kpisData);
+            setVentas(Array.isArray(ventasData) ? ventasData : []);
+            setCaja(cajaData || null);
+            setTopProductos(Array.isArray(topData) ? topData : []);
+            setAlertas(Array.isArray(alertasData) ? alertasData : []);
+            setError("");
+          } catch {
+            // Si también falla el fallback, mantenemos el mensaje principal.
+          }
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
     load();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  if (loading) {
+    return <div className="p-4">Cargando dashboard...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-600">{error}</div>;
+  }
 
   return (
     <div className="p-4 space-y-6">

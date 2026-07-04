@@ -10,7 +10,34 @@ if (-not (Test-Path $pidsFile)) {
 }
 
 $data = Get-Content -Path $pidsFile -Raw | ConvertFrom-Json
-$pids = @($data.backendPid, $data.frontendPid) | Where-Object { $_ }
+
+function Get-OptionalPid {
+  param(
+    [Parameter(Mandatory = $true)]
+    [object]$Source,
+    [Parameter(Mandatory = $true)]
+    [string]$Name
+  )
+
+  $prop = $Source.PSObject.Properties[$Name]
+  if ($null -eq $prop) {
+    return $null
+  }
+
+  return $prop.Value
+}
+
+$pidCandidates = @(
+  (Get-OptionalPid -Source $data -Name "gatewayPid"),
+  (Get-OptionalPid -Source $data -Name "alventApiPid"),
+  (Get-OptionalPid -Source $data -Name "backendPid"),
+  (Get-OptionalPid -Source $data -Name "frontendPid")
+)
+
+$pids = $pidCandidates |
+  Where-Object { $_ } |
+  ForEach-Object { [int]$_ } |
+  Select-Object -Unique
 
 foreach ($procId in $pids) {
   try {

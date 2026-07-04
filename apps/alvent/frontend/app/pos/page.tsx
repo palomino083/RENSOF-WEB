@@ -458,6 +458,10 @@ export default function PosPage() {
   // CHECKOUT (MEJORADO)
   // =========================
   const finalizarVenta = async () => {
+    if (processing) {
+      return;
+    }
+
     if (carrito.length === 0) {
       alert("Carrito vacío");
       return;

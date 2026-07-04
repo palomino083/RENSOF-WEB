@@ -2,8 +2,26 @@ import axios from "axios";
 
 import { appPath } from "@/utils/appPath";
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "/alven/api";
+function resolveApiUrl(): string {
+  const envValue = String(process.env.NEXT_PUBLIC_API_URL || "").trim();
+
+  // En algunos entornos Windows la variable puede existir vacia;
+  // en ese caso forzamos un fallback seguro para desarrollo local.
+  if (envValue) {
+    return envValue;
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost")
+  ) {
+    return "http://127.0.0.1:8000/alven/api";
+  }
+
+  return "/alven/api";
+}
+
+export const API_URL = resolveApiUrl();
 
 export const api = axios.create({
   baseURL: API_URL,
