@@ -920,6 +920,25 @@ async def alven_app_root_proxy(request: Request) -> Response:
 
 
 @router.api_route(
+    "/alven/app/alven/app",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    response_model=None,
+)
+@router.api_route(
+    "/alven/app/alven/app/{full_path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    response_model=None,
+)
+async def alven_app_double_prefix_redirect(request: Request, full_path: str = "") -> Response:
+    canonical = "/alven/app"
+    if full_path:
+        canonical = f"{canonical}/{full_path.lstrip('/')}"
+    if request.url.query:
+        canonical = f"{canonical}?{request.url.query}"
+    return RedirectResponse(canonical, status_code=308)
+
+
+@router.api_route(
     "/alven/app/{full_path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     response_model=None,
