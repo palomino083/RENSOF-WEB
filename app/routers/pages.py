@@ -1,6 +1,7 @@
 import os
 import secrets
 import httpx
+from datetime import datetime
 from fastapi import APIRouter, Form, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
@@ -24,6 +25,7 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 ALVENT_FALLBACK_USER = os.getenv("ALVENT_FALLBACK_USER", "Admin")
 ALVENT_FALLBACK_PASSWORD = os.getenv("ALVENT_FALLBACK_PASSWORD", "123456")
 ALVENT_FRONTEND_FAVICON_PATH = BASE_DIR / "apps" / "alvent" / "frontend" / "app" / "favicon.ico"
+ALVENT_PLAN_PAYMENTS_FALLBACK: dict[int, list[dict[str, object]]] = {}
 
 
 def _alvent_frontend_url(path: str = "") -> str:
@@ -436,6 +438,169 @@ def _alvent_planes_catalogo_fallback_payload() -> dict[str, object]:
                 "backups_limite": None,
             },
         ]
+    }
+
+
+def _alvent_negocio_detail_fallback_payload(negocio_id: int) -> dict[str, object]:
+    return {
+        "id": int(negocio_id),
+        "nombre": "Empresa Demo ALVENT",
+        "tipo": "tienda",
+        "plan": "GRATUITO",
+        "descripcion": "Modo contingencia ALVENT",
+        "logo_url": None,
+        "ruc": None,
+        "razon_social": None,
+        "documento_propietario": None,
+        "email": None,
+        "telefono": None,
+        "whatsapp": None,
+        "pais": "Peru",
+        "departamento": None,
+        "provincia": None,
+        "distrito": None,
+        "direccion": None,
+        "codigo_postal": None,
+        "moneda": "PEN",
+        "zona_horaria": "America/Lima",
+        "idioma": "es",
+    }
+
+
+def _alvent_plan_limites_fallback_payload(negocio_id: int) -> dict[str, object]:
+    return {
+        "negocio_id": int(negocio_id),
+        "plan": "GRATUITO",
+        "usuarios": {"consumidos": 1, "limite": 1, "disponibles": 0, "habilitado": True},
+        "reportes": {"consumidos": 0, "limite": 0, "disponibles": 0, "habilitado": False},
+        "backups": {"consumidos": 0, "limite": 0, "disponibles": 0, "habilitado": False},
+    }
+
+
+def _alvent_plan_montos_fallback_payload(negocio_id: int) -> dict[str, object]:
+    return {
+        "negocio_id": int(negocio_id),
+        "montos": {
+            "gratuito": 0,
+            "prueba": 15,
+            "basico": 20,
+            "lite": 35,
+            "pro": 45,
+            "premium": 65,
+        },
+    }
+
+
+def _alvent_plan_gratuito_bondades_fallback_payload() -> dict[str, object]:
+    return {
+        "usuarios_limite": 1,
+        "reportes_habilitado": False,
+        "reportes_limite": 0,
+        "backups_habilitado": False,
+        "backups_limite": 0,
+        "custom": {
+            "usuarios_limite": 1,
+            "reportes_habilitado": False,
+            "reportes_limite": 0,
+            "backups_habilitado": False,
+            "backups_limite": 0,
+        },
+    }
+
+
+def _alvent_cuentas_cobro_fallback_payload(negocio_id: int) -> dict[str, object]:
+    return {
+        "negocio_id": int(negocio_id),
+        "cuentas": {
+            "transferencia": {
+                "titulo": "Cuenta bancaria para transferencia",
+                "detalle": [
+                    "Banco: BCP",
+                    "Titular: RENSOF S.A.C.",
+                    "Cuenta corriente: 191-2587456-0-21",
+                    "CCI: 00219100258745602137",
+                ],
+            },
+            "tarjeta": {
+                "titulo": "Pago con tarjeta (alineado a cuenta bancaria)",
+                "detalle": [
+                    "Deposita el abono en la misma cuenta bancaria oficial de ALVENT ERP PRO.",
+                    "Banco: BCP - Cuenta corriente 191-2587456-0-21",
+                    "CCI: 00219100258745602137",
+                ],
+            },
+            "yape": {
+                "titulo": "Yape",
+                "detalle": [
+                    "Numero de abono Yape: 987 654 321",
+                    "Titular: RENSOF S.A.C.",
+                ],
+            },
+            "plin": {
+                "titulo": "Plin",
+                "detalle": [
+                    "Numero de abono Plin: 987 654 321",
+                    "Titular: RENSOF S.A.C.",
+                ],
+            },
+        },
+    }
+
+
+def _alvent_planes_historial_fallback_payload(negocio_id: int) -> list[dict[str, object]]:
+    return list(ALVENT_PLAN_PAYMENTS_FALLBACK.get(int(negocio_id), []))
+
+
+def _alvent_planes_historial_add_fallback(
+    negocio_id: int,
+    plan_objetivo: str,
+    referencia_pago: str,
+    canal_pago: str,
+    comprobante_url: str | None,
+) -> dict[str, object]:
+    negocio_key = int(negocio_id)
+    historial = ALVENT_PLAN_PAYMENTS_FALLBACK.setdefault(negocio_key, [])
+    nuevo_id = int(historial[0]["id"]) + 1 if historial else 1
+    item = {
+        "id": nuevo_id,
+        "usuario_id": 2,
+        "plan_actual": "GRATUITO",
+        "plan_solicitado": str(plan_objetivo or "PRO").upper(),
+        "canal_pago": str(canal_pago or "transferencia").lower(),
+        "referencia_pago": str(referencia_pago or f"REF-{nuevo_id:04d}").upper(),
+        "observaciones": "Solicitud en modo contingencia",
+        "comprobante_url": comprobante_url or "/uploads/planes/contingencia.png",
+        "estado": "PENDIENTE_VALIDACION",
+        "fecha": datetime.utcnow().isoformat(),
+    }
+    historial.insert(0, item)
+    return item
+
+
+def _alvent_planes_historial_validar_fallback(
+    negocio_id: int,
+    plan_pago_id: int,
+    accion: str,
+) -> dict[str, object]:
+    historial = ALVENT_PLAN_PAYMENTS_FALLBACK.get(int(negocio_id), [])
+    target = next((item for item in historial if int(item.get("id", 0)) == int(plan_pago_id)), None)
+    if not target:
+        return {
+            "ok": False,
+            "mensaje": "Pago no encontrado",
+            "plan_pago_id": int(plan_pago_id),
+            "estado": "NO_ENCONTRADO",
+            "plan_solicitado": "-",
+        }
+
+    acc = str(accion or "").upper()
+    target["estado"] = "APLICADO" if acc == "APROBAR" else "RECHAZADO"
+    return {
+        "ok": True,
+        "mensaje": "Pago aprobado y plan activado" if acc == "APROBAR" else "Pago rechazado",
+        "plan_pago_id": int(plan_pago_id),
+        "estado": target["estado"],
+        "plan_solicitado": str(target.get("plan_solicitado") or "-"),
     }
 
 
@@ -979,6 +1144,167 @@ async def alven_api_negocios_proxy_or_fallback(request: Request) -> Response:
         pass
 
     return JSONResponse(_alvent_negocios_fallback_payload(), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/negocios/{negocio_id}",
+    methods=["GET", "PUT", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_negocio_detail_proxy_or_fallback(negocio_id: int, request: Request) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    try:
+        proxied = await _proxy_request(request, backend_origin, f"negocios/{negocio_id}")
+        if _is_usable_upstream_response(proxied.status_code):
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    if request.method == "PUT":
+        payload: dict[str, object] = {}
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {}
+        base = _alvent_negocio_detail_fallback_payload(negocio_id)
+        for key, value in payload.items():
+            base[str(key)] = value
+        return JSONResponse(base, status_code=200)
+
+    return JSONResponse(_alvent_negocio_detail_fallback_payload(negocio_id), status_code=200)
+
+
+@router.api_route(
+    "/alven/api/negocios/{negocio_id}/{subpath:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "OPTIONS"],
+    response_model=None,
+)
+async def alven_api_negocios_subpath_proxy_or_fallback(
+    negocio_id: int,
+    subpath: str,
+    request: Request,
+) -> Response:
+    backend_origin = _backend_origin_for_request(request)
+    target_path = f"negocios/{negocio_id}/{subpath.strip('/')}"
+    try:
+        proxied = await _proxy_request(request, backend_origin, target_path)
+        if _is_usable_upstream_response(proxied.status_code):
+            return proxied
+    except httpx.RequestError:
+        pass
+
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+
+    normalized = subpath.strip("/").lower()
+
+    if normalized == "plan-limites":
+        return JSONResponse(_alvent_plan_limites_fallback_payload(negocio_id), status_code=200)
+
+    if normalized == "planes/catalogo-editable":
+        catalogo = _alvent_planes_catalogo_fallback_payload()
+        return JSONResponse({"negocio_id": int(negocio_id), "planes": catalogo["planes"]}, status_code=200)
+
+    if normalized == "plan-gratuito-bondades":
+        if request.method == "PUT":
+            return JSONResponse({"ok": True, "mensaje": "Bondades actualizadas", **_alvent_plan_gratuito_bondades_fallback_payload()}, status_code=200)
+        return JSONResponse(_alvent_plan_gratuito_bondades_fallback_payload(), status_code=200)
+
+    if normalized == "planes/montos":
+        if request.method == "PUT":
+            payload: dict[str, object] = {}
+            try:
+                payload = await request.json()
+            except Exception:
+                payload = {}
+            base = _alvent_plan_montos_fallback_payload(negocio_id)
+            if isinstance(payload, dict):
+                for key, value in payload.items():
+                    if key in base["montos"]:
+                        base["montos"][key] = value
+            return JSONResponse({"ok": True, "mensaje": "Montos de planes actualizados", "montos": base["montos"]}, status_code=200)
+        return JSONResponse(_alvent_plan_montos_fallback_payload(negocio_id), status_code=200)
+
+    if normalized == "planes/cuentas-cobro":
+        if request.method == "PUT":
+            payload: dict[str, object] = {}
+            try:
+                payload = await request.json()
+            except Exception:
+                payload = {}
+            fallback = _alvent_cuentas_cobro_fallback_payload(negocio_id)
+            cuentas = payload if isinstance(payload, dict) else {}
+            return JSONResponse({"ok": True, "mensaje": "Cuentas para pago actualizadas", "negocio_id": int(negocio_id), "cuentas": cuentas or fallback["cuentas"]}, status_code=200)
+        return JSONResponse(_alvent_cuentas_cobro_fallback_payload(negocio_id), status_code=200)
+
+    if normalized == "planes/historial":
+        return JSONResponse(_alvent_planes_historial_fallback_payload(negocio_id), status_code=200)
+
+    if normalized == "planes/comprobante" and request.method == "POST":
+        return JSONResponse({"url": f"/uploads/planes/plan_pago_{int(negocio_id)}_contingencia.png"}, status_code=200)
+
+    if normalized == "solicitar-plan" and request.method == "POST":
+        payload: dict[str, object] = {}
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {}
+        nuevo = _alvent_planes_historial_add_fallback(
+            negocio_id=negocio_id,
+            plan_objetivo=str(payload.get("plan_objetivo") or "PRO"),
+            referencia_pago=str(payload.get("referencia_pago") or "REF-0001"),
+            canal_pago=str(payload.get("canal_pago") or "transferencia"),
+            comprobante_url=str(payload.get("comprobante_url") or "").strip() or None,
+        )
+        return JSONResponse(
+            {
+                "ok": True,
+                "mensaje": "Pago registrado en revision manual. El plan se activara tras la validacion antifraude.",
+                "plan_actual": str(nuevo["plan_actual"]),
+                "plan_solicitado": str(nuevo["plan_solicitado"]),
+                "referencia_pago": str(nuevo["referencia_pago"]),
+                "estado": str(nuevo["estado"]),
+                "validacion_modo_solicitada": "MANUAL",
+                "validacion_modo_aplicada": "MANUAL",
+                "riesgo_score": 2,
+                "riesgo_nivel": "BAJO",
+            },
+            status_code=200,
+        )
+
+    if normalized.startswith("planes/historial/") and normalized.endswith("/validar") and request.method == "PATCH":
+        plan_pago_id_raw = normalized.replace("planes/historial/", "").replace("/validar", "")
+        try:
+            plan_pago_id = int(plan_pago_id_raw)
+        except Exception:
+            plan_pago_id = 0
+        payload: dict[str, object] = {}
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {}
+        accion = str(payload.get("accion") or "RECHAZAR")
+        data = _alvent_planes_historial_validar_fallback(negocio_id, plan_pago_id, accion)
+        status = 200 if bool(data.get("ok")) else 404
+        return JSONResponse(data, status_code=status)
+
+    if normalized == "simulador/escenarios":
+        if request.method == "PUT":
+            payload: dict[str, object] = {}
+            try:
+                payload = await request.json()
+            except Exception:
+                payload = {}
+            escenarios = payload.get("escenarios") if isinstance(payload, dict) else []
+            if not isinstance(escenarios, list):
+                escenarios = []
+            return JSONResponse({"ok": True, "mensaje": "Escenarios del simulador actualizados", "escenarios": escenarios}, status_code=200)
+        return JSONResponse({"negocio_id": int(negocio_id), "escenarios": []}, status_code=200)
+
+    return JSONResponse({"detail": f"Fallback no implementado para /negocios/{negocio_id}/{subpath}"}, status_code=404)
 
 
 @router.api_route(
