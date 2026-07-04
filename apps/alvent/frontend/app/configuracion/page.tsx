@@ -712,23 +712,13 @@ export default function ConfiguracionPage() {
     try {
       const data = await negocioService.getFreePlanPerks(negocioId);
 
-      const inferirSourcePorLimite = (limite: number | null, habilitado: boolean, tipo: "reportes" | "backups" | "usuarios") => {
-        const candidatos = planCatalogo.filter((plan) => PLAN_BONDAD_SOURCES.includes(plan.codigo as (typeof PLAN_BONDAD_SOURCES)[number]));
-        const match = candidatos.find((plan) => {
-          if (tipo === "usuarios") return plan.usuarios_limite === limite;
-          if (tipo === "reportes") return plan.reportes_habilitado === habilitado && plan.reportes_limite === limite;
-          return plan.backups_habilitado === habilitado && plan.backups_limite === limite;
-        });
-        return match?.codigo || (tipo === "reportes" ? "PRO" : tipo === "backups" ? "PRO" : "BASICO");
-      };
-
       setFreePlanBoost((prev) => ({
         ...prev,
-        usuarios_source_plan: inferirSourcePorLimite(data.custom.usuarios_limite, true, "usuarios"),
+        usuarios_source_plan: data.custom.usuarios_limite != null && data.custom.usuarios_limite > 1 ? "BASICO" : "GRATUITO",
         habilitar_reportes: Boolean(data.custom.reportes_habilitado),
-        reportes_source_plan: inferirSourcePorLimite(data.custom.reportes_limite, Boolean(data.custom.reportes_habilitado), "reportes"),
+        reportes_source_plan: "PRO",
         habilitar_backups: Boolean(data.custom.backups_habilitado),
-        backups_source_plan: inferirSourcePorLimite(data.custom.backups_limite, Boolean(data.custom.backups_habilitado), "backups"),
+        backups_source_plan: "PRO",
         usuarios_limite: data.usuarios_limite,
         reportes_limite: data.reportes_limite,
         backups_limite: data.backups_limite,
@@ -736,7 +726,7 @@ export default function ConfiguracionPage() {
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo cargar bondades del plan gratuito"));
     }
-  }, [getNegocioIdActivo, isSuperadmin, planCatalogo]);
+  }, [getNegocioIdActivo, isSuperadmin]);
 
   const cargarMontosPlanes = useCallback(async (negocioIdArg?: number) => {
     const negocioId = negocioIdArg || getNegocioIdActivo();
@@ -1115,7 +1105,7 @@ export default function ConfiguracionPage() {
 
   const sincronizarOverrideConPlanBase = useCallback(() => {
     if (!datosPlanSimuladoBase) return;
-    setSimuladorOverride({
+    const next = {
       habilitado: false,
       usuarios_ilimitado: datosPlanSimuladoBase.usuarios_limite == null,
       usuarios_limite: datosPlanSimuladoBase.usuarios_limite ?? 0,
@@ -1125,6 +1115,23 @@ export default function ConfiguracionPage() {
       backups_habilitado: Boolean(datosPlanSimuladoBase.backups_habilitado),
       backups_ilimitado: datosPlanSimuladoBase.backups_limite == null,
       backups_limite: datosPlanSimuladoBase.backups_limite ?? 0,
+    };
+
+    setSimuladorOverride((prev) => {
+      if (
+        prev.habilitado === next.habilitado &&
+        prev.usuarios_ilimitado === next.usuarios_ilimitado &&
+        prev.usuarios_limite === next.usuarios_limite &&
+        prev.reportes_habilitado === next.reportes_habilitado &&
+        prev.reportes_ilimitado === next.reportes_ilimitado &&
+        prev.reportes_limite === next.reportes_limite &&
+        prev.backups_habilitado === next.backups_habilitado &&
+        prev.backups_ilimitado === next.backups_ilimitado &&
+        prev.backups_limite === next.backups_limite
+      ) {
+        return prev;
+      }
+      return next;
     });
   }, [datosPlanSimuladoBase]);
 
