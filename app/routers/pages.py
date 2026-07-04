@@ -764,7 +764,11 @@ def _alvent_ventas_reporte_fallback_payload() -> dict[str, object]:
     }
 
 
-def _render_alvent_dashboard_fallback(request: Request) -> Response:
+def _fallback_headers(reason: str) -> dict[str, str]:
+    return {"x-alvent-fallback-reason": reason[:120]}
+
+
+def _render_alvent_dashboard_fallback(request: Request, reason: str = "unknown") -> Response:
     return templates.TemplateResponse(
         request,
         "alvent_dashboard_fallback.html",
@@ -775,6 +779,7 @@ def _render_alvent_dashboard_fallback(request: Request) -> Response:
             "alvent_login_url": _alvent_frontend_url("alven/app/login"),
             "alvent_dashboard_url": _alvent_frontend_url("alven/app/dashboard"),
         },
+        headers=_fallback_headers(reason),
     )
 
 @router.get("/", response_class=HTMLResponse)
@@ -830,12 +835,17 @@ def alven(request: Request):
 
 @router.get("/alven/app/login", response_class=HTMLResponse, response_model=None)
 async def alven_app_login(request: Request) -> Response:
+    fallback_reason = "unknown"
     try:
         proxied_response = await _proxy_alvent_frontend_request(request, "login")
         if _is_usable_upstream_response(proxied_response.status_code) and not _looks_like_render_loading_page(proxied_response):
             return proxied_response
+        fallback_reason = (
+            "render_loading" if _looks_like_render_loading_page(proxied_response)
+            else f"upstream_status_{proxied_response.status_code}"
+        )
     except httpx.RequestError:
-        pass
+        fallback_reason = "request_error"
 
     if not _is_html_navigation_request(request):
         return _frontend_unavailable_response()
@@ -850,6 +860,7 @@ async def alven_app_login(request: Request) -> Response:
             "alvent_login_url": _alvent_frontend_url("alven/app/login"),
             "alvent_dashboard_url": _alvent_frontend_url("alven/app/dashboard"),
         },
+        headers=_fallback_headers(fallback_reason),
     )
 
 
@@ -880,18 +891,23 @@ def alven_app_favicon() -> Response:
     response_model=None,
 )
 async def alven_app_root_proxy(request: Request) -> Response:
+    fallback_reason = "unknown"
     try:
         proxied_response = await _proxy_alvent_frontend_request(request)
         if _is_usable_upstream_response(proxied_response.status_code) and not _looks_like_render_loading_page(proxied_response):
             return proxied_response
         if proxied_response.status_code == 429 and _is_html_navigation_request(request):
-            return _render_alvent_dashboard_fallback(request)
+            return _render_alvent_dashboard_fallback(request, reason="upstream_status_429")
+        fallback_reason = (
+            "render_loading" if _looks_like_render_loading_page(proxied_response)
+            else f"upstream_status_{proxied_response.status_code}"
+        )
     except httpx.RequestError:
-        pass
+        fallback_reason = "request_error"
 
     if not _is_html_navigation_request(request):
         return _frontend_unavailable_response()
-    return _render_alvent_dashboard_fallback(request)
+    return _render_alvent_dashboard_fallback(request, reason=fallback_reason)
 
 
 @router.api_route(
@@ -900,24 +916,29 @@ async def alven_app_root_proxy(request: Request) -> Response:
     response_model=None,
 )
 async def alven_app_proxy(full_path: str, request: Request) -> Response:
+    fallback_reason = "unknown"
     try:
         proxied_response = await _proxy_alvent_frontend_request(request, full_path)
         full_path_normalized = full_path.strip("/").lower()
         if full_path_normalized == "dashboard" and proxied_response.status_code == 429:
-            return _render_alvent_dashboard_fallback(request)
+            return _render_alvent_dashboard_fallback(request, reason="upstream_status_429")
         if _is_usable_upstream_response(proxied_response.status_code) and not _looks_like_render_loading_page(proxied_response):
             return proxied_response
+        fallback_reason = (
+            "render_loading" if _looks_like_render_loading_page(proxied_response)
+            else f"upstream_status_{proxied_response.status_code}"
+        )
     except httpx.RequestError:
-        pass
+        fallback_reason = "request_error"
 
     if not _is_html_navigation_request(request):
         return _frontend_unavailable_response()
 
     if full_path.strip("/") == "dashboard":
-        return _render_alvent_dashboard_fallback(request)
+        return _render_alvent_dashboard_fallback(request, reason=fallback_reason)
     # Evita ciclos al login cuando el frontend dedicado no esta disponible.
     # Si no hay sesion, el propio dashboard fallback redirige al login en cliente.
-    return _render_alvent_dashboard_fallback(request)
+    return _render_alvent_dashboard_fallback(request, reason=fallback_reason)
 
 
 @router.api_route(
