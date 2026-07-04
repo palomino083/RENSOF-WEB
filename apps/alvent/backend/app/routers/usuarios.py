@@ -37,6 +37,7 @@ MODULOS_VALIDOS = [
     "Reportes",
     "Usuarios",
     "Configuracion",
+    "Finanzas",
 ]
 PERMISOS_POR_ROL_DEFAULT: dict[str, list[str]] = {
     "ADMINISTRADOR": [
@@ -50,6 +51,7 @@ PERMISOS_POR_ROL_DEFAULT: dict[str, list[str]] = {
         "Reportes",
         "Usuarios",
         "Configuracion",
+        "Finanzas",
     ],
     "CAJERO": ["Dashboard", "POS", "Ventas", "Clientes"],
     "VENDEDOR": ["Dashboard", "POS", "Ventas", "Clientes"],

@@ -10,6 +10,7 @@ export const permisosPorRol = {
     "/configuracion",
     "/cajas",
     "/reportes",
+    "/finanzas",
   ],
   SUPERADMIN: [
     "/dashboard",
@@ -22,6 +23,7 @@ export const permisosPorRol = {
     "/configuracion",
     "/cajas",
     "/reportes",
+    "/finanzas",
   ],
   CAJERO: ["/dashboard", "/pos", "/ventas", "/clientes"],
   VENDEDOR: ["/dashboard", "/pos", "/ventas", "/clientes"],

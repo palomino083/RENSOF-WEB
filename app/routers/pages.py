@@ -57,6 +57,13 @@ def _frontend_unavailable_response() -> Response:
     )
 
 
+def _disable_cache(response: Response) -> Response:
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 def _looks_like_render_loading_page(response: Response) -> bool:
     content_type = response.headers.get("content-type", "").lower()
     if "text/html" not in content_type:
@@ -904,9 +911,11 @@ async def alven_app_root_proxy(request: Request) -> Response:
     try:
         proxied_response = await _proxy_alvent_frontend_request(request)
         if _is_usable_upstream_response(proxied_response.status_code) and not _looks_like_render_loading_page(proxied_response):
+            if _is_html_navigation_request(request):
+                return _disable_cache(proxied_response)
             return proxied_response
         if proxied_response.status_code == 429 and _is_html_navigation_request(request):
-            return _render_alvent_dashboard_fallback(request, reason="upstream_status_429")
+            return _disable_cache(_render_alvent_dashboard_fallback(request, reason="upstream_status_429"))
         fallback_reason = (
             "render_loading" if _looks_like_render_loading_page(proxied_response)
             else f"upstream_status_{proxied_response.status_code}"
@@ -916,7 +925,7 @@ async def alven_app_root_proxy(request: Request) -> Response:
 
     if not _is_html_navigation_request(request):
         return _frontend_unavailable_response()
-    return _render_alvent_dashboard_fallback(request, reason=fallback_reason)
+    return _disable_cache(_render_alvent_dashboard_fallback(request, reason=fallback_reason))
 
 
 @router.api_route(
@@ -935,7 +944,7 @@ async def alven_app_double_prefix_redirect(request: Request, full_path: str = ""
         canonical = f"{canonical}/{full_path.lstrip('/')}"
     if request.url.query:
         canonical = f"{canonical}?{request.url.query}"
-    return RedirectResponse(canonical, status_code=308)
+    return _disable_cache(RedirectResponse(canonical, status_code=308))
 
 
 @router.api_route(
@@ -949,8 +958,10 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
         proxied_response = await _proxy_alvent_frontend_request(request, full_path)
         full_path_normalized = full_path.strip("/").lower()
         if full_path_normalized == "dashboard" and proxied_response.status_code == 429:
-            return _render_alvent_dashboard_fallback(request, reason="upstream_status_429")
+            return _disable_cache(_render_alvent_dashboard_fallback(request, reason="upstream_status_429"))
         if _is_usable_upstream_response(proxied_response.status_code) and not _looks_like_render_loading_page(proxied_response):
+            if _is_html_navigation_request(request):
+                return _disable_cache(proxied_response)
             return proxied_response
         fallback_reason = (
             "render_loading" if _looks_like_render_loading_page(proxied_response)
@@ -963,10 +974,10 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
         return _frontend_unavailable_response()
 
     if full_path.strip("/") == "dashboard":
-        return _render_alvent_dashboard_fallback(request, reason=fallback_reason)
+        return _disable_cache(_render_alvent_dashboard_fallback(request, reason=fallback_reason))
     # Evita ciclos al login cuando el frontend dedicado no esta disponible.
     # Si no hay sesion, el propio dashboard fallback redirige al login en cliente.
-    return _render_alvent_dashboard_fallback(request, reason=fallback_reason)
+    return _disable_cache(_render_alvent_dashboard_fallback(request, reason=fallback_reason))
 
 
 @router.api_route(
