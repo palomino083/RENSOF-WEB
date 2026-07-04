@@ -2119,6 +2119,50 @@
   cursor: not-allowed;
 }
 
+.guardianPanel {
+  border: 1px solid rgba(14, 116, 144, 0.36);
+  border-radius: 12px;
+  background: linear-gradient(142deg, rgba(239, 246, 255, 0.9), rgba(248, 250, 252, 0.95));
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.guardianHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.guardianHead strong {
+  color: #0c4a6e;
+}
+
+.guardianMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.guardianMetrics span {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+}
+
+.guardianMetrics strong {
+  color: #0f172a;
+}
+
+.guardianIncidentList {
+  display: grid;
+  gap: 8px;
+}
+
 @media (max-width: 980px) {
   .shell {
     padding: 16px;
