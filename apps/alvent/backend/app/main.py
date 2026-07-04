@@ -111,9 +111,10 @@ def _ensure_unique_superadmin_account() -> None:
 
         if not admin_user:
             if not SUPERADMIN_PASSWORD:
-                raise RuntimeError(
-                    "Debe definir ALVENT_SUPERADMIN_PASSWORD para inicializar la cuenta superadmin"
+                logger.warning(
+                    "ALVENT_SUPERADMIN_PASSWORD no definida; se omite inicializacion de superadmin hasta que la variable exista"
                 )
+                return
             admin_user = Usuario(
                 nombres="Super Administrador",
                 usuario=SUPERADMIN_USERNAME,
@@ -469,7 +470,11 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _ensure_multitenant_columns()
     _normalize_legacy_identifiers()
-    _ensure_unique_superadmin_account()
+    try:
+        _ensure_unique_superadmin_account()
+    except Exception:
+        # El bootstrap de superadmin no debe tumbar el servicio en produccion.
+        logger.exception("No se pudo verificar la cuenta superadmin durante el arranque")
 
     print("Base de datos inicializada")
     print("Directorios verificados")
