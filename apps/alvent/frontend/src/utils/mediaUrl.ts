@@ -8,6 +8,7 @@ const trimTrailingSlash = (value: string) => value.replace(/\/$/, "");
 const apiBase = trimTrailingSlash(API_URL);
 const apiOrigin = apiBase.replace(/\/alven\/api\/?$/i, "");
 const localMediaOrigin = apiOrigin.replace(/:8000$/i, ":8001");
+const isLocalApiBase = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\b/i.test(apiBase);
 
 const isLocalHost = (host: string) => host === "127.0.0.1" || host === "localhost";
 
@@ -43,7 +44,12 @@ export const toMediaUrl = (value?: string | null) => {
   if (/^https?:\/\//i.test(normalized)) return normalized;
 
   if (normalized.startsWith("/uploads/")) {
-    return `${localMediaOrigin}${normalized}`;
+    // En local evitamos ORB de proxy y servimos media desde API directa (8001).
+    if (isLocalApiBase && localMediaOrigin) {
+      return `${localMediaOrigin}${normalized}`;
+    }
+    // En producción usamos el mismo prefijo de API para mantener el reverse-proxy.
+    return `${apiBase}${normalized}`;
   }
 
   return `${apiBase}${normalized}`;
