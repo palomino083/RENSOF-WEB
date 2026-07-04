@@ -22,10 +22,18 @@ import styles from "./page.module.css";
 type Producto = {
   id: number;
   codigo?: string;
+  codigo_barras?: string;
   nombre: string;
+  categoria?: string;
+  marca?: string;
+  talla?: string;
+  color?: string;
+  sexo?: string;
   precio: number;
+  costo?: number;
   stock: number;
   foto?: string;
+  atributos_extra?: Record<string, string>;
 };
 
 type ItemCarrito = {
@@ -613,9 +621,27 @@ export default function PosPage() {
   const productosFiltrados = productos.filter((p) => {
     const q = busquedaProducto.trim().toLowerCase();
     if (!q) return true;
-    const nombre = String(p.nombre || "").toLowerCase();
-    const codigo = String(p.codigo || "").toLowerCase();
-    return nombre.includes(q) || codigo.includes(q);
+
+    const atributosExtra = Object.values(p.atributos_extra || {}).map((v) => String(v || ""));
+    const atributosBase = [
+      p.nombre,
+      p.codigo,
+      p.codigo_barras,
+      p.categoria,
+      p.marca,
+      p.talla,
+      p.color,
+      p.sexo,
+      p.precio,
+      p.costo,
+      p.stock,
+    ].map((v) => String(v ?? ""));
+
+    const indiceBusqueda = [...atributosBase, ...atributosExtra]
+      .join(" ")
+      .toLowerCase();
+
+    return indiceBusqueda.includes(q);
   });
 
   // =========================
