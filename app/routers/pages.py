@@ -155,6 +155,21 @@ def _is_local_request(request: Request) -> bool:
     return host.startswith("127.0.0.1") or host.startswith("localhost")
 
 
+def _local_frontend_redirect(request: Request, full_path: str = "") -> Response | None:
+    if not _is_local_request(request) or not ALVENT_FRONTEND_LOCAL_ORIGIN:
+        return None
+
+    # En local evitamos proxyear el frontend Next para no romper HMR/WebSocket
+    # en /_next/webpack-hmr cuando se navega por el gateway 8000.
+    if request.method not in {"GET", "HEAD"}:
+        return None
+
+    base_path = ALVENT_FRONTEND_BASE_PATH.strip("/")
+    path = "/".join(part for part in (base_path, full_path.strip("/")) if part)
+    target = _build_proxy_target(ALVENT_FRONTEND_LOCAL_ORIGIN, path, request.url.query)
+    return RedirectResponse(target, status_code=307)
+
+
 def _upstream_unavailable_response() -> Response:
     return JSONResponse({"detail": "ALVENT backend unavailable"}, status_code=503)
 
@@ -851,6 +866,10 @@ def alven(request: Request):
 
 @router.get("/alven/app/login", response_class=HTMLResponse, response_model=None)
 async def alven_app_login(request: Request) -> Response:
+    redirect = _local_frontend_redirect(request, "login")
+    if redirect is not None:
+        return redirect
+
     fallback_reason = "unknown"
     try:
         proxied_response = await _proxy_alvent_frontend_request(request, "login")
@@ -907,6 +926,10 @@ def alven_app_favicon() -> Response:
     response_model=None,
 )
 async def alven_app_root_proxy(request: Request) -> Response:
+    redirect = _local_frontend_redirect(request)
+    if redirect is not None:
+        return redirect
+
     fallback_reason = "unknown"
     try:
         proxied_response = await _proxy_alvent_frontend_request(request)
@@ -953,6 +976,10 @@ async def alven_app_double_prefix_redirect(request: Request, full_path: str = ""
     response_model=None,
 )
 async def alven_app_proxy(full_path: str, request: Request) -> Response:
+    redirect = _local_frontend_redirect(request, full_path)
+    if redirect is not None:
+        return redirect
+
     fallback_reason = "unknown"
     try:
         proxied_response = await _proxy_alvent_frontend_request(request, full_path)
