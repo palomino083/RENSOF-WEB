@@ -2039,7 +2039,7 @@ export default function ConfiguracionPage() {
             />
 
             <p>
-              Resumen en tiempo real de l├¡mites consumidos para usuarios, reportes y backups.
+              Resumen en tiempo real de limites consumidos para usuarios, reportes y backups.
             </p>
 
             <div className={styles.planVisualBoard}>
@@ -2634,7 +2634,7 @@ export default function ConfiguracionPage() {
             <input
               className="focus-ring"
               type="password"
-              placeholder="Contrase├▒a administrador"
+              placeholder="Contrasena administrador"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
