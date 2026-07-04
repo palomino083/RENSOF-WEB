@@ -39,6 +39,7 @@ type TipoComprobante = "NINGUNO" | "BOLETA" | "FACTURA";
 
 type NegocioBranding = {
   nombre: string;
+  razon_social?: string | null;
   logo_url?: string | null;
 };
 
@@ -107,6 +108,7 @@ export default function PosPage() {
       const negocio = await negocioService.getById(negocioId);
       setNegocioBranding({
         nombre: negocio.nombre,
+        razon_social: negocio.razon_social,
         logo_url: negocio.logo_url,
       });
     } catch (err: unknown) {
@@ -367,13 +369,19 @@ export default function PosPage() {
 
   const limpiarNumero = (value: string) => value.replace(/\D/g, "");
 
+  const nombreEmpresaComprobante = () => {
+    const razonSocial = String(negocioBranding?.razon_social || "").trim();
+    const nombreNegocio = String(negocioBranding?.nombre || "").trim();
+    return razonSocial || nombreNegocio || "ALVENT ERP";
+  };
+
   const registrarClienteAutomatico = async (): Promise<number | null> => {
     const nombre = clienteNombre.trim();
     const documento = limpiarNumero(clienteDocumento);
     const celular = limpiarNumero(clienteWhatsapp).slice(0, 9);
 
     if (!nombre || !documento) return null;
-    if (documento.length !== 8) return null;
+    if (documento.length !== 8 && documento.length !== 11) return null;
 
     const clientes = await clientesService.getAll();
     const existente = clientes.find((c) => c.dni === documento);
@@ -407,6 +415,7 @@ export default function PosPage() {
   const compartirComprobante = (ventaId: number | null, totalVenta: number, pdfUrl?: string) => {
     if (tipoComprobante === "NINGUNO") return;
 
+    const empresa = nombreEmpresaComprobante();
     const cliente = clienteNombre.trim() || "Cliente";
     const doc = limpiarNumero(clienteDocumento);
     const resumen = [
@@ -417,13 +426,13 @@ export default function PosPage() {
       `Metodo: ${metodo_pago}`,
       `Total: ${formatMoney(totalVenta)}`,
       pdfUrl ? `PDF: ${pdfUrl}` : "",
-      `Gracias por tu compra en ALVENT ERP`,
+      `Gracias por tu compra en ${empresa}`,
     ]
       .filter(Boolean)
       .join("\n");
 
     if (enviarEmail && clienteEmail.trim()) {
-      const subject = encodeURIComponent(`${tipoComprobante} ALVENT ERP`);
+      const subject = encodeURIComponent(`${tipoComprobante} ${empresa}`);
       const body = encodeURIComponent(resumen);
       window.open(`mailto:${clienteEmail.trim()}?subject=${subject}&body=${body}`, "_blank");
     }
@@ -528,11 +537,12 @@ export default function PosPage() {
 
       let comprobantePdfUrl: string | undefined;
       if (requiereComprobante) {
+        const empresa = nombreEmpresaComprobante();
         const pdfBlob = await generarComprobantePdfBlob({
           tipoComprobante,
           ventaId,
           fechaIso: new Date().toISOString(),
-          negocioNombre: negocioBranding?.nombre || "ALVENT ERP",
+          negocioNombre: empresa,
           negocioLogoUrl: negocioBranding?.logo_url
             ? toAbsoluteUrl(negocioBranding.logo_url)
             : undefined,

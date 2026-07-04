@@ -124,8 +124,9 @@ export async function generarComprobantePdfBlob(data: ComprobantePdfData): Promi
   y += 12;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
+  const empresa = String(data.negocioNombre || "").trim() || "ALVENT ERP";
   doc.text("Gracias por su compra.", 14, y);
-  doc.text("Comprobante generado por ALVENT ERP POS.", 14, y + 5);
+  doc.text(`Comprobante generado por ${empresa}.`, 14, y + 5);
 
   return doc.output("blob");
 }
