@@ -9,3 +9,7 @@ __pycache__/
 
 # Local runtime state
 scripts/.alvent-local.pids.json
+
+# Local databases and generated reports
+apps/alvent/backend/app/database/*.db
+scripts/reports/
