@@ -43,7 +43,7 @@ except Exception as e:
 @app.get("/")
 async def home():
     """Home page"""
-    file_path = BASE_DIR / "public" / "index.html"
+    file_path = BASE_DIR / "index.html"
     if file_path.exists():
         with open(file_path, 'r', encoding='utf-8') as f:
             return HTMLResponse(content=f.read())
@@ -57,7 +57,7 @@ async def index():
 @app.get("/{page}.html")
 async def serve_page(page: str):
     """Serve HTML pages"""
-    file_path = BASE_DIR / "public" / f"{page}.html"
+    file_path = BASE_DIR / f"{page}.html"
     if file_path.exists():
         with open(file_path, 'r', encoding='utf-8') as f:
             return HTMLResponse(content=f.read())

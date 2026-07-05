@@ -1,6 +1,6 @@
-{% extends "base.html" %}
 
-{% block content %}
+
+
 <main class="page-main" style="padding-top: 84px;">
   <section class="story-block">
     <div class="r2030-grid contact-wrap reveal">
@@ -8,16 +8,14 @@
         <span class="story-kicker">Contacto</span>
         <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Activa RENSOF en tu organización</h1>
         <p class="story-text">Cuantifica decisiones, conecta datos y despliega inteligencia aplicada en semanas.</p>
-        <p style="margin-top:14px; color:var(--r-text-soft);">{{ primary_email.email if primary_email else 'contacto@rensof.pe' }}</p>
+        <p style="margin-top:14px; color:var(--r-text-soft);"></p>
       </article>
 
       <form class="contact-panel" id="contactForm" action="/contacto/enviar" method="POST">
         <input type="hidden" name="redirect_to" value="/contacto">
         <input type="hidden" name="source_page" value="contacto">
 
-        {% if message_sent %}
-        <p style="margin-bottom:14px; color:#7ef0b2;">Consulta enviada y registrada en la bandeja de contacto.</p>
-        {% endif %}
+        
 
         <label for="nombre">Nombre completo</label>
         <input id="nombre" class="r-input" type="text" name="nombre" required minlength="3">
@@ -28,17 +26,17 @@
         <label for="servicio">Producto de interés</label>
         <select id="servicio" class="r-select" name="servicio" required>
           <option value="">Selecciona una opción</option>
-          {% for product in products %}
-          <option>{{ product.name }} - {{ product.subtitle }}</option>
-          {% endfor %}
+          
+          <option> - </option>
+          
         </select>
 
         <label for="canal_correo">Correo asignado</label>
         <select id="canal_correo" class="r-select" name="canal_correo" required>
           <option value="">Selecciona un correo</option>
-          {% for account in email_accounts %}
-          <option value="{{ account.email }}">{{ account.display_name }} | {{ account.area }} | {{ account.email }}{% if account.is_primary %} | principal{% endif %}</option>
-          {% endfor %}
+          
+          <option value=""> |  | </option>
+          
         </select>
 
         <label for="mensaje">Mensaje</label>
@@ -54,16 +52,16 @@
     <div class="r2030-grid reveal">
       <span class="story-kicker">Correos de atención</span>
       <div class="intel-pillars" style="grid-template-columns:repeat(3,1fr); margin-top:16px;">
-        {% for account in email_accounts %}
+        
         <article class="pillar-card">
-          <strong>{{ account.display_name }}</strong>
-          <span>{{ account.area }}</span>
-          <span>{{ account.email }}</span>
-          <span>{% if account.is_primary %}Cuenta principal{% else %}Cuenta secundaria{% endif %}</span>
+          <strong></strong>
+          <span></span>
+          <span></span>
+          <span></span>
         </article>
-        {% endfor %}
+        
       </div>
     </div>
   </section>
 </main>
-{% endblock %}
+

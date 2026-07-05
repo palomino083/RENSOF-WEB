@@ -1,18 +1,18 @@
-{% extends "base.html" %}
 
-{% block content %}
+
+
 <main class="page-main" style="padding-top: 84px;">
   <section class="story-block">
     <div class="r2030-grid reveal">
       <span class="story-kicker">Sectores</span>
       <h1 class="story-title" style="font-size:clamp(1.9rem,4.8vw,3.4rem)">Arquitecturas de decisión para cada realidad</h1>
       <div class="sector-flow" style="margin-top:16px;">
-        {% for sector in sectors %}
+        
         <article class="sector-item">
-          <h3>{{ sector.title }}</h3>
-          <p>{{ sector.description }}</p>
+          <h3></h3>
+          <p></p>
         </article>
-        {% endfor %}
+        
       </div>
     </div>
   </section>
@@ -22,14 +22,14 @@
       <span class="story-kicker">Casos</span>
       <h2 class="story-title" style="font-size:clamp(1.7rem,4vw,2.6rem)">Implementaciones de alto impacto</h2>
       <div class="case-grid">
-        {% for case in cases %}
+        
         <article class="case-card">
-          <div class="case-media" style="background-image:linear-gradient(150deg, rgba(11,31,50,0.35), {{ case.overlay }}), url('{{ case.media }}');"></div>
-          <div class="case-body"><h3>{{ case.title }}</h3><p>{{ case.description }}</p></div>
+          <div class="case-media" style="background-image:linear-gradient(150deg, rgba(11,31,50,0.35), ), url('');"></div>
+          <div class="case-body"><h3></h3><p></p></div>
         </article>
-        {% endfor %}
+        
       </div>
     </div>
   </section>
 </main>
-{% endblock %}
+

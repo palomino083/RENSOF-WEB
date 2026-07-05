@@ -1,6 +1,6 @@
-{% extends "base.html" %}
 
-{% block content %}
+
+
 <main class="r2030-main">
   <section class="hero-2030 story-block" id="inicio">
     <div class="r2030-grid inicio-hero reveal">
@@ -110,17 +110,15 @@
         <span class="story-kicker">Contacto</span>
         <h2 style="margin:14px 0 10px; font-family:'Sora', sans-serif;">Activa la plataforma en tu organización</h2>
         <p class="story-text">Convirtamos tus datos en resultados medibles para tu operación y tu estrategia.</p>
-        <p style="margin-top:16px; color:var(--r-text-soft);">{{ primary_email.email if primary_email else 'contacto@rensof.pe' }}</p>
+        <p style="margin-top:16px; color:var(--r-text-soft);"></p>
       </article>
 
       <form class="contact-panel" id="contactForm" action="/contacto/enviar" method="POST">
         <input type="hidden" name="redirect_to" value="/#contacto">
         <input type="hidden" name="source_page" value="home">
-        <input type="hidden" name="canal_correo" value="{{ primary_email.email if primary_email else 'contacto@rensof.pe' }}">
+        <input type="hidden" name="canal_correo" value="">
 
-        {% if message_sent %}
-        <p style="margin-bottom:14px; color:#7ef0b2;">Consulta enviada y registrada en la bandeja de contacto.</p>
-        {% endif %}
+        
 
         <label for="nombre">Nombre</label>
         <input id="nombre" class="r-input" type="text" name="nombre" required minlength="3">
@@ -151,4 +149,4 @@
     </div>
   </section>
 </main>
-{% endblock %}
+
