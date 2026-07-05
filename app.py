@@ -76,6 +76,15 @@ def _serve_named_page(page_name: str):
     return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
 
+def _serve_alven_landing():
+    """Serve local ALVENT landing page if available."""
+    alven_file = BASE_DIR / "alven" / "index.html"
+    if alven_file.exists():
+        with open(alven_file, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return None
+
+
 @app.get("/nosotros")
 async def nosotros():
     return _serve_named_page("nosotros")
@@ -128,26 +137,37 @@ def info():
 @app.get("/alven")
 def redirect_alven():
     """Serve ALVENT landing or fallback redirect."""
-    alven_file = BASE_DIR / "alven" / "index.html"
-    if alven_file.exists():
-        with open(alven_file, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
+    landing = _serve_alven_landing()
+    if landing is not None:
+        return landing
     return RedirectResponse(url=ALVENT_APP_URL)
 
 @app.get("/alven/app")
 def redirect_alven_app():
     """Redirect to ALVENT app root"""
-    if ALVENT_APP_URL.startswith("/alven/app"):
+    if ALVENT_APP_URL.startswith("/alven/app") or ALVENT_APP_URL.startswith("/alven/"):
+        landing = _serve_alven_landing()
+        if landing is not None:
+            return landing
         return RedirectResponse(url="/alven")
     return RedirectResponse(url=ALVENT_APP_URL)
 
 @app.get("/alven/app/{path:path}")
 def redirect_alven_app_path(path: str):
     """Redirect ALVENT app paths without exposing localhost."""
-    if ALVENT_APP_URL.startswith("/alven/app"):
+    if ALVENT_APP_URL.startswith("/alven/app") or ALVENT_APP_URL.startswith("/alven/"):
+        landing = _serve_alven_landing()
+        if landing is not None:
+            return landing
         return RedirectResponse(url="/alven")
     base = ALVENT_APP_BASE_PATH
-    return RedirectResponse(url=f"{base}/{path}")
+    target = f"{base}/{path}"
+    if target == f"/alven/app/{path}":
+        landing = _serve_alven_landing()
+        if landing is not None:
+            return landing
+        return RedirectResponse(url="/alven")
+    return RedirectResponse(url=target)
 
 @app.api_route("/alven/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
 def redirect_alven_api(path: str):
