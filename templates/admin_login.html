@@ -1,10 +1,40 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+  .admin-login-wrap {
+    min-height: calc(100vh - 220px);
+    display: grid;
+    place-items: center;
+    padding: 32px 16px;
+  }
+
+  .admin-login-card {
+    width: min(100%, 640px);
+    border-radius: 18px;
+    border: 1px solid rgba(58, 160, 255, 0.35);
+    background: linear-gradient(180deg, rgba(0, 22, 42, 0.96), rgba(0, 16, 31, 0.96));
+    box-shadow: 0 16px 40px rgba(0, 8, 22, 0.45);
+    padding: 22px 18px;
+  }
+
+  .admin-login-card label {
+    display: block;
+    margin: 12px 0 6px;
+  }
+
+  .admin-login-card .r-input {
+    width: 100%;
+  }
+
+  .admin-login-card .r-btn-primary {
+    margin-top: 12px;
+  }
+</style>
 <main class="page-main" style="padding-top: 84px;">
-  <section class="story-block">
-    <div class="r2030-grid" style="max-width: 560px;">
-      <article class="contact-panel reveal is-visible">
+  <section class="admin-login-wrap">
+    <div class="r2030-grid" style="max-width: 680px;">
+      <article class="admin-login-card reveal is-visible">
         <span class="story-kicker">Admin Access</span>
         <h1 class="story-title" style="font-size:clamp(1.7rem,4vw,2.6rem)">Iniciar sesion</h1>
         <p class="story-text">Accede al panel editorial y de configuracion de contenido.</p>

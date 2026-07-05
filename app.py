@@ -4,7 +4,7 @@ RENSOF Gateway - Servidor simplificado para RENSOF website + ALVENT
 
 from pathlib import Path
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -101,6 +101,27 @@ def _render_admin_login(request: Request):
             "page_description": "Acceso a la plataforma de administracion de RENSOF.",
             "csrf_token": "",
             "error_message": None,
+        },
+    )
+
+
+def _render_admin_inbox(request: Request):
+    template_file = TEMPLATES_DIR / "admin_inbox.html"
+    if not template_file.exists():
+        return JSONResponse(status_code=404, content={"detail": "Admin inbox template not found"})
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_inbox.html",
+        context={
+            "active_page": "admin",
+            "page_title": "Bandeja de Contacto | RENSOF Admin",
+            "page_description": "Bandeja de mensajes de la plataforma de administracion RENSOF.",
+            "csrf_token": "",
+            "messages": [],
+            "area_options": [],
+            "search_query": "",
+            "selected_area": "",
+            "selected_status": "",
         },
     )
 
@@ -205,6 +226,23 @@ def admin_root():
 def admin_login(request: Request):
     """Serve RENSOF admin login page."""
     return _render_admin_login(request)
+
+
+@app.post("/admin/login")
+def admin_login_submit(
+    request: Request,
+    username: str = Form(""),
+    password: str = Form(""),
+):
+    """Temporary admin login flow to open inbox view from login button."""
+    _ = (request, username, password)
+    return RedirectResponse(url="/admin/correos/bandeja", status_code=303)
+
+
+@app.get("/admin/correos/bandeja")
+def admin_inbox(request: Request):
+    """Serve RENSOF admin inbox page."""
+    return _render_admin_inbox(request)
 
 # ==========================================
 # RUN
