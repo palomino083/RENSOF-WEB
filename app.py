@@ -4,19 +4,22 @@ RENSOF Gateway - Servidor simplificado para RENSOF website + ALVENT
 
 from pathlib import Path
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
+TEMPLATES_DIR = BASE_DIR / "templates"
 ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", "/alven/")
 ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/alven/app").rstrip("/")
 ALVENT_BACKEND_ORIGIN = os.getenv("ALVENT_BACKEND_ORIGIN", "").rstrip("/")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # FastAPI app
 app = FastAPI(
@@ -83,6 +86,23 @@ def _serve_alven_landing():
         with open(alven_file, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     return None
+
+
+def _render_admin_login(request: Request):
+    template_file = TEMPLATES_DIR / "admin_login.html"
+    if not template_file.exists():
+        return JSONResponse(status_code=404, content={"detail": "Admin login template not found"})
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_login.html",
+        context={
+            "active_page": "admin",
+            "page_title": "Admin | RENSOF",
+            "page_description": "Acceso a la plataforma de administracion de RENSOF.",
+            "csrf_token": "",
+            "error_message": None,
+        },
+    )
 
 
 @app.get("/nosotros")
@@ -176,10 +196,15 @@ def redirect_alven_api(path: str):
         return JSONResponse(status_code=503, content={"detail": "ALVENT backend unavailable"})
     return RedirectResponse(url=f"{ALVENT_BACKEND_ORIGIN}/{path}")
 
+@app.get("/admin")
+def admin_root():
+    return RedirectResponse(url="/admin/login")
+
+
 @app.get("/admin/login")
-def redirect_admin():
-    """Redirect admin"""
-    return RedirectResponse(url="/alven/app/login")
+def admin_login(request: Request):
+    """Serve RENSOF admin login page."""
+    return _render_admin_login(request)
 
 # ==========================================
 # RUN
