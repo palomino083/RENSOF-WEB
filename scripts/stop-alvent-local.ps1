@@ -48,5 +48,23 @@ foreach ($procId in $pids) {
   }
 }
 
+$ports = @(8000, 8001, 3001)
+foreach ($port in $ports) {
+  $listeners = @(Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue)
+  foreach ($listener in $listeners) {
+    $owningProcess = [int]$listener.OwningProcess
+    if ($owningProcess -le 0) {
+      continue
+    }
+
+    try {
+      Stop-Process -Id $owningProcess -Force -ErrorAction Stop
+      Write-Host "Proceso detenido por puerto ${port}: $owningProcess" -ForegroundColor Green
+    } catch {
+      Write-Host "No se pudo detener PID $owningProcess asociado al puerto ${port}." -ForegroundColor Yellow
+    }
+  }
+}
+
 Remove-Item -Path $pidsFile -Force -ErrorAction SilentlyContinue
 Write-Host "Servicios locales detenidos." -ForegroundColor Cyan

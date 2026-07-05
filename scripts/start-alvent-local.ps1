@@ -27,6 +27,12 @@ if (-not (Test-Path $alventBackendDir)) {
   throw "No se encontro el backend ALVENT en: $alventBackendDir"
 }
 
+$cleanNextScript = Join-Path $frontendDir "scripts/clean-next.js"
+if (Test-Path $cleanNextScript) {
+  Write-Host "Limpiando cache local de Next (.next) ..." -ForegroundColor DarkCyan
+  & node $cleanNextScript
+}
+
 Write-Host "Iniciando gateway RENSOF en 127.0.0.1:8000 ..." -ForegroundColor Cyan
 $gateway = Start-Process -FilePath $pythonExe `
   -ArgumentList "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000" `
@@ -40,8 +46,8 @@ $alventApi = Start-Process -FilePath $pythonExe `
   -PassThru
 
 Write-Host "Iniciando frontend ALVENT en apps/alvent/frontend ..." -ForegroundColor Cyan
-$frontend = Start-Process -FilePath "cmd.exe" `
-  -ArgumentList "/c", "npm run dev -- -p 3001" `
+$frontend = Start-Process -FilePath "npm.cmd" `
+  -ArgumentList "run", "dev", "--", "-p", "3001" `
   -WorkingDirectory $frontendDir `
   -PassThru
 
