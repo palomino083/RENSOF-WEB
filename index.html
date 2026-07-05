@@ -1,197 +1,156 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="RENSOF es una plataforma de inteligencia estrategica que transforma datos en decisiones estrategicas para organizaciones de Latinoamerica.">
   <title>RENSOF | Plataforma de Inteligencia Estrategica</title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="">
+  <meta property="og:description" content="">
+  <meta property="og:url" content="">
+  <meta property="og:image" content="">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="">
+  <meta name="twitter:description" content="">
+  <meta name="twitter:image" content="">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="stylesheet" href="assets/css/r2030.css">
+  <link rel="stylesheet" href="/assets/css/style.css?v=20260702a">
+  <link rel="stylesheet" href="/assets/css/r2030.css?v=20260702b">
 </head>
 <body class="r2030-page">
   <header class="site-header">
-    <a class="brand" href="index.html" aria-label="RENSOF">
+    <a class="brand" href="/" aria-label="RENSOF">
       <span class="brand-mark">R</span>
       <span>RENSOF</span>
     </a>
-    <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">
+    <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
-    <nav class="site-nav" aria-label="Navegacion principal">
-      <a href="index.html" class="active">Inicio</a>
-      <a href="servicios.html">Plataforma</a>
-      <a href="proyectos.html">Sectores</a>
-      <a href="nosotros.html">Vision 2030</a>
-      <a href="publicaciones.html">Observatorio</a>
-      <a href="contacto.html" class="contact-link">Contacto</a>
+    <nav class="site-nav" aria-label="Navegación principal">
+      <a href="/" class="">Inicio</a>
+      <details class="nav-dropdown ">
+        <summary>Aplicaciones</summary>
+        <div class="nav-dropdown-menu" role="menu" aria-label="Aplicaciones disponibles">
+          <a href="/alven" role="menuitem">ALVENT ERP PRO</a>
+          <span class="nav-dropdown-item is-soon" aria-disabled="true">Comercio electrónico (próximamente)</span>
+          <span class="nav-dropdown-item is-soon" aria-disabled="true">Gestión pública (próximamente)</span>
+          <span class="nav-dropdown-item is-soon" aria-disabled="true">Agricultura digital (próximamente)</span>
+        </div>
+      </details>
+      <a href="/nosotros" class="">Nosotros</a>
+      <details class="nav-dropdown ">
+        <summary>Recursos</summary>
+        <div class="nav-dropdown-menu" role="menu" aria-label="Recursos">
+          <a href="/publicaciones" role="menuitem">Publicaciones</a>
+          <a href="/proyectos" role="menuitem">Casos y sectores</a>
+          <span class="nav-dropdown-item is-soon" aria-disabled="true">Documentación (próximamente)</span>
+        </div>
+      </details>
+      <a href="/contacto" class="contact-link ">Contacto</a>
       <a href="/admin/login" class="nav-cta">Admin</a>
     </nav>
   </header>
 
   <main class="r2030-main">
     <section class="hero-2030 story-block" id="inicio">
-      <div class="r2030-grid hero-content reveal">
-        <div>
-          <span class="story-kicker">Vision RENSOF 2030</span>
-          <h1 class="story-title">Transformando datos en decisiones estrategicas.</h1>
-          <p class="story-text">Somos una Plataforma de Inteligencia Estrategica que integra IA, analitica avanzada, economia, sostenibilidad y GIS para resolver desafios complejos del sector publico, privado y academico.</p>
-          <div class="hero-actions">
-            <a href="#plataforma" class="r-btn r-btn-primary">Explorar plataforma</a>
-            <a href="/alven/app/login" class="r-btn r-btn-ghost">Entrar a ALVENT</a>
-            <a href="/admin/login" class="r-btn r-btn-ghost">Ir al panel admin</a>
-            <a href="#contacto" class="r-btn r-btn-ghost">Solicitar demo</a>
-          </div>
-        </div>
+      <div class="r2030-grid inicio-hero reveal">
+        <article class="inicio-copy">
+          <h1 class="story-title">Tecnología que impulsa decisiones <span class="inicio-highlight">inteligentes</span></h1>
+          <p class="story-text">Desarrollamos aplicaciones especializadas que integran datos, modelos y tecnología para transformar información en decisiones con impacto real.</p>
+        </article>
 
-        <article class="hero-panel" aria-label="Panel de inteligencia estrategica">
-          <div class="panel-head">
-            <span>RENSOF Intelligence Platform</span>
-            <span>Latam Signal Live</span>
-          </div>
-          <div class="signal-grid">
-            <div><span>Precision IA</span><strong>94.8%</strong></div>
-            <div><span>Alertas activas</span><strong>1,264</strong></div>
-            <div><span>Cobertura territorial</span><strong>23 regiones</strong></div>
-          </div>
-          <div class="world-map">
-            <svg viewBox="0 0 680 200" role="img" aria-label="Mapa de operaciones estrategicas">
-              <g fill="none" stroke="rgba(110, 197, 242, 0.35)" stroke-width="1.2">
-                <path d="M20 32H660"/><path d="M20 74H660"/><path d="M20 116H660"/><path d="M20 158H660"/>
-                <path d="M94 20V180"/><path d="M178 20V180"/><path d="M262 20V180"/><path d="M346 20V180"/><path d="M430 20V180"/><path d="M514 20V180"/><path d="M598 20V180"/>
-              </g>
-              <path fill="rgba(0, 182, 200, 0.22)" d="M78 120L144 104L210 112L270 88L336 94L404 74L484 90L548 78L602 68L634 88L600 118L518 132L420 122L336 138L248 130L180 142L116 132Z"/>
-              <path fill="none" stroke="#39ca7f" stroke-width="2.4" d="M80 118L144 104L208 112L270 88L336 94L404 74L486 90L548 78L600 68"/>
-              <circle cx="270" cy="88" r="6" fill="#f0b34a"/>
-              <circle cx="404" cy="74" r="6" fill="#00b6c8"/>
-              <circle cx="548" cy="78" r="6" fill="#39ca7f"/>
-            </svg>
-          </div>
+        <article class="inicio-visual" aria-label="Vista principal de RENSOF">
+          <img src="/assets/img/rensof-futurista-v3.svg?v=20260702a" alt="Panel IA dashboard de RENSOF con visualizaciones avanzadas" loading="eager" decoding="async" fetchpriority="high" width="1400" height="840">
         </article>
       </div>
-    </section>
 
-    <section class="story-block mission-band" id="proposito">
-      <div class="r2030-grid split-2 reveal">
-        <article class="contact-panel">
-          <span class="story-kicker">Por que existe RENSOF</span>
-          <h2 class="story-title" style="font-size:clamp(1.6rem, 4.3vw, 3rem)">Impulsar organizaciones inteligentes</h2>
-          <p class="story-text">Nuestra mision es integrar ciencia, tecnologia e innovacion para convertir informacion en decisiones estrategicas que generen desarrollo sostenible.</p>
-        </article>
-        <article class="contact-panel">
-          <span class="story-kicker">Vision</span>
-          <p class="story-text">Ser la plataforma lider de inteligencia estrategica para Latinoamerica, integrando IA, analitica, economia, sostenibilidad y transformacion digital.</p>
-          <div class="data-tiles" style="margin-top:16px;">
-            <div class="data-tile"><span>Sector publico</span><strong>Decision</strong></div>
-            <div class="data-tile"><span>Sector privado</span><strong>Crecimiento</strong></div>
-            <div class="data-tile"><span>Academia</span><strong>Conocimiento</strong></div>
-            <div class="data-tile"><span>Territorio</span><strong>Impacto</strong></div>
-          </div>
-        </article>
+      <div class="r2030-grid inicio-badges reveal" aria-label="Ventajas de la plataforma">
+        <p>Tecnología 100% en la nube</p>
+        <p>Seguridad y cumplimiento</p>
+        <p>Escalables y modulares</p>
+        <p>Soporte especializado</p>
       </div>
-    </section>
 
-    <section class="story-block" id="plataforma">
-      <div class="r2030-grid reveal">
-        <span class="story-kicker">Nuestra plataforma</span>
-        <h2 class="story-title" style="font-size:clamp(1.8rem,4.2vw,3.2rem)">Un ecosistema de inteligencia conectada</h2>
-        <p class="story-text">Cada modulo se integra en una sola arquitectura para acelerar decisiones estrategicas de alto impacto.</p>
-        <div class="intel-pillars">
-          <article class="pillar-card">Inteligencia<span>Modelos estrategicos y alertas tempranas.</span></article>
-          <article class="pillar-card">Analitica<span>Indicadores y escenarios accionables.</span></article>
-          <article class="pillar-card">IA<span>Prediccion, clasificacion y asistentes RENIA.</span></article>
-          <article class="pillar-card">GIS<span>Mapas dinamicos y capas territoriales.</span></article>
-          <article class="pillar-card">Economia<span>Evaluacion de impacto y eficiencia.</span></article>
-          <article class="pillar-card">Capital Natural<span>Agua, carbono y biodiversidad.</span></article>
-          <article class="pillar-card">Prospectiva<span>Rutas de futuro y gestion de incertidumbre.</span></article>
-          <article class="pillar-card">Tecnologia<span>Arquitectura cloud y seguridad empresarial.</span></article>
+      <div class="r2030-grid inicio-solutions reveal" aria-label="Nuestras soluciones">
+        <div class="inicio-solutions-head">
+          <span>Nuestras soluciones</span>
+          <h2>Soluciones especializadas para cada necesidad</h2>
+          <p>Plataforma integrada de aplicaciones diseñadas para maximizar el valor de tus proyectos y operaciones.</p>
         </div>
-      </div>
-    </section>
 
-    <section class="story-block" id="productos">
-      <div class="r2030-grid reveal">
-        <span class="story-kicker">Productos</span>
-        <h2 class="story-title" style="font-size:clamp(1.8rem,4.2vw,3rem)">Brand Architecture RENSOF</h2>
-        <div class="product-grid">
-          <article class="product-card"><h3>RENIA</h3><p>Artificial Intelligence</p></article>
-          <article class="product-card"><h3>RENFIN</h3><p>Financial Intelligence</p></article>
-          <article class="product-card"><h3>RENPROJECT</h3><p>Project Intelligence</p></article>
-          <article class="product-card"><h3>RENPLAN</h3><p>Future Intelligence</p></article>
-          <article class="product-card"><h3>RENNATURE</h3><p>Natural Capital Intelligence</p></article>
-          <article class="product-card"><h3>RENMAP</h3><p>Spatial Intelligence</p></article>
-          <article class="product-card"><h3>ALVENT</h3><p>Digital Business Platform</p></article>
-          <article class="product-card"><h3>RENSCIENCE</h3><p>Scientific Intelligence</p></article>
-        </div>
-        <div class="hero-actions" style="margin-top:20px; flex-wrap:wrap;">
-          <a href="/alven/app/login" class="r-btn r-btn-primary">ALVENT</a>
-          <a href="servicios.html#gestion" class="r-btn r-btn-ghost">RENPROJECT</a>
-          <a href="servicios.html#inversion" class="r-btn r-btn-ghost">RENFIN</a>
-          <a href="publicaciones.html" class="r-btn r-btn-ghost">RENPLAN</a>
-          <a href="servicios.html#valoracion" class="r-btn r-btn-ghost">RENNATURE</a>
-        </div>
-      </div>
-    </section>
-
-    <section class="story-block" id="sectores">
-      <div class="r2030-grid reveal">
-        <span class="story-kicker">Sectores</span>
-        <h2 class="story-title" style="font-size:clamp(1.8rem,4vw,3rem)">Una plataforma, multiples realidades</h2>
-        <div class="sector-flow">
-          <article class="sector-item"><h3>Gobierno</h3><p>Politicas publicas basadas en evidencia y monitoreo territorial en tiempo real.</p></article>
-          <article class="sector-item"><h3>Empresa</h3><p>Rendimiento, riesgo e inversion con analitica de precision.</p></article>
-          <article class="sector-item"><h3>Academia</h3><p>Investigacion aplicada con modelos predictivos y observatorios.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section class="story-block" id="observatorio">
-      <div class="r2030-grid reveal">
-        <span class="story-kicker">Observatorio</span>
-        <h2 class="story-title" style="font-size:clamp(1.8rem,4vw,3rem)">Del dato al tablero estrategico</h2>
-        <div class="data-tiles">
-          <article class="data-tile"><span>Indice estrategico</span><strong>+18.4%</strong></article>
-          <article class="data-tile"><span>Riesgo territorial</span><strong>-11.2%</strong></article>
-          <article class="data-tile"><span>Valor generado</span><strong>S/ 54M</strong></article>
-          <article class="data-tile"><span>Proyectos activos</span><strong>126</strong></article>
-        </div>
-      </div>
-    </section>
-
-    <section class="story-block" id="publicaciones">
-      <div class="r2030-grid knowledge-grid reveal">
-        <article class="contact-panel">
-          <span class="story-kicker">Publicaciones</span>
-          <h2 style="margin:14px 0 10px; font-family:'Sora', sans-serif;">Centro de conocimiento estrategico</h2>
-          <p class="story-text">Informes, papers, notas tecnicas y visualizaciones para directivos, equipos tecnicos y tomadores de decision.</p>
-          <a href="publicaciones.html" class="r-btn r-btn-primary" style="margin-top:18px;">Ver publicaciones</a>
-        </article>
-        <article class="contact-panel">
-          <h3>Ultimos enfoques</h3>
-          <p>Prospectiva para cadenas productivas 2030</p>
-          <p>IA aplicada a desarrollo agricola territorial</p>
-          <p>Capital natural y competitividad regional</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="story-block" id="casos">
-      <div class="r2030-grid reveal">
-        <span class="story-kicker">Casos de exito</span>
-        <h2 class="story-title" style="font-size:clamp(1.8rem,4vw,3rem)">Resultados que se pueden medir</h2>
-        <div class="case-grid">
-          <article class="case-card">
-            <div class="case-media" style="background-image:linear-gradient(150deg, rgba(11,31,50,0.35), rgba(57,202,127,0.3)), url('assets/img/figure-finance.svg');"></div>
-            <div class="case-body"><h3>Inteligencia financiera</h3><p>Mejora de rentabilidad en portafolios con analitica predictiva.</p></div>
+        <div class="inicio-solutions-grid">
+          <article class="inicio-solution-card">
+            <span class="app-icon app-icon-commerce" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation"><path d="M3 5h2l2 10h10l2-7H8"/><circle cx="10" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>
+            </span>
+            <h3>Comercio electrónico</h3>
+            <p>Análisis de mercados, ventas online y comportamiento del consumidor.</p>
+            <a href="/alven">Ver aplicacion</a>
           </article>
-          <article class="case-card">
-            <div class="case-media" style="background-image:linear-gradient(150deg, rgba(11,31,50,0.35), rgba(0,182,200,0.32)), url('assets/img/figure-agro5.svg');"></div>
-            <div class="case-body"><h3>Agro inteligente</h3><p>Optimizacion de rendimiento por lote con sensores, drones e IA.</p></div>
+          <article class="inicio-solution-card">
+            <span class="app-icon app-icon-public" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation"><path d="M4 10h16M6 10v8M12 10v8M18 10v8M4 18h16M12 4l8 4H4z"/></svg>
+            </span>
+            <h3>Gestión Pública</h3>
+            <p>Monitoreo de indicadores, presupuestos, programas y servicios públicos.</p>
+            <a href="/alven">Ver aplicacion</a>
           </article>
-          <article class="case-card">
-            <div class="case-media" style="background-image:linear-gradient(150deg, rgba(11,31,50,0.35), rgba(240,179,74,0.25)), url('assets/img/figure-ecosystem.svg');"></div>
-            <div class="case-body"><h3>Capital natural</h3><p>Valoracion ecosistemica para decisiones de inversion sostenible.</p></div>
+          <article class="inicio-solution-card">
+            <span class="app-icon app-icon-invest" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M16 4v5"/></svg>
+            </span>
+            <h3>Proyectos de inversión</h3>
+            <p>Evaluación financiera de proyectos, VAN, TIR, sensibilidad y gestión de portafolio.</p>
+            <a href="/alven">Ver aplicacion</a>
+          </article>
+          <article class="inicio-solution-card">
+            <span class="app-icon app-icon-agro" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation"><path d="M12 20c-4-2-6-6-5-11 5-1 9 1 11 5-1 3-3 5-6 6z"/><path d="M8 16c2-2 5-4 8-5"/></svg>
+            </span>
+            <h3>Agricultura digital</h3>
+            <p>Monitoreo inteligente de cultivos con sensores, IoT e imágenes satelitales.</p>
+            <a href="/alven">Ver aplicacion</a>
+          </article>
+          <article class="inicio-solution-card">
+            <span class="app-icon app-icon-future" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation"><path d="M4 18l4-4 3 2 5-6 4 2"/><path d="M18 8h2v2"/></svg>
+            </span>
+            <h3>Prospectiva</h3>
+            <p>Modelos de escenarios, análisis de tendencias y construcción de futuros posibles.</p>
+            <a href="/alven">Ver aplicacion</a>
+          </article>
+          <article class="inicio-solution-card">
+            <span class="app-icon app-icon-value" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation"><path d="M12 3v18M5 8c0-2 2-3 4-3h6c2 0 4 1 4 3s-2 3-4 3H9c-2 0-4 1-4 3s2 3 4 3h6c2 0 4-1 4-3"/></svg>
+            </span>
+            <h3>Valoración económica</h3>
+            <p>Valoración de servicios ecosistémicos e impacto ambiental y social.</p>
+            <a href="/alven">Ver aplicacion</a>
+          </article>
+        </div>
+      </div>
+
+      <div class="r2030-grid inicio-why reveal" aria-label="Por que RENSOF">
+        <span class="inicio-why-kicker">¿Por qué RENSOF?</span>
+        <h3>Plataforma diseñada para generar impacto</h3>
+        <div class="inicio-why-grid">
+          <article>
+            <h4>Tecnología en la nube</h4>
+            <p>Accede a tus aplicaciones desde cualquier lugar, con disponibilidad y rendimiento garantizados.</p>
+          </article>
+          <article>
+            <h4>Seguridad de datos</h4>
+            <p>Protegemos tu información con los más altos estándares de seguridad y privacidad.</p>
+          </article>
+          <article>
+            <h4>Integración total</h4>
+            <p>Nuestras aplicaciones se integran entre sí para ofrecerte una visión completa y consistente.</p>
+          </article>
+          <article>
+            <h4>Soporte experto</h4>
+            <p>Nuestro equipo te acompaña en cada etapa para asegurar tu éxito y el de tus proyectos.</p>
           </article>
         </div>
       </div>
@@ -201,68 +160,68 @@
       <div class="r2030-grid contact-wrap reveal">
         <article class="contact-panel">
           <span class="story-kicker">Contacto</span>
-          <h2 style="margin:14px 0 10px; font-family:'Sora', sans-serif;">Activa la plataforma en tu organizacion</h2>
-          <p class="story-text">Hablemos de tus datos, tus decisiones y tu siguiente ventaja estrategica.</p>
+          <h2 style="margin:14px 0 10px; font-family:'Sora', sans-serif;">Activa la plataforma en tu organización</h2>
+          <p class="story-text">Convirtamos tus datos en resultados medibles para tu operación y tu estrategia.</p>
           <p style="margin-top:16px; color:var(--r-text-soft);">contacto@rensof.pe</p>
         </article>
 
-        <form class="contact-panel" id="contactForm" action="https://formsubmit.co/contacto@rensof.pe" method="POST">
-          <input type="hidden" name="_subject" value="Consulta Vision 2030 - RENSOF">
-          <input type="hidden" name="_captcha" value="false">
+        <form class="contact-panel" id="contactForm" action="/contacto/enviar" method="POST">
+          <input type="hidden" name="redirect_to" value="/#contacto">
+          <input type="hidden" name="source_page" value="home">
+          <input type="hidden" name="canal_correo" value="contacto@rensof.pe">
+
           <label for="nombre">Nombre</label>
           <input id="nombre" class="r-input" type="text" name="nombre" required minlength="3">
 
-          <label for="organizacion">Organizacion</label>
+          <label for="email">Correo electrónico</label>
+          <input id="email" class="r-input" type="email" name="email" required>
+
+          <label for="organizacion">Organización</label>
           <input id="organizacion" class="r-input" type="text" name="organizacion" required minlength="2">
 
           <label for="sector">Sector</label>
           <select id="sector" class="r-select" name="sector" required>
             <option value="">Selecciona</option>
-            <option>Publico</option>
+            <option>Público</option>
             <option>Privado</option>
-            <option>Academico</option>
+            <option>Académico</option>
           </select>
 
-          <label for="mensaje">Desafio estrategico</label>
+          <label for="servicio">Línea de interés</label>
+          <input id="servicio" class="r-input" type="text" name="servicio" placeholder="Prospectiva, IA, inversion, GIS">
+
+          <label for="mensaje">Desafío estratégico</label>
           <textarea id="mensaje" class="r-textarea" name="mensaje" rows="4" required minlength="12"></textarea>
 
-          <button class="r-btn r-btn-primary" type="submit">Solicitar demo estrategica</button>
-          <p id="formNote" style="margin-top:12px; color:var(--r-text-soft);">Responderemos en menos de 24 horas habiles.</p>
+          <button class="r-btn r-btn-primary" type="submit">Agendar diagnóstico ejecutivo</button>
+          <p id="formNote" style="margin-top:12px; color:var(--r-text-soft);">Responderemos en menos de 24 horas hábiles.</p>
         </form>
       </div>
     </section>
   </main>
-
-  <footer class="site-footer r2030-footer">
-    <div class="container footer-top">
-      <div class="footer-cta">
-        <h2>RENSOF Intelligence Platform</h2>
-        <p>Integramos IA, analitica, economia, sostenibilidad y tecnologia para transformar decisiones de alto impacto.</p>
-        <a class="btn btn-success" href="#contacto">Empezar ahora</a>
-      </div>
       <div>
         <h3>Arquitectura de marca</h3>
         <p>RENIA | RENFIN | RENPROJECT | RENPLAN | RENNATURE | RENMAP | ALVENT | RENSCIENCE</p>
       </div>
       <div>
         <h3>Rutas</h3>
-        <a href="#plataforma">Plataforma</a>
-        <a href="#productos">Productos</a>
-        <a href="#observatorio">Observatorio</a>
-        <a href="#casos">Casos de exito</a>
+        <a href="/">Inicio</a>
+        <a href="/alven">ALVENT ERP PRO</a>
+        <a href="/nosotros">Nosotros</a>
+        <a href="/publicaciones">Recursos</a>
       </div>
       <div>
         <h3>Contacto</h3>
-        <a href="contacto.html">Formulario completo</a>
-        <a href="publicaciones.html">Centro de conocimiento</a>
+        <a href="/contacto">Formulario completo</a>
+        <a href="/contacto#contactForm">Agendar diagnóstico</a>
       </div>
     </div>
     <div class="container footer-bottom">
       <span>© 2026 RENSOF. Todos los derechos reservados.</span>
-      <span>Transformando datos en decisiones estrategicas.</span>
+      <span>Transformando datos en decisiones estratégicas.</span>
     </div>
   </footer>
 
-  <script src="assets/js/app.js"></script>
+  <script src="/assets/js/app.js?v=20260702a"></script>
 </body>
 </html>
