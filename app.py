@@ -71,6 +71,19 @@ async def serve_page(page: str):
     return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
 
+@app.get("/rensof-")
+def suppress_malformed_rensof_root():
+    """Explicitly suppress malformed rensof- URL paths."""
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+
+@app.get("/rensof-{path:path}")
+def suppress_malformed_rensof_paths(path: str):
+    """Prevent malformed /rensof-* paths from entering redirect flows."""
+    _ = path
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+
 def _serve_named_page(page_name: str):
     file_path = BASE_DIR / f"{page_name}.html"
     if file_path.exists():
