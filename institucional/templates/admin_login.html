@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="page-main" style="padding-top: 84px;">
+  <section class="story-block">
+    <div class="r2030-grid" style="max-width: 560px;">
+      <article class="contact-panel reveal is-visible">
+        <span class="story-kicker">Admin Access</span>
+        <h1 class="story-title" style="font-size:clamp(1.7rem,4vw,2.6rem)">Iniciar sesion</h1>
+        <p class="story-text">Accede al panel editorial y de configuracion de contenido.</p>
+
+        {% if error_message %}
+        <p style="margin-top:14px; color:#ff9a8f;">{{ error_message }}</p>
+        {% endif %}
+
+        <form action="/admin/login" method="post" style="margin-top:16px;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label for="username">Usuario</label>
+          <input id="username" class="r-input" type="text" name="username" required>
+
+          <label for="password">Contraseña</label>
+          <input id="password" class="r-input" type="password" name="password" required>
+
+          <button class="r-btn r-btn-primary" type="submit">Entrar</button>
+        </form>
+      </article>
+    </div>
+  </section>
+</main>
+{% endblock %}

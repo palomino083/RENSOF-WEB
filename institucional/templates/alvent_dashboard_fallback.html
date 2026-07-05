@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="page-main" style="padding-top: 84px;">
+  <section class="story-block">
+    <div class="r2030-grid reveal" style="display:grid; gap:28px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); align-items:start;">
+      <article class="hero-panel" style="padding:28px;">
+        <span class="story-kicker">Sesion de contingencia</span>
+        <h1 class="story-title" style="font-size:clamp(2rem,5vw,3.4rem);">Dashboard ALVENT ERP PRO</h1>
+        <p class="story-text">El frontend dedicado de ALVENT sigue sin responder, pero tu sesion ya fue validada. Este panel temporal confirma el acceso y mantiene el flujo operativo mientras se restablece el aplicativo completo.</p>
+        <div class="data-tiles" style="margin-top:22px;">
+          <article class="data-tile"><span>Canal</span><strong>Sesion fallback</strong></article>
+          <article class="data-tile"><span>Estado</span><strong>Acceso concedido</strong></article>
+          <article class="data-tile"><span>Destino</span><strong>/alven/app/dashboard</strong></article>
+        </div>
+      </article>
+
+      <article class="hero-panel" style="padding:28px;">
+        <h2 class="story-title" style="font-size:clamp(1.4rem,3vw,2rem); margin-top:0;">Sesion activa</h2>
+        <p id="sessionSummary" class="story-text">Verificando credenciales locales...</p>
+        <div class="hero-actions" style="margin-top:18px; display:flex; flex-wrap:wrap; gap:12px;">
+          <a href="/alven/app/pos" class="r-btn r-btn-primary">Abrir ALVENT (POS)</a>
+          <a href="/alven" class="r-btn r-btn-ghost">Ir a ALVENT en RENSOF</a>
+          <a href="{{ alvent_login_url }}" class="r-btn r-btn-ghost">Reintentar login</a>
+          <button id="logoutBtn" type="button" class="r-btn r-btn-ghost">Cerrar sesion</button>
+        </div>
+        <p class="story-text" style="margin-top:18px;">Cuando el frontend dedicado vuelva a estar disponible, esta misma ruta abrira el dashboard completo.</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<script>
+  (function () {
+    const token = localStorage.getItem("token");
+    const rawUsuario = localStorage.getItem("usuario");
+    const summary = document.getElementById("sessionSummary");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (!token) {
+      window.location.replace("{{ alvent_login_url }}");
+      return;
+    }
+
+    let usuario = null;
+    try {
+      usuario = rawUsuario ? JSON.parse(rawUsuario) : null;
+    } catch (error) {
+      usuario = null;
+    }
+
+    const nombre = usuario && usuario.nombres ? usuario.nombres : "Usuario autenticado";
+    const rol = usuario && usuario.rol ? usuario.rol : "SIN ROL";
+    summary.textContent = "Acceso confirmado para " + nombre + " con perfil " + rol + ".";
+
+    logoutBtn.addEventListener("click", function () {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("usuario_id");
+      localStorage.removeItem("negocio_id");
+      localStorage.removeItem("usuario");
+      window.location.replace("{{ alvent_login_url }}");
+    });
+  }());
+</script>
+{% endblock %}

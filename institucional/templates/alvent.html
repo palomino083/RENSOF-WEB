@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="page-main" style="padding-top: 84px;">
+  <section class="story-block alvent-hero-shell">
+    <div class="r2030-grid alvent-hero reveal">
+      <article>
+        <div class="alvent-brand-lockup">
+          <img src="/assets/img/alvent-logo.svg" alt="Logo ALVENT ERP PRO" class="alvent-logo-image" loading="eager" decoding="async" width="58" height="58">
+          <div>
+            <span class="story-kicker">Producto principal RENSOF</span>
+            <p class="alvent-brand-note">ALVENT ERP PRO by RENSOF</p>
+          </div>
+        </div>
+        <h1 class="story-title" style="font-size:clamp(2.2rem,5.4vw,4.6rem)">ALVENT ERP PRO</h1>
+        <p class="story-text">Producto comercial insignia de RENSOF. Opera ventas, inventario, caja y reportes desde una misma plataforma con velocidad, control, trazabilidad y escalabilidad para negocios en crecimiento.</p>
+        <div class="hero-actions" style="margin-top:18px;">
+          <a href="{{ alvent_app_url }}" class="r-btn r-btn-primary">Entrar a ALVENT ERP PRO</a>
+          <a href="/contacto" class="r-btn r-btn-ghost">Solicitar demo ejecutiva</a>
+          <a href="/" class="r-btn r-btn-ghost">Volver a Inicio</a>
+        </div>
+        <div class="data-tiles alvent-metrics" style="margin-top:22px;">
+          <article class="data-tile"><span>Punto de venta</span><strong>Tiempo real</strong></article>
+          <article class="data-tile"><span>Inventario</span><strong>Control vivo</strong></article>
+          <article class="data-tile"><span>Clientes</span><strong>360 comercial</strong></article>
+          <article class="data-tile"><span>Decision</span><strong>Operacion diaria</strong></article>
+        </div>
+      </article>
+
+      <article class="hero-panel alvent-hero-panel" aria-label="Resumen operativo ALVENT">
+        <div class="panel-head">
+          <span>ALVENT ERP PRO</span>
+          <span>Commerce Live Board</span>
+        </div>
+        <div class="signal-grid">
+          <div><span>Ventas del dia</span><strong>S/ 48.2K</strong></div>
+          <div><span>Tickets</span><strong>312</strong></div>
+          <div><span>Reposicion</span><strong>18 alertas</strong></div>
+        </div>
+        <div class="app-preview-frame-wrap" style="margin-top:18px;">
+          <div class="alvent-mini-board">
+            <div class="alvent-mini-row"><span>Top producto</span><strong>Bebidas frias</strong></div>
+            <div class="alvent-mini-row"><span>Caja activa</span><strong>04 sedes</strong></div>
+            <div class="alvent-mini-row"><span>Margen actual</span><strong>27.4%</strong></div>
+            <div class="alvent-bars">
+              <i style="height:48%;"></i>
+              <i style="height:66%;"></i>
+              <i style="height:84%;"></i>
+              <i style="height:61%;"></i>
+              <i style="height:92%;"></i>
+              <i style="height:74%;"></i>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="story-block mission-band">
+    <div class="r2030-grid reveal">
+      <span class="story-kicker">Beneficios</span>
+      <h2 class="story-title" style="font-size:clamp(1.8rem,4vw,3rem)">Lo que gana tu operacion con ALVENT</h2>
+      <div class="intel-pillars alvent-claims-grid">
+        <article class="pillar-card">Menos friccion<span>Operacion comercial mas ordenada en caja, inventario y supervision diaria.</span></article>
+        <article class="pillar-card">Mas control<span>Auditoria de cierres, permisos por rol y lectura continua del negocio.</span></article>
+        <article class="pillar-card">Mejor decision<span>Reportes ejecutivos y alertas para actuar antes de perder venta o margen.</span></article>
+        <article class="pillar-card">Escala comercial<span>Base lista para crecer por sedes, categorias y volumen operativo.</span></article>
+      </div>
+    </div>
+  </section>
+
+  <div class="alvent-sticky-cta" aria-label="Acciones rapidas ALVENT">
+    <div class="alvent-sticky-cta-copy">
+      <strong>ALVENT ERP PRO</strong>
+      <span>Controla ventas, inventario y caja desde una sola plataforma.</span>
+    </div>
+    <div class="alvent-sticky-cta-actions">
+      <a href="/contacto" class="r-btn r-btn-ghost">Solicitar demo</a>
+      <a href="{{ alvent_app_url }}" class="r-btn r-btn-primary">Entrar ahora</a>
+    </div>
+  </div>
+
+</main>
+{% endblock %}
