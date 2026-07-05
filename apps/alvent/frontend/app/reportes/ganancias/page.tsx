@@ -110,7 +110,7 @@ export default function ReporteGanancias() {
 
           <section className={styles.chartCard}>
             <h2>Comparativo de margen por venta</h2>
-            <p>Visual de las ultimas 10 ventas para identificar presion de costos.</p>
+            <p>Visual de las últimas 10 ventas para identificar presión de costos.</p>
             <div className={styles.chartWrap}>
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>

@@ -9,8 +9,8 @@
   <section class="story-block">
     <div class="r2030-grid reveal">
       <span class="story-kicker">Admin</span>
-      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Modulo de publicaciones</h1>
-      <p class="story-text">Gestiona el repositorio editorial, su estado, fecha, tags y correo asignado.</p>
+      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Módulo de publicaciones</h1>
+      <p class="story-text">Gestiona el repositorio editorial, su estado, fecha, etiquetas y correo asignado.</p>
       <div class="hero-actions" style="margin-top:16px;">
         <a href="/admin" class="r-btn r-btn-ghost">Centro de control</a>
         <a href="/admin/correos" class="r-btn r-btn-ghost">Correos</a>
@@ -21,19 +21,19 @@
 
   <section class="story-block mission-band">
     <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Nueva publicacion</h2>
+      <h2 style="font-family:'Sora',sans-serif;">Nueva publicación</h2>
       <form class="contact-panel" action="/admin/publications/add" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <label>Titulo</label><input class="r-input" type="text" name="title" required>
+        <label>Título</label><input class="r-input" type="text" name="title" required>
         <label>Resumen</label><textarea class="r-textarea" name="summary" rows="3" required></textarea>
-        <label>Categoria</label><input class="r-input" type="text" name="category" required>
+        <label>Categoría</label><input class="r-input" type="text" name="category" required>
         <label>Autor</label><input class="r-input" type="text" name="author_name" required>
         <label>Estado</label>
         <select class="r-select" name="status" required>
           <option value="draft">draft</option>
           <option value="published">published</option>
         </select>
-        <label>Fecha de publicacion</label><input class="r-input" type="datetime-local" name="published_at">
+        <label>Fecha de publicación</label><input class="r-input" type="datetime-local" name="published_at">
         <label>Tags (separados por coma)</label><input class="r-input" type="text" name="tags" placeholder="ia, prospectiva, sostenibilidad">
         <label>Correo asignado</label>
         <select class="r-select" name="contact_email" required>
@@ -41,7 +41,7 @@
           <option value="{{ account.email }}">{{ account.display_name }} | {{ account.area }} | {{ account.email }}</option>
           {% endfor %}
         </select>
-        <button class="r-btn r-btn-primary" type="submit">Agregar publicacion</button>
+        <button class="r-btn r-btn-primary" type="submit">Agregar publicación</button>
       </form>
     </div>
   </section>
@@ -78,7 +78,7 @@
       {% else %}
       <article class="pillar-card">
         <strong>Sin publicaciones</strong>
-        <span>Crea la primera publicacion desde el formulario superior.</span>
+        <span>Crea la primera publicación desde el formulario superior.</span>
       </article>
       {% endfor %}
     </div>

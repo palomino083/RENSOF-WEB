@@ -5,11 +5,11 @@
   <section class="story-block">
     <div class="r2030-grid reveal">
       <span class="story-kicker">Publicaciones</span>
-      <h1 class="story-title" style="font-size:clamp(1.9rem,4.8vw,3.4rem)">Centro de conocimiento estrategico</h1>
-      <p class="story-text">Investigacion aplicada, notas tecnicas y visualizaciones para directivos y equipos especializados.</p>
+      <h1 class="story-title" style="font-size:clamp(1.9rem,4.8vw,3.4rem)">Centro de conocimiento estratégico</h1>
+      <p class="story-text">Investigación aplicada, notas técnicas y visualizaciones para directivos y equipos especializados.</p>
 
       <form method="get" action="/publicaciones" class="contact-panel" style="margin-top:18px; padding:16px;">
-        <label for="q">Buscar por titulo, resumen, categoria, autor o tag</label>
+        <label for="q">Buscar por título, resumen, categoría, autor o etiqueta</label>
         <input id="q" class="r-input" type="text" name="q" value="{{ search_query }}" placeholder="Ejemplo: prospectiva, IA, capital natural">
         <button class="r-btn r-btn-primary" type="submit">Buscar</button>
         <a href="/publicaciones" class="r-btn r-btn-ghost" style="margin-left:8px;">Limpiar</a>
@@ -30,7 +30,7 @@
         {% else %}
         <article class="pillar-card" style="grid-column:1 / -1;">
           <strong>Sin resultados</strong>
-          <span>No se encontraron publicaciones para la busqueda actual.</span>
+          <span>No se encontraron publicaciones para la búsqueda actual.</span>
         </article>
         {% endfor %}
       </div>

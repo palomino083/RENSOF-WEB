@@ -9,7 +9,7 @@
   <section class="story-block">
     <div class="r2030-grid reveal">
       <span class="story-kicker">Admin</span>
-      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Gestion de correos RENSOF</h1>
+      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Gestión de correos RENSOF</h1>
       <p class="story-text">Crea, edita y elimina cuentas de correo para contacto, editorial, alianzas y soporte.</p>
       <div class="hero-actions" style="margin-top:16px;">
         <a href="/admin" class="r-btn r-btn-ghost">Volver al panel</a>
@@ -27,11 +27,11 @@
     <div class="r2030-grid reveal">
       <h2 style="font-family:'Sora',sans-serif;">Buscar y filtrar</h2>
       <form class="contact-panel" action="/admin/correos" method="get" style="margin-bottom:16px;">
-        <label>Busqueda</label>
+        <label>Búsqueda</label>
         <input class="r-input" type="text" name="q" value="{{ search_query }}" placeholder="Nombre, correo o area">
         <label>Area</label>
         <select class="r-select" name="area">
-          <option value="">Todas las areas</option>
+          <option value="">Todas las áreas</option>
           {% for option in area_options %}
           <option value="{{ option }}" {% if selected_area == option %}selected{% endif %}>{{ option }}</option>
           {% endfor %}
@@ -53,7 +53,7 @@
         <input class="r-input" type="text" name="display_name" placeholder="Equipo Editorial" required>
         <label>Correo</label>
         <input class="r-input" type="email" name="email" placeholder="editorial@rensof.pe" required>
-        <label>Area</label>
+        <label>Área</label>
         <input class="r-input" type="text" name="area" placeholder="Publicaciones" required>
         <button class="r-btn r-btn-primary" type="submit">Agregar correo</button>
       </form>

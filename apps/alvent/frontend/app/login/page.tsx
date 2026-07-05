@@ -46,15 +46,15 @@ export default function LoginPage() {
     }
 
     if (!err?.response) {
-      return "No hay conexion con la API de ALVENT. Verifica el proxy interno e intenta de nuevo.";
+      return "No hay conexión con la API de ALVENT. Verifica el proxy interno e intenta de nuevo.";
     }
 
     const status = Number(err?.response?.status || 0);
     const detail = String(err?.response?.data?.detail || "").toLowerCase();
 
     if (status === 429) return "Demasiados intentos. Espera un momento y vuelve a intentar.";
-    if (status >= 500) return "El servicio esta temporalmente no disponible. Intenta nuevamente en unos minutos.";
-    if (status === 401 && detail.includes("usuario")) return "El usuario no existe o no esta habilitado.";
+    if (status >= 500) return "El servicio está temporalmente no disponible. Intenta nuevamente en unos minutos.";
+    if (status === 401 && detail.includes("usuario")) return "El usuario no existe o no está habilitado.";
     if (status === 401 && detail.includes("contrasena")) return "La contraseña es incorrecta. Revisa y vuelve a intentar.";
 
     return getApiErrorMessage(err, "Usuario o contraseña incorrectos");

@@ -6,7 +6,7 @@
     <div class="r2030-grid contact-wrap reveal">
       <article class="contact-panel">
         <span class="story-kicker">Contacto</span>
-        <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Activa RENSOF en tu organizacion</h1>
+        <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Activa RENSOF en tu organización</h1>
         <p class="story-text">Cuantifica decisiones, conecta datos y despliega inteligencia aplicada en semanas.</p>
         <p style="margin-top:14px; color:var(--r-text-soft);">{{ primary_email.email if primary_email else 'contacto@rensof.pe' }}</p>
       </article>
@@ -25,9 +25,9 @@
         <label for="email">Correo</label>
         <input id="email" class="r-input" type="email" name="email" required>
 
-        <label for="servicio">Producto de interes</label>
+        <label for="servicio">Producto de interés</label>
         <select id="servicio" class="r-select" name="servicio" required>
-          <option value="">Selecciona una opcion</option>
+          <option value="">Selecciona una opción</option>
           {% for product in products %}
           <option>{{ product.name }} - {{ product.subtitle }}</option>
           {% endfor %}
@@ -45,14 +45,14 @@
         <textarea id="mensaje" class="r-textarea" name="mensaje" rows="5" required minlength="12"></textarea>
 
         <button class="r-btn r-btn-primary" type="submit">Enviar consulta</button>
-        <p id="formNote" style="margin-top:12px; color:var(--r-text-soft);">Tambien puedes escribir a contacto@rensof.pe.</p>
+        <p id="formNote" style="margin-top:12px; color:var(--r-text-soft);">También puedes escribir a contacto@rensof.pe.</p>
       </form>
     </div>
   </section>
 
   <section class="story-block mission-band">
     <div class="r2030-grid reveal">
-      <span class="story-kicker">Correos de atencion</span>
+      <span class="story-kicker">Correos de atención</span>
       <div class="intel-pillars" style="grid-template-columns:repeat(3,1fr); margin-top:16px;">
         {% for account in email_accounts %}
         <article class="pillar-card">

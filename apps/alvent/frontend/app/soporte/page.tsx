@@ -146,6 +146,15 @@ const PLAN_BONDAD_SOURCES = PLANES_VISIBLES_EN_SECCION;
 type CanalPago = "transferencia" | "tarjeta" | "yape" | "plin";
 type DestinoCobro = { titulo: string; detalle: string[] };
 type PaymentDestinations = Record<CanalPago, DestinoCobro>;
+type SoporteCategoria = "acceso" | "facturacion" | "inventario" | "ventas" | "rendimiento" | "integracion" | "otro";
+type SoporteClasificacion = {
+  categoria: SoporteCategoria;
+  prioridadSugerida: SoportePrioridad;
+  confianza: number;
+  asunto: string;
+  resumen: string;
+  checklist: string[];
+};
 
 const CANALES_PAGO: Array<{ value: CanalPago; label: string }> = [
   { value: "transferencia", label: "Transferencia" },
@@ -287,6 +296,145 @@ const severityToBadgeVariant = (severity?: GuardianSeverity) => {
   if (severity === "critical" || severity === "error") return "danger" as const;
   if (severity === "warning") return "warning" as const;
   return "info" as const;
+};
+
+const PRIORIDAD_RANK: Record<SoportePrioridad, number> = {
+  BAJA: 1,
+  MEDIA: 2,
+  ALTA: 3,
+};
+
+const elevarPrioridad = (a: SoportePrioridad, b: SoportePrioridad): SoportePrioridad =>
+  PRIORIDAD_RANK[a] >= PRIORIDAD_RANK[b] ? a : b;
+
+const clasificarConsultaSoporte = (consulta: string): SoporteClasificacion => {
+  const text = String(consulta || "").toLowerCase();
+
+  const score = {
+    acceso: 0,
+    facturacion: 0,
+    inventario: 0,
+    ventas: 0,
+    rendimiento: 0,
+    integracion: 0,
+  };
+
+  const pushScore = (bucket: keyof typeof score, terms: string[], points = 1) => {
+    terms.forEach((t) => {
+      if (text.includes(t)) score[bucket] += points;
+    });
+  };
+
+  pushScore("acceso", ["login", "ingresar", "contrasena", "contraseña", "token", "usuario", "sesion", "sesión", "401", "403"], 2);
+  pushScore("facturacion", ["plan", "pago", "finanzas", "factura", "boleta", "cobro", "suscripcion", "suscripción"], 2);
+  pushScore("inventario", ["stock", "inventario", "producto", "kardex", "almacen", "almacén", "sku"], 2);
+  pushScore("ventas", ["venta", "pos", "caja", "cliente", "comprobante", "ticket", "sunat"], 2);
+  pushScore("rendimiento", ["lento", "demora", "timeout", "congelado", "500", "error", "caido", "caído"], 2);
+  pushScore("integracion", ["api", "webhook", "integracion", "integración", "importar", "exportar", "sincronizar"], 2);
+
+  const ordered = Object.entries(score).sort((a, b) => b[1] - a[1]);
+  const top = ordered[0];
+  const second = ordered[1];
+
+  let categoria: SoporteCategoria = "otro";
+  if (top && top[1] > 0) categoria = top[0] as SoporteCategoria;
+
+  const margen = Math.max(0, (top?.[1] || 0) - (second?.[1] || 0));
+  const confianza = Math.min(0.95, 0.55 + margen * 0.1 + Math.min(0.2, (top?.[1] || 0) * 0.03));
+
+  const byCategory: Record<SoporteCategoria, Omit<SoporteClasificacion, "categoria" | "confianza">> = {
+    acceso: {
+      prioridadSugerida: "ALTA",
+      asunto: "Incidencia de acceso/autenticacion",
+      resumen: "Detecté un posible incidente de acceso. Validemos credenciales, sesión y permisos.",
+      checklist: [
+        "Confirmar usuario/rol y hora exacta del fallo",
+        "Capturar mensaje exacto (401/403 u otro)",
+        "Reintentar login y validar /auth/me",
+      ],
+    },
+    facturacion: {
+      prioridadSugerida: "MEDIA",
+      asunto: "Consulta de facturacion y plan",
+      resumen: "Parece una consulta de pagos/plan. Revisemos estado del pago y reflejo en finanzas.",
+      checklist: [
+        "Validar referencia de pago y estado",
+        "Comprobar historial de planes",
+        "Confirmar visibilidad en Finanzas",
+      ],
+    },
+    inventario: {
+      prioridadSugerida: "MEDIA",
+      asunto: "Incidencia de inventario/productos",
+      resumen: "Se detecta caso de inventario/productos. Verifiquemos datos y sincronía de stock.",
+      checklist: [
+        "Producto/código afectado",
+        "Stock esperado vs mostrado",
+        "Último movimiento relacionado",
+      ],
+    },
+    ventas: {
+      prioridadSugerida: "MEDIA",
+      asunto: "Incidencia operativa de ventas/POS",
+      resumen: "Parece un incidente de ventas/POS. Revisemos flujo completo de transacción.",
+      checklist: [
+        "Hora de venta y usuario",
+        "Paso exacto donde falla",
+        "Respuesta de sistema o comprobante",
+      ],
+    },
+    rendimiento: {
+      prioridadSugerida: "ALTA",
+      asunto: "Incidencia de rendimiento/estabilidad",
+      resumen: "Detecté señales de rendimiento o estabilidad. Recomiendo escalar con evidencia técnica.",
+      checklist: [
+        "Tiempo de respuesta aproximado",
+        "Pantalla/endpoints involucrados",
+        "Errores visibles en consola o backend",
+      ],
+    },
+    integracion: {
+      prioridadSugerida: "MEDIA",
+      asunto: "Incidencia de integración/API",
+      resumen: "Se trata de una integración. Necesitamos request/response y datos de trazabilidad.",
+      checklist: [
+        "Endpoint o módulo de integración",
+        "Payload resumido (sin secretos)",
+        "Código de respuesta y mensaje",
+      ],
+    },
+    otro: {
+      prioridadSugerida: "BAJA",
+      asunto: "Consulta general de soporte",
+      resumen: "Clasificación general. Te guío con pasos mínimos y, si persiste, escalamos.",
+      checklist: [
+        "Qué esperabas que ocurra",
+        "Qué ocurrió realmente",
+        "Cuándo empezó el problema",
+      ],
+    },
+  };
+
+  const cfg = byCategory[categoria];
+  return {
+    categoria,
+    confianza,
+    prioridadSugerida: cfg.prioridadSugerida,
+    asunto: cfg.asunto,
+    resumen: cfg.resumen,
+    checklist: cfg.checklist,
+  };
+};
+
+const construirFallbackSoporte = (clasif: SoporteClasificacion) => {
+  const pasos = clasif.checklist.map((item, idx) => `${idx + 1}. ${item}`).join("\n");
+  return [
+    `${clasif.resumen}`,
+    `Categoría detectada: ${clasif.categoria.toUpperCase()} (${Math.round(clasif.confianza * 100)}% confianza).`,
+    "Para avanzar rápido, recopila:",
+    pasos,
+    "Si continúa, usa 'Escalar a RENSOF' para abrir ticket con contexto técnico.",
+  ].join("\n");
 };
 
 
@@ -446,6 +594,7 @@ export default function ConfiguracionPage() {
   const [soporteChatInput, setSoporteChatInput] = useState("");
   const [soporteChatPrioridad, setSoporteChatPrioridad] = useState<SoportePrioridad>("MEDIA");
   const [soporteChatMessages, setSoporteChatMessages] = useState<SoporteChatMessage[]>([]);
+  const [soporteClasificacion, setSoporteClasificacion] = useState<SoporteClasificacion | null>(null);
   const [planAmounts, setPlanAmounts] = useState({
     gratuito: 0,
     prueba: 15,
@@ -1646,43 +1795,19 @@ export default function ConfiguracionPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const querySupport = new URLSearchParams(window.location.search).get("support") === "1";
-    const storedFocus = window.localStorage.getItem("alvent_menu_focus_config");
-
-    if (querySupport || storedFocus === "soporte") {
-      setConfigAccessMode("soporte");
-      return;
-    }
-
+    // Mantener el acceso inicial en modo configuracion para evitar aperturas
+    // o cambios de foco automaticos que resultan intrusivos.
     setConfigAccessMode("configuracion");
   }, []);
 
   useEffect(() => {
-    const byQuery = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("support") === "1";
-    const byStorage = typeof window !== "undefined" && window.localStorage.getItem("alvent_open_support_modal") === "1";
-    if (!byQuery && !byStorage) return;
-
-    setConfigAccessMode("soporte");
-    setShowSoporteChatModal(true);
-    setTimeout(() => {
-      irASeccion("cfg-operaciones");
-    }, 80);
-
+    // Apertura automatica desactivada: el modal se abre solo de forma manual.
     if (typeof window !== "undefined") {
       window.localStorage.removeItem("alvent_open_support_modal");
     }
   }, []);
 
   useEffect(() => {
-    const openSupportModal = () => {
-      setConfigAccessMode("soporte");
-      setShowSoporteChatModal(true);
-      setTimeout(() => {
-        irASeccion("cfg-operaciones");
-      }, 80);
-    };
-
     const handleMenuFocusConfig = (event: Event) => {
       const customEvent = event as CustomEvent<{ mode?: ConfigAccessMode }>;
       const mode = customEvent.detail?.mode;
@@ -1692,13 +1817,11 @@ export default function ConfiguracionPage() {
     };
 
     if (typeof window !== "undefined") {
-      window.addEventListener("alvent-open-support-modal", openSupportModal);
       window.addEventListener("alvent-config-menu-focus", handleMenuFocusConfig as EventListener);
     }
 
     return () => {
       if (typeof window !== "undefined") {
-        window.removeEventListener("alvent-open-support-modal", openSupportModal);
         window.removeEventListener("alvent-config-menu-focus", handleMenuFocusConfig as EventListener);
       }
     };
@@ -1753,19 +1876,23 @@ export default function ConfiguracionPage() {
     setSoporteChatMessages((prev) => [...prev, userMessage]);
     setSoporteChatInput("");
 
+    const clasif = clasificarConsultaSoporte(consulta);
+    setSoporteClasificacion(clasif);
+    setSoporteChatPrioridad((prev) => elevarPrioridad(prev, clasif.prioridadSugerida));
+
     try {
       setLoadingSugerenciaIa(true);
       setError("");
       const resp = await systemService.sugerenciaIaSoporte({
-        asunto: "Consulta desde ventana de soporte",
-        consulta,
+        asunto: clasif.asunto,
+        consulta: `${consulta}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
       });
       setSoporteChatMessages((prev) => [
         ...prev,
         {
           id: `soporte-bot-${Date.now()}`,
           role: "bot",
-          text: `${resp.recomendacion} (${resp.origen})`,
+          text: `${clasif.resumen}\n\n${resp.recomendacion}\n\nFuente: ${resp.origen}`,
         },
       ]);
     } catch (err: unknown) {
@@ -1775,7 +1902,7 @@ export default function ConfiguracionPage() {
         {
           id: `soporte-bot-error-${Date.now()}`,
           role: "bot",
-          text: "No pude generar la recomendación IA en este momento.",
+          text: construirFallbackSoporte(clasif),
         },
       ]);
     } finally {
@@ -1796,16 +1923,29 @@ export default function ConfiguracionPage() {
       return;
     }
 
+    const clasif = soporteClasificacion || clasificarConsultaSoporte(ultimaConsulta);
+    const ultimoBot = [...soporteChatMessages].reverse().find((m) => m.role === "bot")?.text?.trim() || "";
+    const prioridadEscalada = elevarPrioridad(soporteChatPrioridad, clasif.prioridadSugerida);
+    const consultaEscalada = [
+      ultimaConsulta,
+      "",
+      "[Contexto de escalamiento]",
+      `Categoría: ${clasif.categoria}`,
+      `Confianza: ${Math.round(clasif.confianza * 100)}%`,
+      `Prioridad sugerida: ${clasif.prioridadSugerida}`,
+      `Checklist sugerido: ${clasif.checklist.join(" | ")}`,
+      ultimoBot ? `Ultima respuesta bot: ${ultimoBot.slice(0, 380)}` : "",
+    ].filter(Boolean).join("\n");
+
     try {
       setCreatingSoporte(true);
       setError("");
-      const asuntoBase = ultimaConsulta.slice(0, 64);
-      const asunto = asuntoBase.length >= 4 ? asuntoBase : "Consulta de soporte";
+      const asunto = clasif.asunto;
 
       const resp = await systemService.crearTicketSoporte({
         asunto,
-        consulta: ultimaConsulta,
-        prioridad: soporteChatPrioridad,
+        consulta: consultaEscalada,
+        prioridad: prioridadEscalada,
         negocio_id: negocioId || undefined,
       });
 
@@ -1814,7 +1954,7 @@ export default function ConfiguracionPage() {
         {
           id: `soporte-bot-ticket-${Date.now()}`,
           role: "bot",
-          text: `Ticket #${resp.ticket.id} escalado a RENSOF con prioridad ${resp.ticket.prioridad}.`,
+          text: `Ticket #${resp.ticket.id} escalado a RENSOF con prioridad ${resp.ticket.prioridad} y categoría ${clasif.categoria.toUpperCase()}.`,
         },
       ]);
 
@@ -2263,7 +2403,7 @@ export default function ConfiguracionPage() {
                   </div>
 
                   <p className={styles.supportPremiumBody}>
-                    Usa esta opcion solo cuando sea necesario. Requiere confirmacion con credenciales de administrador.
+                    Usa esta opción solo cuando sea necesario. Requiere confirmación con credenciales de administrador.
                   </p>
 
                   <button
@@ -2277,6 +2417,59 @@ export default function ConfiguracionPage() {
                   </button>
                 </article>
                 </section>
+
+                {isSuperadmin && showSoporteInteligente ? (
+                  <section className={styles.supportInteligentePanel}>
+                    <p className={styles.supportInteligenteIntro}>
+                      Atención de incidencias centralizada para RENSOF. Abre el soporte en línea para conversar con el chat bot y escalar tickets.
+                    </p>
+
+                    <section id="cfg-guardian" className={styles.guardianPanel}>
+                      <div className={styles.guardianHead}>
+                        <strong>Guardian Runtime en vivo</strong>
+                        <StatusBadge
+                          text={guardianStatus?.safe_mode?.enabled ? "SAFE MODE ON" : "SAFE MODE OFF"}
+                          variant={guardianStatus?.safe_mode?.enabled ? "danger" : "success"}
+                        />
+                      </div>
+
+                      <p className={styles.helperText}>
+                        Vigilancia activa de errores y latencia con autocuración controlada para el núcleo ALVENT.
+                      </p>
+
+                      <div className={styles.guardianMetrics}>
+                        <span>Req: <strong>{guardianStatus?.metrics?.requests_total ?? 0}</strong></span>
+                        <span>5xx: <strong>{guardianStatus?.metrics?.requests_5xx ?? 0}</strong></span>
+                        <span>Excepciones: <strong>{guardianStatus?.metrics?.exceptions_total ?? 0}</strong></span>
+                        <span>Abiertos: <strong>{guardianStatus?.open_incidents ?? 0}</strong></span>
+                      </div>
+
+                      <div className={styles.supportActions}>
+                        <button
+                          type="button"
+                          className={`${styles.actionBtn} focus-ring`}
+                          onClick={() => void cargarGuardianRuntime()}
+                          disabled={loadingGuardian || loadingGuardianIncidents}
+                        >
+                          {loadingGuardian || loadingGuardianIncidents ? "Consultando..." : "Probar GET estado"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`${styles.saveBusinessBtn} focus-ring`}
+                          onClick={() => void actualizarSafeModeGuardian(!Boolean(guardianStatus?.safe_mode?.enabled))}
+                          disabled={guardianSafeModeBusy || !guardianStatus}
+                        >
+                          {guardianSafeModeBusy
+                            ? "Aplicando..."
+                            : guardianStatus?.safe_mode?.enabled
+                              ? "Desactivar Safe Mode"
+                              : "Activar Safe Mode"}
+                        </button>
+                      </div>
+                    </section>
+                  </section>
+                ) : null}
               </section>
             </>
           ) : (
@@ -3064,7 +3257,7 @@ export default function ConfiguracionPage() {
               />
 
               <p>
-                Usa esta opcion solo cuando sea necesario. Requiere confirmacion con credenciales de administrador.
+                Usa esta opción solo cuando sea necesario. Requiere confirmación con credenciales de administrador.
               </p>
 
               <button
@@ -3760,13 +3953,24 @@ export default function ConfiguracionPage() {
             )}
           >
             <div className={styles.supportChatWindow}>
+              {soporteClasificacion ? (
+                <div className={styles.chatBubbleIa}>
+                  <strong>Clasificación automática</strong>
+                  <p>
+                    {soporteClasificacion.categoria.toUpperCase()} | prioridad sugerida {soporteClasificacion.prioridadSugerida} | confianza {Math.round(soporteClasificacion.confianza * 100)}%
+                  </p>
+                  <p>{soporteClasificacion.resumen}</p>
+                  <p>Checklist: {soporteClasificacion.checklist.join(" | ")}</p>
+                </div>
+              ) : null}
+
               <div className={styles.supportChatMessages}>
                 {soporteChatMessages.slice(-12).map((message) => (
                   <div
                     key={message.id}
                     className={message.role === "user" ? styles.chatBubbleUser : styles.chatBubbleIa}
                   >
-                    <strong>{message.role === "user" ? "Usuario" : "Chat bot"}</strong>
+                    <strong>{message.role === "user" ? "Usuario" : "Chatbot"}</strong>
                     <p>{message.text}</p>
                   </div>
                 ))}
@@ -3842,7 +4046,7 @@ export default function ConfiguracionPage() {
             <input
               className="focus-ring"
               type="password"
-              placeholder="Contrasena administrador"
+              placeholder="Contraseña administrador"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />

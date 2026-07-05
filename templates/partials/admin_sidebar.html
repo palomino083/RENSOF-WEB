@@ -1,14 +1,14 @@
 <aside class="admin-sidebar">
   <div>
     <span class="story-kicker">Admin RENSOF</span>
-    <h2 class="admin-sidebar-title">Backoffice</h2>
-    <p class="admin-sidebar-text">Navegacion fija para contenido, correos y seguimiento operativo.</p>
+    <h2 class="admin-sidebar-title">Centro administrativo</h2>
+    <p class="admin-sidebar-text">Navegación fija para contenido, correos y seguimiento operativo.</p>
   </div>
 
-  <nav class="admin-sidebar-nav" aria-label="Modulos admin">
+  <nav class="admin-sidebar-nav" aria-label="Módulos admin">
     <a href="/admin" class="admin-sidebar-link {% if admin_section == 'dashboard' %}is-active{% endif %}">
       <strong>Centro de control</strong>
-      <span>Vista general y modulos base</span>
+      <span>Vista general y módulos base</span>
     </a>
     <a href="/admin/publicaciones" class="admin-sidebar-link {% if admin_section == 'publications' %}is-active{% endif %}">
       <strong>Publicaciones</strong>
@@ -25,10 +25,10 @@
   </nav>
 
   <div class="admin-sidebar-actions">
-    <a href="/" class="r-btn r-btn-ghost">Ver sitio publico</a>
+    <a href="/" class="r-btn r-btn-ghost">Ver sitio público</a>
     <form action="/admin/logout" method="post">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button class="r-btn" style="background:rgba(236,106,95,0.2);color:#fff; width:100%;" type="submit">Cerrar sesion</button>
+      <button class="r-btn" style="background:rgba(236,106,95,0.2);color:#fff; width:100%;" type="submit">Cerrar sesión</button>
     </form>
   </div>
 </aside>

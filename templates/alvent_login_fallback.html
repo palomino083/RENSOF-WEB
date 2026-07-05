@@ -7,7 +7,7 @@
       <article class="hero-panel" style="padding:28px;">
         <span class="story-kicker">Acceso de contingencia</span>
         <h1 class="story-title" style="font-size:clamp(2rem,5vw,3.4rem);">Login ALVENT ERP PRO</h1>
-        <p class="story-text">El frontend dedicado de ALVENT no esta disponible en este momento. Este acceso temporal usa directamente la API publicada para que el ingreso no falle con error interno.</p>
+        <p class="story-text">El frontend dedicado de ALVENT no está disponible en este momento. Este acceso temporal usa directamente la API publicada para que el ingreso no falle con error interno.</p>
         <div class="data-tiles" style="margin-top:22px;">
           <article class="data-tile"><span>Canal</span><strong>API directa</strong></article>
           <article class="data-tile"><span>Estado</span><strong>Contingencia</strong></article>
@@ -23,10 +23,10 @@
             <input id="usuario" type="text" required style="padding:12px 14px; border-radius:12px; border:1px solid rgba(126,214,255,.22); background:rgba(7,19,31,.55); color:var(--r-text);">
           </label>
           <label style="display:grid; gap:6px; color:var(--r-text-soft);">
-            <span>Contrasena</span>
+            <span>Contraseña</span>
             <input id="password" type="password" required style="padding:12px 14px; border-radius:12px; border:1px solid rgba(126,214,255,.22); background:rgba(7,19,31,.55); color:var(--r-text);">
           </label>
-          <button id="submitBtn" type="submit" class="r-btn r-btn-primary">Iniciar sesion</button>
+          <button id="submitBtn" type="submit" class="r-btn r-btn-primary">Iniciar sesión</button>
         </form>
         <p id="loginStatus" class="story-text" style="margin-top:14px; min-height:24px;"></p>
         <div class="hero-actions" style="margin-top:18px;">
@@ -72,7 +72,7 @@
         const payload = await response.json();
 
         if (!response.ok) {
-          throw new Error(payload.detail || "No se pudo iniciar sesion");
+          throw new Error(payload.detail || "No se pudo iniciar sesión");
         }
 
         const rol = normalizarRol(payload.rol || "");
@@ -93,12 +93,12 @@
           negocio_id: payload.negocio_id
         }));
 
-        status.textContent = "Sesion iniciada. Te redirigimos al aplicativo ALVENT.";
+        status.textContent = "Sesión iniciada. Te redirigimos al aplicativo ALVENT.";
         window.setTimeout(function () {
           window.location.href = "/alven/app/pos";
         }, 900);
       } catch (error) {
-        status.textContent = error && error.message ? error.message : "Error inesperado al iniciar sesion";
+        status.textContent = error && error.message ? error.message : "Error inesperado al iniciar sesión";
       } finally {
         submitBtn.disabled = false;
       }

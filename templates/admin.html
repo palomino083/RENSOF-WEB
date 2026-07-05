@@ -10,7 +10,7 @@
     <div class="r2030-grid reveal">
       <span class="story-kicker">Admin</span>
       <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Centro de control</h1>
-      <p class="story-text">Organiza el backoffice por modulos: plataforma base, publicaciones, correos y bandeja de contacto.</p>
+      <p class="story-text">Gestiona el centro administrativo por módulos: plataforma base, publicaciones, correos y bandeja de contacto.</p>
       <div class="hero-actions" style="margin-top:16px;">
         <a href="/admin/publicaciones" class="r-btn r-btn-primary">Publicaciones</a>
         <a href="/admin/correos" class="r-btn r-btn-ghost">Correos</a>
@@ -19,18 +19,18 @@
       <div class="intel-pillars" style="margin-top:20px; grid-template-columns:repeat(3,1fr);">
         <article class="pillar-card">
           <strong>Publicaciones</strong>
-          <span>Gestion editorial, estados, tags y asignacion de correo.</span>
-          <a href="/admin/publicaciones" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir modulo</a>
+          <span>Gestión editorial, estados, etiquetas y asignación de correo.</span>
+          <a href="/admin/publicaciones" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir módulo</a>
         </article>
         <article class="pillar-card">
           <strong>Correos</strong>
-          <span>Cuentas por area, filtros y correo principal de RENSOF.</span>
-          <a href="/admin/correos" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir modulo</a>
+          <span>Cuentas por área, filtros y correo principal de RENSOF.</span>
+          <a href="/admin/correos" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir módulo</a>
         </article>
         <article class="pillar-card">
           <strong>Bandeja</strong>
-          <span>Mensajes de contacto, clasificacion y seguimiento operativo.</span>
-          <a href="/admin/correos/bandeja" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir modulo</a>
+          <span>Mensajes de contacto, clasificación y seguimiento operativo.</span>
+          <a href="/admin/correos/bandeja" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir módulo</a>
         </article>
       </div>
     </div>
@@ -62,7 +62,7 @@
 
   <section class="story-block">
     <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Metricas</h2>
+      <h2 style="font-family:'Sora',sans-serif;">Métricas</h2>
       <form class="contact-panel" action="/admin/metrics/add" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <label>Grupo</label>
@@ -72,7 +72,7 @@
         </select>
         <label>Label</label><input class="r-input" type="text" name="label" required>
         <label>Value</label><input class="r-input" type="text" name="value" required>
-        <button class="r-btn r-btn-primary" type="submit">Agregar metrica</button>
+        <button class="r-btn r-btn-primary" type="submit">Agregar métrica</button>
       </form>
       {% for metric in metrics %}
       <form class="contact-panel" action="/admin/metrics/{{ metric.id }}/update" method="post" style="margin-top:10px;">

@@ -6,6 +6,8 @@ import { productosService } from "@/services/productosService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { appPath } from "@/utils/appPath";
 import { applyFallbackImage, toMediaUrl } from "@/utils/mediaUrl";
+import Menu from "@/components/Menu";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
 import Toolbar from "@/components/ui/Toolbar";
 import ModalCard from "@/components/ui/ModalCard";
@@ -68,7 +70,7 @@ const COLUMNAS_POR_TIPO: Record<TipoNegocio, ColumnaPresetKey[]> = {
 };
 
 const LABEL_COLUMNA: Record<ColumnaPresetKey, string> = {
-  categoria: "Categoria",
+  categoria: "Categoría",
   marca: "Marca",
   talla: "Talla",
   color: "Color",
@@ -77,7 +79,7 @@ const LABEL_COLUMNA: Record<ColumnaPresetKey, string> = {
 
 const CORE_COLUMNS_BEFORE: Array<{ key: ColumnaCoreKey; label: string; locked?: boolean }> = [
   { key: "foto", label: "Foto", locked: true },
-  { key: "codigo", label: "Codigo", locked: true },
+  { key: "codigo", label: "Código", locked: true },
   { key: "nombre", label: "Nombre", locked: true },
 ];
 
@@ -111,16 +113,16 @@ const ATRIBUTOS_SUGERIDOS_CATALOGO = [
   "Fecha vencimiento",
   "Registro sanitario",
   "Laboratorio",
-  "Ubicacion almacen",
+  "Ubicación almacén",
   "Pasillo",
   "Estante",
   "Nivel",
-  "Garantia",
+  "Garantía",
   "Compatibilidad",
   "Origen",
-  "Pais",
-  "Linea",
-  "Subcategoria",
+  "País",
+  "Línea",
+  "Subcategoría",
   "Notas internas",
 ];
 
@@ -262,9 +264,9 @@ export default function Productos() {
       setColumnasCustom(Array.isArray(resp.columnas_custom) ? resp.columnas_custom : []);
       setTiposCustom(Array.isArray(resp.tipos_custom) ? resp.tipos_custom : []);
       setColumnasVisibles(Array.isArray(resp.columnas_visibles) ? resp.columnas_visibles : []);
-      setSuccess(resp.mensaje || "Configuracion de tabla guardada");
+      setSuccess(resp.mensaje || "Configuración de tabla guardada");
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "No se pudo guardar la configuracion de tabla"));
+      setError(getApiErrorMessage(err, "No se pudo guardar la configuración de tabla"));
     } finally {
       setSavingTableConfig(false);
     }
@@ -448,13 +450,13 @@ export default function Productos() {
 
     const key = normalizarKeyColumna(label);
     if (!key) {
-      setError("El nombre de columna no es valido");
+      setError("El nombre de columna no es válido");
       return;
     }
 
     const existeEnColumnasBaseActivas = columnasDisponibles.some((col) => col.key === key);
     if (existeEnColumnasBaseActivas) {
-      setError("Ese atributo ya existe en la configuracion actual de tabla");
+      setError("Ese atributo ya existe en la configuración actual de tabla");
       return;
     }
 
@@ -643,7 +645,11 @@ export default function Productos() {
      UI
   ========================= */
   return (
-    <main className={`${styles.shell} app-content`}>
+    <ProtectedRoute>
+      <div className="app-layout">
+        <Menu />
+
+        <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
         <div>
           <p className={styles.eyebrow}>Comercial y stock</p>
@@ -774,7 +780,7 @@ export default function Productos() {
                   ))}
                 </div>
               ) : (
-                <p className={styles.hint}>No hay columnas personalizadas todavia.</p>
+                <p className={styles.hint}>No hay columnas personalizadas todavía.</p>
               )}
             </div>
 
@@ -785,7 +791,7 @@ export default function Productos() {
       <ModalCard
         open={openModal}
         title={editMode ? "Editar producto" : "Nuevo producto"}
-        subtitle="Completa los datos base y los campos definidos en la configuracion de tabla"
+        subtitle="Completa los datos base y los campos definidos en la configuración de tabla"
         actions={(
           <>
             <button type="button" onClick={guardarProducto} className={styles.saveButton}>
@@ -798,7 +804,7 @@ export default function Productos() {
         )}
       >
         <input
-          placeholder="Codigo"
+          placeholder="Código"
           disabled={editMode}
           value={form.codigo}
           onChange={(e) => setForm({ ...form, codigo: e.target.value })}
@@ -812,7 +818,7 @@ export default function Productos() {
         />
         {mostrarCampoConfigurado("categoria") ? (
           <input
-            placeholder="Categoria"
+            placeholder="Categoría"
             value={form.categoria}
             onChange={(e) => setForm({ ...form, categoria: e.target.value })}
             className="focus-ring"
@@ -971,6 +977,8 @@ export default function Productos() {
           </table>
         </div>
       </section>
-    </main>
+        </main>
+      </div>
+    </ProtectedRoute>
   );
 }

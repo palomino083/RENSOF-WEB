@@ -10,7 +10,7 @@
     <div class="r2030-grid reveal">
       <span class="story-kicker">Admin</span>
       <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Bandeja de contacto</h1>
-      <p class="story-text">Visualiza y clasifica las consultas recibidas desde los formularios publicos.</p>
+      <p class="story-text">Visualiza y clasifica las consultas recibidas desde los formularios públicos.</p>
       <div class="hero-actions" style="margin-top:16px;">
         <a href="/admin/correos" class="r-btn r-btn-ghost">Volver a correos</a>
         <a href="/admin/publicaciones" class="r-btn r-btn-ghost">Publicaciones</a>
@@ -23,11 +23,11 @@
     <div class="r2030-grid reveal">
       <h2 style="font-family:'Sora',sans-serif;">Filtros</h2>
       <form class="contact-panel" action="/admin/correos/bandeja" method="get">
-        <label>Busqueda</label>
+        <label>Búsqueda</label>
         <input class="r-input" type="text" name="q" value="{{ search_query }}" placeholder="Nombre, correo, tema o mensaje">
         <label>Area</label>
         <select class="r-select" name="area">
-          <option value="">Todas las areas</option>
+          <option value="">Todas las áreas</option>
           {% for option in area_options %}
           <option value="{{ option }}" {% if selected_area == option %}selected{% endif %}>{{ option }}</option>
           {% endfor %}
@@ -56,7 +56,7 @@
             <span class="story-kicker">{{ message.status }}</span>
             <h3 style="margin:12px 0 6px;">{{ message.full_name }}</h3>
             <p style="margin:0; color:var(--r-text-soft);">{{ message.email }}{% if message.organization %} | {{ message.organization }}{% endif %}</p>
-            <p style="margin:8px 0 0; color:var(--r-text-soft);">Area: {{ message.area or 'Sin area' }} | Tema: {{ message.topic or 'General' }}</p>
+            <p style="margin:8px 0 0; color:var(--r-text-soft);">Área: {{ message.area or 'Sin área' }} | Tema: {{ message.topic or 'General' }}</p>
             <p style="margin:8px 0 0; color:var(--r-text-soft);">Asignado a: {{ message.assigned_email }} | Origen: {{ message.source_page }}</p>
             <p style="margin:8px 0 0; color:var(--r-text-soft);">{{ message.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
           </div>
