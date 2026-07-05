@@ -80,8 +80,21 @@ def _serve_named_page(page_name: str):
     return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
 
-def _serve_alven_landing():
-    """Serve local ALVENT landing page if available."""
+def _serve_alven_landing(request: Request):
+    """Render ALVENT landing page template with runtime context."""
+    template_file = TEMPLATES_DIR / "alvent.html"
+    if template_file.exists():
+        return templates.TemplateResponse(
+            request=request,
+            name="alvent.html",
+            context={
+                "active_page": "servicios",
+                "page_title": "ALVENT ERP PRO | RENSOF",
+                "page_description": "Plataforma comercial para ventas, inventario, caja y reportes en tiempo real.",
+                "alvent_app_url": _internalize_url(ALVENT_APP_URL, "/alven/app/login"),
+            },
+        )
+
     alven_file = BASE_DIR / "alven" / "index.html"
     if alven_file.exists():
         with open(alven_file, "r", encoding="utf-8") as f:
@@ -197,35 +210,35 @@ def info():
 # ==========================================
 
 @app.get("/alven")
-def redirect_alven():
+def redirect_alven(request: Request):
     """Serve ALVENT landing or fallback redirect."""
-    landing = _serve_alven_landing()
+    landing = _serve_alven_landing(request)
     if landing is not None:
         return landing
     return RedirectResponse(url=_internalize_url(ALVENT_APP_URL, "/alven/app/login"))
 
 @app.get("/alven/app")
-def redirect_alven_app():
+def redirect_alven_app(request: Request):
     """Redirect to ALVENT app root"""
     if ALVENT_APP_URL.startswith("/alven/app") or ALVENT_APP_URL.startswith("/alven/"):
-        landing = _serve_alven_landing()
+        landing = _serve_alven_landing(request)
         if landing is not None:
             return landing
         return RedirectResponse(url="/alven")
     return RedirectResponse(url=_internalize_url(ALVENT_APP_URL, "/alven/app/login"))
 
 @app.get("/alven/app/{path:path}")
-def redirect_alven_app_path(path: str):
+def redirect_alven_app_path(request: Request, path: str):
     """Redirect ALVENT app paths without exposing localhost."""
     if ALVENT_APP_URL.startswith("/alven/app") or ALVENT_APP_URL.startswith("/alven/"):
-        landing = _serve_alven_landing()
+        landing = _serve_alven_landing(request)
         if landing is not None:
             return landing
         return RedirectResponse(url="/alven")
     base = _internalize_url(ALVENT_APP_BASE_PATH, "/alven/app")
     target = f"{base}/{path}"
     if target == f"/alven/app/{path}":
-        landing = _serve_alven_landing()
+        landing = _serve_alven_landing(request)
         if landing is not None:
             return landing
         return RedirectResponse(url="/alven")
