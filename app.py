@@ -58,8 +58,8 @@ async def home(request: Request):
 
 @app.get("/index.html")
 async def index():
-    """Redirect to home"""
-    return RedirectResponse(url="/")
+    """Disable /index.html alias route."""
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
 @app.get("/{page}.html")
 async def serve_page(page: str):
