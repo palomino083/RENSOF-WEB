@@ -695,8 +695,26 @@
 .alvent-hero {
   display: grid;
   grid-template-columns: 1.08fr 0.92fr;
-  gap: 28px;
+  gap: 20px;
   align-items: center;
+}
+
+.alvent-hero .story-title {
+  margin: 10px 0 12px;
+  font-size: clamp(2.45rem, 5.6vw, 4.85rem) !important;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.alvent-hero .story-text {
+  max-width: 650px;
+  font-size: clamp(1.02rem, 1.55vw, 1.24rem);
+  line-height: 1.48;
+}
+
+.alvent-hero .hero-actions .r-btn {
+  min-height: 46px;
+  padding-inline: 18px;
 }
 
 .alvent-brand-lockup {
@@ -725,7 +743,28 @@
 }
 
 .alvent-metrics {
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.alvent-metrics .data-tile {
+  padding: 12px 10px;
+  border-color: rgba(126, 214, 255, 0.2);
+  background: rgba(6, 20, 33, 0.85);
+}
+
+.alvent-metrics .data-tile span {
+  display: block;
+  font-size: 0.84rem;
+  color: #a8c5db;
+}
+
+.alvent-metrics .data-tile strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 2rem;
+  line-height: 1.06;
+  color: #eef8ff;
 }
 
 .alvent-claims-grid {
@@ -734,10 +773,12 @@
 
 .alvent-hero-panel {
   min-height: 100%;
+  padding: 18px;
+  border-radius: 22px;
 }
 
 .alvent-mini-board {
-  padding: 18px;
+  padding: 16px;
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(7, 19, 31, 0.9), rgba(11, 31, 50, 0.84));
 }
