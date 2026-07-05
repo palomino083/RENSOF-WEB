@@ -3,9 +3,10 @@ RENSOF Gateway - Servidor simplificado para RENSOF website + ALVENT
 """
 
 from pathlib import Path
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import logging
 
@@ -13,6 +14,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
+ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", "/alven/")
+ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/alven/app").rstrip("/")
+ALVENT_BACKEND_ORIGIN = os.getenv("ALVENT_BACKEND_ORIGIN", "").rstrip("/")
 
 # FastAPI app
 app = FastAPI(
@@ -61,7 +65,40 @@ async def serve_page(page: str):
     if file_path.exists():
         with open(file_path, 'r', encoding='utf-8') as f:
             return HTMLResponse(content=f.read())
-    return {"error": "Page not found"}
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+
+def _serve_named_page(page_name: str):
+    file_path = BASE_DIR / f"{page_name}.html"
+    if file_path.exists():
+        with open(file_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+
+@app.get("/nosotros")
+async def nosotros():
+    return _serve_named_page("nosotros")
+
+
+@app.get("/publicaciones")
+async def publicaciones():
+    return _serve_named_page("publicaciones")
+
+
+@app.get("/contacto")
+async def contacto():
+    return _serve_named_page("contacto")
+
+
+@app.get("/proyectos")
+async def proyectos():
+    return _serve_named_page("proyectos")
+
+
+@app.get("/servicios")
+async def servicios():
+    return _serve_named_page("servicios")
 
 # ==========================================
 # HEALTH CHECKS
@@ -91,22 +128,25 @@ def info():
 @app.get("/alven")
 def redirect_alven():
     """Redirect to ALVENT"""
-    return RedirectResponse(url="/alven/app/login")
+    return RedirectResponse(url=ALVENT_APP_URL)
 
 @app.get("/alven/app")
 def redirect_alven_app():
-    """Redirect to ALVENT frontend"""
-    return RedirectResponse(url="http://127.0.0.1:3001/alven/app")
+    """Redirect to ALVENT app root"""
+    return RedirectResponse(url=ALVENT_APP_URL)
 
 @app.get("/alven/app/{path:path}")
 def redirect_alven_app_path(path: str):
-    """Redirect ALVENT frontend path"""
-    return RedirectResponse(url=f"http://127.0.0.1:3001/alven/app/{path}")
+    """Redirect ALVENT app paths without exposing localhost."""
+    base = ALVENT_APP_BASE_PATH
+    return RedirectResponse(url=f"{base}/{path}")
 
 @app.api_route("/alven/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
 def redirect_alven_api(path: str):
-    """Redirect ALVENT backend API"""
-    return RedirectResponse(url=f"http://127.0.0.1:8001/{path}")
+    """Redirect ALVENT backend API to configured origin only."""
+    if not ALVENT_BACKEND_ORIGIN:
+        return JSONResponse(status_code=503, content={"detail": "ALVENT backend unavailable"})
+    return RedirectResponse(url=f"{ALVENT_BACKEND_ORIGIN}/{path}")
 
 @app.get("/admin/login")
 def redirect_admin():
