@@ -64,6 +64,7 @@ const PERMISOS: Record<string, string[]> = {
     "exportacion",
     "usuarios",
     "configuracion",
+    "empresa",
     "soporte",
   ],
 
@@ -79,6 +80,7 @@ const PERMISOS: Record<string, string[]> = {
     "exportacion",
     "usuarios",
     "configuracion",
+    "empresa",
     "soporte",
   ],
 
@@ -94,6 +96,7 @@ const PERMISOS: Record<string, string[]> = {
     "exportacion",
     "usuarios",
     "configuracion",
+    "empresa",
     "finanzas",
     "soporte",
   ],
@@ -161,6 +164,7 @@ const MENU: MenuBlock[] = [
     section: "SISTEMA",
     items: [
       { label: "Usuarios", href: "/usuarios", icon: "👤", key: "usuarios" },
+      { label: "Empresa", href: "/configuracion", icon: "🏢", key: "empresa" },
       { label: "Soporte", href: "/configuracion", icon: "🤖", key: "soporte" },
       { label: "Configuración", href: "/configuracion", icon: "⚙️", key: "configuracion" },
       { label: "Finanzas", href: "/finanzas", icon: "🧾", key: "finanzas" },
@@ -170,7 +174,7 @@ const MENU: MenuBlock[] = [
 
 export default function Menu() {
   const [usuario, setUsuario] = useState<Usuario>({});
-  const [configMenuFocus, setConfigMenuFocus] = useState<"soporte" | "configuracion">("configuracion");
+  const [configMenuFocus, setConfigMenuFocus] = useState<"soporte" | "configuracion" | "empresa">("configuracion");
   const pathname = usePathname();
 
   const toAppHref = (href: string) => {
@@ -227,8 +231,12 @@ export default function Menu() {
       return isConfigRoute && configMenuFocus === "soporte";
     }
 
+    if (item.key === "empresa") {
+      return isConfigRoute && configMenuFocus === "empresa";
+    }
+
     if (item.key === "configuracion") {
-      return isConfigRoute && configMenuFocus !== "soporte";
+      return isConfigRoute && configMenuFocus === "configuracion";
     }
 
     return currentPath === normalizePath(item.href);
@@ -250,7 +258,7 @@ export default function Menu() {
       return;
     }
 
-    if (stored === "soporte" || stored === "configuracion") {
+    if (stored === "soporte" || stored === "configuracion" || stored === "empresa") {
       setConfigMenuFocus(stored);
       return;
     }
@@ -332,6 +340,12 @@ const menuFiltrado = useMemo(() => {
                       if (normalizePath(pathname) === "/configuracion") {
                         window.dispatchEvent(new Event("alvent-open-support-modal"));
                       }
+                    }
+
+                    if (item.key === "empresa") {
+                      window.localStorage.setItem("alvent_menu_focus_config", "empresa");
+                      setConfigMenuFocus("empresa");
+                      window.dispatchEvent(new CustomEvent("alvent-config-menu-focus", { detail: { mode: "configuracion" } }));
                     }
 
                     if (item.key === "configuracion") {

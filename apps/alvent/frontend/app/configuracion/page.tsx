@@ -327,6 +327,7 @@ export default function ConfiguracionPage() {
   const [negocio, setNegocio] = useState<Negocio | null>(null);
   const [loadingBranding, setLoadingBranding] = useState(true);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [hasAdminSupportAccess, setHasAdminSupportAccess] = useState(false);
   const [negocioSeleccionadoId, setNegocioSeleccionadoId] = useState<number>(0);
   const [negociosDisponibles, setNegociosDisponibles] = useState<Negocio[]>([]);
   const [negocioTipoFiltro, setNegocioTipoFiltro] = useState<string>("todos");
@@ -1508,7 +1509,9 @@ export default function ConfiguracionPage() {
         ? parsed.roles.map((r: string) => normalizarRol(String(r || "")))
         : [];
       const esSuper = rol === "SUPERADMIN" || roles.includes("SUPERADMIN") || parseNumero(getStorageItem("usuario_id")) === 1;
+      const esAdmin = esSuper || rol === "ADMINISTRADOR" || roles.includes("ADMINISTRADOR");
       setIsSuperadmin(esSuper);
+      setHasAdminSupportAccess(esAdmin);
 
       if (!esSuper) {
         const negocioIdLocal = getNegocioIdFromSession();
@@ -1516,6 +1519,7 @@ export default function ConfiguracionPage() {
       }
     } catch {
       setIsSuperadmin(false);
+      setHasAdminSupportAccess(false);
       setNegocioSeleccionadoId(getNegocioIdFromSession());
     }
   }, []);
@@ -2721,35 +2725,38 @@ export default function ConfiguracionPage() {
 
             <article className={styles.card}>
               <Toolbar
-                title="Soporte técnico inteligente"
+                title="Soporte Sistema"
                 right={<StatusBadge text={loadingSoporte ? "Cargando" : `${soporteTotal} tickets`} variant="info" />}
               />
-              <button
-                type="button"
-                className={`${styles.supportInteligenteBtn} focus-ring`}
-                onClick={() => setShowSoporteInteligente((prev) => !prev)}
-              >
-                Soporte inteligente {showSoporteInteligente ? "▲" : "▼"}
-              </button>
 
-              {showSoporteInteligente ? (
+              <div className={styles.supportActions}>
+                <button
+                  type="button"
+                  className={`${styles.saveBusinessBtn} focus-ring`}
+                  onClick={() => {
+                    setConfigAccessMode("soporte");
+                    setShowSoporteChatModal(true);
+                  }}
+                >
+                  Soporte usuario
+                </button>
+              </div>
+
+              {hasAdminSupportAccess ? (
+                <button
+                  type="button"
+                  className={`${styles.supportInteligenteBtn} focus-ring`}
+                  onClick={() => setShowSoporteInteligente((prev) => !prev)}
+                >
+                  Soporte Sistema {showSoporteInteligente ? "▲" : "▼"}
+                </button>
+              ) : null}
+
+              {hasAdminSupportAccess && showSoporteInteligente ? (
                 <div className={styles.supportInteligentePanel}>
                   <p className={styles.supportInteligenteIntro}>
                     Atención de incidencias centralizada para RENSOF. Abre el soporte en línea para conversar con el chat bot y escalar tickets.
                   </p>
-
-                  <div className={styles.supportActions}>
-                    <button
-                      type="button"
-                      className={`${styles.saveBusinessBtn} focus-ring`}
-                      onClick={() => {
-                        setConfigAccessMode("soporte");
-                        setShowSoporteChatModal(true);
-                      }}
-                    >
-                      Soporte en línea
-                    </button>
-                  </div>
 
                   {isSuperadmin ? (
                     <section id="cfg-guardian" className={styles.guardianPanel}>
