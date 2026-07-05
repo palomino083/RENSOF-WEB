@@ -1,15 +1,21 @@
 """
 RENSOF Gateway - API Gateway simple para ALVENT ERP POS PRO
 Redirecciona solicitudes a backend (8001) y frontend (3001)
+Sirve archivos estáticos de rensof.pe en la raíz
 """
 
 import os
-from fastapi import FastAPI
+from pathlib import Path
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Path a archivos estáticos
+BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(
     title="RENSOF Gateway",
@@ -27,13 +33,32 @@ app.add_middleware(
 )
 
 # ==========================================
+# STATIC FILES (RENSOF.PE WEBSITE)
+# ==========================================
+
+# Montar archivos estáticos HTML
+app.mount("/assets", StaticFiles(directory=BASE_DIR / "assets"), name="assets")
+
+# ==========================================
 # ROOT ENDPOINTS
 # ==========================================
 
 @app.get("/")
-def root():
-    """Redirect to app"""
+async def root():
+    """Servir index.html en raíz"""
+    index_path = BASE_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
     return {"message": "RENSOF Gateway is running"}
+
+@app.get("/{filename}")
+async def serve_html(filename: str):
+    """Servir archivos HTML estáticos (contacto, servicios, etc)"""
+    file_path = BASE_DIR / filename
+    if file_path.exists() and file_path.suffix == ".html":
+        return FileResponse(file_path)
+    # Si no es HTML, pasar a las siguientes rutas
+    raise HTTPException(status_code=404, detail="File not found")
 
 @app.get("/health")
 def health():
