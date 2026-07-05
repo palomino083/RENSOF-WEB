@@ -112,6 +112,7 @@ export const negocioService = {
       backups: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
       productos: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
       soporte: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
+      reinicio: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
       sunat: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
     };
   },
@@ -128,6 +129,7 @@ export const negocioService = {
         backups_habilitado: boolean;
         backups_limite: number | null;
         soporte_habilitado: boolean;
+        reinicio_habilitado: boolean;
         productos_limite: number | null;
         sunat_habilitado: boolean;
       }>;
@@ -147,6 +149,7 @@ export const negocioService = {
         backups_habilitado: boolean;
         backups_limite: number | null;
         soporte_habilitado: boolean;
+        reinicio_habilitado: boolean;
         productos_limite: number | null;
         sunat_habilitado: boolean;
       }>;
@@ -163,6 +166,7 @@ export const negocioService = {
       backups_habilitado: boolean;
       backups_limite: number | null;
       soporte_habilitado: boolean;
+      reinicio_habilitado: boolean;
       productos_limite: number | null;
       sunat_habilitado: boolean;
     }>
@@ -180,6 +184,7 @@ export const negocioService = {
         backups_habilitado: boolean;
         backups_limite: number | null;
         soporte_habilitado: boolean;
+        reinicio_habilitado: boolean;
         productos_limite: number | null;
         sunat_habilitado: boolean;
       }>;

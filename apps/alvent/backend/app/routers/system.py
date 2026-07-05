@@ -167,6 +167,31 @@ def _validar_plan_soporte(db: Session, current_user: dict, negocio_id: Optional[
         )
 
 
+def _validar_plan_reinicio(db: Session, current_user: dict) -> None:
+    if bool(current_user.get("is_superadmin")):
+        return
+
+    negocio_objetivo = int(current_user.get("negocio_id") or 0)
+    if not negocio_objetivo:
+        return
+
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_objetivo).first()
+    if not negocio:
+        return
+
+    try:
+        plan = normalizar_plan(getattr(negocio, "plan", "BASICO"))
+    except ValueError:
+        plan = "BASICO"
+
+    config = resolver_config_plan_negocio(negocio, plan)
+    if not getattr(config, "reinicio_habilitado", True):
+        raise HTTPException(
+            status_code=402,
+            detail=f"Reinicio no disponible en plan {plan}. Mejora tu plan para continuar.",
+        )
+
+
 def _ticket_to_dict(ticket: SoporteTicket, autor: Usuario | None, atendido_por: Usuario | None) -> dict:
     return {
         "id": ticket.id,
@@ -198,6 +223,8 @@ def reset_system(
     actor_rol = str(getattr(actor, "rol", "") or "").upper()
     if not current_user.get("is_superadmin") and actor_rol != "ADMINISTRADOR":
         raise HTTPException(status_code=403, detail="Solo administrador puede reiniciar")
+
+    _validar_plan_reinicio(db, current_user)
 
     # 🔐 SEGURIDAD
     if data.password != "ADMIN123":

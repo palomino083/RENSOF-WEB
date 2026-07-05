@@ -166,6 +166,7 @@ class PlanCatalogoEditableItem(BaseModel):
     backups_habilitado: bool = False
     backups_limite: int | None = Field(default=None, ge=0)
     soporte_habilitado: bool = True
+    reinicio_habilitado: bool = True
     productos_limite: int | None = Field(default=None, ge=0)
     sunat_habilitado: bool = False
 
@@ -376,6 +377,7 @@ def _resolver_config_plan_para_negocio(negocio: Negocio, plan: str):
         "backups_habilitado": cfg.backups_habilitado,
         "backups_limite": cfg.backups_limite,
         "soporte_habilitado": cfg.soporte_habilitado,
+        "reinicio_habilitado": cfg.reinicio_habilitado,
         "productos_limite": cfg.productos_limite,
         "sunat_habilitado": cfg.sunat_habilitado,
     }
@@ -650,6 +652,7 @@ def actualizar_catalogo_planes_editable(
         backups_habilitado = bool(item.backups_habilitado)
         backups_limite = item.backups_limite if backups_habilitado else 0
         soporte_habilitado = bool(item.soporte_habilitado)
+        reinicio_habilitado = bool(item.reinicio_habilitado)
         productos_limite = item.productos_limite
         sunat_habilitado = bool(item.sunat_habilitado)
 
@@ -663,6 +666,7 @@ def actualizar_catalogo_planes_editable(
             current = current if isinstance(current, dict) else {}
             current.update({
                 "soporte_habilitado": soporte_habilitado,
+                "reinicio_habilitado": reinicio_habilitado,
                 "productos_limite": productos_limite,
                 "sunat_habilitado": sunat_habilitado,
             })
@@ -678,6 +682,7 @@ def actualizar_catalogo_planes_editable(
             "backups_habilitado": backups_habilitado,
             "backups_limite": backups_limite,
             "soporte_habilitado": soporte_habilitado,
+            "reinicio_habilitado": reinicio_habilitado,
             "productos_limite": productos_limite,
             "sunat_habilitado": sunat_habilitado,
         })
@@ -1022,6 +1027,12 @@ def obtener_resumen_plan(
             "limite": reportes_limite,
             "disponibles": _disponibles(reportes_limite, int(reportes_consumidos)),
             "habilitado": config["reportes_habilitado"],
+        },
+        "reinicio": {
+            "consumidos": 0,
+            "limite": None,
+            "disponibles": None,
+            "habilitado": config["reinicio_habilitado"],
         },
         "backups": {
             "consumidos": backups_consumidos,

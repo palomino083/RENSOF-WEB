@@ -13,6 +13,7 @@ class PlanConfig:
     backups_habilitado: bool
     backups_limite: int | None
     soporte_habilitado: bool
+    reinicio_habilitado: bool
     productos_limite: int | None
     sunat_habilitado: bool
 
@@ -25,6 +26,7 @@ PLANES: dict[str, PlanConfig] = {
         backups_habilitado=False,
         backups_limite=0,
         soporte_habilitado=True,
+        reinicio_habilitado=True,
         productos_limite=100,
         sunat_habilitado=False,
     ),
@@ -35,6 +37,7 @@ PLANES: dict[str, PlanConfig] = {
         backups_habilitado=False,
         backups_limite=0,
         soporte_habilitado=True,
+        reinicio_habilitado=True,
         productos_limite=300,
         sunat_habilitado=False,
     ),
@@ -45,6 +48,7 @@ PLANES: dict[str, PlanConfig] = {
         backups_habilitado=False,
         backups_limite=0,
         soporte_habilitado=True,
+        reinicio_habilitado=True,
         productos_limite=500,
         sunat_habilitado=False,
     ),
@@ -55,6 +59,7 @@ PLANES: dict[str, PlanConfig] = {
         backups_habilitado=False,
         backups_limite=0,
         soporte_habilitado=True,
+        reinicio_habilitado=True,
         productos_limite=1500,
         sunat_habilitado=True,
     ),
@@ -65,6 +70,7 @@ PLANES: dict[str, PlanConfig] = {
         backups_habilitado=True,
         backups_limite=25,
         soporte_habilitado=True,
+        reinicio_habilitado=True,
         productos_limite=5000,
         sunat_habilitado=True,
     ),
@@ -75,6 +81,7 @@ PLANES: dict[str, PlanConfig] = {
         backups_habilitado=True,
         backups_limite=None,
         soporte_habilitado=True,
+        reinicio_habilitado=True,
         productos_limite=None,
         sunat_habilitado=True,
     ),
@@ -145,6 +152,7 @@ def obtener_catalogo_planes() -> list[dict]:
                 "backups_habilitado": cfg.backups_habilitado,
                 "backups_limite": cfg.backups_limite,
                 "soporte_habilitado": cfg.soporte_habilitado,
+                "reinicio_habilitado": cfg.reinicio_habilitado,
                 "productos_limite": cfg.productos_limite,
                 "sunat_habilitado": cfg.sunat_habilitado,
             }
@@ -212,6 +220,7 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
             backups_limite = base.backups_limite
 
         soporte_habilitado = bool(override.get("soporte_habilitado", base.soporte_habilitado))
+        reinicio_habilitado = bool(override.get("reinicio_habilitado", base.reinicio_habilitado))
         productos_limite = override.get("productos_limite", base.productos_limite)
         sunat_habilitado = bool(override.get("sunat_habilitado", base.sunat_habilitado))
 
@@ -222,6 +231,7 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
             backups_habilitado=backups_habilitado,
             backups_limite=backups_limite,
             soporte_habilitado=soporte_habilitado,
+            reinicio_habilitado=reinicio_habilitado,
             productos_limite=productos_limite,
             sunat_habilitado=sunat_habilitado,
         )
@@ -235,6 +245,7 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
     backups_habilitado = bool(override.get("backups_habilitado", base.backups_habilitado))
     backups_limite = override.get("backups_limite", base.backups_limite)
     soporte_habilitado = bool(override.get("soporte_habilitado", base.soporte_habilitado))
+    reinicio_habilitado = bool(override.get("reinicio_habilitado", base.reinicio_habilitado))
     productos_limite = override.get("productos_limite", base.productos_limite)
     sunat_habilitado = bool(override.get("sunat_habilitado", base.sunat_habilitado))
 
@@ -250,6 +261,7 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
         backups_habilitado=backups_habilitado,
         backups_limite=backups_limite,
         soporte_habilitado=soporte_habilitado,
+        reinicio_habilitado=reinicio_habilitado,
         productos_limite=productos_limite,
         sunat_habilitado=sunat_habilitado,
     )
@@ -291,6 +303,7 @@ def obtener_catalogo_planes_para_negocio(negocio: object | None) -> list[dict]:
                 "backups_habilitado": cfg.backups_habilitado,
                 "backups_limite": cfg.backups_limite,
                 "soporte_habilitado": cfg.soporte_habilitado,
+                "reinicio_habilitado": cfg.reinicio_habilitado,
                 "productos_limite": cfg.productos_limite,
                 "sunat_habilitado": cfg.sunat_habilitado,
             }
