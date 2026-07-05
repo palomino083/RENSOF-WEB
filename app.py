@@ -20,6 +20,9 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", "/alven/")
 ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/alven/app").rstrip("/")
 ALVENT_BACKEND_ORIGIN = os.getenv("ALVENT_BACKEND_ORIGIN", "").rstrip("/")
+ALVENT_APP_EXTERNAL_BASE_URL = os.getenv(
+    "ALVENT_APP_EXTERNAL_BASE_URL", "https://alvent-frontend.onrender.com/alven/app"
+).rstrip("/")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # FastAPI app
@@ -122,6 +125,20 @@ def _internalize_url(raw_url: str, fallback: str) -> str:
     return fallback
 
 
+def _external_alvent_app_url(path: str = "") -> str:
+    """Build ALVENT app URLs that must resolve on the dedicated frontend service."""
+    if not ALVENT_APP_EXTERNAL_BASE_URL:
+        fallback = _internalize_url(ALVENT_APP_URL, "/alven/app/login")
+        if path:
+            return f"{ALVENT_APP_BASE_PATH}/{path.lstrip('/')}"
+        return fallback
+
+    if path:
+        return f"{ALVENT_APP_EXTERNAL_BASE_URL}/{path.lstrip('/')}"
+
+    return f"{ALVENT_APP_EXTERNAL_BASE_URL}/login"
+
+
 def _render_admin_login(request: Request):
     template_file = TEMPLATES_DIR / "admin_login.html"
     if not template_file.exists():
@@ -220,29 +237,14 @@ def redirect_alven(request: Request):
 @app.get("/alven/app")
 def redirect_alven_app(request: Request):
     """Redirect to ALVENT app root"""
-    if ALVENT_APP_URL.startswith("/alven/app") or ALVENT_APP_URL.startswith("/alven/"):
-        landing = _serve_alven_landing(request)
-        if landing is not None:
-            return landing
-        return RedirectResponse(url="/alven")
-    return RedirectResponse(url=_internalize_url(ALVENT_APP_URL, "/alven/app/login"))
+    _ = request
+    return RedirectResponse(url=_external_alvent_app_url())
 
 @app.get("/alven/app/{path:path}")
 def redirect_alven_app_path(request: Request, path: str):
     """Redirect ALVENT app paths without exposing localhost."""
-    if ALVENT_APP_URL.startswith("/alven/app") or ALVENT_APP_URL.startswith("/alven/"):
-        landing = _serve_alven_landing(request)
-        if landing is not None:
-            return landing
-        return RedirectResponse(url="/alven")
-    base = _internalize_url(ALVENT_APP_BASE_PATH, "/alven/app")
-    target = f"{base}/{path}"
-    if target == f"/alven/app/{path}":
-        landing = _serve_alven_landing(request)
-        if landing is not None:
-            return landing
-        return RedirectResponse(url="/alven")
-    return RedirectResponse(url=target)
+    _ = request
+    return RedirectResponse(url=_external_alvent_app_url(path))
 
 @app.api_route("/alven/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
 def redirect_alven_api(path: str):
