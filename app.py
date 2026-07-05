@@ -48,11 +48,25 @@ except Exception as e:
 # ==========================================
 
 @app.get("/")
-async def home():
-    """Home page"""
+async def home(request: Request):
+    """Render institutional homepage template."""
+    template_file = TEMPLATES_DIR / "home.html"
+    if template_file.exists():
+        return templates.TemplateResponse(
+            request=request,
+            name="home.html",
+            context={
+                "active_page": "inicio",
+                "page_title": "RENSOF | Tecnologia que impulsa decisiones inteligentes",
+                "page_description": "Desarrollamos aplicaciones especializadas que integran datos, modelos y tecnologia para transformar informacion en decisiones con impacto real.",
+                "primary_email": None,
+                "message_sent": False,
+            },
+        )
+
     file_path = BASE_DIR / "index.html"
     if file_path.exists():
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     return {"message": "RENSOF Gateway"}
 
