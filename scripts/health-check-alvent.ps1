@@ -1,11 +1,14 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$backendLoginUrl = "http://127.0.0.1:8000/alven/api/auth/login"
-$backendOverviewUrl = "http://127.0.0.1:8000/alven/api/dashboard/overview"
-$backendProductosUrl = "http://127.0.0.1:8000/alven/api/productos/"
-$backendVentasUrl = "http://127.0.0.1:8000/alven/api/ventas/"
-$backendVentasResumenUrl = "http://127.0.0.1:8000/alven/api/ventas/resumen"
+# Direct backend API endpoints (bypass gateway proxy)
+$backendLoginUrl = "http://127.0.0.1:8001/auth/login"
+$backendOverviewUrl = "http://127.0.0.1:8001/dashboard/overview"
+$backendProductosUrl = "http://127.0.0.1:8001/productos/"
+$backendVentasUrl = "http://127.0.0.1:8001/ventas/"
+$backendVentasResumenUrl = "http://127.0.0.1:8001/ventas/resumen"
+
+# Frontend served via gateway
 $frontendLoginUrl = "http://127.0.0.1:8000/alven/app"
 $frontendDashboardUrl = "http://127.0.0.1:8000/alven/app/dashboard"
 $repoRoot = Split-Path -Path $PSScriptRoot -Parent
