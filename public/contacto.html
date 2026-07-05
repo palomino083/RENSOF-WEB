@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <title></title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="">
+  <meta property="og:description" content="">
+  <meta property="og:url" content="">
+  <meta property="og:image" content="">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="">
+  <meta name="twitter:description" content="">
+  <meta name="twitter:image" content="">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="/assets/css/style.css?v=20260702a">
+  <link rel="stylesheet" href="/assets/css/r2030.css?v=20260702b">
+</head>
+<body class="r2030-page">
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="RENSOF">
+      <span class="brand-mark">R</span>
+      <span>RENSOF</span>
+    </a>
+    <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="site-nav" aria-label="Navegación principal">
+      <a href="/" class="active">Inicio</a>
+      <details class="nav-dropdown is-active">
+        <summary>Aplicaciones</summary>
+        <div class="nav-dropdown-menu" role="menu" aria-label="Aplicaciones disponibles">
+          <a href="/alven" role="menuitem">ALVENT ERP PRO</a>
+          <span class="nav-dropdown-item is-soon" aria-disabled="true">Comercio electrónico (próximamente)</span>
+          <span class="nav-dropdown-item is-soon" aria-disabled="true">Gestión pública (próximamente)</span>
+          <span class="nav-dropdown-item is-soon" aria-disabled="true">Agricultura digital (próximamente)</span>
+        </div>
+      </details>
+      <a href="/nosotros" class="active">Nosotros</a>
+      <details class="nav-dropdown is-active">
+        <summary>Recursos</summary>
+        <div class="nav-dropdown-menu" role="menu" aria-label="Recursos">
+          <a href="/publicaciones" role="menuitem">Publicaciones</a>
+          <a href="/proyectos" role="menuitem">Casos y sectores</a>
+          <span class="nav-dropdown-item is-soon" aria-disabled="true">Documentación (próximamente)</span>
+        </div>
+      </details>
+      <a href="/contacto" class="contact-link active">Contacto</a>
+      <a href="/admin/login" class="nav-cta">Admin</a>
+    </nav>
+  </header>
+
+  
+<main class="page-main" style="padding-top: 84px;">
+  <section class="story-block">
+    <div class="r2030-grid contact-wrap reveal">
+      <article class="contact-panel">
+        <span class="story-kicker">Contacto</span>
+        <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Activa RENSOF en tu organización</h1>
+        <p class="story-text">Cuantifica decisiones, conecta datos y despliega inteligencia aplicada en semanas.</p>
+        <p style="margin-top:14px; color:var(--r-text-soft);"></p>
+      </article>
+
+      <form class="contact-panel" id="contactForm" action="/contacto/enviar" method="POST">
+        <input type="hidden" name="redirect_to" value="/contacto">
+        <input type="hidden" name="source_page" value="contacto">
+
+        
+        <p style="margin-bottom:14px; color:#7ef0b2;">Consulta enviada y registrada en la bandeja de contacto.</p>
+        
+
+        <label for="nombre">Nombre completo</label>
+        <input id="nombre" class="r-input" type="text" name="nombre" required minlength="3">
+
+        <label for="email">Correo</label>
+        <input id="email" class="r-input" type="email" name="email" required>
+
+        <label for="servicio">Producto de interés</label>
+        <select id="servicio" class="r-select" name="servicio" required>
+          <option value="">Selecciona una opción</option>
+          
+          <option> - </option>
+          
+        </select>
+
+        <label for="canal_correo">Correo asignado</label>
+        <select id="canal_correo" class="r-select" name="canal_correo" required>
+          <option value="">Selecciona un correo</option>
+          
+          <option value=""> |  |  | principal</option>
+          
+        </select>
+
+        <label for="mensaje">Mensaje</label>
+        <textarea id="mensaje" class="r-textarea" name="mensaje" rows="5" required minlength="12"></textarea>
+
+        <button class="r-btn r-btn-primary" type="submit">Enviar consulta</button>
+        <p id="formNote" style="margin-top:12px; color:var(--r-text-soft);">También puedes escribir a contacto@rensof.pe.</p>
+      </form>
+    </div>
+  </section>
+
+  <section class="story-block mission-band">
+    <div class="r2030-grid reveal">
+      <span class="story-kicker">Correos de atención</span>
+      <div class="intel-pillars" style="grid-template-columns:repeat(3,1fr); margin-top:16px;">
+        
+        <article class="pillar-card">
+          <strong></strong>
+          <span></span>
+          <span></span>
+          <span>Cuenta principalCuenta secundaria</span>
+        </article>
+        
+      </div>
+    </div>
+  </section>
+</main>
+
+
+  <footer class="site-footer r2030-footer">
+    <div class="container footer-top">
+      <div class="footer-cta">
+        <h2>RENSOF Intelligence Platform</h2>
+        <p>Integramos IA, analítica, economía, sostenibilidad y tecnología para transformar decisiones de alto impacto.</p>
+        <a class="btn btn-success" href="/alven">Conocer ALVENT ERP PRO</a>
+      </div>
+      <div>
+        <h3>Arquitectura de marca</h3>
+        <p>RENIA | RENFIN | RENPROJECT | RENPLAN | RENNATURE | RENMAP | ALVENT | RENSCIENCE</p>
+      </div>
+      <div>
+        <h3>Rutas</h3>
+        <a href="/">Inicio</a>
+        <a href="/alven">ALVENT ERP PRO</a>
+        <a href="/nosotros">Nosotros</a>
+        <a href="/publicaciones">Recursos</a>
+      </div>
+      <div>
+        <h3>Contacto</h3>
+        <a href="/contacto">Formulario completo</a>
+        <a href="/contacto#contactForm">Agendar diagnóstico</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© 2026 RENSOF. Todos los derechos reservados.</span>
+      <span>Transformando datos en decisiones estratégicas.</span>
+    </div>
+  </footer>
+
+  <script src="/assets/js/app.js?v=20260702a"></script>
+</body>
+</html>

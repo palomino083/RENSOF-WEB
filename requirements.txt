@@ -1,10 +1,40 @@
-fastapi
-uvicorn
-gunicorn
-sqlalchemy
-pydantic
-jinja2
-python-multipart
-alembic
-itsdangerous
-httpx
+# =========================
+# CORE FASTAPI
+# =========================
+fastapi==0.139.0
+uvicorn==0.50.0
+gunicorn==23.0.0
+
+# =========================
+# DATABASE
+# =========================
+SQLAlchemy==2.0.51
+alembic==1.13.2
+
+# =========================
+# VALIDATION / CORE PYDANTIC
+# =========================
+pydantic==2.13.4
+
+# =========================
+# SECURITY / AUTH
+# =========================
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.3.0
+itsdangerous==2.2.0
+
+# =========================
+# FORMS / UPLOADS
+# =========================
+python-multipart==0.0.6
+
+# =========================
+# HTTP CLIENT
+# =========================
+httpx==0.28.1
+
+# =========================
+# TEMPLATES (si usas frontend server-rendered)
+# =========================
+jinja2==3.1.4
