@@ -4,6 +4,7 @@ RENSOF Gateway - Servidor simplificado para RENSOF website + ALVENT
 
 from pathlib import Path
 import os
+from urllib.parse import urlsplit
 from fastapi import FastAPI, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
@@ -58,8 +59,8 @@ async def home(request: Request):
 
 @app.get("/index.html")
 async def index():
-    """Disable /index.html alias route."""
-    return JSONResponse(status_code=404, content={"detail": "Not Found"})
+    """Canonical alias to home."""
+    return RedirectResponse(url="/")
 
 @app.get("/{page}.html")
 async def serve_page(page: str):
@@ -68,19 +69,6 @@ async def serve_page(page: str):
     if file_path.exists():
         with open(file_path, 'r', encoding='utf-8') as f:
             return HTMLResponse(content=f.read())
-    return JSONResponse(status_code=404, content={"detail": "Not Found"})
-
-
-@app.get("/rensof-")
-def suppress_malformed_rensof_root():
-    """Explicitly suppress malformed rensof- URL paths."""
-    return JSONResponse(status_code=404, content={"detail": "Not Found"})
-
-
-@app.get("/rensof-{path:path}")
-def suppress_malformed_rensof_paths(path: str):
-    """Prevent malformed /rensof-* paths from entering redirect flows."""
-    _ = path
     return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
 
@@ -99,6 +87,26 @@ def _serve_alven_landing():
         with open(alven_file, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     return None
+
+
+def _internalize_url(raw_url: str, fallback: str) -> str:
+    """Keep redirects on the same host/channel by returning path-only targets."""
+    if not raw_url:
+        return fallback
+
+    if raw_url.startswith("/"):
+        return raw_url
+
+    parsed = urlsplit(raw_url)
+    if parsed.scheme and parsed.netloc:
+        path = parsed.path or fallback
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        if parsed.fragment:
+            path = f"{path}#{parsed.fragment}"
+        return path
+
+    return fallback
 
 
 def _render_admin_login(request: Request):
@@ -194,7 +202,7 @@ def redirect_alven():
     landing = _serve_alven_landing()
     if landing is not None:
         return landing
-    return RedirectResponse(url=ALVENT_APP_URL)
+    return RedirectResponse(url=_internalize_url(ALVENT_APP_URL, "/alven/app/login"))
 
 @app.get("/alven/app")
 def redirect_alven_app():
@@ -204,7 +212,7 @@ def redirect_alven_app():
         if landing is not None:
             return landing
         return RedirectResponse(url="/alven")
-    return RedirectResponse(url=ALVENT_APP_URL)
+    return RedirectResponse(url=_internalize_url(ALVENT_APP_URL, "/alven/app/login"))
 
 @app.get("/alven/app/{path:path}")
 def redirect_alven_app_path(path: str):
@@ -214,7 +222,7 @@ def redirect_alven_app_path(path: str):
         if landing is not None:
             return landing
         return RedirectResponse(url="/alven")
-    base = ALVENT_APP_BASE_PATH
+    base = _internalize_url(ALVENT_APP_BASE_PATH, "/alven/app")
     target = f"{base}/{path}"
     if target == f"/alven/app/{path}":
         landing = _serve_alven_landing()
