@@ -1,15 +1,50 @@
+# =========================
+# OS Files
+# =========================
 .DS_Store
 Thumbs.db
-*.log
-.vscode/
 
-# Python cache artifacts
+# =========================
+# Python
+# =========================
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 
+# Virtual environment
+.venv/
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Environment variables
+# =========================
+.env
+
+# =========================
+# IDE / Editors
+# =========================
+.vscode/
+.idea/
+
+# =========================
 # Local runtime state
+# =========================
 scripts/.alvent-local.pids.json
 
-# Local databases and generated reports
+# =========================
+# Databases (local/dev only)
+# =========================
+*.db
+*.sqlite
+
 apps/alvent/backend/app/database/*.db
+
+# =========================
+# Reports / generated files
+# =========================
 scripts/reports/

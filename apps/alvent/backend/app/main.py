@@ -19,6 +19,7 @@ from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
 
 
+
 from app.database.database import Base, SessionLocal, engine
 from app.models.cliente import Cliente
 from app.models.negocio import Negocio
@@ -26,8 +27,6 @@ from app.models.usuario import Usuario
 from app.utils.jwt_utils import hash_password
 from app.services.runtime_guardian import runtime_guardian
 
-# Registrar modelos SQLAlchemy
-import app.models
 # ==========================================
 # ROUTERS
 # ==========================================
@@ -469,29 +468,52 @@ async def lifespan(app: FastAPI):
     print("INICIANDO ALVENT ERP POS PRO")
     print("=" * 60)
 
-    Base.metadata.create_all(bind=engine)
-    _ensure_multitenant_columns()
-    _normalize_legacy_identifiers()
     try:
-        _ensure_unique_superadmin_account()
-        runtime_guardian.mark_startup(True, "Superadmin bootstrap ejecutado")
-    except Exception:
-        # El bootstrap de superadmin no debe tumbar el servicio en produccion.
-        logger.exception("No se pudo verificar la cuenta superadmin durante el arranque")
-        runtime_guardian.mark_startup(False, "Error al verificar superadmin")
+        # ======================================
+        # 1. BASE DE DATOS (CRÍTICO)
+        # ======================================
+        Base.metadata.create_all(bind=engine)
 
-    print("Base de datos inicializada")
-    print("Directorios verificados")
-    print("Rate limiting habilitado")
-    print("API disponible")
-    print("=" * 60)
+        # ======================================
+        # 2. MIGRACIONES LIGERAS (LEGACY SAFE)
+        # ======================================
+        _ensure_multitenant_columns()
+        _normalize_legacy_identifiers()
+
+        # ======================================
+        # 3. USUARIO SISTEMA (SUPERADMIN)
+        # ======================================
+        _ensure_unique_superadmin_account()
+
+        # ======================================
+        # 4. RUNTIME GUARDIAN
+        # ======================================
+        runtime_guardian.mark_startup(
+            True,
+            "Bootstrap completo exitoso"
+        )
+
+        print("Base de datos inicializada")
+        print("Migraciones verificadas")
+        print("Seguridad inicializada")
+        print("API disponible")
+        print("=" * 60)
+
+    except Exception as e:
+        logger.exception("Error crítico en startup")
+        runtime_guardian.mark_startup(False, str(e))
+
+        # 🔴 IMPORTANTE: no tumbar el servidor
+        print("WARNING: Startup incompleto, modo degradado")
 
     yield
 
+    # ======================================
+    # SHUTDOWN CONTROLADO
+    # ======================================
     print("=" * 60)
-    print("Cerrando ALVENT ERP POS PRO")
+    print("CERRANDO ALVENT ERP POS PRO")
     print("=" * 60)
-
 # ==========================================
 # APP
 # ==========================================
@@ -553,10 +575,13 @@ async def runtime_guardian_middleware(request: Request, call_next):
 
 # Agregar limiter a la app
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, lambda request, exc: JSONResponse(
-    status_code=429,
-    content={"detail": "Demasiadas solicitudes. Intente más tarde."},
-))
+app.add_exception_handler(
+    RateLimitExceeded,
+    lambda request, exc: JSONResponse(
+        status_code=429,
+        content={"detail": "Demasiadas solicitudes. Intente más tarde."},
+    ),
+)
 
 # ==========================================
 # CORS

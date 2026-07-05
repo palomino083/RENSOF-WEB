@@ -13,7 +13,7 @@ services:
       - key: RENSOF_ADMIN_PASSWORD
         value: admin123
       - key: ALVENT_FRONTEND_ORIGIN
-        value: https://alvent-frontend.onrender.com
+        value: https://www.rensof.pe
       - key: ALVENT_BACKEND_ORIGIN
         value: https://alvent-backend.onrender.com
       - key: ALVENT_APP_URL
