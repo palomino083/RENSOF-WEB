@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -218,7 +218,7 @@ const normalizarPaymentDestinations = (value: unknown): PaymentDestinations => {
 const esCanalPago = (value: string): value is CanalPago =>
   CANALES_PAGO.some((item) => item.value === value);
 
-const SHOW_CONFIG_PRE_PLAN_SECTIONS = false;
+const SHOW_EMPRESA_SECONDARY_SECTIONS = false;
 
 const normalizarCanalPago = (value?: string | null): CanalPago => {
   const raw = String(value || "").trim().toLowerCase();
@@ -329,6 +329,7 @@ export default function ConfiguracionPage() {
   const [negocio, setNegocio] = useState<Negocio | null>(null);
   const [loadingBranding, setLoadingBranding] = useState(true);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [hasAdminSupportAccess, setHasAdminSupportAccess] = useState(false);
   const [negocioSeleccionadoId, setNegocioSeleccionadoId] = useState<number>(0);
   const [negociosDisponibles, setNegociosDisponibles] = useState<Negocio[]>([]);
   const [negocioTipoFiltro, setNegocioTipoFiltro] = useState<string>("todos");
@@ -433,6 +434,7 @@ export default function ConfiguracionPage() {
     estado: "EN_PROCESO",
     respuesta: "",
   });
+  const [showSoporteInteligente, setShowSoporteInteligente] = useState(false);
   const [guardianStatus, setGuardianStatus] = useState<GuardianStatus | null>(null);
   const [guardianIncidents, setGuardianIncidents] = useState<GuardianIncident[]>([]);
   const [loadingGuardian, setLoadingGuardian] = useState(false);
@@ -1024,7 +1026,7 @@ export default function ConfiguracionPage() {
 
   const actualizarCampoPlanCatalogo = (
     codigo: string,
-    campo: "usuarios_limite" | "reportes_habilitado" | "reportes_limite" | "backups_habilitado" | "backups_limite" | "soporte_habilitado" | "reinicio_habilitado" | "productos_limite" | "sunat_habilitado",
+    campo: "usuarios_limite" | "reportes_habilitado" | "reportes_limite" | "backups_habilitado" | "backups_limite" | "soporte_habilitado" | "productos_limite" | "sunat_habilitado",
     valor: number | boolean | null,
   ) => {
     setPlanCatalogo((prev) => prev.map((plan) => {
@@ -1511,7 +1513,9 @@ export default function ConfiguracionPage() {
         ? parsed.roles.map((r: string) => normalizarRol(String(r || "")))
         : [];
       const esSuper = rol === "SUPERADMIN" || roles.includes("SUPERADMIN") || parseNumero(getStorageItem("usuario_id")) === 1;
+      const esAdmin = esSuper || rol === "ADMINISTRADOR" || roles.includes("ADMINISTRADOR");
       setIsSuperadmin(esSuper);
+      setHasAdminSupportAccess(esAdmin);
 
       if (!esSuper) {
         const negocioIdLocal = getNegocioIdFromSession();
@@ -1519,6 +1523,7 @@ export default function ConfiguracionPage() {
       }
     } catch {
       setIsSuperadmin(false);
+      setHasAdminSupportAccess(false);
       setNegocioSeleccionadoId(getNegocioIdFromSession());
     }
   }, []);
@@ -2164,8 +2169,6 @@ export default function ConfiguracionPage() {
         <Menu />
 
         <main className={`app-content ${styles.shell}`}>
-          {SHOW_CONFIG_PRE_PLAN_SECTIONS ? (
-            <>
           <section className={styles.hero}>
             <div className={styles.heroContent}>
               <p className={styles.eyebrow}>Centro de control</p>
@@ -2242,8 +2245,6 @@ export default function ConfiguracionPage() {
           <section className={`${styles.actionBar} uiEnter`} data-stagger="3">
             <div className={styles.actionGroup}>
               <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-empresa")}>Empresa</button>
-              <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-operaciones")}>Operaciones</button>
-              <button type="button" className={styles.actionBtn} onClick={() => irASeccion("cfg-plan")}>Plan</button>
             </div>
           </section>
 
@@ -2698,6 +2699,8 @@ export default function ConfiguracionPage() {
             ) : null}
           </section>
 
+          {SHOW_EMPRESA_SECONDARY_SECTIONS ? (
+            <>
           <section id="cfg-operaciones" className={`${styles.operationsGrid} uiEnter`} data-stagger="5">
             {isSuperadmin ? (
               <article className={styles.card}>
@@ -2723,13 +2726,9 @@ export default function ConfiguracionPage() {
 
             <article className={styles.card}>
               <Toolbar
-                title="Soporte técnico inteligente"
+                title="Soporte Sistema"
                 right={<StatusBadge text={loadingSoporte ? "Cargando" : `${soporteTotal} tickets`} variant="info" />}
               />
-
-              <p>
-                Atención de incidencias centralizada para RENSOF. Abre la ventana de soporte para conversar con el chat bot y escalar tickets.
-              </p>
 
               <div className={styles.supportActions}>
                 <button
@@ -2740,94 +2739,110 @@ export default function ConfiguracionPage() {
                     setShowSoporteChatModal(true);
                   }}
                 >
-                  Abrir ventana de soporte
+                  Soporte usuario
                 </button>
               </div>
 
-              {isSuperadmin ? (
-                <div className={styles.guardianPanel}>
-                  <div className={styles.guardianHead}>
-                    <strong>Guardian Runtime en vivo</strong>
-                    <StatusBadge
-                      text={guardianStatus?.safe_mode?.enabled ? "SAFE MODE ON" : "SAFE MODE OFF"}
-                      variant={guardianStatus?.safe_mode?.enabled ? "danger" : "success"}
-                    />
-                  </div>
-
-                  <p className={styles.helperText}>
-                    Vigilancia activa de errores y latencia con autocuración controlada para el núcleo ALVENT.
-                  </p>
-
-                  <div className={styles.guardianMetrics}>
-                    <span>Req: <strong>{guardianStatus?.metrics?.requests_total ?? 0}</strong></span>
-                    <span>5xx: <strong>{guardianStatus?.metrics?.requests_5xx ?? 0}</strong></span>
-                    <span>Excepciones: <strong>{guardianStatus?.metrics?.exceptions_total ?? 0}</strong></span>
-                    <span>Abiertos: <strong>{guardianStatus?.open_incidents ?? 0}</strong></span>
-                  </div>
-
-                  <div className={styles.supportActions}>
-                    <button
-                      type="button"
-                      className={`${styles.actionBtn} focus-ring`}
-                      onClick={() => void cargarGuardianRuntime()}
-                      disabled={loadingGuardian || loadingGuardianIncidents}
-                    >
-                      {loadingGuardian || loadingGuardianIncidents ? "Actualizando..." : "Actualizar Guardian"}
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`${styles.saveBusinessBtn} focus-ring`}
-                      onClick={() => void actualizarSafeModeGuardian(!Boolean(guardianStatus?.safe_mode?.enabled))}
-                      disabled={guardianSafeModeBusy || !guardianStatus}
-                    >
-                      {guardianSafeModeBusy
-                        ? "Aplicando..."
-                        : guardianStatus?.safe_mode?.enabled
-                          ? "Desactivar Safe Mode"
-                          : "Activar Safe Mode"}
-                    </button>
-                  </div>
-
-                  <div className={styles.guardianIncidentList}>
-                    {guardianIncidents.length === 0 ? (
-                      <small className={styles.helperText}>Sin incidentes recientes en Guardian.</small>
-                    ) : (
-                      guardianIncidents.slice(0, 8).map((incident) => (
-                        <article key={`guardian-${incident.id}`} className={styles.supportTicketItem}>
-                          <div className={styles.supportTicketHead}>
-                            <strong>{incident.title}</strong>
-                            <StatusBadge text={incident.severity.toUpperCase()} variant={severityToBadgeVariant(incident.severity)} />
-                          </div>
-                          <small className={styles.helperText}>
-                            {new Date(incident.timestamp).toLocaleString()} | fuente: {incident.source}
-                          </small>
-                          {incident.details?.reason ? (
-                            <small className={styles.helperText}>Detalle: {String(incident.details.reason)}</small>
-                          ) : null}
-                          {incident.auto_action ? (
-                            <small className={styles.helperText}>Auto acción: {incident.auto_action}</small>
-                          ) : null}
-
-                          <div className={styles.supportActions}>
-                            <StatusBadge text={incident.acked ? "ACK" : "PENDIENTE"} variant={incident.acked ? "success" : "warning"} />
-                            <button
-                              type="button"
-                              className={`${styles.actionBtn} focus-ring`}
-                              disabled={incident.acked || ackingGuardianIncidentId === incident.id}
-                              onClick={() => void confirmarIncidenteGuardian(incident.id)}
-                            >
-                              {ackingGuardianIncidentId === incident.id ? "Confirmando..." : "Confirmar incidente"}
-                            </button>
-                          </div>
-                        </article>
-                      ))
-                    )}
-                  </div>
-                </div>
+              {hasAdminSupportAccess ? (
+                <button
+                  type="button"
+                  className={`${styles.supportInteligenteBtn} focus-ring`}
+                  onClick={() => setShowSoporteInteligente((prev) => !prev)}
+                >
+                  Soporte Sistema {showSoporteInteligente ? "▲" : "▼"}
+                </button>
               ) : null}
 
-              <div className={styles.supportList}>
+              {hasAdminSupportAccess && showSoporteInteligente ? (
+                <div className={styles.supportInteligentePanel}>
+                  <p className={styles.supportInteligenteIntro}>
+                    Atención de incidencias centralizada para RENSOF. Abre el soporte en línea para conversar con el chat bot y escalar tickets.
+                  </p>
+
+                  {isSuperadmin ? (
+                    <section id="cfg-guardian" className={styles.guardianPanel}>
+                      <div className={styles.guardianHead}>
+                        <strong>Guardian Runtime en vivo</strong>
+                        <StatusBadge
+                          text={guardianStatus?.safe_mode?.enabled ? "SAFE MODE ON" : "SAFE MODE OFF"}
+                          variant={guardianStatus?.safe_mode?.enabled ? "danger" : "success"}
+                        />
+                      </div>
+
+                      <p className={styles.helperText}>
+                        Vigilancia activa de errores y latencia con autocuración controlada para el núcleo ALVENT.
+                      </p>
+
+                      <div className={styles.guardianMetrics}>
+                        <span>Req: <strong>{guardianStatus?.metrics?.requests_total ?? 0}</strong></span>
+                        <span>5xx: <strong>{guardianStatus?.metrics?.requests_5xx ?? 0}</strong></span>
+                        <span>Excepciones: <strong>{guardianStatus?.metrics?.exceptions_total ?? 0}</strong></span>
+                        <span>Abiertos: <strong>{guardianStatus?.open_incidents ?? 0}</strong></span>
+                      </div>
+
+                      <div className={styles.supportActions}>
+                        <button
+                          type="button"
+                          className={`${styles.actionBtn} focus-ring`}
+                          onClick={() => void cargarGuardianRuntime()}
+                          disabled={loadingGuardian || loadingGuardianIncidents}
+                        >
+                          {loadingGuardian || loadingGuardianIncidents ? "Consultando..." : "Probar GET estado"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`${styles.saveBusinessBtn} focus-ring`}
+                          onClick={() => void actualizarSafeModeGuardian(!Boolean(guardianStatus?.safe_mode?.enabled))}
+                          disabled={guardianSafeModeBusy || !guardianStatus}
+                        >
+                          {guardianSafeModeBusy
+                            ? "Aplicando..."
+                            : guardianStatus?.safe_mode?.enabled
+                              ? "Desactivar Safe Mode"
+                              : "Activar Safe Mode"}
+                        </button>
+                      </div>
+
+                      <div className={styles.guardianIncidentList}>
+                        {guardianIncidents.length === 0 ? (
+                          <small className={styles.helperText}>Sin incidentes recientes en Guardian.</small>
+                        ) : (
+                          guardianIncidents.slice(0, 8).map((incident) => (
+                            <article key={`guardian-${incident.id}`} className={styles.supportTicketItem}>
+                              <div className={styles.supportTicketHead}>
+                                <strong>{incident.title}</strong>
+                                <StatusBadge text={incident.severity.toUpperCase()} variant={severityToBadgeVariant(incident.severity)} />
+                              </div>
+                              <small className={styles.helperText}>
+                                {new Date(incident.timestamp).toLocaleString()} | fuente: {incident.source}
+                              </small>
+                              {incident.details?.reason ? (
+                                <small className={styles.helperText}>Detalle: {String(incident.details.reason)}</small>
+                              ) : null}
+                              {incident.auto_action ? (
+                                <small className={styles.helperText}>Auto acción: {incident.auto_action}</small>
+                              ) : null}
+
+                              <div className={styles.supportActions}>
+                                <StatusBadge text={incident.acked ? "ACK" : "PENDIENTE"} variant={incident.acked ? "success" : "warning"} />
+                                <button
+                                  type="button"
+                                  className={`${styles.actionBtn} focus-ring`}
+                                  disabled={incident.acked || ackingGuardianIncidentId === incident.id}
+                                  onClick={() => void confirmarIncidenteGuardian(incident.id)}
+                                >
+                                  {ackingGuardianIncidentId === incident.id ? "Confirmando..." : "Confirmar incidente"}
+                                </button>
+                              </div>
+                            </article>
+                          ))
+                        )}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  <div className={styles.supportList}>
                 <div className={styles.supportFilterBar}>
                   <label>
                     Estado
@@ -2922,7 +2937,9 @@ export default function ConfiguracionPage() {
                     Siguiente
                   </button>
                 </div>
-              </div>
+                  </div>
+                </div>
+              ) : null}
             </article>
 
             <article className={`${styles.card} ${styles.dangerCard}`}>
@@ -2944,8 +2961,6 @@ export default function ConfiguracionPage() {
               </button>
             </article>
           </section>
-            </>
-          ) : null}
 
           <section id="cfg-plan" className={`${styles.card} uiEnter`} data-stagger="6">
             <Toolbar
@@ -3034,7 +3049,7 @@ export default function ConfiguracionPage() {
                 <section className={styles.planAmountsBox}>
                   <div>
                     <h4>Límites editables por plan</h4>
-                    <p>Define usuarios, reportes, soporte, reinicio y cantidad de productos por plan. Estos límites se aplican al negocio seleccionado.</p>
+                    <p>Define usuarios, reportes, soporte y cantidad de productos por plan. Estos límites se aplican al negocio seleccionado.</p>
                     {!negocioActivoId ? (
                       <small className={styles.helperText}>
                         Sin negocio objetivo seleccionado: puedes seleccionar plan para análisis, pero aplicar requiere elegir una empresa.
@@ -3088,15 +3103,6 @@ export default function ConfiguracionPage() {
                             onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "soporte_habilitado", e.target.checked)}
                           />
                           Soporte
-                        </label>
-
-                        <label className={styles.inlineCheck}>
-                          <input
-                            type="checkbox"
-                            checked={Boolean(plan.reinicio_habilitado)}
-                            onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "reinicio_habilitado", e.target.checked)}
-                          />
-                          Panel de reinicio
                         </label>
 
                         <label className={styles.inlineCheck}>
@@ -3457,6 +3463,8 @@ export default function ConfiguracionPage() {
               </div>
             )}
           </section>
+            </>
+          ) : null}
 
           <ModalCard
             open={showPagoPlanModal}

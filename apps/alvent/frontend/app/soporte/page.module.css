@@ -2119,6 +2119,32 @@
   cursor: not-allowed;
 }
 
+.supportInteligenteBtn {
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #0f766e, #0d9488);
+  color: #ecfeff;
+  font-weight: 800;
+  padding: 10px 14px;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.supportInteligentePanel {
+  margin-top: 10px;
+  border: 1px solid rgba(203, 213, 225, 0.75);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.supportInteligenteIntro {
+  margin: 0;
+  color: #334155;
+}
+
 .guardianPanel {
   border: 1px solid rgba(14, 116, 144, 0.36);
   border-radius: 12px;
@@ -2386,5 +2412,217 @@
 
   .simulatorPlanTabs {
     grid-template-columns: 1fr;
+  }
+}
+
+.supportPremiumShell {
+  display: grid;
+  gap: 16px;
+}
+
+.supportPremiumHero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(14, 165, 233, 0.16);
+  background:
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.22), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.24), transparent 34%),
+    linear-gradient(145deg, #06131f 0%, #0d1b2a 52%, #14243a 100%);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+}
+
+.supportPremiumHero::after {
+  content: "";
+  position: absolute;
+  inset: auto -40px -40px auto;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.2), transparent 65%);
+  pointer-events: none;
+}
+
+.supportPremiumHeroCopy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.supportPremiumEyebrow {
+  margin: 0;
+  color: #67e8f9;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.supportPremiumTitle {
+  margin: 0;
+  color: #f8fafc;
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 2.7vw, 2.2rem);
+  line-height: 1.05;
+}
+
+.supportPremiumLead {
+  margin: 0;
+  max-width: 58ch;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.supportPremiumMetaGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  align-content: stretch;
+}
+
+.supportPremiumMetaCard {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  padding: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(148, 163, 184, 0.04));
+  backdrop-filter: blur(8px);
+  display: grid;
+  gap: 5px;
+}
+
+.supportPremiumMetaCard span {
+  color: #67e8f9;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.supportPremiumMetaCard strong {
+  color: #f8fafc;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.supportPremiumMetaCard small {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.supportPremiumGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.supportPremiumCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.94)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.24));
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.1);
+}
+
+.supportPremiumCard::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.9), rgba(14, 165, 233, 0.2));
+}
+
+.supportPremiumCardBackup::before {
+  background: linear-gradient(180deg, #818cf8, rgba(99, 102, 241, 0.22));
+}
+
+.supportPremiumCardSupport::before {
+  background: linear-gradient(180deg, #14b8a6, rgba(13, 148, 136, 0.24));
+}
+
+.supportPremiumCardDanger::before {
+  background: linear-gradient(180deg, #ef4444, rgba(220, 38, 38, 0.24));
+}
+
+.supportPremiumCardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.supportPremiumCardHead h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.3rem;
+  line-height: 1.1;
+}
+
+.supportPremiumKicker {
+  margin: 0 0 6px;
+  color: #64748b;
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.supportPremiumBody {
+  margin: 0;
+  color: #475569;
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.supportPremiumActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.supportPremiumAction {
+  min-height: 48px;
+  padding-inline: 18px;
+  border-radius: 14px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+}
+
+.supportPremiumSecondaryAction {
+  min-height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(20, 184, 166, 0.24);
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+  box-shadow: 0 12px 24px rgba(13, 148, 136, 0.16);
+}
+
+@media (max-width: 980px) {
+  .supportPremiumHero {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .supportPremiumCardHead {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .supportPremiumAction,
+  .supportPremiumSecondaryAction {
+    width: 100%;
+    justify-content: center;
   }
 }
