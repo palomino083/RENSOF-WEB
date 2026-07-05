@@ -127,17 +127,25 @@ def info():
 
 @app.get("/alven")
 def redirect_alven():
-    """Redirect to ALVENT"""
+    """Serve ALVENT landing or fallback redirect."""
+    alven_file = BASE_DIR / "alven" / "index.html"
+    if alven_file.exists():
+        with open(alven_file, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
     return RedirectResponse(url=ALVENT_APP_URL)
 
 @app.get("/alven/app")
 def redirect_alven_app():
     """Redirect to ALVENT app root"""
+    if ALVENT_APP_URL.startswith("/alven/app"):
+        return RedirectResponse(url="/alven")
     return RedirectResponse(url=ALVENT_APP_URL)
 
 @app.get("/alven/app/{path:path}")
 def redirect_alven_app_path(path: str):
     """Redirect ALVENT app paths without exposing localhost."""
+    if ALVENT_APP_URL.startswith("/alven/app"):
+        return RedirectResponse(url="/alven")
     base = ALVENT_APP_BASE_PATH
     return RedirectResponse(url=f"{base}/{path}")
 
