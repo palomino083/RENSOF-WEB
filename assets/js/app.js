@@ -50,37 +50,24 @@ if (contactForm && formNote) {
 	});
 }
 
-function revealImmediatelyIfNeeded(elements) {
-	elements.forEach((element) => {
-		element.classList.add('is-visible');
+const revealBlocks = document.querySelectorAll('.reveal');
+
+if (revealBlocks.length) {
+	const revealObserver = new IntersectionObserver(
+		(entries, observer) => {
+			entries.forEach((entry) => {
+				if (!entry.isIntersecting) return;
+				entry.target.classList.add('is-visible');
+				observer.unobserve(entry.target);
+			});
+		},
+		{
+			threshold: 0.18,
+			rootMargin: '0px 0px -40px 0px',
+		}
+	);
+
+	revealBlocks.forEach((block) => {
+		revealObserver.observe(block);
 	});
-}
-
-const revealNodes = Array.from(document.querySelectorAll('.reveal'));
-if (revealNodes.length > 0) {
-	if (!('IntersectionObserver' in window)) {
-		revealImmediatelyIfNeeded(revealNodes);
-	} else {
-		const observer = new IntersectionObserver(
-			(entries, obs) => {
-				entries.forEach((entry) => {
-					if (!entry.isIntersecting) return;
-					entry.target.classList.add('is-visible');
-					obs.unobserve(entry.target);
-				});
-			},
-			{
-				root: null,
-				rootMargin: '0px 0px -10% 0px',
-				threshold: 0.08,
-			}
-		);
-
-		revealNodes.forEach((node) => observer.observe(node));
-
-		// Si la pagina llega arriba sin scroll (ej. render lento), asegurar primer render.
-		window.requestAnimationFrame(() => {
-			revealNodes.slice(0, 2).forEach((node) => node.classList.add('is-visible'));
-		});
-	}
 }

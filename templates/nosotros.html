@@ -1,70 +1,17 @@
-﻿<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="">
-  <title></title>
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="">
-  <meta property="og:description" content="">
-  <meta property="og:url" content="">
-  <meta property="og:image" content="">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="">
-  <meta name="twitter:description" content="">
-  <meta name="twitter:image" content="">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=20260702a">
-  <link rel="stylesheet" href="/assets/css/r2030.css?v=20260702b">
-</head>
-<body class="r2030-page">
-  <header class="site-header">
-    <a class="brand" href="/" aria-label="RENSOF">
-      <span class="brand-mark">R</span>
-      <span>RENSOF</span>
-    </a>
-    <button class="menu-toggle" type="button" aria-label="Abrir menÃº" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
-    <nav class="site-nav" aria-label="NavegaciÃ³n principal">
-      <a href="/" class="active">Inicio</a>
-      <details class="nav-dropdown is-active">
-        <summary>Aplicaciones</summary>
-        <div class="nav-dropdown-menu" role="menu" aria-label="Aplicaciones disponibles">
-          <a href="/alven" role="menuitem">ALVENT ERP PRO</a>
-          <span class="nav-dropdown-item is-soon" aria-disabled="true">Comercio electrÃ³nico (prÃ³ximamente)</span>
-          <span class="nav-dropdown-item is-soon" aria-disabled="true">GestiÃ³n pÃºblica (prÃ³ximamente)</span>
-          <span class="nav-dropdown-item is-soon" aria-disabled="true">Agricultura digital (prÃ³ximamente)</span>
-        </div>
-      </details>
-      <a href="/nosotros" class="active">Nosotros</a>
-      <details class="nav-dropdown is-active">
-        <summary>Recursos</summary>
-        <div class="nav-dropdown-menu" role="menu" aria-label="Recursos">
-          <a href="/publicaciones" role="menuitem">Publicaciones</a>
-          <a href="/proyectos" role="menuitem">Casos y sectores</a>
-          <span class="nav-dropdown-item is-soon" aria-disabled="true">DocumentaciÃ³n (prÃ³ximamente)</span>
-        </div>
-      </details>
-      <a href="/contacto" class="contact-link active">Contacto</a>
-      <a href="/admin/login" class="nav-cta">Admin</a>
-    </nav>
-  </header>
+{% extends "base.html" %}
 
-  
+{% block content %}
 <main class="page-main" style="padding-top: 84px;">
   <section class="story-block">
     <div class="r2030-grid split-2 reveal">
       <article class="contact-panel">
-        <span class="story-kicker">MisiÃ³n</span>
+        <span class="story-kicker">Mision</span>
         <h1 class="story-title" style="font-size:clamp(1.7rem,4.5vw,3.2rem)">Impulsar organizaciones inteligentes</h1>
-        <p class="story-text">Unimos ciencia, tecnologÃ­a e innovaciÃ³n para transformar informaciÃ³n en decisiones estratÃ©gicas que generan desarrollo sostenible.</p>
+        <p class="story-text">Unimos ciencia, tecnologia e innovacion para transformar informacion en decisiones estrategicas que generan desarrollo sostenible.</p>
       </article>
       <article class="contact-panel">
-        <span class="story-kicker">VisiÃ³n</span>
-        <p class="story-text">Ser la plataforma lÃ­der de inteligencia estratÃ©gica para LatinoamÃ©rica, integrando IA, analÃ­tica avanzada, economÃ­a, sostenibilidad y transformaciÃ³n digital.</p>
+        <span class="story-kicker">Vision</span>
+        <p class="story-text">Ser la plataforma lider de inteligencia estrategica para Latinoamerica integrando IA, analitica avanzada, economia, sostenibilidad y transformacion digital.</p>
       </article>
     </div>
   </section>
@@ -73,43 +20,8 @@
     <div class="r2030-grid reveal">
       <span class="story-kicker">Posicionamiento</span>
       <h2 class="story-title" style="font-size:clamp(1.7rem,4vw,2.8rem)">No somos consultora. No somos software factory.</h2>
-      <p class="story-text">Somos una Plataforma de Inteligencia EstratÃ©gica construida para organizaciones que quieren decidir con evidencia y velocidad.</p>
+      <p class="story-text">Somos una Plataforma de Inteligencia Estrategica construida para organizaciones que quieren decidir con evidencia y velocidad.</p>
     </div>
   </section>
 </main>
-
-
-  <footer class="site-footer r2030-footer">
-    <div class="container footer-top">
-      <div class="footer-cta">
-        <h2>RENSOF Intelligence Platform</h2>
-        <p>Integramos IA, analÃ­tica, economÃ­a, sostenibilidad y tecnologÃ­a para transformar decisiones de alto impacto.</p>
-        <a class="btn btn-success" href="/alven">Conocer ALVENT ERP PRO</a>
-      </div>
-      <div>
-        <h3>Arquitectura de marca</h3>
-        <p>RENIA | RENFIN | RENPROJECT | RENPLAN | RENNATURE | RENMAP | ALVENT | RENSCIENCE</p>
-      </div>
-      <div>
-        <h3>Rutas</h3>
-        <a href="/">Inicio</a>
-        <a href="/alven">ALVENT ERP PRO</a>
-        <a href="/nosotros">Nosotros</a>
-        <a href="/publicaciones">Recursos</a>
-      </div>
-      <div>
-        <h3>Contacto</h3>
-        <a href="/contacto">Formulario completo</a>
-        <a href="/contacto#contactForm">Agendar diagnÃ³stico</a>
-      </div>
-    </div>
-    <div class="container footer-bottom">
-      <span>Â© 2026 RENSOF. Todos los derechos reservados.</span>
-      <span>Transformando datos en decisiones estratÃ©gicas.</span>
-    </div>
-  </footer>
-
-  <script src="/assets/js/app.js?v=20260705c"></script>
-</body>
-</html>
-
+{% endblock %}

@@ -1,71 +1,18 @@
-﻿<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="">
-  <title></title>
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="">
-  <meta property="og:description" content="">
-  <meta property="og:url" content="">
-  <meta property="og:image" content="">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="">
-  <meta name="twitter:description" content="">
-  <meta name="twitter:image" content="">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=20260702a">
-  <link rel="stylesheet" href="/assets/css/r2030.css?v=20260702b">
-</head>
-<body class="r2030-page">
-  <header class="site-header">
-    <a class="brand" href="/" aria-label="RENSOF">
-      <span class="brand-mark">R</span>
-      <span>RENSOF</span>
-    </a>
-    <button class="menu-toggle" type="button" aria-label="Abrir menÃº" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
-    <nav class="site-nav" aria-label="NavegaciÃ³n principal">
-      <a href="/" class="active">Inicio</a>
-      <details class="nav-dropdown is-active">
-        <summary>Aplicaciones</summary>
-        <div class="nav-dropdown-menu" role="menu" aria-label="Aplicaciones disponibles">
-          <a href="/alven" role="menuitem">ALVENT ERP PRO</a>
-          <span class="nav-dropdown-item is-soon" aria-disabled="true">Comercio electrÃ³nico (prÃ³ximamente)</span>
-          <span class="nav-dropdown-item is-soon" aria-disabled="true">GestiÃ³n pÃºblica (prÃ³ximamente)</span>
-          <span class="nav-dropdown-item is-soon" aria-disabled="true">Agricultura digital (prÃ³ximamente)</span>
-        </div>
-      </details>
-      <a href="/nosotros" class="active">Nosotros</a>
-      <details class="nav-dropdown is-active">
-        <summary>Recursos</summary>
-        <div class="nav-dropdown-menu" role="menu" aria-label="Recursos">
-          <a href="/publicaciones" role="menuitem">Publicaciones</a>
-          <a href="/proyectos" role="menuitem">Casos y sectores</a>
-          <span class="nav-dropdown-item is-soon" aria-disabled="true">DocumentaciÃ³n (prÃ³ximamente)</span>
-        </div>
-      </details>
-      <a href="/contacto" class="contact-link active">Contacto</a>
-      <a href="/admin/login" class="nav-cta">Admin</a>
-    </nav>
-  </header>
+{% extends "base.html" %}
 
-  
+{% block content %}
 <main class="page-main" style="padding-top: 84px;">
   <section class="story-block">
     <div class="r2030-grid reveal">
       <span class="story-kicker">Sectores</span>
-      <h1 class="story-title" style="font-size:clamp(1.9rem,4.8vw,3.4rem)">Arquitecturas de decisiÃ³n para cada realidad</h1>
+      <h1 class="story-title" style="font-size:clamp(1.9rem,4.8vw,3.4rem)">Arquitecturas de decision para cada realidad</h1>
       <div class="sector-flow" style="margin-top:16px;">
-        
+        {% for sector in sectors %}
         <article class="sector-item">
-          <h3></h3>
-          <p></p>
+          <h3>{{ sector.title }}</h3>
+          <p>{{ sector.description }}</p>
         </article>
-        
+        {% endfor %}
       </div>
     </div>
   </section>
@@ -75,49 +22,14 @@
       <span class="story-kicker">Casos</span>
       <h2 class="story-title" style="font-size:clamp(1.7rem,4vw,2.6rem)">Implementaciones de alto impacto</h2>
       <div class="case-grid">
-        
+        {% for case in cases %}
         <article class="case-card">
-          <div class="case-media" style="background-image:linear-gradient(150deg, rgba(11,31,50,0.35), ), url('');"></div>
-          <div class="case-body"><h3></h3><p></p></div>
+          <div class="case-media" style="background-image:linear-gradient(150deg, rgba(11,31,50,0.35), {{ case.overlay }}), url('{{ case.media }}');"></div>
+          <div class="case-body"><h3>{{ case.title }}</h3><p>{{ case.description }}</p></div>
         </article>
-        
+        {% endfor %}
       </div>
     </div>
   </section>
 </main>
-
-
-  <footer class="site-footer r2030-footer">
-    <div class="container footer-top">
-      <div class="footer-cta">
-        <h2>RENSOF Intelligence Platform</h2>
-        <p>Integramos IA, analÃ­tica, economÃ­a, sostenibilidad y tecnologÃ­a para transformar decisiones de alto impacto.</p>
-        <a class="btn btn-success" href="/alven">Conocer ALVENT ERP PRO</a>
-      </div>
-      <div>
-        <h3>Arquitectura de marca</h3>
-        <p>RENIA | RENFIN | RENPROJECT | RENPLAN | RENNATURE | RENMAP | ALVENT | RENSCIENCE</p>
-      </div>
-      <div>
-        <h3>Rutas</h3>
-        <a href="/">Inicio</a>
-        <a href="/alven">ALVENT ERP PRO</a>
-        <a href="/nosotros">Nosotros</a>
-        <a href="/publicaciones">Recursos</a>
-      </div>
-      <div>
-        <h3>Contacto</h3>
-        <a href="/contacto">Formulario completo</a>
-        <a href="/contacto#contactForm">Agendar diagnÃ³stico</a>
-      </div>
-    </div>
-    <div class="container footer-bottom">
-      <span>Â© 2026 RENSOF. Todos los derechos reservados.</span>
-      <span>Transformando datos en decisiones estratÃ©gicas.</span>
-    </div>
-  </footer>
-
-  <script src="/assets/js/app.js?v=20260705c"></script>
-</body>
-</html>
-
+{% endblock %}
