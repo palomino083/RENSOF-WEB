@@ -234,6 +234,11 @@
   gap: 30px;
   grid-template-columns: 1.02fr 0.98fr;
   align-items: center;
+  padding: clamp(16px, 2vw, 24px);
+  border-radius: 26px;
+  border: 1px solid rgba(126, 214, 255, 0.14);
+  background: linear-gradient(145deg, rgba(6, 20, 33, 0.72), rgba(9, 28, 45, 0.38));
+  box-shadow: 0 30px 70px rgba(2, 10, 18, 0.34);
 }
 
 .inicio-copy {
@@ -250,6 +255,7 @@
 
 .inicio-highlight {
   color: #34d27f;
+  text-shadow: 0 10px 24px rgba(52, 210, 127, 0.35);
 }
 
 .inicio-copy .story-text {
@@ -273,8 +279,8 @@
   border-radius: 24px;
   overflow: hidden;
   border: 1px solid rgba(126, 214, 255, 0.28);
-  background: rgba(4, 13, 22, 0.9);
-  box-shadow: 0 32px 64px rgba(2, 10, 18, 0.46);
+  background: radial-gradient(circle at 12% 8%, rgba(26, 154, 199, 0.2), rgba(4, 13, 22, 0.94));
+  box-shadow: 0 34px 74px rgba(2, 10, 18, 0.52);
   aspect-ratio: 5 / 3;
   min-height: 0;
   display: flex;
@@ -309,10 +315,17 @@
   border-radius: 12px;
   padding: 10px 12px;
   border: 1px solid rgba(126, 214, 255, 0.26);
-  background: rgba(4, 17, 30, 0.8);
+  background: linear-gradient(145deg, rgba(4, 17, 30, 0.84), rgba(7, 24, 40, 0.72));
   color: #d8ebff;
   font-size: 0.87rem;
   font-weight: 600;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.inicio-badges p:hover {
+  transform: translateY(-2px);
+  border-color: rgba(126, 214, 255, 0.45);
+  box-shadow: 0 12px 24px rgba(3, 14, 23, 0.34);
 }
 
 .inicio-badges p::before {
@@ -332,7 +345,7 @@
   background: #ffffff;
   color: #152235;
   border: 1px solid rgba(14, 40, 63, 0.09);
-  box-shadow: 0 22px 52px rgba(5, 15, 24, 0.2);
+  box-shadow: 0 26px 64px rgba(5, 15, 24, 0.25);
   padding: clamp(20px, 2.5vw, 28px);
 }
 
@@ -372,10 +385,17 @@
   padding: 18px 14px 14px;
   border-radius: 14px;
   border: 1px solid #e4ebf2;
-  background: #ffffff;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
   display: flex;
   flex-direction: column;
   min-height: 242px;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.inicio-solution-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(27, 132, 173, 0.36);
+  box-shadow: 0 18px 28px rgba(7, 21, 34, 0.12);
 }
 
 .app-icon {
@@ -440,8 +460,9 @@
   border-radius: var(--r-radius-xl);
   background: #ffffff;
   color: #16273d;
-  border: 1px solid rgba(14, 40, 63, 0.08);
+  border: 1px solid rgba(14, 40, 63, 0.1);
   padding: 18px 16px;
+  box-shadow: 0 22px 40px rgba(6, 17, 28, 0.12);
 }
 
 .inicio-why-kicker {
