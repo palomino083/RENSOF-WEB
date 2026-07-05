@@ -7,9 +7,6 @@ const PLACEHOLDER_IMAGE =
 const trimTrailingSlash = (value: string) => value.replace(/\/$/, "");
 const apiBase = trimTrailingSlash(API_URL);
 const apiOriginFromApiBase = apiBase.replace(/\/alven\/api\/?$/i, "");
-const localMediaOrigin = apiOriginFromApiBase.replace(/:8000$/i, ":8001");
-const isLocalApiBase = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\b/i.test(apiBase);
-
 const isLocalHost = (host: string) => host === "127.0.0.1" || host === "localhost";
 
 const normalizeUploadsPath = (value: string) => {
@@ -65,11 +62,7 @@ export const toMediaUrl = (value?: string | null) => {
   if (/^https?:\/\//i.test(normalized)) return normalized;
 
   if (normalized.startsWith("/uploads/")) {
-    // En local evitamos ORB de proxy y servimos media desde API directa (8001).
-    if (isLocalApiBase && localMediaOrigin) {
-      return `${localMediaOrigin}${normalized}`;
-    }
-    // En producción priorizamos el prefijo API porque suele ser la ruta proxy estable.
+    // Prioriza la ruta API/proxy para evitar bloqueos ORB en navegadores locales.
     if (apiBase) {
       return `${apiBase}${normalized}`;
     }
@@ -95,6 +88,10 @@ export const applyFallbackImage = (event: SyntheticEvent<HTMLImageElement>) => {
 
     if (/\/uploads\//i.test(src) && !/\/alven\/api\/uploads\//i.test(src)) {
       candidates.push(src.replace(/\/uploads\//i, "/alven/api/uploads/"));
+    }
+
+    if (/\/alven\/api\/uploads\//i.test(src)) {
+      candidates.push(src.replace(/\/alven\/api\/uploads\//i, "/uploads/"));
     }
 
     if (/:8000\b/.test(src)) {

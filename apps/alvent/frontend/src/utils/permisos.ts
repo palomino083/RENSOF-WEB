@@ -13,7 +13,6 @@ export const permisosPorRol = {
     "/exportacion",
     "/empresa",
     "/soporte",
-    "/finanzas",
   ],
   SUPERADMIN: [
     "/dashboard",
