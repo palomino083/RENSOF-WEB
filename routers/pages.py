@@ -54,6 +54,10 @@ def _redirect_to_real_alvent_frontend(request: Request, full_path: str = "") -> 
     target_host = (urlparse(target).hostname or "").lower()
     current_host = request.headers.get("host", "").split(":", 1)[0].lower()
 
+    # Seguridad: nunca redirigir a localhost/loopback desde produccion.
+    if target_host in {"127.0.0.1", "localhost"} and not _is_local_request(request):
+        return _frontend_unavailable_response()
+
     # Evita bucles si el origen directo coincide con el host actual.
     if target_host and current_host and target_host == current_host:
         return _frontend_unavailable_response()

@@ -2,19 +2,29 @@ import axios from "axios";
 
 import { appPath } from "@/utils/appPath";
 
+function isLocalApiUrl(url: string): boolean {
+  return /127\.0\.0\.1|localhost/i.test(url);
+}
+
 function resolveApiUrl(): string {
   const envValue = String(process.env.NEXT_PUBLIC_API_URL || "").trim();
+
+  const isBrowser = typeof window !== "undefined";
+  const isLocalHost =
+    isBrowser &&
+    (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost");
 
   // En algunos entornos Windows la variable puede existir vacia;
   // en ese caso forzamos un fallback seguro para desarrollo local.
   if (envValue) {
+    // Blindaje: en produccion no permitir un API apuntando a localhost.
+    if (!isLocalHost && isLocalApiUrl(envValue)) {
+      return "/alven/api";
+    }
     return envValue;
   }
 
-  if (
-    typeof window !== "undefined" &&
-    (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost")
-  ) {
+  if (isLocalHost) {
     return "http://127.0.0.1:8000/alven/api";
   }
 
@@ -43,11 +53,17 @@ function isHtmlInsteadOfJsonError(error: any): boolean {
 }
 
 function getLocalFallbackBaseUrls(currentBaseURL?: string): string[] {
-  const candidates = [
-    "/alven/api",
-    "http://127.0.0.1:8000/alven/api",
-    "http://localhost:8000/alven/api",
-  ];
+  const isLocalHost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost");
+
+  const candidates = isLocalHost
+    ? [
+        "/alven/api",
+        "http://127.0.0.1:8000/alven/api",
+        "http://localhost:8000/alven/api",
+      ]
+    : ["/alven/api"];
 
   const current = (currentBaseURL || "").replace(/\/$/, "");
   return candidates.filter((url) => url !== current);
