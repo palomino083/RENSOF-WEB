@@ -101,8 +101,10 @@ def _parse_roles_csv(valor: str | None) -> list[str]:
 
 
 def _ensure_unique_superadmin_account() -> None:
+    """Asegura que exista una única cuenta superadmin con el rol correcto."""
     db = SessionLocal()
     try:
+        # Buscar superadmin existente
         admin_user = (
             db.query(Usuario)
             .filter(func.lower(Usuario.usuario) == SUPERADMIN_USERNAME.lower())
@@ -110,12 +112,14 @@ def _ensure_unique_superadmin_account() -> None:
             .first()
         )
 
+        # Crear o actualizar superadmin
         if not admin_user:
             if not SUPERADMIN_PASSWORD:
                 logger.warning(
-                    "ALVENT_SUPERADMIN_PASSWORD no definida; se omite inicializacion de superadmin hasta que la variable exista"
+                    "ALVENT_SUPERADMIN_PASSWORD no definida; se omite inicialización de superadmin"
                 )
                 return
+            
             admin_user = Usuario(
                 nombres="Super Administrador",
                 usuario=SUPERADMIN_USERNAME,
@@ -128,293 +132,161 @@ def _ensure_unique_superadmin_account() -> None:
             )
             db.add(admin_user)
             db.flush()
+            logger.info(f"Cuenta superadmin creada: {SUPERADMIN_USERNAME}")
         else:
+            # Actualizar propiedades críticas
             admin_user.nombres = admin_user.nombres or "Super Administrador"
             admin_user.rol = "SUPERADMIN"
             admin_user.roles = "SUPERADMIN"
             admin_user.activo = True
             admin_user.negocio_id = None
 
-            # Rotación opcional por entorno, nunca forzada en cada arranque.
+            # Actualizar contraseña si está configurada
             if SUPERADMIN_PASSWORD:
                 admin_user.password = hash_password(SUPERADMIN_PASSWORD)
+                logger.debug(f"Contraseña superadmin actualizada")
 
-        usuarios = db.query(Usuario).all()
-        for usuario in usuarios:
-            if usuario.id == admin_user.id:
-                continue
-
-            rol = _normalizar_rol(usuario.rol)
+        # Degradar otros usuarios que tengan rol SUPERADMIN
+        otros_superadmins = (
+            db.query(Usuario)
+            .filter(Usuario.id != admin_user.id, Usuario.rol == "SUPERADMIN")
+            .all()
+        )
+        
+        for usuario in otros_superadmins:
+            usuario.rol = "ADMINISTRADOR"
             roles = _parse_roles_csv(getattr(usuario, "roles", ""))
-
-            if rol == "SUPERADMIN":
-                usuario.rol = "ADMINISTRADOR"
-            else:
-                usuario.rol = rol
-
-            if roles:
-                roles_filtrados = [r for r in roles if r != "SUPERADMIN"]
-                if "ADMINISTRADOR" in roles_filtrados:
-                    roles_filtrados = ["ADMINISTRADOR"]
-                usuario.roles = ",".join(roles_filtrados) if roles_filtrados else usuario.rol
-            else:
-                usuario.roles = usuario.rol
+            roles_filtrados = [r for r in roles if r != "SUPERADMIN"]
+            usuario.roles = ",".join(roles_filtrados) if roles_filtrados else "ADMINISTRADOR"
+            logger.debug(f"Usuario {usuario.usuario} degradado de SUPERADMIN")
 
         db.commit()
         logger.info("Cuenta superadmin verificada correctamente")
+        
+    except Exception as e:
+        logger.error(f"Error al configurar superadmin: {e}")
+        raise
     finally:
         db.close()
+
+
+def _add_column_if_missing(conn, table: str, column: str, definition: str) -> None:
+    """Agrega una columna a una tabla si no existe."""
+    columns = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
+    if column not in columns:
+        conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
 def _ensure_multitenant_columns() -> None:
     """Agrega columnas faltantes en tablas legacy de SQLite si no existen."""
     with engine.begin() as conn:
-        for table_name in ("productos", "clientes"):
-            columns = {
-                row[1]
-                for row in conn.exec_driver_sql(f"PRAGMA table_info({table_name})")
-            }
-            if "negocio_id" not in columns:
-                conn.exec_driver_sql(
-                    f"ALTER TABLE {table_name} ADD COLUMN negocio_id INTEGER"
-                )
-
-        producto_columns = {
-            row[1]
-            for row in conn.exec_driver_sql("PRAGMA table_info(productos)")
-        }
-        if "talla" not in producto_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE productos ADD COLUMN talla VARCHAR(50)"
-            )
-        if "color" not in producto_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE productos ADD COLUMN color VARCHAR(50)"
-            )
-        if "sexo" not in producto_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE productos ADD COLUMN sexo VARCHAR(20)"
-            )
-        if "atributos_extra" not in producto_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE productos ADD COLUMN atributos_extra JSON"
-            )
-
-        negocio_columns = {
-            row[1]
-            for row in conn.exec_driver_sql("PRAGMA table_info(negocios)")
-        }
-        if "logo_url" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN logo_url VARCHAR(500)"
-            )
-
-        usuario_columns = {
-            row[1]
-            for row in conn.exec_driver_sql("PRAGMA table_info(usuarios)")
-        }
-        if "dni" not in usuario_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE usuarios ADD COLUMN dni VARCHAR(20)"
-            )
-        if "roles" not in usuario_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE usuarios ADD COLUMN roles VARCHAR(120)"
-            )
-
-        if "plan" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan VARCHAR(20) DEFAULT 'GRATUITO'"
-            )
-        if "plan_gratuito_usuarios_limite" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_gratuito_usuarios_limite INTEGER"
-            )
-        if "plan_gratuito_reportes_habilitado" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_gratuito_reportes_habilitado BOOLEAN DEFAULT 0"
-            )
-        if "plan_gratuito_reportes_limite" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_gratuito_reportes_limite INTEGER"
-            )
-        if "plan_gratuito_backups_habilitado" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_gratuito_backups_habilitado BOOLEAN DEFAULT 0"
-            )
-        if "plan_gratuito_backups_limite" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_gratuito_backups_limite INTEGER"
-            )
-        if "plan_monto_gratuito" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_monto_gratuito REAL"
-            )
-        if "plan_monto_prueba" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_monto_prueba REAL"
-            )
-        if "plan_monto_basico" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_monto_basico REAL"
-            )
-        if "plan_monto_lite" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_monto_lite REAL"
-            )
-        if "plan_monto_pro" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_monto_pro REAL"
-            )
-        if "plan_monto_premium" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_monto_premium REAL"
-            )
-        if "plan_vigente_hasta" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_vigente_hasta DATETIME"
-            )
-        if "plan_catalogo_custom" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_catalogo_custom TEXT"
-            )
-        if "plan_simulador_escenarios" not in negocio_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE negocios ADD COLUMN plan_simulador_escenarios TEXT"
-            )
-
-        configuracion_columns = {
-            row[1]
-            for row in conn.exec_driver_sql("PRAGMA table_info(configuracion_negocio)")
-        }
-        if "permisos_roles_json" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN permisos_roles_json TEXT"
-            )
-        if "productos_columnas_json" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN productos_columnas_json TEXT"
-            )
-        if "sunat_api_url" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_api_url VARCHAR(500)"
-            )
-        if "sunat_proveedor" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_proveedor VARCHAR(30) DEFAULT 'NUBEFACT'"
-            )
-        if "sunat_api_token" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_api_token VARCHAR(255)"
-            )
-        if "sunat_usuario_sol" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_usuario_sol VARCHAR(80)"
-            )
-        if "sunat_clave_sol" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_clave_sol VARCHAR(120)"
-            )
-        if "sunat_emisor_ruc" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_emisor_ruc VARCHAR(11)"
-            )
-        if "sunat_modo" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_modo VARCHAR(20) DEFAULT 'beta'"
-            )
-        if "sunat_serie_boleta" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_serie_boleta VARCHAR(10)"
-            )
-        if "sunat_serie_factura" not in configuracion_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE configuracion_negocio ADD COLUMN sunat_serie_factura VARCHAR(10)"
-            )
-
-        venta_columns = {
-            row[1]
-            for row in conn.exec_driver_sql("PRAGMA table_info(ventas)")
-        }
-        if "tipo_comprobante" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN tipo_comprobante VARCHAR(20) DEFAULT 'NINGUNO'"
-            )
-        if "cliente_nombre" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN cliente_nombre VARCHAR(255)"
-            )
-        if "cliente_documento" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN cliente_documento VARCHAR(20)"
-            )
-        if "cliente_email" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN cliente_email VARCHAR(120)"
-            )
-        if "serie_comprobante" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN serie_comprobante VARCHAR(10)"
-            )
-        if "numero_comprobante" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN numero_comprobante VARCHAR(20)"
-            )
-        if "sunat_estado" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN sunat_estado VARCHAR(30)"
-            )
-        if "sunat_codigo" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN sunat_codigo VARCHAR(80)"
-            )
-        if "sunat_mensaje" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN sunat_mensaje VARCHAR(500)"
-            )
-        if "sunat_hash" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN sunat_hash VARCHAR(120)"
-            )
-        if "sunat_ticket" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN sunat_ticket VARCHAR(120)"
-            )
-        if "sunat_cdr_url" not in venta_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE ventas ADD COLUMN sunat_cdr_url VARCHAR(500)"
-            )
-
-        planes_pago_columns = {
-            row[1]
-            for row in conn.exec_driver_sql("PRAGMA table_info(planes_pagos)")
-        }
-        if "duracion_dias" not in planes_pago_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE planes_pagos ADD COLUMN duracion_dias INTEGER"
-            )
-        if "plan_vigente_desde" not in planes_pago_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE planes_pagos ADD COLUMN plan_vigente_desde DATETIME"
-            )
-        if "plan_vigente_hasta" not in planes_pago_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE planes_pagos ADD COLUMN plan_vigente_hasta DATETIME"
-            )
-        if "token_idempotencia" not in planes_pago_columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE planes_pagos ADD COLUMN token_idempotencia VARCHAR(80)"
-            )
+        # ================ PRODUCTOS ================
+        _add_column_if_missing(conn, "productos", "negocio_id", "INTEGER")
+        _add_column_if_missing(conn, "productos", "talla", "VARCHAR(50)")
+        _add_column_if_missing(conn, "productos", "color", "VARCHAR(50)")
+        _add_column_if_missing(conn, "productos", "sexo", "VARCHAR(20)")
+        _add_column_if_missing(conn, "productos", "atributos_extra", "JSON")
+        
+        # ================ CLIENTES ================
+        _add_column_if_missing(conn, "clientes", "negocio_id", "INTEGER")
+        
+        # ================ NEGOCIOS ================
+        _add_column_if_missing(conn, "negocios", "logo_url", "VARCHAR(500)")
+        _add_column_if_missing(conn, "negocios", "plan", "VARCHAR(20) DEFAULT 'GRATUITO'")
+        _add_column_if_missing(conn, "negocios", "plan_gratuito_usuarios_limite", "INTEGER")
+        _add_column_if_missing(conn, "negocios", "plan_gratuito_reportes_habilitado", "BOOLEAN DEFAULT 0")
+        _add_column_if_missing(conn, "negocios", "plan_gratuito_reportes_limite", "INTEGER")
+        _add_column_if_missing(conn, "negocios", "plan_gratuito_backups_habilitado", "BOOLEAN DEFAULT 0")
+        _add_column_if_missing(conn, "negocios", "plan_gratuito_backups_limite", "INTEGER")
+        _add_column_if_missing(conn, "negocios", "plan_monto_gratuito", "REAL")
+        _add_column_if_missing(conn, "negocios", "plan_monto_prueba", "REAL")
+        _add_column_if_missing(conn, "negocios", "plan_monto_basico", "REAL")
+        _add_column_if_missing(conn, "negocios", "plan_monto_lite", "REAL")
+        _add_column_if_missing(conn, "negocios", "plan_monto_pro", "REAL")
+        _add_column_if_missing(conn, "negocios", "plan_monto_premium", "REAL")
+        _add_column_if_missing(conn, "negocios", "plan_vigente_hasta", "DATETIME")
+        _add_column_if_missing(conn, "negocios", "plan_catalogo_custom", "TEXT")
+        _add_column_if_missing(conn, "negocios", "plan_simulador_escenarios", "TEXT")
+        
+        # ================ USUARIOS ================
+        _add_column_if_missing(conn, "usuarios", "dni", "VARCHAR(20)")
+        _add_column_if_missing(conn, "usuarios", "roles", "VARCHAR(120)")
+        
+        # ================ CONFIGURACIÓN ================
+        _add_column_if_missing(conn, "configuracion_negocio", "permisos_roles_json", "TEXT")
+        _add_column_if_missing(conn, "configuracion_negocio", "productos_columnas_json", "TEXT")
+        _add_column_if_missing(conn, "configuracion_negocio", "sunat_api_url", "VARCHAR(500)")
+        _add_column_if_missing(conn, "configuracion_negocio", "sunat_proveedor", "VARCHAR(30) DEFAULT 'NUBEFACT'")
+        _add_column_if_missing(conn, "configuracion_negocio", "sunat_api_token", "VARCHAR(255)")
+        _add_column_if_missing(conn, "configuracion_negocio", "sunat_usuario_sol", "VARCHAR(80)")
+        _add_column_if_missing(conn, "configuracion_negocio", "sunat_clave_sol", "VARCHAR(120)")
+        _add_column_if_missing(conn, "configuracion_negocio", "sunat_emisor_ruc", "VARCHAR(11)")
+        _add_column_if_missing(conn, "configuracion_negocio", "sunat_modo", "VARCHAR(20) DEFAULT 'beta'")
+        _add_column_if_missing(conn, "configuracion_negocio", "sunat_serie_boleta", "VARCHAR(10)")
+        _add_column_if_missing(conn, "configuracion_negocio", "sunat_serie_factura", "VARCHAR(10)")
+        
+        # ================ VENTAS ================
+        _add_column_if_missing(conn, "ventas", "tipo_comprobante", "VARCHAR(20) DEFAULT 'NINGUNO'")
+        _add_column_if_missing(conn, "ventas", "cliente_nombre", "VARCHAR(255)")
+        _add_column_if_missing(conn, "ventas", "cliente_documento", "VARCHAR(20)")
+        _add_column_if_missing(conn, "ventas", "cliente_email", "VARCHAR(120)")
+        _add_column_if_missing(conn, "ventas", "serie_comprobante", "VARCHAR(10)")
+        _add_column_if_missing(conn, "ventas", "numero_comprobante", "VARCHAR(20)")
+        _add_column_if_missing(conn, "ventas", "sunat_estado", "VARCHAR(30)")
+        _add_column_if_missing(conn, "ventas", "sunat_codigo", "VARCHAR(80)")
+        _add_column_if_missing(conn, "ventas", "sunat_mensaje", "VARCHAR(500)")
+        _add_column_if_missing(conn, "ventas", "sunat_hash", "VARCHAR(120)")
+        _add_column_if_missing(conn, "ventas", "sunat_ticket", "VARCHAR(120)")
+        _add_column_if_missing(conn, "ventas", "sunat_cdr_url", "VARCHAR(500)")
+        
+        # ================ PLANES PAGOS ================
+        _add_column_if_missing(conn, "planes_pagos", "duracion_dias", "INTEGER")
+        _add_column_if_missing(conn, "planes_pagos", "plan_vigente_desde", "DATETIME")
+        _add_column_if_missing(conn, "planes_pagos", "plan_vigente_hasta", "DATETIME")
+        _add_column_if_missing(conn, "planes_pagos", "token_idempotencia", "VARCHAR(80)")
         conn.exec_driver_sql(
             "CREATE INDEX IF NOT EXISTS ix_planes_pagos_token_idempotencia ON planes_pagos(token_idempotencia)"
         )
+    
+    logger.info("Migraciones de esquema completadas")
 
 
 def _solo_digitos_exactos(value: str | None, largo: int) -> str | None:
-    raw = "".join(ch for ch in str(value or "") if ch.isdigit())
-    if len(raw) == largo:
-        return raw
-    return None
+    """
+    Extrae exactamente `largo` dígitos de una cadena.
+    
+    Args:
+        value: Valor a normalizar (puede ser None)
+        largo: Cantidad exacta de dígitos esperados
+        
+    Returns:
+        Cadena con exactamente `largo` dígitos, o None si no cumple
+    """
+    if not value:
+        return None
+    raw = "".join(ch for ch in str(value) if ch.isdigit())
+    return raw if len(raw) == largo else None
+
+
+def _normalize_field(obj, field_name: str, expected_length: int) -> bool:
+    """
+    Normaliza un campo de un objeto si es necesario.
+    
+    Args:
+        obj: Objeto con el campo a normalizar
+        field_name: Nombre del campo
+        expected_length: Cantidad exacta de dígitos esperados
+        
+    Returns:
+        True si hubo cambio, False si no
+    """
+    current_value = getattr(obj, field_name, None)
+    normalized = _solo_digitos_exactos(current_value, expected_length)
+    
+    if current_value != normalized:
+        setattr(obj, field_name, normalized)
+        return True
+    return False
 
 
 def _normalize_legacy_identifiers() -> None:
@@ -422,38 +294,38 @@ def _normalize_legacy_identifiers() -> None:
     db = SessionLocal()
     cambios = 0
     try:
+        # Normalizar negocios (RUC 11, teléfono/WhatsApp 9 dígitos)
         negocios = db.query(Negocio).all()
         for negocio in negocios:
-            ruc_norm = _solo_digitos_exactos(getattr(negocio, "ruc", None), 11)
-            telefono_norm = _solo_digitos_exactos(getattr(negocio, "telefono", None), 9)
-            whatsapp_norm = _solo_digitos_exactos(getattr(negocio, "whatsapp", None), 9)
+            cambios += _normalize_field(negocio, "ruc", 11)
+            cambios += _normalize_field(negocio, "telefono", 9)
+            cambios += _normalize_field(negocio, "whatsapp", 9)
+        
+        if negocios:
+            logger.debug(f"Negocios verificados: {len(negocios)}")
 
-            if getattr(negocio, "ruc", None) != ruc_norm:
-                negocio.ruc = ruc_norm
-                cambios += 1
-            if getattr(negocio, "telefono", None) != telefono_norm:
-                negocio.telefono = telefono_norm
-                cambios += 1
-            if getattr(negocio, "whatsapp", None) != whatsapp_norm:
-                negocio.whatsapp = whatsapp_norm
-                cambios += 1
-
+        # Normalizar clientes (teléfono 9 dígitos)
         clientes = db.query(Cliente).all()
         for cliente in clientes:
-            telefono_norm = _solo_digitos_exactos(getattr(cliente, "telefono", None), 9)
-            if getattr(cliente, "telefono", None) != telefono_norm:
-                cliente.telefono = telefono_norm
-                cambios += 1
+            cambios += _normalize_field(cliente, "telefono", 9)
+        
+        if clientes:
+            logger.debug(f"Clientes verificados: {len(clientes)}")
 
+        # Normalizar usuarios (DNI 8 dígitos)
         usuarios = db.query(Usuario).all()
         for usuario in usuarios:
-            dni_norm = _solo_digitos_exactos(getattr(usuario, "dni", None), 8)
-            if getattr(usuario, "dni", None) != dni_norm:
-                usuario.dni = dni_norm
-                cambios += 1
+            cambios += _normalize_field(usuario, "dni", 8)
+        
+        if usuarios:
+            logger.debug(f"Usuarios verificados: {len(usuarios)}")
 
         if cambios:
             db.commit()
+            logger.info(f"Identificadores normalizados: {cambios} cambios")
+    except Exception as e:
+        logger.error(f"Error en normalización de identificadores: {e}")
+        raise
     finally:
         db.close()
 
