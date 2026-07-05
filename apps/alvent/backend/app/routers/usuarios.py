@@ -35,7 +35,10 @@ MODULOS_VALIDOS = [
     "Clientes",
     "Cajas",
     "Reportes",
+    "Exportacion",
     "Usuarios",
+    "Empresa",
+    "Soporte",
     "Configuracion",
     "Finanzas",
 ]
@@ -49,13 +52,16 @@ PERMISOS_POR_ROL_DEFAULT: dict[str, list[str]] = {
         "Clientes",
         "Cajas",
         "Reportes",
+        "Exportacion",
         "Usuarios",
+        "Empresa",
+        "Soporte",
         "Configuracion",
         "Finanzas",
     ],
-    "CAJERO": ["Dashboard", "POS", "Ventas", "Clientes"],
-    "VENDEDOR": ["Dashboard", "POS", "Ventas", "Clientes"],
-    "ALMACEN": ["Dashboard", "Productos", "Inventario"],
+    "CAJERO": ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "Configuracion"],
+    "VENDEDOR": ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "Configuracion"],
+    "ALMACEN": ["Dashboard", "Productos", "Inventario", "Empresa", "Soporte", "Configuracion"],
 }
 
 

@@ -39,12 +39,16 @@ const PERMISOS_POR_ROL: Record<string, string[]> = {
     "Clientes",
     "Cajas",
     "Reportes",
+    "Exportacion",
     "Usuarios",
+    "Empresa",
+    "Soporte",
     "Configuracion",
+    "Finanzas",
   ],
-  CAJERO: ["Dashboard", "POS", "Ventas", "Clientes"],
-  VENDEDOR: ["Dashboard", "POS", "Ventas", "Clientes"],
-  ALMACEN: ["Dashboard", "Productos", "Inventario"],
+  CAJERO: ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "Configuracion"],
+  VENDEDOR: ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "Configuracion"],
+  ALMACEN: ["Dashboard", "Productos", "Inventario", "Empresa", "Soporte", "Configuracion"],
 };
 
 const MODULOS_PERMISOS = [
@@ -56,8 +60,12 @@ const MODULOS_PERMISOS = [
   "Clientes",
   "Cajas",
   "Reportes",
+  "Exportacion",
   "Usuarios",
+  "Empresa",
+  "Soporte",
   "Configuracion",
+  "Finanzas",
 ];
 
 const sanitizarDni = (value: string | null | undefined) =>

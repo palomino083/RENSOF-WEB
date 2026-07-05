@@ -101,11 +101,11 @@ const PERMISOS: Record<string, string[]> = {
     "soporte",
   ],
 
-  CAJERO: ["pos", "ventas", "clientes"],
-  VENDEDOR: ["pos", "ventas", "clientes"],
-  ALMACEN: ["dashboard", "productos", "inventario"],
+  CAJERO: ["pos", "ventas", "clientes", "empresa", "soporte", "configuracion"],
+  VENDEDOR: ["pos", "ventas", "clientes", "empresa", "soporte", "configuracion"],
+  ALMACEN: ["dashboard", "productos", "inventario", "empresa", "soporte", "configuracion"],
 
-  CONTADOR: ["reportes", "exportacion", "cajas", "dashboard"],
+  CONTADOR: ["reportes", "exportacion", "cajas", "dashboard", "empresa", "soporte", "configuracion"],
 };
 
 function permisosPorRoles(rol: string, roles: string[] = []) {
@@ -164,8 +164,8 @@ const MENU: MenuBlock[] = [
     section: "SISTEMA",
     items: [
       { label: "Usuarios", href: "/usuarios", icon: "👤", key: "usuarios" },
-      { label: "Empresa", href: "/configuracion", icon: "🏢", key: "empresa" },
-      { label: "Soporte", href: "/configuracion", icon: "🤖", key: "soporte" },
+      { label: "Empresa", href: "/empresa", icon: "🏢", key: "empresa" },
+      { label: "Soporte", href: "/soporte", icon: "🤖", key: "soporte" },
       { label: "Configuración", href: "/configuracion", icon: "⚙️", key: "configuracion" },
       { label: "Finanzas", href: "/finanzas", icon: "🧾", key: "finanzas" },
     ],
