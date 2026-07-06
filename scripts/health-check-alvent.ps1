@@ -1,16 +1,46 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# Direct backend API endpoints (bypass gateway proxy)
-$backendLoginUrl = "http://127.0.0.1:8001/auth/login"
-$backendOverviewUrl = "http://127.0.0.1:8001/dashboard/overview"
-$backendProductosUrl = "http://127.0.0.1:8001/productos/"
-$backendVentasUrl = "http://127.0.0.1:8001/ventas/"
-$backendVentasResumenUrl = "http://127.0.0.1:8001/ventas/resumen"
+$localBackendBase = "http://127.0.0.1:8001"
+$localGatewayBase = "http://127.0.0.1:8000"
+$remoteBackendBase = if ($env:ALVENT_BACKEND_ORIGIN) { $env:ALVENT_BACKEND_ORIGIN.TrimEnd('/') } else { "https://alvent-backend.onrender.com" }
+$remoteSiteBase = if ($env:RENSOF_PUBLIC_ORIGIN) { $env:RENSOF_PUBLIC_ORIGIN.TrimEnd('/') } else { "https://www.rensof.pe" }
 
-# Frontend served via gateway
-$frontendLoginUrl = "http://127.0.0.1:8000/alven/app"
-$frontendDashboardUrl = "http://127.0.0.1:8000/alven/app/dashboard"
+function Test-UrlAvailable {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Url
+  )
+
+  try {
+    $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -Method Get -TimeoutSec 6
+    return ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500)
+  } catch {
+    return $false
+  }
+}
+
+$isLocalMode = Test-UrlAvailable -Url "$localBackendBase/health"
+
+if ($isLocalMode) {
+  Write-Host "[INFO] Health check en modo LOCAL (gateway/backend en 127.0.0.1)." -ForegroundColor Cyan
+  $backendBase = $localBackendBase
+  $frontendLoginUrl = "$localGatewayBase/alven/app"
+  $frontendDashboardUrl = "$localGatewayBase/alven/app/dashboard"
+} else {
+  Write-Host "[INFO] Health check en modo REMOTO (Render/produccion)." -ForegroundColor Cyan
+  $backendBase = $remoteBackendBase
+  $frontendLoginUrl = "$remoteSiteBase/app/alven/login"
+  $frontendDashboardUrl = "$remoteSiteBase/alven/app/dashboard"
+}
+
+# Direct backend API endpoints
+$backendLoginUrl = "$backendBase/auth/login"
+$backendOverviewUrl = "$backendBase/dashboard/overview"
+$backendProductosUrl = "$backendBase/productos/"
+$backendVentasUrl = "$backendBase/ventas/"
+$backendVentasResumenUrl = "$backendBase/ventas/resumen"
+
 $repoRoot = Split-Path -Path $PSScriptRoot -Parent
 
 function Restart-LocalServices {
@@ -145,7 +175,11 @@ if ($assetMatches.Count -eq 0) {
   if ($loginPage.Content -match "Acceso de contingencia") {
     Write-Host "[WARN] Login en modo contingencia detectado (sin assets _next)." -ForegroundColor Yellow
   } else {
-    Restart-LocalServices
+    if ($isLocalMode) {
+      Restart-LocalServices
+    } else {
+      throw "Frontend login remoto sin referencias a assets _next."
+    }
     $loginPage = Invoke-WithRetry -Message "Frontend login sin assets _next tras reinicio" -Action {
       Invoke-WebRequest -Uri $frontendLoginUrl -Headers $htmlHeaders -UseBasicParsing
     }
