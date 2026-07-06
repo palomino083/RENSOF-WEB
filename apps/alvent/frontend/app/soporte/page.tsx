@@ -2078,7 +2078,7 @@ export default function ConfiguracionPage() {
       role: "user",
       text: consulta,
     };
-    const isFirstUserMessage = suporteChatMessages.filter((m) => m.role === "user").length === 0;
+    const isFirstUserMessage = soporteChatMessages.filter((m) => m.role === "user").length === 0;
     setSoporteChatMessages((prev) => [...prev, userMessage]);
     setSoporteChatInput("");
 
