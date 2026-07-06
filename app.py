@@ -13,6 +13,23 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import logging
 
+from db.database import SessionLocal
+from services.content_service import (
+    add_email_account,
+    add_publication,
+    delete_email_account,
+    delete_publication,
+    get_admin_content,
+    get_contact_inbox,
+    get_contact_inbox_summary,
+    get_email_accounts,
+    get_email_areas,
+    set_primary_email_account,
+    update_contact_message_status,
+    update_email_account,
+    update_publication,
+)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -180,7 +197,7 @@ def _render_admin_dashboard(request: Request):
     )
 
 
-def _render_admin_publications(request: Request):
+def _render_admin_publications(request: Request, publications: list, email_accounts: list):
     template_file = TEMPLATES_DIR / "admin_publications.html"
     if not template_file.exists():
         return JSONResponse(status_code=404, content={"detail": "Admin publications template not found"})
@@ -261,8 +278,8 @@ def _render_admin_publications(request: Request):
             "page_title": "Publicaciones | RENSOF Admin",
             "page_description": "Control editorial y desarrollo de contenidos de RENSOF.",
             "csrf_token": "",
-            "publications": [],
-            "email_accounts": [],
+            "publications": publications,
+            "email_accounts": email_accounts,
             "publication_metrics": publication_metrics,
             "editorial_tracks": editorial_tracks,
             "publication_queue": publication_queue,
@@ -273,7 +290,15 @@ def _render_admin_publications(request: Request):
     )
 
 
-def _render_admin_emails(request: Request):
+def _render_admin_emails(
+    request: Request,
+    email_accounts: list,
+    area_options: list[str],
+    search_query: str,
+    selected_area: str,
+    principal_only: bool,
+    inbox_summary: dict,
+):
     template_file = TEMPLATES_DIR / "admin_emails.html"
     if not template_file.exists():
         return JSONResponse(status_code=404, content={"detail": "Admin emails template not found"})
@@ -354,13 +379,12 @@ def _render_admin_emails(request: Request):
             "page_title": "Correos | RENSOF Admin",
             "page_description": "Gobierno de canales de correo y flujo de contacto de RENSOF.",
             "csrf_token": "",
-            "email_accounts": [],
-            "search_query": "",
-            "selected_area": "",
-            "principal_only": False,
-            "area_options": [],
-            "total_messages": 0,
-            "new_messages": 0,
+            "email_accounts": email_accounts,
+            "search_query": search_query,
+            "selected_area": selected_area,
+            "principal_only": principal_only,
+            "area_options": area_options,
+            **inbox_summary,
             "email_metrics": email_metrics,
             "email_channels": email_channels,
             "email_queue": email_queue,
@@ -499,10 +523,27 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
 
 
 def _render_admin_inbox(request: Request):
+    return _render_admin_inbox_page(
+        request=request,
+        messages=[],
+        area_options=[],
+        search_query="",
+        selected_area="",
+        selected_status="",
+    )
+
+
+def _render_admin_inbox_page(
+    request: Request,
+    messages: list,
+    area_options: list[str],
+    search_query: str,
+    selected_area: str,
+    selected_status: str,
+):
     template_file = TEMPLATES_DIR / "admin_inbox.html"
     if not template_file.exists():
         return JSONResponse(status_code=404, content={"detail": "Admin inbox template not found"})
-    messages: list = []
     ops_context = _build_admin_ops_context(request, messages)
     return templates.TemplateResponse(
         request=request,
@@ -513,10 +554,10 @@ def _render_admin_inbox(request: Request):
             "page_description": "Bandeja de mensajes de la plataforma de administracion RENSOF.",
             "csrf_token": "",
             "messages": messages,
-            "area_options": [],
-            "search_query": "",
-            "selected_area": "",
-            "selected_status": "",
+            "area_options": area_options,
+            "search_query": search_query,
+            "selected_area": selected_area,
+            "selected_status": selected_status,
             **ops_context,
         },
     )
@@ -636,19 +677,155 @@ def admin_login_submit(
 @app.get("/admin/publicaciones")
 def admin_publications(request: Request):
     """Serve RENSOF admin publications control module."""
-    return _render_admin_publications(request)
+    with SessionLocal() as session:
+        content = get_admin_content(session)
+    return _render_admin_publications(request, content["publications"], content["email_accounts"])
 
 
 @app.get("/admin/correos")
-def admin_emails(request: Request):
+def admin_emails(
+    request: Request,
+    q: str = "",
+    area: str = "",
+    principal_only: bool = False,
+):
     """Serve RENSOF admin email governance module."""
-    return _render_admin_emails(request)
+    with SessionLocal() as session:
+        email_accounts = get_email_accounts(session, query=q, area=area, principal_only=principal_only)
+        inbox_summary = get_contact_inbox_summary(session)
+        area_options = get_email_areas(session)
+    return _render_admin_emails(request, email_accounts, area_options, q, area, principal_only, inbox_summary)
 
 
 @app.get("/admin/correos/bandeja")
-def admin_inbox(request: Request):
+def admin_inbox(
+    request: Request,
+    q: str = "",
+    area: str = "",
+    status: str = "",
+):
     """Serve RENSOF admin inbox page."""
-    return _render_admin_inbox(request)
+    with SessionLocal() as session:
+        messages = get_contact_inbox(session, query=q, area=area, status=status)
+        area_options = get_email_areas(session)
+    return _render_admin_inbox_page(request, messages, area_options, q, area, status)
+
+
+@app.post("/admin/bandeja/{message_id}/status")
+def admin_update_inbox_message_status(
+    request: Request,
+    message_id: int,
+    status: str = Form("new"),
+    csrf_token: str = Form(""),
+):
+    _ = (request, csrf_token)
+    with SessionLocal() as session:
+        update_contact_message_status(session, message_id, status)
+    return RedirectResponse(url="/admin/correos/bandeja", status_code=303)
+
+
+@app.post("/admin/publications/add")
+def admin_add_publication(
+    request: Request,
+    title: str = Form(...),
+    summary: str = Form(...),
+    category: str = Form(...),
+    author_name: str = Form(...),
+    contact_email: str = Form(...),
+    status: str = Form("draft"),
+    published_at: str = Form(""),
+    tags: str = Form(""),
+    csrf_token: str = Form(""),
+):
+    _ = (request, csrf_token)
+    with SessionLocal() as session:
+        add_publication(session, title, summary, category, author_name, contact_email, status, published_at, tags)
+    return RedirectResponse(url="/admin/publicaciones", status_code=303)
+
+
+@app.post("/admin/publications/{publication_id}/update")
+def admin_update_publication_route(
+    request: Request,
+    publication_id: int,
+    title: str = Form(...),
+    summary: str = Form(...),
+    category: str = Form(...),
+    author_name: str = Form(...),
+    contact_email: str = Form(...),
+    status: str = Form("draft"),
+    published_at: str = Form(""),
+    tags: str = Form(""),
+    csrf_token: str = Form(""),
+):
+    _ = (request, csrf_token)
+    with SessionLocal() as session:
+        update_publication(session, publication_id, title, summary, category, author_name, contact_email, status, published_at, tags)
+    return RedirectResponse(url="/admin/publicaciones", status_code=303)
+
+
+@app.post("/admin/publications/{publication_id}/delete")
+def admin_delete_publication_route(
+    request: Request,
+    publication_id: int,
+    csrf_token: str = Form(""),
+):
+    _ = (request, csrf_token)
+    with SessionLocal() as session:
+        delete_publication(session, publication_id)
+    return RedirectResponse(url="/admin/publicaciones", status_code=303)
+
+
+@app.post("/admin/emails/add")
+def admin_add_email(
+    request: Request,
+    display_name: str = Form(...),
+    email: str = Form(...),
+    area: str = Form(...),
+    csrf_token: str = Form(""),
+):
+    _ = (request, csrf_token)
+    with SessionLocal() as session:
+        add_email_account(session, display_name, email, area)
+    return RedirectResponse(url="/admin/correos", status_code=303)
+
+
+@app.post("/admin/emails/{email_id}/update")
+def admin_update_email_route(
+    request: Request,
+    email_id: int,
+    display_name: str = Form(...),
+    email: str = Form(...),
+    area: str = Form(...),
+    csrf_token: str = Form(""),
+):
+    _ = (request, csrf_token)
+    with SessionLocal() as session:
+        update_email_account(session, email_id, display_name, email, area)
+    return RedirectResponse(url="/admin/correos", status_code=303)
+
+
+@app.post("/admin/emails/{email_id}/delete")
+def admin_delete_email_route(
+    request: Request,
+    email_id: int,
+    csrf_token: str = Form(""),
+):
+    _ = (request, csrf_token)
+    with SessionLocal() as session:
+        delete_email_account(session, email_id)
+    return RedirectResponse(url="/admin/correos", status_code=303)
+
+
+@app.post("/admin/correos/{email_id}/principal")
+def admin_set_primary_email(
+    request: Request,
+    email_id: int,
+    csrf_token: str = Form(""),
+):
+    _ = (request, csrf_token)
+    with SessionLocal() as session:
+        set_primary_email_account(session, email_id)
+    return RedirectResponse(url="/admin/correos", status_code=303)
 
 # ==========================================
 # RUN
