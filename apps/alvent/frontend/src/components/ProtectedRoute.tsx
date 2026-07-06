@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { tieneAcceso } from "@/utils/permisos";
-import { appPath } from "@/utils/appPath";
+import { APP_BASE_PATH, appPath } from "@/utils/appPath";
 
 export default function ProtectedRoute({
   children,
@@ -12,19 +12,32 @@ export default function ProtectedRoute({
 }) {
 
   const pathname = usePathname();
-  const APP_PREFIX = "/alven/app";
+  const APP_PREFIXES = Array.from(
+    new Set([APP_BASE_PATH, "/app/alvent", "/alven/app", "/alvent/app"])
+  ).map((prefix) => prefix.replace(/\/$/, ""));
 
-  const normalizeRoute = (value: string) => {
+  const normalizeRoute = useCallback((value: string) => {
     const raw = String(value || "").trim();
     const noOrigin = raw.replace(/^https?:\/\/[^/]+/i, "");
     const [pathOnly] = noOrigin.split(/[?#]/);
     let route = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
     route = route.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
-    while (route.startsWith(APP_PREFIX)) {
-      route = route.slice(APP_PREFIX.length) || "/";
+
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const prefix of APP_PREFIXES) {
+        if (!prefix) continue;
+        if (route === prefix || route.startsWith(`${prefix}/`)) {
+          route = route.slice(prefix.length) || "/";
+          changed = true;
+          break;
+        }
+      }
     }
+
     return route || "/";
-  };
+  }, [APP_PREFIXES]);
 
   useEffect(() => {
     const rawUsuario = localStorage.getItem("usuario");
@@ -71,7 +84,7 @@ export default function ProtectedRoute({
         appPath("dashboard");
     }
 
-  }, [pathname]);
+  }, [normalizeRoute, pathname]);
 
   return <>{children}</>;
 }
