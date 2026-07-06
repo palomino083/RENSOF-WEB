@@ -471,9 +471,24 @@
   gap: 10px;
 }
 
+.sofiaModalCard {
+  width: min(920px, 96vw);
+  max-width: 96vw;
+  height: min(78vh, 760px);
+  min-width: 360px;
+  min-height: 520px;
+  resize: both;
+}
+
+.sofiaModalBody {
+  min-height: 0;
+}
+
 .supportChatWindow {
   display: grid;
   gap: 10px;
+  grid-template-rows: auto auto 1fr auto;
+  min-height: 0;
 }
 
 .supportChatQuickActions {
@@ -506,13 +521,22 @@
   padding: 10px;
   display: grid;
   gap: 8px;
-  max-height: 320px;
+  min-height: 220px;
+  max-height: 50vh;
   overflow: auto;
+  resize: vertical;
 }
 
 .supportChatComposer {
   display: grid;
   gap: 8px;
+}
+
+.sofiaInputTextarea {
+  min-height: 112px;
+  max-height: 42vh;
+  resize: vertical;
+  line-height: 1.4;
 }
 
 .chatLevelHint {
@@ -592,6 +616,23 @@
 
 .chatTypingDot:nth-child(3) {
   animation-delay: 0.32s;
+}
+
+@media (max-width: 900px) {
+  .sofiaModalCard {
+    width: min(96vw, 100%);
+    max-width: 100%;
+    min-width: 0;
+    min-height: 0;
+    height: auto;
+    resize: none;
+  }
+
+  .supportChatMessages {
+    min-height: 180px;
+    max-height: 40vh;
+    resize: none;
+  }
 }
 
 @keyframes chatTypingPulse {

@@ -4311,6 +4311,8 @@ export default function ConfiguracionPage() {
             open={showSoporteChatModal}
             title="SofIA - Soporte Inteligente"
             subtitle={`Asistente de soporte ALVENT con escalamiento a RENSOF | Nivel ${sofiaResponseLevel}`}
+            cardClassName={styles.sofiaModalCard}
+            bodyClassName={styles.sofiaModalBody}
             actions={(
               <>
                 <button
@@ -4417,7 +4419,7 @@ export default function ConfiguracionPage() {
                 <label className={styles.formRow}>
                   Tu consulta
                   <textarea
-                    className="focus-ring"
+                    className={`${styles.sofiaInputTextarea} focus-ring`}
                     rows={3}
                     value={soporteChatInput}
                     onChange={(e) => setSoporteChatInput(e.target.value)}

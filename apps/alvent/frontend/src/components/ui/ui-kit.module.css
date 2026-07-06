@@ -110,6 +110,9 @@
   padding: 14px;
   display: grid;
   gap: 9px;
+  max-height: calc(100vh - 32px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
 }
 
 .modalHeader h3 {
@@ -124,6 +127,8 @@
 .modalBody {
   display: grid;
   gap: 8px;
+  min-height: 0;
+  overflow: auto;
 }
 
 .modalBody input,
