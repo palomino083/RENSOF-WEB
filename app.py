@@ -760,6 +760,14 @@ def admin_logout(request: Request, csrf_token: str = Form("")):
     return RedirectResponse(url="/admin/login", status_code=303)
 
 
+@app.get("/admin/logout")
+def admin_logout_get(request: Request):
+    """Compatibility logout route for direct-link navigation to /admin/logout."""
+    clear_admin_session(request)
+    request.session.pop("rensof_csrf_token", None)
+    return RedirectResponse(url="/admin/login", status_code=303)
+
+
 @app.get("/admin/publicaciones")
 def admin_publications(request: Request):
     """Serve RENSOF admin publications control module."""
