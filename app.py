@@ -47,13 +47,15 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", "/alven/")
-ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/alven/app").rstrip("/")
+ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/alvent/app").rstrip("/")
 ALVENT_BACKEND_ORIGIN = os.getenv("ALVENT_BACKEND_ORIGIN", "").rstrip("/")
 ALVENT_APP_EXTERNAL_BASE_URL = os.getenv(
     "ALVENT_APP_EXTERNAL_BASE_URL", "https://alvent-frontend.onrender.com/alven/app"
 ).rstrip("/")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 PUBLIC_ALVENT_LOGIN_PATH = "/app/alvent/login"
+PUBLIC_ALVENT_APP_BASE_PATH = "/alvent/app"
+LEGACY_ALVENT_APP_BASE_PATH = "/alven/app"
 RENSOF_SESSION_SECRET = os.getenv("RENSOF_SESSION_SECRET", "rensof-dev-session-secret")
 
 # FastAPI app
@@ -161,7 +163,7 @@ def _internalize_url(raw_url: str, fallback: str) -> str:
 def _external_alvent_app_url(path: str = "") -> str:
     """Build ALVENT app URLs that must resolve on the dedicated frontend service."""
     if not ALVENT_APP_EXTERNAL_BASE_URL:
-        fallback = _internalize_url(ALVENT_APP_URL, "/alven/app/login")
+        fallback = _internalize_url(ALVENT_APP_URL, f"{PUBLIC_ALVENT_APP_BASE_PATH}/login")
         if path:
             return f"{ALVENT_APP_BASE_PATH}/{path.lstrip('/')}"
         return fallback
@@ -223,7 +225,11 @@ async def _proxy_alvent_frontend_request(request: Request, path: str = "") -> Re
 
     location = response_headers.get("location")
     if location and location.startswith(ALVENT_APP_EXTERNAL_BASE_URL.rstrip("/")):
-        response_headers["location"] = location.replace(ALVENT_APP_EXTERNAL_BASE_URL.rstrip("/"), "/alven/app", 1)
+        response_headers["location"] = location.replace(
+            ALVENT_APP_EXTERNAL_BASE_URL.rstrip("/"),
+            PUBLIC_ALVENT_APP_BASE_PATH,
+            1,
+        )
 
     return Response(
         content=upstream.content,
@@ -728,7 +734,7 @@ def redirect_alven(request: Request):
     landing = _serve_alven_landing(request)
     if landing is not None:
         return landing
-    return RedirectResponse(url=_internalize_url(ALVENT_APP_URL, "/alven/app/login"))
+    return RedirectResponse(url=_internalize_url(ALVENT_APP_URL, f"{PUBLIC_ALVENT_APP_BASE_PATH}/login"))
 
 @app.get("/alven/login")
 def redirect_alven_login(request: Request):
@@ -748,35 +754,49 @@ def redirect_public_alvent_login_legacy(request: Request):
 def redirect_public_alvent_login(request: Request):
     """Canonical public ALVENT login entrypoint."""
     _ = request
-    return RedirectResponse(url="/alven/app/login", status_code=307)
+    return RedirectResponse(url=f"{PUBLIC_ALVENT_APP_BASE_PATH}/login", status_code=307)
 
-@app.api_route("/alven/app", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
-async def proxy_alven_app(request: Request):
-    """Proxy ALVENT app root to preserve public host prefix."""
+
+@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def proxy_alvent_app_public(request: Request):
+    """Canonical ALVENT app root for public access."""
     try:
         return await _proxy_alvent_frontend_request(request)
     except httpx.RequestError:
         return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
 
 
-@app.api_route("/alven/app/alven/app", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
-@app.api_route("/alven/app/alven/app/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def proxy_alvent_app_public_path(request: Request, path: str):
+    """Canonical ALVENT app paths for public access."""
+    try:
+        return await _proxy_alvent_frontend_request(request, path)
+    except httpx.RequestError:
+        return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
+
+
+@app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH}/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def redirect_legacy_alvent_app_base(request: Request, path: str = ""):
+    """Redirect legacy /alven/app path to canonical /alvent/app path."""
+    target = PUBLIC_ALVENT_APP_BASE_PATH
+    if path:
+        target = f"{target}/{path.lstrip('/')}"
+    if request.url.query:
+        target = f"{target}?{request.url.query}"
+    return RedirectResponse(url=target, status_code=308)
+
+
+@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alven/app", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alven/app/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def redirect_alven_double_prefix(request: Request, path: str = ""):
     """Canonicalize duplicated ALVENT basePath emitted by stale frontend chunks."""
-    canonical = "/alven/app"
+    canonical = PUBLIC_ALVENT_APP_BASE_PATH
     if path:
         canonical = f"{canonical}/{path.lstrip('/')}"
     if request.url.query:
         canonical = f"{canonical}?{request.url.query}"
     return RedirectResponse(url=canonical, status_code=308)
-
-@app.api_route("/alven/app/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
-async def proxy_alven_app_path(request: Request, path: str):
-    """Proxy ALVENT app paths without exposing upstream host."""
-    try:
-        return await _proxy_alvent_frontend_request(request, path)
-    except httpx.RequestError:
-        return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
 
 @app.api_route("/alven/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def proxy_alven_api(request: Request, path: str):

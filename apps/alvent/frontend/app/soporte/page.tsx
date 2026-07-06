@@ -2860,7 +2860,7 @@ export default function ConfiguracionPage() {
             metricas={[
               { label: "Empresa", value: nombreEmpresa || "No definida" },
               { label: "Plan", value: planActual || "No definido", tone: "good" },
-              { label: "Backups", value: estadoBackups || "N/D" },
+              { label: "Reportes", value: estadoReportes || "N/D" },
             ]}
           />
 
@@ -2901,10 +2901,6 @@ export default function ConfiguracionPage() {
             <article className={styles.overviewCard}>
               <span>Reportes</span>
               <strong>{estadoReportes}</strong>
-            </article>
-            <article className={styles.overviewCard}>
-              <span>Backups</span>
-              <strong>{estadoBackups}</strong>
             </article>
           </section>
 

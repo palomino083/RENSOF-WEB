@@ -2249,10 +2249,6 @@ export default function ConfiguracionPage() {
               <span>Reportes</span>
               <strong>{estadoReportes}</strong>
             </article>
-            <article className={styles.overviewCard}>
-              <span>Backups</span>
-              <strong>{estadoBackups}</strong>
-            </article>
           </section>
 
           <section className={`${styles.actionBar} uiEnter`} data-stagger="3">
