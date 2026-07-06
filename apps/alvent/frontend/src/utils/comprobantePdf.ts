@@ -1,4 +1,4 @@
-export type ComprobanteHtmlItem = {
+﻿export type ComprobanteHtmlItem = {
   nombre: string;
   cantidad: number;
   precio: number;
@@ -92,10 +92,10 @@ export function generarComprobanteHtml(data: ComprobanteHtmlData): string {
 
           <section class="meta">
             <p><strong>Fecha:</strong> ${escapeHtml(fechaLocal)}</p>
-            <p><strong>Operacion:</strong> ${escapeHtml(String(operacion))}</p>
+            <p><strong>Operación:</strong> ${escapeHtml(String(operacion))}</p>
             <p><strong>Cliente:</strong> ${escapeHtml(cliente)}</p>
             <p><strong>Doc:</strong> ${escapeHtml(documento)}</p>
-            <p><strong>Metodo de pago:</strong> ${escapeHtml(data.metodoPago)}</p>
+            <p><strong>Método de pago:</strong> ${escapeHtml(data.metodoPago)}</p>
           </section>
 
           <table>

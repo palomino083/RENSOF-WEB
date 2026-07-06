@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { cajaService } from "@/services/cajaService";
@@ -181,7 +181,7 @@ export default function CajasPage() {
       <ExecutivePulseBar
         modulo="Cajas"
         estado={cajaAbierta ? "Caja abierta" : "Caja cerrada"}
-        foco="Supervision en vivo del flujo de efectivo y operaciones de apertura/cierre."
+        foco="Supervisión en vivo del flujo de efectivo y operaciones de apertura/cierre."
         accion={{ label: "Ir a POS", href: "pos" }}
         metricas={[
           { label: "Estado", value: estadoCaja },
@@ -216,7 +216,7 @@ export default function CajasPage() {
         <div>
           <h2>Control de caja</h2>
           <p>
-            Define el monto de apertura y ejecuta acciones segun el estado operativo actual.
+            Define el monto de apertura y ejecuta acciones según el estado operativo actual.
           </p>
         </div>
 

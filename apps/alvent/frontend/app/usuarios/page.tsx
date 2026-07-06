@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Menu from "@/components/Menu";
@@ -404,7 +404,7 @@ export default function UsuariosPage() {
      🗑️ ELIMINAR
   ========================= */
   const eliminarUsuario = async (id: number) => {
-    if (!confirm("¿Eliminar usuario? Esta accion no se puede deshacer.")) return;
+    if (!confirm("¿Eliminar usuario? Esta acción no se puede deshacer.")) return;
 
     try {
       setRowAction({ id, type: "delete" });
@@ -507,8 +507,8 @@ export default function UsuariosPage() {
           <ExecutivePulseBar
             modulo="Usuarios"
             estado={isAdmin ? "Control administrativo" : "Consulta"}
-            foco="Gobierno de accesos y trazabilidad de perfiles para toda la operacion."
-            accion={{ label: "Ir a configuracion", href: "configuracion" }}
+            foco="Gobierno de accesos y trazabilidad de perfiles para toda la operación."
+            accion={{ label: "Ir a configuración", href: "configuracion" }}
             metricas={[
               { label: "Total", value: String(resumen.total) },
               { label: "Activos", value: String(resumen.activos), tone: "good" },

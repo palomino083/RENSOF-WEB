@@ -739,15 +739,15 @@ export default function ConfiguracionPage() {
     const telefonoSanitizado = sanitizarCelular(businessForm.telefono);
     const whatsappSanitizado = sanitizarCelular(businessForm.whatsapp);
     if (rucSanitizado && rucSanitizado.length !== 11) {
-      setError("El RUC debe tener exactamente 11 digitos numericos");
+      setError("El RUC debe tener exactamente 11 dígitos numéricos");
       return;
     }
     if (telefonoSanitizado && telefonoSanitizado.length !== 9) {
-      setError("El celular debe tener exactamente 9 digitos numericos");
+      setError("El celular debe tener exactamente 9 dígitos numéricos");
       return;
     }
     if (whatsappSanitizado && whatsappSanitizado.length !== 9) {
-      setError("El WhatsApp debe tener exactamente 9 digitos numericos");
+      setError("El WhatsApp debe tener exactamente 9 dígitos numéricos");
       return;
     }
 
@@ -1067,10 +1067,10 @@ export default function ConfiguracionPage() {
       }));
       const data = await negocioService.updateEditablePlanCatalog(negocioId, payload);
       setPlanCatalogo(Array.isArray(data.planes) ? data.planes : []);
-      setSuccess(data.mensaje || "Limites de planes actualizados");
+      setSuccess(data.mensaje || "Límites de planes actualizados");
       await cargarPlanStats();
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "No se pudo actualizar limites de planes"));
+      setError(getApiErrorMessage(err, "No se pudo actualizar límites de planes"));
     } finally {
       setSavingPlanLimits(false);
     }
@@ -1265,7 +1265,7 @@ export default function ConfiguracionPage() {
 
   const resumenSugerencia = planSugerido
     ? `Sugerido: ${nombrePlan(planSugerido.codigo)} para ${consumoUsuarios} usuarios, ${consumoReportes} reportes, ${consumoProductos} productos y ${consumoSoporte} casos de soporte.`
-    : "No hay un plan visible que cubra totalmente el consumo actual. Revisa limites y montos.";
+    : "No hay un plan visible que cubra totalmente el consumo actual. Revisa límites y montos.";
 
   const evaluarSemaforoPlan = (plan: {
     codigo: string;
@@ -1990,7 +1990,7 @@ export default function ConfiguracionPage() {
       await cargarPlanStats();
     } catch (err) {
       console.error(err);
-      setError("No se pudo generar el backup. Verifica los permisos y limites de tu plan.");
+      setError("No se pudo generar el backup. Verifica los permisos y límites de tu plan.");
     } finally {
       setLoadingBackup(false);
     }
@@ -2198,7 +2198,7 @@ export default function ConfiguracionPage() {
 
           <ExecutivePulseBar
             modulo="Configuracion"
-            estado={configAccessMode === "soporte" ? "Modo soporte" : "Modo configuracion"}
+            estado={configAccessMode === "soporte" ? "Modo soporte" : "Modo configuración"}
             foco="Gobierno operativo y personalizacion adaptable para cualquier escala de negocio."
             accion={{ label: "Ir a empresa", href: "empresa" }}
             metricas={[
@@ -2712,7 +2712,7 @@ export default function ConfiguracionPage() {
               <article className={styles.card}>
                 <Toolbar
                   title="Backup del sistema"
-                  right={<StatusBadge text="Segun plan" variant="warning" />}
+                  right={<StatusBadge text="Según plan" variant="warning" />}
                 />
 
                 <p>
@@ -2963,13 +2963,13 @@ export default function ConfiguracionPage() {
             />
 
             <p>
-              Resumen en tiempo real de limites consumidos para usuarios, reportes, soporte y productos.
+              Resumen en tiempo real de límites consumidos para usuarios, reportes, soporte y productos.
             </p>
 
             <div className={styles.planVisualBoard}>
               <header className={styles.planVisualHero}>
                 <p className={styles.planVisualEyebrow}>ALVENT PREMIUM 2026</p>
-                <h3 className={styles.planVisualHeadline}>Activa tu plan segun el ritmo de crecimiento</h3>
+                <h3 className={styles.planVisualHeadline}>Activa tu plan según el ritmo de crecimiento</h3>
                 <p className={styles.planVisualSubhead}>
                   Alternativas dinámicas conectadas al catálogo editable. {isSuperadmin ? "Como propietario del sistema, ajusta montos y límites desde esta misma sección." : "Solicita el plan ideal según tu consumo."}
                 </p>
@@ -2978,7 +2978,7 @@ export default function ConfiguracionPage() {
 
               <div className={styles.planVisualCallout}>
                 <div className={styles.planVisualCalloutCopy}>
-                  <strong>Activa ALVENT segun tu etapa comercial</strong>
+                  <strong>Activa ALVENT según tu etapa comercial</strong>
                   <p>
                     {isSuperadmin
                       ? "Propietario del sistema: define capacidades y precios desde Configuración para que toda la vitrina de planes se actualice al instante."
@@ -3144,7 +3144,7 @@ export default function ConfiguracionPage() {
                       onClick={() => void guardarLimitesPlanes()}
                       disabled={savingPlanLimits}
                     >
-                      {savingPlanLimits ? "Guardando..." : "Guardar limites"}
+                      {savingPlanLimits ? "Guardando..." : "Guardar límites"}
                     </button>
                   </div>
                 </section>
@@ -3162,7 +3162,7 @@ export default function ConfiguracionPage() {
                 <section className={styles.planExecutiveControlBar}>
                   <div className={styles.planExecutiveControlHead}>
                     <strong>Panel ejecutivo de decisión</strong>
-                    <p>Una sola vista para elegir plan y ejecutar la accion requerida sin duplicar tarjetas.</p>
+                    <p>Una sola vista para elegir plan y ejecutar la acción requerida sin duplicar tarjetas.</p>
                   </div>
 
                   <div className={styles.planExecutiveControlGrid}>
@@ -3385,7 +3385,7 @@ export default function ConfiguracionPage() {
                     </label>
 
                     <label>
-                      Accion rapida
+                      Acción rápida
                       <select
                         value={planControlSimulado ? "simulado" : "simular"}
                         onChange={(e) => {

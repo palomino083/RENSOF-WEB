@@ -1,4 +1,4 @@
-export const PLANES_VISIBLES_EN_SECCION = ["GRATUITO", "BASICO", "PRO", "PREMIUM"] as const;
+﻿export const PLANES_VISIBLES_EN_SECCION = ["GRATUITO", "BASICO", "PRO", "PREMIUM"] as const;
 
 const LEGACY_PLAN_ALIAS: Record<string, string> = {
   FREE: "GRATUITO",
@@ -20,7 +20,7 @@ export const PLAN_VISUAL_META: Record<string, {
     accentClass: "free",
   },
   BASICO: {
-    subtitulo: "Operacion estable",
+    subtitulo: "Operación estable",
     lema: "Control diario para negocios en crecimiento",
     accentClass: "basic",
   },
@@ -31,7 +31,7 @@ export const PLAN_VISUAL_META: Record<string, {
   },
   PREMIUM: {
     subtitulo: "Maximo rendimiento",
-    lema: "Operacion con prioridad total",
+    lema: "Operación con prioridad total",
     accentClass: "premium",
   },
 };

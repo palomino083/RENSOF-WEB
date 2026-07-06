@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -741,15 +741,15 @@ export default function ConfiguracionPage() {
     const telefonoSanitizado = sanitizarCelular(businessForm.telefono);
     const whatsappSanitizado = sanitizarCelular(businessForm.whatsapp);
     if (rucSanitizado && rucSanitizado.length !== 11) {
-      setError("El RUC debe tener exactamente 11 digitos numericos");
+      setError("El RUC debe tener exactamente 11 dígitos numericos");
       return;
     }
     if (telefonoSanitizado && telefonoSanitizado.length !== 9) {
-      setError("El celular debe tener exactamente 9 digitos numericos");
+      setError("El celular debe tener exactamente 9 dígitos numericos");
       return;
     }
     if (whatsappSanitizado && whatsappSanitizado.length !== 9) {
-      setError("El WhatsApp debe tener exactamente 9 digitos numericos");
+      setError("El WhatsApp debe tener exactamente 9 dígitos numericos");
       return;
     }
 
@@ -1072,7 +1072,7 @@ export default function ConfiguracionPage() {
       setSuccess(data.mensaje || "Limites de planes actualizados");
       await cargarPlanStats();
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "No se pudo actualizar limites de planes"));
+      setError(getApiErrorMessage(err, "No se pudo actualizar límites de planes"));
     } finally {
       setSavingPlanLimits(false);
     }
@@ -1267,7 +1267,7 @@ export default function ConfiguracionPage() {
 
   const resumenSugerencia = planSugerido
     ? `Sugerido: ${nombrePlan(planSugerido.codigo)} para ${consumoUsuarios} usuarios, ${consumoReportes} reportes, ${consumoProductos} productos y ${consumoSoporte} casos de soporte.`
-    : "No hay un plan visible que cubra totalmente el consumo actual. Revisa limites y montos.";
+    : "No hay un plan visible que cubra totalmente el consumo actual. Revisa límites y montos.";
 
   const evaluarSemaforoPlan = (plan: {
     codigo: string;
@@ -1995,7 +1995,7 @@ export default function ConfiguracionPage() {
       await cargarPlanStats();
     } catch (err) {
       console.error(err);
-      setError("No se pudo generar el backup. Verifica los permisos y limites de tu plan.");
+      setError("No se pudo generar el backup. Verifica los permisos y límites de tu plan.");
     } finally {
       setLoadingBackup(false);
     }
@@ -2173,7 +2173,7 @@ export default function ConfiguracionPage() {
           <section className={styles.hero}>
             <div className={styles.heroContent}>
               <p className={styles.eyebrow}>Centro de control</p>
-              <h1>Configuracion empresarial</h1>
+              <h1>Configuración empresarial</h1>
               <p>Gestiona acciones sensibles del sistema con mayor claridad y seguridad.</p>
               <div className={styles.modeChipRow}>
                 <span className={`${styles.modeChip} ${configAccessMode === "soporte" ? styles.modeChipSupport : styles.modeChipConfig}`}>
@@ -2182,16 +2182,16 @@ export default function ConfiguracionPage() {
                   </span>
 
                   <span className={styles.modeChipDesktop}>
-                    <strong>Modo: {configAccessMode === "soporte" ? "Soporte" : "Configuracion"}</strong>
+                    <strong>Modo: {configAccessMode === "soporte" ? "Soporte" : "Configuración"}</strong>
                     <small>
                       {configAccessMode === "soporte"
-                        ? "Atencion asistida por IA y escalamiento a RENSOF"
-                        : "Administracion general del sistema y controles de negocio"}
+                        ? "Atención asistida por IA y escalamiento a RENSOF"
+                        : "Administración general del sistema y controles de negocio"}
                     </small>
                   </span>
 
                   <span className={styles.modeChipMobile}>
-                    {configAccessMode === "soporte" ? "Soporte" : "Configuracion"}
+                    {configAccessMode === "soporte" ? "Soporte" : "Configuración"}
                   </span>
                 </span>
               </div>
@@ -2201,8 +2201,8 @@ export default function ConfiguracionPage() {
 
           <ExecutivePulseBar
             modulo="Empresa"
-            estado={configAccessMode === "soporte" ? "Modo soporte" : "Modo configuracion"}
-            foco="Personalizacion transversal del negocio, desde emprendimientos hasta operaciones corporativas."
+            estado={configAccessMode === "soporte" ? "Modo soporte" : "Modo configuración"}
+            foco="Personalización transversal del negocio, desde emprendimientos hasta operaciones corporativas."
             accion={{ label: "Ir a soporte", href: "soporte" }}
             metricas={[
               { label: "Empresa", value: nombreEmpresa || "No definida" },
@@ -2216,7 +2216,7 @@ export default function ConfiguracionPage() {
           {planApprovalAlertText ? (
             <section className={`${styles.planApprovalAlert} ${planApprovalAlertPulse ? styles.planApprovalAlertPulse : ""}`}>
               <div>
-                <strong>{isSuperadmin ? "Alertas de aprobacion de planes" : "Estado de tu solicitud de plan"}</strong>
+                <strong>{isSuperadmin ? "Alertas de aprobación de planes" : "Estado de tu solicitud de plan"}</strong>
                 <p>{planApprovalAlertText}</p>
               </div>
               <button
@@ -2288,7 +2288,7 @@ export default function ConfiguracionPage() {
                   onClick={() => setEmpresaTab("ubicacion")}
                   className={`${styles.tabBtn} ${empresaTab === "ubicacion" ? styles.tabBtnActive : ""}`}
                 >
-                  Ubicacion
+                  Ubicación
                 </button>
                 <button
                   type="button"
@@ -2328,7 +2328,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "general" ? (
                   <div className={styles.companyBlock}>
-                    <h3>Informacion general</h3>
+                    <h3>Información general</h3>
 
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
@@ -2365,7 +2365,7 @@ export default function ConfiguracionPage() {
                             </button>
                           </div>
                           <small className={styles.helperText}>
-                            Si no encuentras el tipo en la lista, crea uno nuevo y guardalo.
+                            Si no encuentras el tipo en la lista, crea uno nuevo y guárdalo.
                           </small>
                           <div className={styles.tipoNegocioInline}>
                             <input
@@ -2418,7 +2418,7 @@ export default function ConfiguracionPage() {
                           className="focus-ring"
                         >
                           <option value="PEN">Soles (PEN)</option>
-                          <option value="USD">Dolares (USD)</option>
+                          <option value="USD">Dólares (USD)</option>
                           <option value="EUR">Euros (EUR)</option>
                         </select>
                       </div>
@@ -2446,13 +2446,13 @@ export default function ConfiguracionPage() {
                           onChange={(e) => setBusinessForm({ ...businessForm, idioma: e.target.value })}
                           className="focus-ring"
                         >
-                          <option value="es">EspaÃ±ol</option>
-                          <option value="en">Ingles</option>
+                          <option value="es">Español</option>
+                          <option value="en">Inglés</option>
                         </select>
                       </div>
 
                       <div className={`${styles.formRow} ${styles.fullRow}`}>
-                        <label htmlFor="empresa-descripcion">Descripcion del negocio</label>
+                        <label htmlFor="empresa-descripcion">Descripción del negocio</label>
                         <textarea
                           id="empresa-descripcion"
                           value={businessForm.descripcion}
@@ -2467,7 +2467,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "fiscal" ? (
                   <div className={styles.companyBlock}>
-                    <h3>Informacion fiscal</h3>
+                    <h3>Información fiscal</h3>
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-ruc">RUC</label>
@@ -2478,14 +2478,14 @@ export default function ConfiguracionPage() {
                           inputMode="numeric"
                           maxLength={11}
                           pattern="[0-9]{11}"
-                          placeholder="11 digitos"
+                          placeholder="11 dígitos"
                           className="focus-ring"
                         />
-                        {rucInvalido ? <small className={styles.errorHint}>RUC incompleto: deben ser 11 digitos.</small> : null}
+                        {rucInvalido ? <small className={styles.errorHint}>RUC incompleto: deben ser 11 dígitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-razon">Razon social</label>
+                        <label htmlFor="empresa-razon">Razón social</label>
                         <input
                           id="empresa-razon"
                           value={businessForm.razon_social}
@@ -2513,10 +2513,10 @@ export default function ConfiguracionPage() {
                           className="focus-ring"
                         >
                           <option value="no">No vincular</option>
-                          <option value="si">Si, vincular comprobantes</option>
+                          <option value="si">Sí, vincular comprobantes</option>
                         </select>
                         <small className={styles.helperText}>
-                          Si se activa, las boletas y facturas intentaran enviarse a SUNAT mediante la integracion configurada.
+                          Si se activa, las boletas y facturas intentarán enviarse a SUNAT mediante la integración configurada.
                         </small>
                       </div>
                     </div>
@@ -2525,7 +2525,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "ubicacion" ? (
                   <div className={styles.companyBlock}>
-                    <h3>Contacto y ubicacion</h3>
+                    <h3>Contacto y ubicación</h3>
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-email">Correo</label>
@@ -2539,7 +2539,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-telefono">Telefono</label>
+                        <label htmlFor="empresa-telefono">Teléfono</label>
                         <input
                           id="empresa-telefono"
                           value={businessForm.telefono}
@@ -2549,7 +2549,7 @@ export default function ConfiguracionPage() {
                           pattern="[0-9]{9}"
                           className="focus-ring"
                         />
-                        {telefonoInvalido ? <small className={styles.errorHint}>Celular incompleto: deben ser 9 digitos.</small> : null}
+                        {telefonoInvalido ? <small className={styles.errorHint}>Celular incompleto: deben ser 9 dígitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -2563,7 +2563,7 @@ export default function ConfiguracionPage() {
                           pattern="[0-9]{9}"
                           className="focus-ring"
                         />
-                        {whatsappInvalido ? <small className={styles.errorHint}>WhatsApp incompleto: deben ser 9 digitos.</small> : null}
+                        {whatsappInvalido ? <small className={styles.errorHint}>WhatsApp incompleto: deben ser 9 dígitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -2702,7 +2702,7 @@ export default function ConfiguracionPage() {
               <article className={styles.card}>
                 <Toolbar
                   title="Backup del sistema"
-                  right={<StatusBadge text="Segun plan" variant="warning" />}
+                  right={<StatusBadge text="Según plan" variant="warning" />}
                 />
 
                 <p>
@@ -2941,7 +2941,7 @@ export default function ConfiguracionPage() {
             <article className={`${styles.card} ${styles.dangerCard}`}>
               <Toolbar
                 title="Reinicio de sistema"
-                right={<StatusBadge text="Operacion sensible" variant="danger" />}
+                right={<StatusBadge text="Operación sensible" variant="danger" />}
               />
 
               <p>
@@ -2965,26 +2965,26 @@ export default function ConfiguracionPage() {
             />
 
             <p>
-              Resumen en tiempo real de limites consumidos para usuarios, reportes, soporte y productos.
+              Resumen en tiempo real de límites consumidos para usuarios, reportes, soporte y productos.
             </p>
 
             <div className={styles.planVisualBoard}>
               <header className={styles.planVisualHero}>
                 <p className={styles.planVisualEyebrow}>ALVENT PREMIUM 2026</p>
-                <h3 className={styles.planVisualHeadline}>Activa tu plan segun el ritmo de crecimiento</h3>
+                <h3 className={styles.planVisualHeadline}>Activa tu plan según el ritmo de crecimiento</h3>
                 <p className={styles.planVisualSubhead}>
-                  Alternativas dinamicas conectadas al catalogo editable. {isSuperadmin ? "Como propietario del sistema, ajusta montos y limites desde esta misma seccion." : "Solicita el plan ideal segÃºn tu consumo."}
+                  Alternativas dinámicas conectadas al catálogo editable. {isSuperadmin ? "Como propietario del sistema, ajusta montos y limites desde esta misma seccion." : "Solicita el plan ideal segÃºn tu consumo."}
                 </p>
               </header>
               <PlanVisualCards cards={planVisualCards} />
 
               <div className={styles.planVisualCallout}>
                 <div className={styles.planVisualCalloutCopy}>
-                  <strong>Activa ALVENT segun tu etapa comercial</strong>
+                  <strong>Activa ALVENT según tu etapa comercial</strong>
                   <p>
                     {isSuperadmin
                       ? "Propietario del sistema: define capacidades y precios desde Configuracion para que toda la vitrina de planes se actualice al instante."
-                      : "Empieza con el gratuito y escala a Basico, Pro o Premium cuando tu operacion lo requiera."}
+                      : "Empieza con el gratuito y escala a Basico, Pro o Premium cuando tu operación lo requiera."}
                   </p>
                   <div className={styles.planVisualMiniStrip} aria-label="Beneficios destacados">
                     <span title="Respuestas inteligentes">{renderBenefitIcon("spark")}</span>
@@ -3030,7 +3030,7 @@ export default function ConfiguracionPage() {
                   </div>
 
                   <div className={styles.freePlanBoostQuickActions}>
-                    <span>Guardar todo el catalogo de montos:</span>
+                    <span>Guardar todo el catálogo de montos:</span>
                     <button
                       type="button"
                       className={`${styles.saveBusinessBtn} focus-ring`}
@@ -3045,10 +3045,10 @@ export default function ConfiguracionPage() {
                 <section className={styles.planAmountsBox}>
                   <div>
                     <h4>Limites editables por plan</h4>
-                    <p>Define usuarios, reportes, soporte y cantidad de productos por plan. Estos limites se aplican al negocio seleccionado.</p>
+                    <p>Define usuarios, reportes, soporte y cantidad de productos por plan. Estos límites se aplican al negocio seleccionado.</p>
                     {!negocioActivoId ? (
                       <small className={styles.helperText}>
-                        Sin negocio objetivo seleccionado: puedes seleccionar plan para analisis, pero aplicar requiere elegir una empresa.
+                        Sin negocio objetivo seleccionado: puedes seleccionar plan para análisis, pero aplicar requiere elegir una empresa.
                       </small>
                     ) : null}
                   </div>
@@ -3130,7 +3130,7 @@ export default function ConfiguracionPage() {
                   </div>
 
                   <div className={styles.freePlanBoostQuickActions}>
-                    <span>Guardar limites efectivos del catalogo:</span>
+                    <span>Guardar límites efectivos del catálogo:</span>
                     <button
                       type="button"
                       className={`${styles.saveBusinessBtn} focus-ring`}
@@ -3145,17 +3145,17 @@ export default function ConfiguracionPage() {
                 <section className={styles.planAmountsBox}>
                   <div>
                     <h4>Empresa cliente para aplicar plan</h4>
-                    <p>Usa la empresa cliente seleccionada en la seccion Empresa para ejecutar cambios de plan.</p>
+                    <p>Usa la empresa cliente seleccionada en la sección Empresa para ejecutar cambios de plan.</p>
                   </div>
                   {!negocioActivoId ? (
-                    <small className={styles.helperText}>Sin empresa cliente seleccionada, aplicar plan estara bloqueado.</small>
+                    <small className={styles.helperText}>Sin empresa cliente seleccionada, aplicar plan estará bloqueado.</small>
                   ) : null}
                 </section>
 
                 <section className={styles.planExecutiveControlBar}>
                   <div className={styles.planExecutiveControlHead}>
                     <strong>Panel ejecutivo de decision</strong>
-                    <p>Una sola vista para elegir plan y ejecutar la accion requerida sin duplicar tarjetas.</p>
+                    <p>Una sola vista para elegir plan y ejecutar la acción requerida sin duplicar tarjetas.</p>
                   </div>
 
                   <div className={styles.planExecutiveControlGrid}>
@@ -3192,9 +3192,9 @@ export default function ConfiguracionPage() {
                       className={`${styles.planPickBtn} focus-ring`}
                       onClick={() => void ejecutarAccionPlanEjecutiva()}
                       disabled={!planControlSeleccionadoData || changingPlan || savingPlanAmounts || savingPlanLimits || Boolean(planControlAccionRequiereNegocio)}
-                      title={planControlAccionRequiereNegocio ? "Selecciona una empresa cliente en la seccion Empresa" : ""}
+                      title={planControlAccionRequiereNegocio ? "Selecciona una empresa cliente en la sección Empresa" : ""}
                     >
-                      {planControlAccion === "simular" ? "Ejecutar simulacion" :
+                      {planControlAccion === "simular" ? "Ejecutar simulación" :
                         planControlAccion === "aplicar" ? (changingPlan ? "Aplicando..." : "Aplicar plan") :
                         planControlAccion === "guardar_monto" ? (savingPlanAmounts ? "Guardando..." : "Guardar montos") :
                         planControlAccion === "guardar_limites" ? (savingPlanLimits ? "Guardando..." : "Guardar limites") :
@@ -3261,7 +3261,7 @@ export default function ConfiguracionPage() {
 
                 <section id="cfg-plan-validaciones" className={styles.planHistoryBox}>
                   <div className={styles.planHistoryHead}>
-                    <h4>Validacion de pagos de planes</h4>
+                    <h4>Validación de pagos de planes</h4>
                     <label className={styles.planHistoryFilter}>
                       Estado
                       <select
@@ -3294,7 +3294,7 @@ export default function ConfiguracionPage() {
                             <th>Canal</th>
                             <th>Referencia</th>
                             <th>Comprobante</th>
-                            <th>Accion</th>
+                            <th>Acción</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -3354,12 +3354,12 @@ export default function ConfiguracionPage() {
               <div className={styles.clientPlanRequestBox}>
                 <h3>Escoge tu plan y activa con pago</h3>
                 <p>
-                  Presentacion ejecutiva unificada para elegir plan, simular impacto y activar con pago.
+                  Presentación ejecutiva unificada para elegir plan, simular impacto y activar con pago.
                 </p>
 
                 <section className={styles.planExecutiveControlBar}>
                   <div className={styles.planExecutiveControlHead}>
-                    <strong>Decision de plan</strong>
+                    <strong>Decisión de plan</strong>
                     <p>Selecciona un plan, simula su efecto y activa de inmediato desde un solo bloque.</p>
                   </div>
 
@@ -3378,7 +3378,7 @@ export default function ConfiguracionPage() {
                     </label>
 
                     <label>
-                      Accion rapida
+                      Acción rápida
                       <select
                         value={planControlSimulado ? "simulado" : "simular"}
                         onChange={(e) => {

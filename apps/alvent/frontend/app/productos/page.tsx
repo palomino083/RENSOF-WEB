@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -657,21 +657,21 @@ export default function Productos() {
         <div>
           <p className={styles.eyebrow}>Comercial y stock</p>
           <h1>Productos premium</h1>
-          <p>Administra catalogo, precios y utilidad desde una interfaz moderna.</p>
+          <p>Administra catálogo, precios y utilidad desde una interfaz moderna.</p>
         </div>
         <ExecutiveThemeSwitch />
       </section>
 
       <ExecutivePulseBar
         modulo="Productos"
-        estado={loading ? "Sincronizando" : "Catalogo operativo"}
+        estado={loading ? "Sincronizando" : "Catálogo operativo"}
         foco="Gestion comercial de portafolio, precio y utilidad con lectura de riesgo de stock."
         accion={{ label: "Ir a inventario", href: "inventario" }}
         metricas={[
-          { label: "Catalogo", value: String(productos.length) },
+          { label: "Catálogo", value: String(productos.length) },
           { label: "Filtrados", value: String(productosFiltrados.length) },
           {
-            label: "Stock critico",
+            label: "Stock crítico",
             value: String(stockCritico),
             tone: stockCritico > 0 ? "warn" : "good",
           },
@@ -680,7 +680,7 @@ export default function Productos() {
 
       <section className="uiEnter" data-stagger="2">
         <Toolbar
-          title="Catalogo de productos"
+          title="Catálogo de productos"
           className={styles.toolbar}
           right={(
             <>

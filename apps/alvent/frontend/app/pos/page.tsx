@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -271,7 +271,7 @@ export default function PosPage() {
 
   const aplicarPostVenta = async (venta: VentaReciente, tipo: "anular" | "devolver") => {
     const etiqueta = tipo === "anular" ? "anular" : "devolver";
-    if (!confirm(`¿Deseas ${etiqueta} la venta #${venta.id}? Esta accion repone stock.`)) {
+    if (!confirm(`¿Deseas ${etiqueta} la venta #${venta.id}? Esta acción repone stock.`)) {
       return;
     }
 
@@ -286,7 +286,7 @@ export default function PosPage() {
         setSuccess(`Venta #${venta.id} anulada correctamente`);
       } else {
         await ventasService.devolverVenta(venta.id, motivo);
-        setSuccess(`Devolucion de venta #${venta.id} registrada`);
+        setSuccess(`Devolución de venta #${venta.id} registrada`);
       }
 
       await Promise.all([cargarVentasRecientes(), cargarProductos()]);
@@ -407,7 +407,7 @@ export default function PosPage() {
       ventaId ? `Operación #${ventaId}` : "Operación registrada",
       `Cliente: ${cliente}`,
       doc ? `Documento: ${doc}` : "",
-      `Metodo: ${metodo_pago}`,
+      `Método: ${metodo_pago}`,
       `Total: ${formatMoney(totalVenta)}`,
       pdfUrl ? `PDF: ${pdfUrl}` : "",
       `Gracias por tu compra en ${empresa}`,
@@ -467,17 +467,17 @@ export default function PosPage() {
     }
 
     if (tipoComprobante !== "NINGUNO" && enviarEmail && !clienteEmail.trim()) {
-      alert("Activas envio por email, pero falta correo del cliente");
+      alert("Activas envío por email, pero falta correo del cliente");
       return;
     }
 
     if (tipoComprobante !== "NINGUNO" && enviarWhatsapp && !limpiarNumero(clienteWhatsapp)) {
-      alert("Activas envio por WhatsApp, pero falta numero valido");
+      alert("Activas envío por WhatsApp, pero falta número válido");
       return;
     }
 
     if (clienteWhatsapp.trim() && limpiarNumero(clienteWhatsapp).length !== 9) {
-      alert("El celular debe tener exactamente 9 digitos numericos");
+      alert("El celular debe tener exactamente 9 dígitos numéricos");
       return;
     }
 
@@ -487,7 +487,7 @@ export default function PosPage() {
       try {
         cliente_id = await registrarClienteAutomatico();
       } catch (err: unknown) {
-        console.warn("No se pudo registrar/actualizar cliente automaticamente", err);
+        console.warn("No se pudo registrar/actualizar cliente automáticamente", err);
       }
     }
 
@@ -591,7 +591,7 @@ export default function PosPage() {
       const comprobanteLabel = tipoComprobante === "NINGUNO" ? "Sin comprobante" : tipoComprobante;
 
       alert(
-        `Venta registrada\nComprobante: ${comprobanteLabel}${sunatInfo?.serie && sunatInfo?.numero ? ` (${sunatInfo.serie}-${sunatInfo.numero})` : ""}\nMetodo: ${metodo_pago}\nTotal: S/${total.toFixed(2)}${sunatInfo?.estado ? `\nSUNAT: ${sunatInfo.estado}` : ""}${sunatInfo?.mensaje ? `\nDetalle SUNAT: ${sunatInfo.mensaje}` : ""}${comprobantePdfUrl ? `\nPDF: ${comprobantePdfUrl}` : ""}`
+        `Venta registrada\nComprobante: ${comprobanteLabel}${sunatInfo?.serie && sunatInfo?.numero ? ` (${sunatInfo.serie}-${sunatInfo.numero})` : ""}\nMétodo: ${metodo_pago}\nTotal: S/${total.toFixed(2)}${sunatInfo?.estado ? `\nSUNAT: ${sunatInfo.estado}` : ""}${sunatInfo?.mensaje ? `\nDetalle SUNAT: ${sunatInfo.mensaje}` : ""}${comprobantePdfUrl ? `\nPDF: ${comprobantePdfUrl}` : ""}`
       );
 
       setCarrito([]);
@@ -689,13 +689,13 @@ export default function PosPage() {
       <section className={`${styles.grid} uiEnter`} data-stagger="2">
         <article className={`${styles.card} ${styles.productsCard}`}>
           <Toolbar
-            title="Catalogo disponible"
+            title="Catálogo disponible"
             right={(
               <div className={styles.catalogActions}>
                 <input
                   value={busquedaProducto}
                   onChange={(e) => setBusquedaProducto(e.target.value)}
-                  placeholder="Buscar por nombre o codigo"
+                  placeholder="Buscar por nombre o código"
                   className={`${styles.searchInput} focus-ring`}
                 />
                 <input
@@ -768,10 +768,10 @@ export default function PosPage() {
 
           <div className={styles.cartList}>
             {carrito.length === 0 ? (
-              <p className={styles.empty}>Carrito vacio</p>
+              <p className={styles.empty}>Carrito vacío</p>
             ) : (
               <DataTable
-                headers={["Producto", "Cant.", "Precio", "Subtotal", "Accion"]}
+                headers={["Producto", "Cant.", "Precio", "Subtotal", "Acción"]}
                 minWidth={560}
                 density="compact"
               >
@@ -804,7 +804,7 @@ export default function PosPage() {
           </div>
 
           <div className={styles.formRow}>
-            <label htmlFor="metodo">Metodo de pago</label>
+            <label htmlFor="metodo">Método de pago</label>
             <select
               id="metodo"
               value={metodo_pago}
@@ -841,7 +841,7 @@ export default function PosPage() {
             {requiereComprobante ? (
               <>
                 <div className={styles.formRow}>
-                  <label htmlFor="cliente-nombre">Cliente / Razon social</label>
+                  <label htmlFor="cliente-nombre">Cliente / Razón social</label>
                   <input
                     id="cliente-nombre"
                     value={clienteNombre}
@@ -861,7 +861,7 @@ export default function PosPage() {
                       const maxLen = tipoComprobante === "FACTURA" ? 11 : 8;
                       setClienteDocumento(soloDigitos.slice(0, maxLen));
                     }}
-                    placeholder={tipoComprobante === "FACTURA" ? "11 digitos" : "8 digitos"}
+                    placeholder={tipoComprobante === "FACTURA" ? "11 dígitos" : "8 dígitos"}
                     inputMode="numeric"
                     maxLength={tipoComprobante === "FACTURA" ? 11 : 8}
                     pattern={tipoComprobante === "FACTURA" ? "[0-9]{11}" : "[0-9]{8}"}
@@ -870,7 +870,7 @@ export default function PosPage() {
                 </div>
 
                 <div className={styles.formRow}>
-                  <label htmlFor="cliente-email">Correo para envio</label>
+                  <label htmlFor="cliente-email">Correo para envío</label>
                   <input
                     id="cliente-email"
                     type="email"
@@ -882,7 +882,7 @@ export default function PosPage() {
                 </div>
 
                 <div className={styles.formRow}>
-                  <label htmlFor="cliente-wa">WhatsApp para envio</label>
+                  <label htmlFor="cliente-wa">WhatsApp para envío</label>
                   <input
                     id="cliente-wa"
                     value={clienteWhatsapp}
@@ -894,7 +894,7 @@ export default function PosPage() {
                     className="focus-ring"
                   />
                   {Boolean(clienteWhatsapp) && limpiarNumero(clienteWhatsapp).length !== 9 ? (
-                    <small>Celular incompleto: deben ser 9 digitos.</small>
+                    <small>Celular incompleto: deben ser 9 dígitos.</small>
                   ) : null}
                 </div>
 
@@ -918,12 +918,12 @@ export default function PosPage() {
                 </div>
 
                 <small>
-                  Si completas cliente + documento, se registra automaticamente en tu base de clientes.
+                  Si completas cliente + documento, se registra automáticamente en tu base de clientes.
                 </small>
               </>
             ) : (
               <small>
-                Sin comprobante: no se solicitaran ni registraran datos del cliente.
+                Sin comprobante: no se solicitarán ni registrarán datos del cliente.
               </small>
             )}
           </section>
@@ -973,7 +973,7 @@ export default function PosPage() {
         />
 
         <p className={styles.postventaHint}>
-          Gestiona ventas recientes desde POS. Al anular o devolver, el stock se repone automaticamente.
+          Gestiona ventas recientes desde POS. Al anular o devolver, el stock se repone automáticamente.
         </p>
 
         <DataTable
@@ -1026,8 +1026,8 @@ export default function PosPage() {
 
       <ModalCard
         open={scanOpen}
-        title="Escanear codigo de barras"
-        subtitle="Usa la camara del celular para leer el codigo y agregar el producto"
+        title="Escanear código de barras"
+        subtitle="Usa la cámara del celular para leer el código y agregar el producto"
         actions={(
           <>
             <button

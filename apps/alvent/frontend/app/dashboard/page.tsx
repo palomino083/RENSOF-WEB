@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -301,7 +301,7 @@ export default function Dashboard() {
               <p className={styles.eyebrow}>Centro de mando</p>
               <h1>Dashboard premium</h1>
               <p>
-                Bienvenido {nombreVisible}. Aqui tienes una vision
+                Bienvenido {nombreVisible}. Aquí tienes una visión
                 ejecutiva de ventas, caja e inventario en tiempo real.
               </p>
             </div>
@@ -336,7 +336,7 @@ export default function Dashboard() {
           <ExecutivePulseBar
             modulo="Dashboard"
             estado={data?.kpis.caja_abierta ? "Caja abierta" : "Caja cerrada"}
-            foco="Operacion consolidada de ventas, caja e inventario en tiempo real."
+            foco="Operación consolidada de ventas, caja e inventario en tiempo real."
             accion={{ label: "Abrir reportes", href: "reportes" }}
             metricas={[
               { label: "Ventas", value: String(data?.kpis.ventas ?? 0) },
@@ -346,7 +346,7 @@ export default function Dashboard() {
                 tone: "good",
               },
               {
-                label: "Stock critico",
+                label: "Stock crítico",
                 value: String(data?.inventario?.stock_critico ?? 0),
                 tone: Number(data?.inventario?.stock_critico ?? 0) > 0 ? "warn" : "good",
               },
@@ -394,7 +394,7 @@ export default function Dashboard() {
             <article className={styles.chartCard}>
               <header>
                 <h2>Ritmo de ventas</h2>
-                <span>Ultimo periodo</span>
+                <span>Último periodo</span>
               </header>
               <div className={styles.chartWrap}>
                 <ResponsiveContainer width="100%" height={260}>
@@ -460,7 +460,7 @@ export default function Dashboard() {
             <article className={styles.chartCard}>
               <header>
                 <h2>Top productos</h2>
-                <span>Mas vendidos</span>
+                <span>Más vendidos</span>
               </header>
               <div className={styles.chartWrap}>
                 <ResponsiveContainer width="100%" height={250}>
@@ -504,7 +504,7 @@ export default function Dashboard() {
               <div className={styles.inventoryBox}>
                 <h3>Inventario</h3>
                 <p>Total productos: {data?.inventario.total_productos ?? 0}</p>
-                <p>Stock critico: {data?.inventario.stock_critico ?? 0}</p>
+                <p>Stock crítico: {data?.inventario.stock_critico ?? 0}</p>
                 <p>
                   Valor inventario: {formatMoney(Number(data?.inventario.valor_inventario ?? 0))}
                 </p>

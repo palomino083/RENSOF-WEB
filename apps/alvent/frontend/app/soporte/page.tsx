@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -275,7 +275,7 @@ const buildSofiaOperatingContext = (level: SofiaResponseLevel, isFirstInteractio
     "Identidad: SofIA, asistente de soporte ALVENT.",
     "Tono: saludo cordial, trato respetuoso y lenguaje profesional.",
     "Privacidad: proteger datos personales y evitar exponer informacion sensible.",
-    "Objetivo: diagnostico claro, accionable y orientado a continuidad operativa.",
+    "Objetivo: diagnóstico claro, accionable y orientado a continuidad operativa.",
     nivelDetalle,
   ];
 
@@ -307,7 +307,7 @@ const construirRespuestaTecnicaBreve = (recomendacion: string, clasif: SoporteCl
 
   return [
     `Diagnostico: ${diagnostico}`,
-    `Accion: ${accion}`,
+    `Acción: ${accion}`,
     `Validacion: ${validacion}`,
   ].join("\n");
 };
@@ -571,7 +571,7 @@ const construirFallbackSoporte = (clasif: SoporteClasificacion, concise: boolean
   if (concise) {
     return [
       `Diagnostico: ${clasif.resumen}`,
-      `Accion: ${clasif.checklist[0] || "Validar evidencia tecnica del incidente."}`,
+      `Acción: ${clasif.checklist[0] || "Validar evidencia tecnica del incidente."}`,
       `Validacion: ${clasif.checklist[1] || "Confirmar resultado y hora exacta."}`,
     ].join("\n");
   }
@@ -2694,7 +2694,7 @@ export default function ConfiguracionPage() {
                         <p className={styles.supportPremiumKicker}>Respaldo</p>
                         <h2>Backup del sistema</h2>
                       </div>
-                      <StatusBadge text="Segun plan" variant="warning" />
+                      <StatusBadge text="Según plan" variant="warning" />
                     </div>
 
                     <p className={styles.supportPremiumBody}>
@@ -3414,7 +3414,7 @@ export default function ConfiguracionPage() {
               <article className={styles.card}>
                 <Toolbar
                   title="Backup del sistema"
-                  right={<StatusBadge text="Segun plan" variant="warning" />}
+                  right={<StatusBadge text="Según plan" variant="warning" />}
                 />
 
                 <p>
@@ -4436,7 +4436,7 @@ export default function ConfiguracionPage() {
                     <span className={styles.chatTypingDot} />
                     <span className={styles.chatTypingDot} />
                     <span className={styles.chatTypingDot} />
-                    <small>{loadingDiagnosticoSuperagente ? "SofIA diagnosticando operacion..." : "SofIA analizando incidencia..."}</small>
+                    <small>{loadingDiagnosticoSuperagente ? "SofIA diagnosticando operación..." : "SofIA analizando incidencia..."}</small>
                   </div>
                 ) : null}
               </div>

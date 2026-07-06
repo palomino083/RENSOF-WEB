@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -424,9 +424,9 @@ const menuFiltrado = useMemo(() => {
               window.location.href = appPath("login");
             }}
             className={styles.logoutBtn}
-            title={desktopCollapsed ? "Cerrar sesion" : undefined}
+            title={desktopCollapsed ? "Cerrar sesión" : undefined}
           >
-            {desktopCollapsed ? "↩" : "Cerrar sesion"}
+            {desktopCollapsed ? "↩" : "Cerrar sesión"}
           </button>
         </div>
       </aside>
