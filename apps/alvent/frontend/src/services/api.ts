@@ -140,14 +140,22 @@ api.interceptors.response.use(
     }
 
     // Si es 401 y no es un endpoint de refresh/login, intentar refrescar token
-    if (response?.status === 401 && config && !config.url?.includes("/auth/refresh") && !config.url?.includes("/auth/login")) {
+    if (
+      response?.status === 401 &&
+      config &&
+      !config.url?.includes("/auth/refresh") &&
+      !config.url?.includes("/auth/login") &&
+      !config.__retryAfterRefresh
+    ) {
+      const originalRequest = config;
+
       if (!isRefreshing) {
         isRefreshing = true;
 
         const refreshToken = localStorage.getItem("refreshToken");
         if (!refreshToken) {
           localStorage.clear();
-          isRefreshing = false;
+          processQueue(error, null);
 
           if (typeof window !== "undefined") {
             window.location.href = appPath("login");
@@ -157,7 +165,7 @@ api.interceptors.response.use(
         }
 
         // Intentar refrescar el token
-        api
+        return api
           .post("/auth/refresh", { refresh_token: refreshToken })
           .then((res) => {
             const { access_token } = res.data;
@@ -165,12 +173,14 @@ api.interceptors.response.use(
 
             // Actualizar token en la instancia actual
             api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
-            config.headers.Authorization = `Bearer ${access_token}`;
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers.Authorization = `Bearer ${access_token}`;
+            originalRequest.__retryAfterRefresh = true;
 
             processQueue(null, access_token);
 
             // Reintentar la solicitud original con el nuevo token
-            return api(config);
+            return api(originalRequest);
           })
           .catch((err) => {
             // Si falla el refresh, logout
@@ -189,7 +199,9 @@ api.interceptors.response.use(
       return new Promise((resolve, reject) => {
         failedQueue.push({
           onSuccess: (token: string) => {
+            config.headers = config.headers || {};
             config.headers.Authorization = `Bearer ${token}`;
+            config.__retryAfterRefresh = true;
             resolve(api(config));
           },
           onFailed: (err) => {
