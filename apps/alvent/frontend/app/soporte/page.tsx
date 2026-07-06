@@ -262,7 +262,7 @@ const buildWelcomeMessage = (): { id: string; role: "bot"; text: string } => ({
 type SofiaResponseLevel = "EJECUTIVO" | "TECNICO" | "USUARIO_FINAL";
 type SoporteTemplateKey = "ACCESO" | "SUNAT_FACTURACION" | "RENDIMIENTO" | "INVENTARIO_VENTAS" | "GENERAL";
 
-const buildSofiaOperatingContext = (level: SofiaResponseLevel) => {
+const buildSofiaOperatingContext = (level: SofiaResponseLevel, isFirstInteraction: boolean) => {
   const nivelDetalle =
     level === "EJECUTIVO"
       ? "Nivel de respuesta: EJECUTIVO (impacto, riesgo y decision)."
@@ -270,14 +270,45 @@ const buildSofiaOperatingContext = (level: SofiaResponseLevel) => {
         ? "Nivel de respuesta: TECNICO (causa probable, pasos y validacion)."
         : "Nivel de respuesta: USUARIO_FINAL (pasos simples y lenguaje claro).";
 
-  return [
+  const contextoBase = [
     "[Protocolo SofIA]",
     "Identidad: SofIA, asistente de soporte ALVENT.",
     "Tono: saludo cordial, trato respetuoso y lenguaje profesional.",
     "Privacidad: proteger datos personales y evitar exponer informacion sensible.",
-    "Marco normativo: actuar bajo normativa aplicable del Peru (Ley 29733 y buenas practicas de seguridad).",
     "Objetivo: diagnostico claro, accionable y orientado a continuidad operativa.",
     nivelDetalle,
+  ];
+
+  if (isFirstInteraction) {
+    return [
+      ...contextoBase,
+      "Marco normativo: actuar bajo normativa aplicable del Peru (Ley 29733 y buenas practicas de seguridad).",
+      "Primer mensaje: incluir de forma breve marcos normativos y consideraciones de confidencialidad.",
+    ].join("\n");
+  }
+
+  return [
+    ...contextoBase,
+    "Desde el segundo mensaje: responder tecnico y muy breve (maximo 3 lineas).",
+    "No repetir marco normativo salvo que el usuario lo solicite explicitamente.",
+  ].join("\n");
+};
+
+const construirRespuestaTecnicaBreve = (recomendacion: string, clasif: SoporteClasificacion) => {
+  const limpio = String(recomendacion || "").replace(/\s+/g, " ").trim();
+  const frases = limpio
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const diagnostico = frases.slice(0, 1).join(" ") || clasif.resumen;
+  const accion = clasif.checklist[0] || "Valida evento con hora exacta y usuario.";
+  const validacion = clasif.checklist[1] || "Confirma resultado tras la accion.";
+
+  return [
+    `Diagnostico: ${diagnostico}`,
+    `Accion: ${accion}`,
+    `Validacion: ${validacion}`,
   ].join("\n");
 };
 
@@ -536,7 +567,15 @@ const clasificarConsultaSoporte = (consulta: string): SoporteClasificacion => {
   };
 };
 
-const construirFallbackSoporte = (clasif: SoporteClasificacion) => {
+const construirFallbackSoporte = (clasif: SoporteClasificacion, concise: boolean = false) => {
+  if (concise) {
+    return [
+      `Diagnostico: ${clasif.resumen}`,
+      `Accion: ${clasif.checklist[0] || "Validar evidencia tecnica del incidente."}`,
+      `Validacion: ${clasif.checklist[1] || "Confirmar resultado y hora exacta."}`,
+    ].join("\n");
+  }
+
   const pasos = clasif.checklist.map((item, idx) => `${idx + 1}. ${item}`).join("\n");
   return [
     `${clasif.resumen}`,
@@ -2039,6 +2078,7 @@ export default function ConfiguracionPage() {
       role: "user",
       text: consulta,
     };
+    const isFirstUserMessage = suporteChatMessages.filter((m) => m.role === "user").length === 0;
     setSoporteChatMessages((prev) => [...prev, userMessage]);
     setSoporteChatInput("");
 
@@ -2051,14 +2091,17 @@ export default function ConfiguracionPage() {
       setError("");
       const resp = await systemService.sugerenciaIaSoporte({
         asunto: clasif.asunto,
-        consulta: `${consulta}\n\n${buildSofiaOperatingContext(sofiaResponseLevel)}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
+        consulta: `${consulta}\n\n${buildSofiaOperatingContext(sofiaResponseLevel, isFirstUserMessage)}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
       });
+      const respuestaBot = isFirstUserMessage
+        ? `${clasif.resumen}\n\n${resp.recomendacion}\n\nFuente: ${resp.origen}`
+        : construirRespuestaTecnicaBreve(resp.recomendacion, clasif);
       setSoporteChatMessages((prev) => [
         ...prev,
         {
           id: `soporte-bot-${Date.now()}`,
           role: "bot",
-          text: `${clasif.resumen}\n\n${resp.recomendacion}\n\nFuente: ${resp.origen}`,
+          text: respuestaBot,
           meta: `Categoria ${resp.categoria || clasif.categoria} | Prioridad sugerida ${clasif.prioridadSugerida} | Nivel ${resp.nivel || sofiaResponseLevel}`,
         },
       ]);
@@ -2069,7 +2112,7 @@ export default function ConfiguracionPage() {
         {
           id: `soporte-bot-error-${Date.now()}`,
           role: "bot",
-          text: construirFallbackSoporte(clasif),
+          text: construirFallbackSoporte(clasif, !isFirstUserMessage),
           meta: "Fallback local activado",
         },
       ]);
