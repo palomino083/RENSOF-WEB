@@ -459,6 +459,13 @@
   font-weight: 700;
 }
 
+.templateActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .supportChatModal {
   display: grid;
   gap: 10px;
@@ -506,6 +513,16 @@
 .supportChatComposer {
   display: grid;
   gap: 8px;
+}
+
+.chatLevelHint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.chatLevelHint strong {
+  color: #0f172a;
 }
 
 .chatBubbleUser,
@@ -2260,6 +2277,80 @@
 .guardianIncidentList {
   display: grid;
   gap: 8px;
+}
+
+.guardianHealthGrid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.guardianHealthCard {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 8px;
+  display: grid;
+  gap: 5px;
+}
+
+.guardianHealthCard span {
+  color: #64748b;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.guardianHealthCard strong {
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.guardianSlaTrack {
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.guardianSlaTrackHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.guardianSlaTrackHead small {
+  color: #475569;
+  font-weight: 700;
+}
+
+.guardianSlaBar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.guardianSlaFill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.guardianSlaFillOk {
+  background: linear-gradient(120deg, #16a34a, #22c55e);
+}
+
+.guardianSlaFillWarn {
+  background: linear-gradient(120deg, #f59e0b, #f97316);
+}
+
+.guardianSlaFillDanger {
+  background: linear-gradient(120deg, #dc2626, #ef4444);
 }
 
 @media (max-width: 980px) {

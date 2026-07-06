@@ -258,14 +258,82 @@ const buildWelcomeMessage = (): { id: string; role: "bot"; text: string } => ({
   text: "Hola, soy SofIA, tu asistente de soporte ALVENT. Te ayudo con diagnosticos tecnicos, estadisticas operativas y escalamiento a RENSOF, siempre con respeto, confidencialidad y cumplimiento normativo en Peru.",
 });
 
-const SOFIA_OPERATING_CONTEXT = [
-  "[Protocolo SofIA]",
-  "Identidad: SofIA, asistente de soporte ALVENT.",
-  "Tono: saludo cordial, trato respetuoso y lenguaje profesional.",
-  "Privacidad: proteger datos personales y evitar exponer informacion sensible.",
-  "Marco normativo: actuar bajo normativa aplicable del Peru (Ley 29733 y buenas practicas de seguridad).",
-  "Objetivo: diagnostico claro, accionable y orientado a continuidad operativa.",
-].join("\n");
+type SofiaResponseLevel = "EJECUTIVO" | "TECNICO" | "USUARIO_FINAL";
+type SoporteTemplateKey = "ACCESO" | "SUNAT_FACTURACION" | "RENDIMIENTO" | "INVENTARIO_VENTAS" | "GENERAL";
+
+const buildSofiaOperatingContext = (level: SofiaResponseLevel) => {
+  const nivelDetalle =
+    level === "EJECUTIVO"
+      ? "Nivel de respuesta: EJECUTIVO (impacto, riesgo y decision)."
+      : level === "TECNICO"
+        ? "Nivel de respuesta: TECNICO (causa probable, pasos y validacion)."
+        : "Nivel de respuesta: USUARIO_FINAL (pasos simples y lenguaje claro).";
+
+  return [
+    "[Protocolo SofIA]",
+    "Identidad: SofIA, asistente de soporte ALVENT.",
+    "Tono: saludo cordial, trato respetuoso y lenguaje profesional.",
+    "Privacidad: proteger datos personales y evitar exponer informacion sensible.",
+    "Marco normativo: actuar bajo normativa aplicable del Peru (Ley 29733 y buenas practicas de seguridad).",
+    "Objetivo: diagnostico claro, accionable y orientado a continuidad operativa.",
+    nivelDetalle,
+  ].join("\n");
+};
+
+const resolveSofiaLevelByRole = (rol: string, roles: string[] = [], isSuper = false): SofiaResponseLevel => {
+  if (isSuper) return "EJECUTIVO";
+  const normalized = [rol, ...roles].map((item) => normalizarRol(item));
+  if (normalized.includes("SUPERADMIN")) return "EJECUTIVO";
+  if (normalized.includes("ADMINISTRADOR") || normalized.includes("ADMIN")) return "TECNICO";
+  return "USUARIO_FINAL";
+};
+
+const INCIDENT_TEMPLATE_LABELS: Record<SoporteTemplateKey, string> = {
+  ACCESO: "Acceso y autenticacion",
+  SUNAT_FACTURACION: "SUNAT y facturacion",
+  RENDIMIENTO: "Rendimiento y estabilidad",
+  INVENTARIO_VENTAS: "Inventario y ventas",
+  GENERAL: "Consulta general",
+};
+
+const inferIncidentTemplateKey = (ticket?: SoporteTicket | null): SoporteTemplateKey => {
+  if (!ticket) return "GENERAL";
+  const raw = `${ticket.asunto || ""} ${ticket.consulta || ""} ${ticket.recomendacion_ia || ""}`.toLowerCase();
+  if (/(login|ingresar|contrasena|contraseña|token|acceso|401|403)/.test(raw)) return "ACCESO";
+  if (/(sunat|nubefact|factura|boleta|fiscal|comprobante)/.test(raw)) return "SUNAT_FACTURACION";
+  if (/(lento|latencia|demora|500|error|caido|caído|timeout)/.test(raw)) return "RENDIMIENTO";
+  if (/(inventario|stock|producto|venta|pos|caja)/.test(raw)) return "INVENTARIO_VENTAS";
+  return "GENERAL";
+};
+
+const buildTemplateReply = (template: SoporteTemplateKey, level: SofiaResponseLevel, ticket?: SoporteTicket | null) => {
+  const intro = "Hola, gracias por tu reporte. Con gusto te ayudo.";
+  const cierre = "Quedo atento a tu confirmacion para cerrar o escalar internamente con RENSOF.";
+
+  const levelLine =
+    level === "EJECUTIVO"
+      ? "Resumen ejecutivo: impacto controlado, accion inmediata y seguimiento con SLA."
+      : level === "TECNICO"
+        ? "Detalle tecnico: causa probable, validacion y evidencia requerida."
+        : "Guia usuario final: pasos claros para resolver rapido.";
+
+  const base = {
+    ACCESO: "Valida credenciales, estado del usuario, permisos de rol y sesion activa. Si persiste, envia hora exacta y mensaje mostrado.",
+    SUNAT_FACTURACION: "Revisa integracion SUNAT activa, token vigente, series configuradas y RUC emisor valido. Luego prueba un comprobante controlado.",
+    RENDIMIENTO: "Verifica latencia por modulo, incidentes Guardian y errores recientes. Comparte pantalla/modulo afectado y rango horario.",
+    INVENTARIO_VENTAS: "Contrasta stock esperado vs real, ultimo movimiento y caja activa. Valida tambien rol del usuario y negocio asociado.",
+    GENERAL: "Comparte modulo, accion, resultado esperado y mensaje exacto para responder con mayor precision.",
+  } as const;
+
+  return [
+    intro,
+    levelLine,
+    `Categoria atendida: ${INCIDENT_TEMPLATE_LABELS[template]}.`,
+    `Accion recomendada: ${base[template]}`,
+    ticket ? `Referencia ticket #${ticket.id}.` : "",
+    cierre,
+  ].filter(Boolean).join("\n\n");
+};
 
 const buildChatStorageKey = (isSuperadmin: boolean, negocioId: number) =>
   `alvent_support_chat_v2:${isSuperadmin ? "superadmin" : "usuario"}:${negocioId || "global"}`;
@@ -637,6 +705,8 @@ export default function ConfiguracionPage() {
   const [soporteChatPrioridad, setSoporteChatPrioridad] = useState<SoportePrioridad>("MEDIA");
   const [soporteChatMessages, setSoporteChatMessages] = useState<SoporteChatMessage[]>([buildWelcomeMessage()]);
   const [soporteClasificacion, setSoporteClasificacion] = useState<SoporteClasificacion | null>(null);
+  const [sofiaResponseLevel, setSofiaResponseLevel] = useState<SofiaResponseLevel>("USUARIO_FINAL");
+  const [atencionTemplateKey, setAtencionTemplateKey] = useState<SoporteTemplateKey>("GENERAL");
   const [loadingDiagnosticoSuperagente, setLoadingDiagnosticoSuperagente] = useState(false);
   const [chatPersistReady, setChatPersistReady] = useState(false);
   const [planAmounts, setPlanAmounts] = useState({
@@ -1701,6 +1771,7 @@ export default function ConfiguracionPage() {
         : [];
       const esSuper = rol === "SUPERADMIN" || roles.includes("SUPERADMIN") || parseNumero(getStorageItem("usuario_id")) === 1;
       setIsSuperadmin(esSuper);
+      setSofiaResponseLevel(resolveSofiaLevelByRole(rol, roles, esSuper));
 
       if (!esSuper) {
         const negocioIdLocal = getNegocioIdFromSession();
@@ -1708,6 +1779,7 @@ export default function ConfiguracionPage() {
       }
     } catch {
       setIsSuperadmin(false);
+      setSofiaResponseLevel("USUARIO_FINAL");
       setNegocioSeleccionadoId(getNegocioIdFromSession());
     }
   }, []);
@@ -1978,7 +2050,7 @@ export default function ConfiguracionPage() {
       setError("");
       const resp = await systemService.sugerenciaIaSoporte({
         asunto: clasif.asunto,
-        consulta: `${consulta}\n\n${SOFIA_OPERATING_CONTEXT}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
+        consulta: `${consulta}\n\n${buildSofiaOperatingContext(sofiaResponseLevel)}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
       });
       setSoporteChatMessages((prev) => [
         ...prev,
@@ -1986,7 +2058,7 @@ export default function ConfiguracionPage() {
           id: `soporte-bot-${Date.now()}`,
           role: "bot",
           text: `${clasif.resumen}\n\n${resp.recomendacion}\n\nFuente: ${resp.origen}`,
-          meta: `Categoria ${resp.categoria || clasif.categoria} | Prioridad sugerida ${clasif.prioridadSugerida}`,
+          meta: `Categoria ${resp.categoria || clasif.categoria} | Prioridad sugerida ${clasif.prioridadSugerida} | Nivel ${resp.nivel || sofiaResponseLevel}`,
         },
       ]);
     } catch (err: unknown) {
@@ -2151,12 +2223,32 @@ export default function ConfiguracionPage() {
 
   const abrirModalAtencionSoporte = (ticket: SoporteTicket, estadoInicial: SoporteEstado) => {
     if (!isSuperadmin) return;
+    const template = inferIncidentTemplateKey(ticket);
     setTicketAtencion(ticket);
     setAtencionForm({
       estado: estadoInicial,
       respuesta: String(ticket.respuesta_superadmin || "").trim(),
     });
+    setAtencionTemplateKey(template);
+
+    if (!String(ticket.respuesta_superadmin || "").trim()) {
+      setAtencionForm((prev) => ({
+        ...prev,
+        respuesta: buildTemplateReply(template, sofiaResponseLevel, ticket),
+      }));
+    }
     setShowAtencionSoporteModal(true);
+  };
+
+  const aplicarPlantillaAtencion = (append = false) => {
+    if (!ticketAtencion) return;
+    const plantilla = buildTemplateReply(atencionTemplateKey, sofiaResponseLevel, ticketAtencion);
+    setAtencionForm((prev) => ({
+      ...prev,
+      respuesta: append && prev.respuesta.trim().length > 0
+        ? `${prev.respuesta.trim()}\n\n${plantilla}`
+        : plantilla,
+    }));
   };
 
   const atenderTicketSoporte = async () => {
@@ -2404,6 +2496,45 @@ export default function ConfiguracionPage() {
   const estadoBackups = planStats?.backups.habilitado ? "Habilitado" : "Bloqueado";
   const estadoReportes = planStats?.reportes.habilitado ? "Habilitado" : "Bloqueado";
   const reinicioHabilitadoPorPlan = isSuperadmin || Boolean(planStats?.reinicio?.habilitado ?? false);
+  const guardianIncidentesPendientes = guardianIncidents.filter((incident) => !incident.acked);
+  const guardianOldestPendingMinutes = guardianIncidentesPendientes.length > 0
+    ? Math.max(
+        0,
+        Math.floor(
+          (Date.now() - Math.min(...guardianIncidentesPendientes.map((item) => new Date(item.timestamp).getTime())))
+          / 60000
+        )
+      )
+    : 0;
+  const guardianRiskScore = (() => {
+    if (!guardianStatus) return 0;
+    const fiveXx = Number(guardianStatus.metrics?.requests_5xx || 0);
+    const exceptions = Number(guardianStatus.metrics?.exceptions_total || 0);
+    const consecutive5xx = Number(guardianStatus.metrics?.consecutive_5xx || 0);
+    const openInc = Number(guardianStatus.open_incidents || 0);
+    const safeModeOn = guardianStatus.safe_mode?.enabled ? 1 : 0;
+    const agePenalty = Math.min(20, Math.floor(guardianOldestPendingMinutes / 5));
+
+    const scoreRaw =
+      (fiveXx * 2.4) +
+      (exceptions * 1.6) +
+      (consecutive5xx * 3.4) +
+      (openInc * 5.5) +
+      (safeModeOn * 12) +
+      agePenalty;
+
+    return Math.max(0, Math.min(100, Math.round(scoreRaw)));
+  })();
+  const guardianRiskBand = guardianRiskScore >= 67 ? "ROJO" : guardianRiskScore >= 34 ? "AMBAR" : "VERDE";
+  const guardianRiskVariant = guardianRiskBand === "ROJO" ? "danger" : guardianRiskBand === "AMBAR" ? "warning" : "success";
+  const guardianSlaTargetMin = 15;
+  const guardianSlaBand = guardianOldestPendingMinutes <= guardianSlaTargetMin && guardianRiskScore < 67
+    ? "Cumpliendo SLA"
+    : guardianOldestPendingMinutes <= guardianSlaTargetMin * 2
+      ? "SLA en riesgo"
+      : "SLA fuera de objetivo";
+  const guardianSlaVariant = guardianSlaBand === "Cumpliendo SLA" ? "success" : guardianSlaBand === "SLA en riesgo" ? "warning" : "danger";
+  const guardianSlaProgress = Math.max(0, Math.min(100, Math.round((guardianOldestPendingMinutes / (guardianSlaTargetMin * 2)) * 100)));
   const rucInvalido = Boolean(businessForm.ruc) && businessForm.ruc.length !== 11;
   const telefonoInvalido = Boolean(businessForm.telefono) && businessForm.telefono.length !== 9;
   const whatsappInvalido = Boolean(businessForm.whatsapp) && businessForm.whatsapp.length !== 9;
@@ -2623,6 +2754,33 @@ export default function ConfiguracionPage() {
                         <span>5xx: <strong>{guardianStatus?.metrics?.requests_5xx ?? 0}</strong></span>
                         <span>Excepciones: <strong>{guardianStatus?.metrics?.exceptions_total ?? 0}</strong></span>
                         <span>Abiertos: <strong>{guardianStatus?.open_incidents ?? 0}</strong></span>
+                      </div>
+
+                      <div className={styles.guardianHealthGrid}>
+                        <article className={styles.guardianHealthCard}>
+                          <span>Score de riesgo</span>
+                          <strong>{guardianRiskScore}/100</strong>
+                          <StatusBadge text={guardianRiskBand} variant={guardianRiskVariant} />
+                        </article>
+
+                        <article className={styles.guardianHealthCard}>
+                          <span>SLA operativo</span>
+                          <strong>{guardianSlaBand}</strong>
+                          <StatusBadge text={`Objetivo ${guardianSlaTargetMin} min`} variant={guardianSlaVariant} />
+                        </article>
+                      </div>
+
+                      <div className={styles.guardianSlaTrack}>
+                        <div className={styles.guardianSlaTrackHead}>
+                          <small>Incidente pendiente mas antiguo: {guardianOldestPendingMinutes} min</small>
+                          <small>{guardianSlaProgress}% del umbral maximo</small>
+                        </div>
+                        <div className={styles.guardianSlaBar}>
+                          <div
+                            className={`${styles.guardianSlaFill} ${guardianSlaProgress >= 90 ? styles.guardianSlaFillDanger : guardianSlaProgress >= 55 ? styles.guardianSlaFillWarn : styles.guardianSlaFillOk}`}
+                            style={{ width: `${guardianSlaProgress}%` }}
+                          />
+                        </div>
                       </div>
 
                       <div className={styles.supportActions}>
@@ -4096,6 +4254,37 @@ export default function ConfiguracionPage() {
                 </label>
 
                 <label className={styles.formRow}>
+                  Plantilla de respuesta RENSOF
+                  <select
+                    className="focus-ring"
+                    value={atencionTemplateKey}
+                    onChange={(e) => setAtencionTemplateKey(e.target.value as SoporteTemplateKey)}
+                  >
+                    {(Object.keys(INCIDENT_TEMPLATE_LABELS) as SoporteTemplateKey[]).map((key) => (
+                      <option key={`template-${key}`} value={key}>{INCIDENT_TEMPLATE_LABELS[key]}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className={styles.templateActionRow}>
+                  <StatusBadge text={`Nivel SofIA: ${sofiaResponseLevel}`} variant="info" />
+                  <button
+                    type="button"
+                    className={`${styles.actionBtn} focus-ring`}
+                    onClick={() => aplicarPlantillaAtencion(false)}
+                  >
+                    Aplicar plantilla
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.actionBtn} focus-ring`}
+                    onClick={() => aplicarPlantillaAtencion(true)}
+                  >
+                    Anexar plantilla
+                  </button>
+                </div>
+
+                <label className={styles.formRow}>
                   Respuesta de RENSOF
                   <textarea
                     className="focus-ring"
@@ -4112,14 +4301,14 @@ export default function ConfiguracionPage() {
           <ModalCard
             open={showSoporteChatModal}
             title="SofIA - Soporte Inteligente"
-            subtitle="Asistente de soporte ALVENT con escalamiento a RENSOF"
+            subtitle={`Asistente de soporte ALVENT con escalamiento a RENSOF | Nivel ${sofiaResponseLevel}`}
             actions={(
               <>
                 <button
                   type="button"
                   onClick={() => void enviarMensajeSoporteChat()}
                   className={styles.confirmBtn}
-                  disabled={loadingSugerenciaIa || creatingSoporte}
+                  disabled={loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente}
                 >
                   {loadingSugerenciaIa ? "Consultando IA..." : "Consultar IA"}
                 </button>
@@ -4127,7 +4316,7 @@ export default function ConfiguracionPage() {
                   type="button"
                   onClick={() => void escalarChatSoporte()}
                   className={styles.actionBtn}
-                  disabled={loadingSugerenciaIa || creatingSoporte}
+                  disabled={loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente}
                 >
                   {creatingSoporte ? "Escalando..." : "Escalar a RENSOF"}
                 </button>
@@ -4135,7 +4324,7 @@ export default function ConfiguracionPage() {
                   type="button"
                   onClick={() => setShowSoporteChatModal(false)}
                   className={styles.cancelBtn}
-                  disabled={loadingSugerenciaIa || creatingSoporte}
+                  disabled={loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente}
                 >
                   Cerrar
                 </button>
@@ -4199,6 +4388,10 @@ export default function ConfiguracionPage() {
               </div>
 
               <div className={styles.supportChatComposer}>
+                <p className={styles.chatLevelHint}>
+                  Nivel activo: <strong>{sofiaResponseLevel}</strong>. SofIA adapta profundidad y lenguaje automaticamente segun el rol.
+                </p>
+
                 <label className={styles.formRow}>
                   Prioridad para escalar ticket
                   <select

@@ -99,7 +99,30 @@ def _normalizar_prioridad_filtro(value: str | None) -> Optional[str]:
     return None
 
 
-def _envolver_respuesta_sofia(categoria: str, recomendacion_base: str) -> dict:
+def _resolver_nivel_sofia(current_user: dict | None, texto_contexto: str) -> str:
+    text = str(texto_contexto or "").lower()
+
+    if "nivel de respuesta: ejecutivo" in text or "nivel ejecutivo" in text:
+        return "EJECUTIVO"
+    if "nivel de respuesta: tecnico" in text or "nivel tecnico" in text:
+        return "TECNICO"
+    if "nivel de respuesta: usuario_final" in text or "usuario final" in text:
+        return "USUARIO_FINAL"
+
+    if current_user:
+        if bool(current_user.get("is_superadmin")):
+            return "EJECUTIVO"
+
+        rol = str(current_user.get("rol") or "").upper().strip()
+        if rol in {"ADMIN", "ADMINISTRADOR", "SUPERADMIN"}:
+            return "TECNICO"
+
+    return "USUARIO_FINAL"
+
+
+def _envolver_respuesta_sofia(categoria: str, recomendacion_base: str, nivel: str = "USUARIO_FINAL") -> dict:
+    nivel_normalizado = str(nivel or "USUARIO_FINAL").upper().strip()
+
     intro = (
         "Hola, soy SofIA, asistente de soporte de ALVENT. "
         "Con gusto te ayudo con un analisis tecnico claro y respetuoso."
@@ -114,9 +137,25 @@ def _envolver_respuesta_sofia(categoria: str, recomendacion_base: str) -> dict:
         "podre darte un diagnostico mas preciso y, de ser necesario, escalarlo a RENSOF."
     )
 
+    if nivel_normalizado == "EJECUTIVO":
+        recomendacion_nivel = (
+            "Resumen ejecutivo: impacto operativo, riesgo actual y accion recomendada inmediata para continuidad. "
+            f"Accion sugerida: {recomendacion_base}"
+        )
+    elif nivel_normalizado == "TECNICO":
+        recomendacion_nivel = (
+            "Detalle tecnico: identifica modulo, endpoint/flujo, causa probable y verificacion esperada. "
+            f"Paso a paso tecnico: {recomendacion_base}"
+        )
+    else:
+        recomendacion_nivel = (
+            "Guia para usuario final: te explico en pasos simples que revisar y que hacer ahora mismo. "
+            f"Siguiente accion: {recomendacion_base}"
+        )
+
     recomendacion = "\n\n".join([
         intro,
-        f"Diagnostico inicial ({categoria.upper()}): {recomendacion_base}",
+        f"Diagnostico inicial ({categoria.upper()}): {recomendacion_nivel}",
         marco,
         cierre,
     ])
@@ -125,11 +164,13 @@ def _envolver_respuesta_sofia(categoria: str, recomendacion_base: str) -> dict:
         "categoria": categoria,
         "recomendacion": recomendacion,
         "origen": "SOFIA_LOCAL",
+        "nivel": nivel_normalizado,
     }
 
 
-def _sugerir_respuesta_ia(asunto: str | None, consulta: str) -> dict:
+def _sugerir_respuesta_ia(asunto: str | None, consulta: str, current_user: Optional[dict] = None) -> dict:
     texto = f"{asunto or ''} {consulta or ''}".lower()
+    nivel = _resolver_nivel_sofia(current_user, f"{asunto or ''} {consulta or ''}")
 
     if any(word in texto for word in ["sunat", "nubefact", "boleta", "factura", "comprobante"]):
         return _envolver_respuesta_sofia(
@@ -138,6 +179,7 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str) -> dict:
                 "Verifica en Configuracion/Fiscal: integracion SUNAT activa, RUC emisor valido, token API vigente y series B/F configuradas. "
                 "Luego prueba una boleta en POS y revisa el estado SUNAT devuelto por la venta."
             ),
+            nivel,
         )
 
     if any(word in texto for word in ["no carga", "error 500", "distors", "estilo", "css", "hydration"]):
@@ -147,6 +189,7 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str) -> dict:
                 "Reinicia frontend local, limpia cache .next y recarga la pagina. "
                 "Si persiste, valida consola del navegador y ejecuta lint/build para detectar inconsistencias."
             ),
+            nivel,
         )
 
     if any(word in texto for word in ["stock", "inventario", "producto", "venta", "caja"]):
@@ -156,6 +199,7 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str) -> dict:
                 "Confirma que la caja este abierta y que el producto tenga stock suficiente. "
                 "Revisa en POS si el usuario pertenece al negocio correcto y que no tenga restricciones de rol."
             ),
+            nivel,
         )
 
     return _envolver_respuesta_sofia(
@@ -164,6 +208,7 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str) -> dict:
             "Recopila contexto minimo: modulo, accion, resultado esperado, mensaje de error y hora del incidente. "
             "Con eso el superadministrador puede diagnosticar y responder mas rapido."
         ),
+        nivel,
     )
 
 
@@ -460,12 +505,13 @@ def sugerir_soporte_ia(
     if len(consulta) < 8:
         raise HTTPException(status_code=400, detail="Describe mejor la consulta para sugerir una solución")
 
-    result = _sugerir_respuesta_ia(data.asunto, consulta)
+    result = _sugerir_respuesta_ia(data.asunto, consulta, current_user)
     return {
         "ok": True,
         "categoria": result["categoria"],
         "recomendacion": result["recomendacion"],
         "origen": result.get("origen", "SOFIA_LOCAL"),
+        "nivel": result.get("nivel", "USUARIO_FINAL"),
     }
 
 
@@ -558,7 +604,7 @@ def crear_ticket_soporte(
 
     negocio_ticket = _resolver_negocio_soporte(current_user, data.negocio_id)
     _validar_plan_soporte(db, current_user, negocio_ticket)
-    sugerencia = _sugerir_respuesta_ia(asunto, consulta)
+    sugerencia = _sugerir_respuesta_ia(asunto, consulta, current_user)
 
     ticket = SoporteTicket(
         negocio_id=negocio_ticket,
@@ -595,6 +641,7 @@ def crear_ticket_soporte(
             "categoria": sugerencia["categoria"],
             "recomendacion": sugerencia["recomendacion"],
             "origen": sugerencia.get("origen", "SOFIA_LOCAL"),
+            "nivel": sugerencia.get("nivel", "USUARIO_FINAL"),
         },
     }
 
