@@ -13,6 +13,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { appPath } from "@/utils/appPath";
 import { applyFallbackImage, toMediaUrl } from "@/utils/mediaUrl";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import DataTable from "@/components/ui/DataTable";
@@ -625,6 +626,8 @@ export default function PosPage() {
       minimumFractionDigits: 2,
     }).format(value || 0);
 
+  const itemsCarrito = carrito.reduce((acc, item) => acc + Number(item.cantidad || 0), 0);
+
   const productosFiltrados = productos.filter((p) => {
     const q = busquedaProducto.trim().toLowerCase();
     if (!q) return true;
@@ -664,6 +667,18 @@ export default function PosPage() {
         </div>
         <ExecutiveThemeSwitch />
       </section>
+
+      <ExecutivePulseBar
+        modulo="POS"
+        estado={processing ? "Registrando venta" : "Operativo"}
+        foco="Cobro en tiempo real con control de ticket, flujo de caja y continuidad comercial."
+        accion={{ label: "Ir a ventas", href: "ventas" }}
+        metricas={[
+          { label: "Items", value: String(itemsCarrito) },
+          { label: "Total", value: formatMoney(total), tone: "good" },
+          { label: "Ventas recientes", value: String(ventasRecientes.length) },
+        ]}
+      />
 
       {error ? <p className={styles.errorBox}>{error}</p> : null}
       {success ? <p className={styles.successBox}>{success}</p> : null}

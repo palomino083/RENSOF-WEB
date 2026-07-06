@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { ventasService } from "@/services/ventasService";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import Toolbar from "@/components/ui/Toolbar";
 import DataTable from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -85,6 +86,9 @@ export default function VentasPage() {
       minimumFractionDigits: 2,
     }).format(value || 0);
 
+  const ticketPromedioMes =
+    resumen && resumen.mes.ventas > 0 ? resumen.mes.monto / resumen.mes.ventas : 0;
+
   return (
     <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
@@ -95,6 +99,26 @@ export default function VentasPage() {
         </div>
         <ExecutiveThemeSwitch />
       </section>
+
+      <ExecutivePulseBar
+        modulo="Ventas"
+        estado={loading ? "Actualizando" : "Operativo"}
+        foco="Seguimiento comercial por rango y lectura ejecutiva de conversion diaria."
+        accion={{ label: "Ver reportes", href: "reportes" }}
+        metricas={[
+          { label: "Operaciones", value: String(ventasFiltradas.length) },
+          {
+            label: "Mes",
+            value: resumen ? formatMoney(resumen.mes.monto) : "S/0.00",
+            tone: "good",
+          },
+          {
+            label: "Ticket",
+            value: formatMoney(ticketPromedioMes),
+            tone: ticketPromedioMes > 0 ? "neutral" : "warn",
+          },
+        ]}
+      />
 
       {resumen ? (
         <section className={`${styles.kpiGrid} stagger`}>

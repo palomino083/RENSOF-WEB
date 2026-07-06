@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { cajaService } from "@/services/cajaService";
 import { getApiErrorMessage } from "@/utils/apiError";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import DataTable from "@/components/ui/DataTable";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -149,6 +150,18 @@ export default function CajasPage() {
           <span>Ultima actualizacion: {ultimaActualizacion || "-"}</span>
         </div>
       </section>
+
+      <ExecutivePulseBar
+        modulo="Cajas"
+        estado={cajaAbierta ? "Caja abierta" : "Caja cerrada"}
+        foco="Supervision en vivo del flujo de efectivo y operaciones de apertura/cierre."
+        accion={{ label: "Ir a POS", href: "pos" }}
+        metricas={[
+          { label: "Estado", value: estadoCaja },
+          { label: "Movimientos", value: String(movimientos.length) },
+          { label: "Saldo", value: formatoMoneda(montoActual), tone: "good" },
+        ]}
+      />
 
       {mensajeError ? <p className={styles.errorBox}>{mensajeError}</p> : null}
 

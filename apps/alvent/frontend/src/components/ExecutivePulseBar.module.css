@@ -1,0 +1,134 @@
+.pulse {
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 16px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.16), transparent 40%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 64, 175, 0.92));
+  color: #dbeafe;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
+  display: grid;
+  gap: 10px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: 0.7rem;
+  color: #67e8f9;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: #f8fafc;
+}
+
+.head p {
+  margin-top: 4px;
+  font-size: 0.88rem;
+  color: #bfdbfe;
+}
+
+.status {
+  border: 1px solid rgba(125, 211, 252, 0.6);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #e0f2fe;
+  background: rgba(14, 165, 233, 0.18);
+  white-space: nowrap;
+}
+
+.metrics {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+}
+
+.metric {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.metricLabel {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.metricValue {
+  display: block;
+  margin-top: 4px;
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.neutral .metricValue {
+  color: #e2e8f0;
+}
+
+.good .metricValue {
+  color: #86efac;
+}
+
+.warn .metricValue {
+  color: #fde68a;
+}
+
+.critical .metricValue {
+  color: #fca5a5;
+}
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.timestamp {
+  font-size: 0.74rem;
+  color: #c7d2fe;
+}
+
+.action {
+  border: 1px solid rgba(125, 211, 252, 0.64);
+  border-radius: 10px;
+  text-decoration: none;
+  color: #e0f2fe;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 7px 10px;
+  background: rgba(14, 165, 233, 0.16);
+}
+
+@media (max-width: 900px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .head {
+    flex-direction: column;
+  }
+}

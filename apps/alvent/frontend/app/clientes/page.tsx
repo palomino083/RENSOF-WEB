@@ -6,6 +6,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import Toolbar from "@/components/ui/Toolbar";
 import DataTable from "@/components/ui/DataTable";
 import styles from "./page.module.css";
@@ -180,6 +181,22 @@ export default function ClientesPage() {
             </div>
             <ExecutiveThemeSwitch />
           </section>
+
+          <ExecutivePulseBar
+            modulo="Clientes"
+            estado={loadingList ? "Sincronizando" : "Operativo"}
+            foco="Relacion comercial con busqueda rapida y mantenimiento de datos maestros."
+            accion={{ label: "Ir a ventas", href: "ventas" }}
+            metricas={[
+              { label: "Registrados", value: String(clientes.length) },
+              { label: "Filtrados", value: String(clientesFiltrados.length) },
+              {
+                label: "Edicion",
+                value: editId ? "En curso" : "Sin cambios",
+                tone: editId ? "warn" : "neutral",
+              },
+            ]}
+          />
 
           {error ? <p className={styles.errorBox}>{error}</p> : null}
 

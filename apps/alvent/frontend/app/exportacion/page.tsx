@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import Menu from "../../src/components/Menu";
 import ProtectedRoute from "../../src/components/ProtectedRoute";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 
 import { dashboardService } from "../../src/services/dashboardService";
 import { productosService } from "../../src/services/productosService";
@@ -100,6 +101,8 @@ export default function ExportacionPage() {
 
   const getSelectedExportKeys = (): ExportModuleKey[] => EXPORT_KEYS.filter((key) => exportSelection[key]);
   const hasExportSelection = getSelectedExportKeys().length > 0;
+  const selectedExportCount = getSelectedExportKeys().length;
+  const rangeLabel = fechaInicio || fechaFin ? `${fechaInicio || "..."} a ${fechaFin || "..."}` : "Sin filtro";
 
   const buildExportSections = async (keys: ExportModuleKey[], dateRange: DateRangeFilter): Promise<ExportSection[]> => {
     const sections: ExportSection[] = [];
@@ -426,6 +429,18 @@ export default function ExportacionPage() {
             </div>
             <ExecutiveThemeSwitch />
           </section>
+
+          <ExecutivePulseBar
+            modulo="Exportacion"
+            estado={exportingExcel || exportingPdf ? "Generando" : "Listo"}
+            foco="Consolidacion controlada de datos para auditoria, direccion y despliegue." 
+            accion={{ label: "Abrir reportes", href: "reportes" }}
+            metricas={[
+              { label: "Modulos", value: String(selectedExportCount) },
+              { label: "Rango", value: rangeLabel },
+              { label: "Auto print", value: autoPrintOnOpen ? "Activo" : "Inactivo" },
+            ]}
+          />
 
           <section className={styles.exportCenterCard}>
             <header className={styles.exportHeader}>

@@ -6,6 +6,7 @@ import { usuariosService } from "@/services/usuariosService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import Toolbar from "@/components/ui/Toolbar";
 import DataTable from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -502,6 +503,18 @@ export default function UsuariosPage() {
               ) : null}
             </div>
           </section>
+
+          <ExecutivePulseBar
+            modulo="Usuarios"
+            estado={isAdmin ? "Control administrativo" : "Consulta"}
+            foco="Gobierno de accesos y trazabilidad de perfiles para toda la operacion."
+            accion={{ label: "Ir a configuracion", href: "configuracion" }}
+            metricas={[
+              { label: "Total", value: String(resumen.total) },
+              { label: "Activos", value: String(resumen.activos), tone: "good" },
+              { label: "Admins", value: String(resumen.administradores) },
+            ]}
+          />
 
           {error ? <p className={styles.errorBox}>{error}</p> : null}
           {success ? <p className={styles.successBox}>{success}</p> : null}

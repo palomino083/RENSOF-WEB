@@ -17,6 +17,7 @@ import {
 import Menu from "../../src/components/Menu";
 import ProtectedRoute from "../../src/components/ProtectedRoute";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import DataTable from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
 import Toolbar from "@/components/ui/Toolbar";
@@ -311,6 +312,26 @@ export default function Dashboard() {
               </button>
             </div>
           </section>
+
+          <ExecutivePulseBar
+            modulo="Dashboard"
+            estado={data?.kpis.caja_abierta ? "Caja abierta" : "Caja cerrada"}
+            foco="Operacion consolidada de ventas, caja e inventario en tiempo real."
+            accion={{ label: "Abrir reportes", href: "reportes" }}
+            metricas={[
+              { label: "Ventas", value: String(data?.kpis.ventas ?? 0) },
+              {
+                label: "Monto",
+                value: formatMoney(Number(data?.kpis.monto_vendido ?? 0)),
+                tone: "good",
+              },
+              {
+                label: "Stock critico",
+                value: String(data?.inventario?.stock_critico ?? 0),
+                tone: Number(data?.inventario?.stock_critico ?? 0) > 0 ? "warn" : "good",
+              },
+            ]}
+          />
 
           {mostrarBannerGlobal ? (
             <section className={styles.globalBanner}>

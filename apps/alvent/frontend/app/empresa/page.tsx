@@ -5,6 +5,7 @@ import Image from "next/image";
 import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import Toolbar from "@/components/ui/Toolbar";
 import ModalCard from "@/components/ui/ModalCard";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -2197,6 +2198,18 @@ export default function ConfiguracionPage() {
             </div>
             <ExecutiveThemeSwitch />
           </section>
+
+          <ExecutivePulseBar
+            modulo="Empresa"
+            estado={configAccessMode === "soporte" ? "Modo soporte" : "Modo configuracion"}
+            foco="Personalizacion transversal del negocio, desde emprendimientos hasta operaciones corporativas."
+            accion={{ label: "Ir a soporte", href: "soporte" }}
+            metricas={[
+              { label: "Empresa", value: nombreEmpresa || "No definida" },
+              { label: "Plan", value: planActual || "No definido", tone: "good" },
+              { label: "Reportes", value: estadoReportes || "N/D" },
+            ]}
+          />
 
           {error ? <p className={styles.errorBox}>{error}</p> : null}
           {success ? <p className={styles.successBox}>{success}</p> : null}

@@ -16,6 +16,7 @@ import {
 import DataTable from "@/components/ui/DataTable";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import styles from "./page.module.css";
 
 type ResumenBloque = {
@@ -116,6 +117,18 @@ export default function ReportesPage() {
           y con confianza.
         </p>
       </section>
+
+      <ExecutivePulseBar
+        modulo="Reportes"
+        estado={loading ? "Calculando" : "Actualizado"}
+        foco="Narrativa ejecutiva para decisiones de margen, ritmo comercial y crecimiento."
+        accion={{ label: "Ir a exportacion", href: "exportacion" }}
+        metricas={[
+          { label: "Ticket mes", value: formatMoney(promedioTicket), tone: "good" },
+          { label: "Ventas mes", value: String(resumen.mes.ventas) },
+          { label: "Pico", value: mayorBloque?.periodo || "-" },
+        ]}
+      />
 
       {error ? <p className={styles.errorBox}>{error}</p> : null}
 

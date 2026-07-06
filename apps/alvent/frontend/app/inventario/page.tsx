@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { productosService } from "@/services/productosService";
 import { inventarioService } from "@/services/inventarioService";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import DataTable from "@/components/ui/DataTable";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -92,6 +93,8 @@ export default function Inventario() {
     ? productos.filter((p) => p.codigo === codigoSeleccionado)
     : productos;
 
+  const stockCritico = productosFiltrados.filter((p) => Number(p.stock ?? 0) <= Number(p.stock_minimo ?? 5)).length;
+
   const formatMoney = (value: number) =>
     new Intl.NumberFormat("es-PE", {
       style: "currency",
@@ -110,6 +113,22 @@ export default function Inventario() {
         </div>
         <ExecutiveThemeSwitch />
       </section>
+
+      <ExecutivePulseBar
+        modulo="Inventario"
+        estado={codigoSeleccionado ? "Producto seleccionado" : "Vista general"}
+        foco="Control de existencias, flujo de kardex y deteccion de riesgo de quiebre."
+        accion={{ label: "Ir a productos", href: "productos" }}
+        metricas={[
+          { label: "Productos", value: String(productosFiltrados.length) },
+          {
+            label: "Stock critico",
+            value: String(stockCritico),
+            tone: stockCritico > 0 ? "warn" : "good",
+          },
+          { label: "Mov. kardex", value: String(kardexFiltrado.length) },
+        ]}
+      />
 
       <section className={styles.selectorPanel}>
         <label htmlFor="selector">Seleccionar producto</label>

@@ -9,6 +9,7 @@ import { applyFallbackImage, toMediaUrl } from "@/utils/mediaUrl";
 import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import Toolbar from "@/components/ui/Toolbar";
 import ModalCard from "@/components/ui/ModalCard";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -429,6 +430,8 @@ export default function Productos() {
       minimumFractionDigits: 2,
     }).format(Number.isFinite(value) ? value : 0);
 
+  const stockCritico = productosFiltrados.filter((p) => Number(p.stock ?? 0) <= 5).length;
+
 
   const manejarArchivoFoto = async (file?: File | null) => {
     if (!file) return;
@@ -658,6 +661,22 @@ export default function Productos() {
         </div>
         <ExecutiveThemeSwitch />
       </section>
+
+      <ExecutivePulseBar
+        modulo="Productos"
+        estado={loading ? "Sincronizando" : "Catalogo operativo"}
+        foco="Gestion comercial de portafolio, precio y utilidad con lectura de riesgo de stock."
+        accion={{ label: "Ir a inventario", href: "inventario" }}
+        metricas={[
+          { label: "Catalogo", value: String(productos.length) },
+          { label: "Filtrados", value: String(productosFiltrados.length) },
+          {
+            label: "Stock critico",
+            value: String(stockCritico),
+            tone: stockCritico > 0 ? "warn" : "good",
+          },
+        ]}
+      />
 
       <section className="uiEnter" data-stagger="2">
         <Toolbar

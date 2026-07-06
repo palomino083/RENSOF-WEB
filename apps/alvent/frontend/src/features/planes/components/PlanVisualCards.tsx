@@ -1,4 +1,5 @@
 import styles from "./PlanVisualCards.module.css";
+import { getPlanGovernanceProfile } from "../visualNarrative";
 
 type PlanAccent = "free" | "basic" | "pro" | "premium";
 type PlanIcon = "spark" | "chart" | "user" | "rocket" | "crown" | "shield" | "briefcase";
@@ -76,7 +77,10 @@ const renderBenefitIcon = (icon: PlanIcon) => {
 export default function PlanVisualCards({ cards }: Props) {
   return (
     <div className={styles.planVisualGrid}>
-      {cards.map((plan, index) => (
+      {cards.map((plan, index) => {
+        const governance = getPlanGovernanceProfile(plan.key);
+
+        return (
         <article
           key={`visual-${plan.key}`}
           className={`${styles.planVisualCard} ${styles[`planVisualCard_${plan.accentClass}`]} ${index === 0 ? styles.planVisualCardFree : ""}`}
@@ -99,8 +103,31 @@ export default function PlanVisualCards({ cards }: Props) {
               </li>
             ))}
           </ul>
+
+          <section className={styles.planVisualTrust}>
+            <header className={styles.planVisualTrustHead}>
+              <strong>Seguridad</strong>
+              <small>Disponibilidad {governance.disponibilidad}</small>
+            </header>
+            <ul className={styles.planVisualTrustList}>
+              {governance.seguridad.slice(0, 2).map((item) => (
+                <li key={`${plan.key}-seg-${item}`}>{item}</li>
+              ))}
+            </ul>
+
+            <header className={styles.planVisualTrustHead}>
+              <strong>Servicio</strong>
+              <small>Soporte {governance.soporte}</small>
+            </header>
+            <ul className={styles.planVisualTrustList}>
+              {governance.servicio.slice(0, 2).map((item) => (
+                <li key={`${plan.key}-srv-${item}`}>{item}</li>
+              ))}
+            </ul>
+          </section>
         </article>
-      ))}
+        );
+      })}
     </div>
   );
 }

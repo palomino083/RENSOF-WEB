@@ -5,6 +5,7 @@ import Image from "next/image";
 import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import Toolbar from "@/components/ui/Toolbar";
 import ModalCard from "@/components/ui/ModalCard";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -2850,6 +2851,18 @@ export default function ConfiguracionPage() {
             </div>
             <ExecutiveThemeSwitch />
           </section>
+
+          <ExecutivePulseBar
+            modulo="Soporte"
+            estado={configAccessMode === "soporte" ? "Asistencia activa" : "Modo configuracion"}
+            foco="Atencion inteligente con SofIA y control de incidencias para cualquier tipo de negocio."
+            accion={{ label: "Abrir configuracion", href: "configuracion" }}
+            metricas={[
+              { label: "Empresa", value: nombreEmpresa || "No definida" },
+              { label: "Plan", value: planActual || "No definido", tone: "good" },
+              { label: "Backups", value: estadoBackups || "N/D" },
+            ]}
+          />
 
           {error ? <p className={styles.errorBox}>{error}</p> : null}
           {success ? <p className={styles.successBox}>{success}</p> : null}

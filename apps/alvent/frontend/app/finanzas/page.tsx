@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import PlanVisualCards from "@/features/planes/components/PlanVisualCards";
@@ -299,6 +300,22 @@ export default function FinanzasPage() {
             </div>
             <StatusBadge text="Sin negocio fijo" variant="info" />
           </section>
+
+          <ExecutivePulseBar
+            modulo="Finanzas"
+            estado={loading ? "Sincronizando" : "Operativo"}
+            foco="Control contable mensual con lectura de utilidad y cierre de periodo."
+            accion={{ label: "Ir a Configuracion", href: "configuracion" }}
+            metricas={[
+              { label: "Ingresos", value: `S/${totalIngresos.toFixed(2)}`, tone: "good" },
+              { label: "Gastos", value: `S/${totalGastos.toFixed(2)}`, tone: "warn" },
+              {
+                label: "Resultado",
+                value: `S/${utilidad.toFixed(2)}`,
+                tone: utilidad >= 0 ? "good" : "critical",
+              },
+            ]}
+          />
 
           {error ? <p className={styles.errorBox}>{error}</p> : null}
           {success ? <p className={styles.successBox}>{success}</p> : null}
