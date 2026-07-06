@@ -234,6 +234,12 @@ def redirect_alven(request: Request):
         return landing
     return RedirectResponse(url=_internalize_url(ALVENT_APP_URL, "/alven/app/login"))
 
+@app.get("/alven/login")
+def redirect_alven_login(request: Request):
+    """Public ALVENT login alias from RENSOF marketing pages."""
+    _ = request
+    return RedirectResponse(url=_external_alvent_app_url())
+
 @app.get("/alven/app")
 def redirect_alven_app(request: Request):
     """Redirect to ALVENT app root"""
