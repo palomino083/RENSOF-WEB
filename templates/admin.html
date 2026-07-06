@@ -1,6 +1,60 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .dashboard-card,
+  .dashboard-route,
+  .dashboard-action {
+    border-radius: 20px;
+    border: 1px solid rgba(126, 214, 255, 0.16);
+    background: linear-gradient(180deg, rgba(8, 22, 37, 0.92), rgba(6, 16, 29, 0.92));
+    box-shadow: 0 18px 38px rgba(0, 10, 25, 0.28);
+    padding: 20px;
+  }
+
+  .dashboard-card strong,
+  .dashboard-route strong,
+  .dashboard-action strong {
+    display: block;
+    margin-top: 10px;
+    font-size: 1.25rem;
+  }
+
+  .dashboard-card p,
+  .dashboard-route p,
+  .dashboard-action p {
+    color: var(--r-text-soft);
+  }
+
+  .dashboard-actions-grid,
+  .dashboard-routes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  @media (max-width: 1080px) {
+    .dashboard-grid,
+    .dashboard-actions-grid,
+    .dashboard-routes-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .dashboard-grid,
+    .dashboard-actions-grid,
+    .dashboard-routes-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
 <main class="page-main" style="padding-top: 84px;">
   <div class="admin-shell">
     {% include "partials/admin_sidebar.html" %}
@@ -10,114 +64,79 @@
     <div class="r2030-grid reveal">
       <span class="story-kicker">Admin</span>
       <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Centro de control</h1>
-      <p class="story-text">Organiza el backoffice por modulos: plataforma base, publicaciones, correos y bandeja de contacto.</p>
+      <p class="story-text">Opera el backoffice desde una consola viva: accesos criticos, vigilancia de plataforma, contenido y respuesta operativa.</p>
       <div class="hero-actions" style="margin-top:16px;">
-        <a href="/admin/publicaciones" class="r-btn r-btn-primary">Publicaciones</a>
-        <a href="/admin/correos" class="r-btn r-btn-ghost">Correos</a>
-        <a href="/admin/correos/bandeja" class="r-btn r-btn-ghost">Bandeja</a>
+        <a href="/admin/correos/bandeja" class="r-btn r-btn-primary">Abrir bandeja operativa</a>
+        <a href="/admin/publicaciones" class="r-btn r-btn-ghost">Publicaciones</a>
+        <a href="/app/alven/login" class="r-btn r-btn-ghost">Abrir ALVENT</a>
       </div>
-      <div class="intel-pillars" style="margin-top:20px; grid-template-columns:repeat(3,1fr);">
-        <article class="pillar-card">
-          <strong>Publicaciones</strong>
-          <span>Gestion editorial, estados, tags y asignacion de correo.</span>
-          <a href="/admin/publicaciones" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir modulo</a>
+      <div class="dashboard-grid" style="margin-top:20px;">
+        {% for metric in ops_metrics %}
+        <article class="dashboard-card">
+          <span class="story-kicker">{{ metric.label }}</span>
+          <strong>{{ metric.value }}</strong>
+          <p>{{ metric.detail }}</p>
         </article>
-        <article class="pillar-card">
-          <strong>Correos</strong>
-          <span>Cuentas por area, filtros y correo principal de RENSOF.</span>
-          <a href="/admin/correos" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir modulo</a>
-        </article>
-        <article class="pillar-card">
-          <strong>Bandeja</strong>
-          <span>Mensajes de contacto, clasificacion y seguimiento operativo.</span>
-          <a href="/admin/correos/bandeja" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir modulo</a>
-        </article>
+        {% endfor %}
       </div>
     </div>
   </section>
 
   <section class="story-block mission-band">
     <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Productos</h2>
-      <form class="contact-panel" action="/admin/products/add" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <label>Nombre</label><input class="r-input" type="text" name="name" required>
-        <label>Subtitle</label><input class="r-input" type="text" name="subtitle" required>
-        <button class="r-btn r-btn-primary" type="submit">Agregar producto</button>
-      </form>
-      {% for product in products %}
-      <form class="contact-panel" action="/admin/products/{{ product.id }}/update" method="post" style="margin-top:10px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <input class="r-input" type="text" name="name" value="{{ product.name }}" required>
-        <input class="r-input" type="text" name="subtitle" value="{{ product.subtitle }}" required>
-        <button class="r-btn r-btn-ghost" type="submit">Guardar</button>
-      </form>
-      <form action="/admin/products/{{ product.id }}/delete" method="post" style="margin-top:6px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="r-btn" style="background:rgba(236,106,95,0.2);color:#fff;" type="submit">Eliminar</button>
-      </form>
-      {% endfor %}
+      <h2 style="font-family:'Sora',sans-serif;">Opciones de control</h2>
+      <div class="dashboard-actions-grid">
+        <article class="dashboard-action">
+          <strong>Mensajes y leads</strong>
+          <p>Gestiona entrada comercial, clasificacion, prioridades y seguimiento operativo.</p>
+          <a href="/admin/correos/bandeja" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir bandeja</a>
+        </article>
+        <article class="dashboard-action">
+          <strong>Gobierno editorial</strong>
+          <p>Centraliza publicaciones, narrativas, recursos y ajustes de contenido institucional.</p>
+          <a href="/admin/publicaciones" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir publicaciones</a>
+        </article>
+        <article class="dashboard-action">
+          <strong>Acceso ALVENT</strong>
+          <p>Valida el ingreso principal del aplicativo y controla el recorrido de usuarios hacia dashboard.</p>
+          <a href="/app/alven/login" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir acceso</a>
+        </article>
+        <article class="dashboard-action">
+          <strong>Vista publica</strong>
+          <p>Revisa home, navegacion y formularios desde la perspectiva del usuario final.</p>
+          <a href="/" class="r-btn r-btn-primary" style="margin-top:14px;">Ver sitio publico</a>
+        </article>
+      </div>
     </div>
   </section>
 
   <section class="story-block">
     <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Metricas</h2>
-      <form class="contact-panel" action="/admin/metrics/add" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <label>Grupo</label>
-        <select class="r-select" name="metric_group" required>
-          <option value="hero">hero</option>
-          <option value="observatory">observatory</option>
-        </select>
-        <label>Label</label><input class="r-input" type="text" name="label" required>
-        <label>Value</label><input class="r-input" type="text" name="value" required>
-        <button class="r-btn r-btn-primary" type="submit">Agregar metrica</button>
-      </form>
-      {% for metric in metrics %}
-      <form class="contact-panel" action="/admin/metrics/{{ metric.id }}/update" method="post" style="margin-top:10px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <select class="r-select" name="metric_group" required>
-          <option value="hero" {% if metric.metric_group == 'hero' %}selected{% endif %}>hero</option>
-          <option value="observatory" {% if metric.metric_group == 'observatory' %}selected{% endif %}>observatory</option>
-        </select>
-        <input class="r-input" type="text" name="label" value="{{ metric.label }}" required>
-        <input class="r-input" type="text" name="value" value="{{ metric.value }}" required>
-        <button class="r-btn r-btn-ghost" type="submit">Guardar</button>
-      </form>
-      <form action="/admin/metrics/{{ metric.id }}/delete" method="post" style="margin-top:6px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="r-btn" style="background:rgba(236,106,95,0.2);color:#fff;" type="submit">Eliminar</button>
-      </form>
-      {% endfor %}
+      <h2 style="font-family:'Sora',sans-serif;">Rutas criticas</h2>
+      <div class="dashboard-routes-grid">
+        {% for route in ops_watch_routes %}
+        <article class="dashboard-route">
+          <span class="story-kicker">Ruta</span>
+          <strong>{{ route.path }}</strong>
+          <p>{{ route.purpose }}</p>
+        </article>
+        {% endfor %}
+      </div>
     </div>
   </section>
 
   <section class="story-block mission-band">
     <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Casos</h2>
-      <form class="contact-panel" action="/admin/cases/add" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <label>Titulo</label><input class="r-input" type="text" name="title" required>
-        <label>Descripción</label><textarea class="r-textarea" name="description" rows="3" required></textarea>
-        <label>Media</label><input class="r-input" type="text" name="media" placeholder="/assets/img/figure-finance.svg" required>
-        <label>Overlay</label><input class="r-input" type="text" name="overlay" placeholder="rgba(57,202,127,0.30)" required>
-        <button class="r-btn r-btn-primary" type="submit">Agregar caso</button>
-      </form>
-      {% for case in cases %}
-      <form class="contact-panel" action="/admin/cases/{{ case.id }}/update" method="post" style="margin-top:10px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <input class="r-input" type="text" name="title" value="{{ case.title }}" required>
-        <textarea class="r-textarea" name="description" rows="3" required>{{ case.description }}</textarea>
-        <input class="r-input" type="text" name="media" value="{{ case.media }}" required>
-        <input class="r-input" type="text" name="overlay" value="{{ case.overlay }}" required>
-        <button class="r-btn r-btn-ghost" type="submit">Guardar</button>
-      </form>
-      <form action="/admin/cases/{{ case.id }}/delete" method="post" style="margin-top:6px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="r-btn" style="background:rgba(236,106,95,0.2);color:#fff;" type="submit">Eliminar</button>
-      </form>
-      {% endfor %}
+      <h2 style="font-family:'Sora',sans-serif;">Alertas operativas</h2>
+      <div class="dashboard-actions-grid">
+        {% for alert in ops_alerts %}
+        <article class="dashboard-action">
+          <span class="story-kicker">{{ alert.level }}</span>
+          <strong>{{ alert.title }}</strong>
+          <p>{{ alert.detail }}</p>
+        </article>
+        {% endfor %}
+      </div>
     </div>
   </section>
 

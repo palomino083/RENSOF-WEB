@@ -158,6 +158,28 @@ def _render_admin_login(request: Request):
     )
 
 
+def _render_admin_dashboard(request: Request):
+    template_file = TEMPLATES_DIR / "admin.html"
+    if not template_file.exists():
+        return JSONResponse(status_code=404, content={"detail": "Admin dashboard template not found"})
+    ops_context = _build_admin_ops_context(request, [])
+    return templates.TemplateResponse(
+        request=request,
+        name="admin.html",
+        context={
+            "active_page": "admin",
+            "page_title": "Centro de Control | RENSOF Admin",
+            "page_description": "Centro de control operativo de la plataforma RENSOF.",
+            "csrf_token": "",
+            "products": [],
+            "metrics": [],
+            "cases": [],
+            **ops_context,
+            "admin_section": "dashboard",
+        },
+    )
+
+
 def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> dict:
     total_messages = len(messages)
     status_counts = {
@@ -399,8 +421,8 @@ def redirect_alven_api(path: str):
     return RedirectResponse(url=f"{ALVENT_BACKEND_ORIGIN}/{path}")
 
 @app.get("/admin")
-def admin_root():
-    return RedirectResponse(url="/admin/login")
+def admin_root(request: Request):
+    return _render_admin_dashboard(request)
 
 
 @app.get("/admin/login")
@@ -417,7 +439,7 @@ def admin_login_submit(
 ):
     """Temporary admin login flow to open inbox view from login button."""
     _ = (request, username, password)
-    return RedirectResponse(url="/admin/correos/bandeja", status_code=303)
+    return RedirectResponse(url="/admin", status_code=303)
 
 
 @app.get("/admin/correos/bandeja")
