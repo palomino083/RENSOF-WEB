@@ -18,6 +18,7 @@ import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import DataTable from "@/components/ui/DataTable";
 import ModalCard from "@/components/ui/ModalCard";
+import Menu from "@/components/Menu";
 import styles from "./page.module.css";
 
 type Producto = {
@@ -658,7 +659,9 @@ export default function PosPage() {
   // UI
   // =========================
   return (
-    <main className={`${styles.shell} app-content`}>
+    <div className="app-layout">
+      <Menu />
+      <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
         <div>
           <p className={styles.eyebrow}>Operación en tiempo real</p>
@@ -1058,6 +1061,7 @@ export default function PosPage() {
           />
         </div>
       </ModalCard>
-    </main>
+      </main>
+    </div>
   );
 }

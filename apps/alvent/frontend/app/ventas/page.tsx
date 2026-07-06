@@ -7,6 +7,7 @@ import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import Toolbar from "@/components/ui/Toolbar";
 import DataTable from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
+import Menu from "@/components/Menu";
 import styles from "./page.module.css";
 
 type VentaItem = {
@@ -90,7 +91,9 @@ export default function VentasPage() {
     resumen && resumen.mes.ventas > 0 ? resumen.mes.monto / resumen.mes.ventas : 0;
 
   return (
-    <main className={`${styles.shell} app-content`}>
+    <div className="app-layout">
+      <Menu />
+      <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
         <div>
           <p className={styles.eyebrow}>Analítica comercial</p>
@@ -236,6 +239,7 @@ export default function VentasPage() {
           ))}
         </DataTable>
       </section>
-    </main>
+      </main>
+    </div>
   );
 }

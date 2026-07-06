@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import DataTable from "@/components/ui/DataTable";
 import Toolbar from "@/components/ui/Toolbar";
+import Menu from "@/components/Menu";
 import styles from "./page.module.css";
 
 type GananciaDetalle = {
@@ -70,14 +71,19 @@ export default function ReporteGanancias() {
 
   if (loading) {
     return (
-      <main className={`${styles.shell} app-content`}>
-        <section className={styles.loader}>Construyendo reporte de ganancias...</section>
-      </main>
+      <div className="app-layout">
+        <Menu />
+        <main className={`${styles.shell} app-content`}>
+          <section className={styles.loader}>Construyendo reporte de ganancias...</section>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className={`${styles.shell} app-content`}>
+    <div className="app-layout">
+      <Menu />
+      <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
         <p className={styles.eyebrow}>Performance financiero</p>
         <h1>Ganancias reales</h1>
@@ -159,6 +165,7 @@ export default function ReporteGanancias() {
           </section>
         </>
       ) : null}
-    </main>
+      </main>
+    </div>
   );
 }

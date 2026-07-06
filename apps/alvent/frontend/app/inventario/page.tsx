@@ -8,6 +8,7 @@ import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import DataTable from "@/components/ui/DataTable";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
+import Menu from "@/components/Menu";
 import styles from "./page.module.css";
 
 type Producto = {
@@ -104,7 +105,9 @@ export default function Inventario() {
 
 
   return (
-    <main className={`${styles.shell} app-content`}>
+    <div className="app-layout">
+      <Menu />
+      <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
         <div>
           <p className={styles.eyebrow}>Control de existencias</p>
@@ -261,6 +264,7 @@ export default function Inventario() {
           </DataTable>
         </section>
       ) : null}
-    </main>
+      </main>
+    </div>
   );
 }

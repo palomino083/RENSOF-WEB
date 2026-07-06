@@ -7,6 +7,7 @@ import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import DataTable from "@/components/ui/DataTable";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
+import Menu from "@/components/Menu";
 import styles from "./page.module.css";
 
 /* =========================
@@ -140,23 +141,28 @@ export default function CajasPage() {
 
   if (loading) {
     return (
-      <main className={`${styles.shell} app-content`}>
-        <section className={styles.hero}>
-          <p className={styles.eyebrow}>Gestion de efectivo</p>
-          <h1>Caja inteligente</h1>
-          <p>Sincronizando estado operativo...</p>
-        </section>
+      <div className="app-layout">
+        <Menu />
+        <main className={`${styles.shell} app-content`}>
+          <section className={styles.hero}>
+            <p className={styles.eyebrow}>Gestion de efectivo</p>
+            <h1>Caja inteligente</h1>
+            <p>Sincronizando estado operativo...</p>
+          </section>
 
-        <section className={styles.loaderCard}>
-          <div className={styles.loaderDot} />
-          <span>Cargando estado de caja...</span>
-        </section>
-      </main>
+          <section className={styles.loaderCard}>
+            <div className={styles.loaderDot} />
+            <span>Cargando estado de caja...</span>
+          </section>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className={`${styles.shell} app-content`}>
+    <div className="app-layout">
+      <Menu />
+      <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
         <p className={styles.eyebrow}>Gestion de efectivo</p>
         <h1>Caja inteligente</h1>
@@ -279,6 +285,7 @@ export default function CajasPage() {
           ))}
         </DataTable>
       </section>
-    </main>
+      </main>
+    </div>
   );
 }

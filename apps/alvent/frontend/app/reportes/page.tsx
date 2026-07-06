@@ -17,6 +17,7 @@ import DataTable from "@/components/ui/DataTable";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import ExecutivePulseBar from "@/components/ExecutivePulseBar";
+import Menu from "@/components/Menu";
 import styles from "./page.module.css";
 
 type ResumenBloque = {
@@ -108,7 +109,9 @@ export default function ReportesPage() {
   const mayorBloque = [...trendData].sort((a, b) => b.monto - a.monto)[0];
 
   return (
-    <main className={`${styles.shell} app-content`}>
+    <div className="app-layout">
+      <Menu />
+      <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
         <p className={styles.eyebrow}>Centro de inteligencia</p>
         <h1>Reportes con narrativa de negocio</h1>
@@ -228,6 +231,7 @@ export default function ReportesPage() {
           </Link>
         </article>
       </section>
-    </main>
+      </main>
+    </div>
   );
 }
