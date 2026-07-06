@@ -24,6 +24,15 @@
     </a>
   </nav>
 
+  {% if superagent_name %}
+  <div class="admin-sidebar-agent">
+    <span class="story-kicker">Superagente activo</span>
+    <h3 class="admin-sidebar-agent-title">{{ superagent_name }}</h3>
+    <p class="admin-sidebar-agent-text">{{ superagent_scope }}</p>
+    <a href="/admin/correos/bandeja" class="r-btn r-btn-ghost">Abrir radar operativo</a>
+  </div>
+  {% endif %}
+
   <div class="admin-sidebar-actions">
     <a href="/" class="r-btn r-btn-ghost">Ver sitio publico</a>
     <form action="/admin/logout" method="post">

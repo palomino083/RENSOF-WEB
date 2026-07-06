@@ -273,6 +273,104 @@ def _render_admin_publications(request: Request):
     )
 
 
+def _render_admin_emails(request: Request):
+    template_file = TEMPLATES_DIR / "admin_emails.html"
+    if not template_file.exists():
+        return JSONResponse(status_code=404, content={"detail": "Admin emails template not found"})
+    ops_context = _build_admin_ops_context(request, [])
+    email_metrics = [
+        {
+            "label": "Canales activos",
+            "value": "04",
+            "detail": "Comercial, publicaciones, soporte y direccion institucional.",
+        },
+        {
+            "label": "Prioridad de respuesta",
+            "value": "24h",
+            "detail": "Ventana objetivo para primer contacto de leads e incidencias.",
+        },
+        {
+            "label": "Rutas conectadas",
+            "value": "03",
+            "detail": "Formulario publico, bandeja operativa y modulo editorial.",
+        },
+    ]
+    email_channels = [
+        {
+            "title": "Comercial y demos",
+            "detail": "Centraliza consultas de producto, demos ejecutivas y conversion desde ALVENT y contacto.",
+            "href": "/contacto#contactForm",
+            "cta": "Ver origen publico",
+        },
+        {
+            "title": "Editorial y recursos",
+            "detail": "Conecta publicaciones, piezas de conocimiento y solicitudes de contenido institucional.",
+            "href": "/admin/publicaciones",
+            "cta": "Ir a publicaciones",
+        },
+        {
+            "title": "Soporte y plataforma",
+            "detail": "Escala incidentes, monitoreo y observaciones operativas hacia el equipo de control.",
+            "href": "/admin/correos/bandeja",
+            "cta": "Abrir bandeja",
+        },
+    ]
+    email_queue = [
+        {
+            "name": "Correo principal institucional",
+            "status": "Vigilar",
+            "detail": "Debe mantenerse como destino canonical para formularios y respuestas maestras.",
+        },
+        {
+            "name": "Reglas por area",
+            "status": "En desarrollo",
+            "detail": "Separar comercial, editorial y soporte evita mezcla de leads con incidencias.",
+        },
+        {
+            "name": "Escalamiento de incidencias",
+            "status": "Prioridad alta",
+            "detail": "Toda alerta de acceso, deploy o rutas debe poder subir a control operativo sin friccion.",
+        },
+    ]
+    email_playbooks = [
+        {
+            "title": "Responder primero, clasificar despues",
+            "detail": "No dejar leads en espera por falta de taxonomia; capturar y ordenar en segundo paso.",
+        },
+        {
+            "title": "Separar negocio de soporte",
+            "detail": "Las consultas comerciales y las incidencias de plataforma requieren dueños y SLA distintos.",
+        },
+        {
+            "title": "Usar la bandeja como centro de triage",
+            "detail": "La bandeja consolida estado, prioridad y seguimiento antes de cerrar o derivar.",
+        },
+    ]
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_emails.html",
+        context={
+            "active_page": "admin",
+            "page_title": "Correos | RENSOF Admin",
+            "page_description": "Gobierno de canales de correo y flujo de contacto de RENSOF.",
+            "csrf_token": "",
+            "email_accounts": [],
+            "search_query": "",
+            "selected_area": "",
+            "principal_only": False,
+            "area_options": [],
+            "total_messages": 0,
+            "new_messages": 0,
+            "email_metrics": email_metrics,
+            "email_channels": email_channels,
+            "email_queue": email_queue,
+            "email_playbooks": email_playbooks,
+            **ops_context,
+            "admin_section": "emails",
+        },
+    )
+
+
 def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> dict:
     total_messages = len(messages)
     status_counts = {
@@ -539,6 +637,12 @@ def admin_login_submit(
 def admin_publications(request: Request):
     """Serve RENSOF admin publications control module."""
     return _render_admin_publications(request)
+
+
+@app.get("/admin/correos")
+def admin_emails(request: Request):
+    """Serve RENSOF admin email governance module."""
+    return _render_admin_emails(request)
 
 
 @app.get("/admin/correos/bandeja")

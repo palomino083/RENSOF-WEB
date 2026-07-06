@@ -1085,6 +1085,28 @@
   gap: 10px;
 }
 
+.admin-sidebar-agent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(57, 202, 127, 0.2);
+  background: linear-gradient(180deg, rgba(7, 28, 31, 0.9), rgba(10, 22, 38, 0.9));
+}
+
+.admin-sidebar-agent-title {
+  margin: 0;
+  font-family: 'Sora', 'Segoe UI', Tahoma, sans-serif;
+  font-size: 1rem;
+}
+
+.admin-sidebar-agent-text {
+  margin: 0;
+  color: var(--r-text-soft);
+  font-size: 0.88rem;
+}
+
 .admin-sidebar-actions form {
   margin: 0;
 }

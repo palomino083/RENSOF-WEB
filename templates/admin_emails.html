@@ -1,6 +1,66 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+  .mail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .mail-card,
+  .mail-channel,
+  .mail-queue,
+  .mail-playbook {
+    border-radius: 20px;
+    border: 1px solid rgba(126, 214, 255, 0.16);
+    background: linear-gradient(180deg, rgba(8, 22, 37, 0.92), rgba(6, 16, 29, 0.92));
+    box-shadow: 0 18px 38px rgba(0, 10, 25, 0.28);
+    padding: 20px;
+  }
+
+  .mail-card strong,
+  .mail-channel strong,
+  .mail-queue strong,
+  .mail-playbook strong {
+    display: block;
+    margin-top: 10px;
+    font-size: 1.2rem;
+  }
+
+  .mail-card p,
+  .mail-channel p,
+  .mail-queue p,
+  .mail-playbook p {
+    color: var(--r-text-soft);
+  }
+
+  .mail-channel-grid,
+  .mail-queue-grid,
+  .mail-playbook-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  @media (max-width: 1080px) {
+    .mail-grid,
+    .mail-channel-grid,
+    .mail-queue-grid,
+    .mail-playbook-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .mail-grid,
+    .mail-channel-grid,
+    .mail-queue-grid,
+    .mail-playbook-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
 <main class="page-main" style="padding-top: 84px;">
   <div class="admin-shell">
     {% include "partials/admin_sidebar.html" %}
@@ -9,72 +69,19 @@
   <section class="story-block">
     <div class="r2030-grid reveal">
       <span class="story-kicker">Admin</span>
-      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Gestion de correos RENSOF</h1>
-      <p class="story-text">Crea, edita y elimina cuentas de correo para contacto, editorial, alianzas y soporte.</p>
+      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Gobierno de correos y canales</h1>
+      <p class="story-text">Controla por donde entra la demanda, como se distribuye y que canal responde cada frente operativo de RENSOF.</p>
       <div class="hero-actions" style="margin-top:16px;">
         <a href="/admin" class="r-btn r-btn-ghost">Volver al panel</a>
         <a href="/admin/publicaciones" class="r-btn r-btn-ghost">Publicaciones</a>
         <a href="/admin/correos/bandeja" class="r-btn r-btn-primary">Bandeja de contacto</a>
       </div>
-      <div class="data-tiles" style="margin-top:16px;">
-        <article class="data-tile"><span>Mensajes totales</span><strong>{{ total_messages }}</strong></article>
-        <article class="data-tile"><span>Nuevos</span><strong>{{ new_messages }}</strong></article>
-      </div>
-    </div>
-  </section>
-
-  <section class="story-block mission-band">
-    <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Buscar y filtrar</h2>
-      <form class="contact-panel" action="/admin/correos" method="get" style="margin-bottom:16px;">
-        <label>Busqueda</label>
-        <input class="r-input" type="text" name="q" value="{{ search_query }}" placeholder="Nombre, correo o area">
-        <label>Area</label>
-        <select class="r-select" name="area">
-          <option value="">Todas las areas</option>
-          {% for option in area_options %}
-          <option value="{{ option }}" {% if selected_area == option %}selected{% endif %}>{{ option }}</option>
-          {% endfor %}
-        </select>
-        <label style="display:flex; gap:8px; align-items:center; margin:8px 0 14px;">
-          <input type="checkbox" name="principal_only" value="true" {% if principal_only %}checked{% endif %}>
-          Solo principal
-        </label>
-        <div class="hero-actions">
-          <button class="r-btn r-btn-primary" type="submit">Aplicar filtros</button>
-          <a href="/admin/correos" class="r-btn r-btn-ghost">Limpiar</a>
-        </div>
-      </form>
-
-      <h2 style="font-family:'Sora',sans-serif;">Crear cuenta</h2>
-      <form class="contact-panel" action="/admin/emails/add" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <label>Nombre visible</label>
-        <input class="r-input" type="text" name="display_name" placeholder="Equipo Editorial" required>
-        <label>Correo</label>
-        <input class="r-input" type="email" name="email" placeholder="editorial@rensof.pe" required>
-        <label>Area</label>
-        <input class="r-input" type="text" name="area" placeholder="Publicaciones" required>
-        <button class="r-btn r-btn-primary" type="submit">Agregar correo</button>
-      </form>
-    </div>
-  </section>
-
-  <section class="story-block">
-    <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Cuentas registradas</h2>
-      <div class="intel-pillars" style="margin-top:20px; grid-template-columns:repeat(3,1fr);">
-        {% for account in email_accounts %}
-        <article class="pillar-card">
-          <strong>{{ account.display_name }}</strong>
-          <span>{{ account.area }}</span>
-          <span style="margin-top:4px; display:block;">{{ account.email }}</span>
-          <span style="margin-top:4px; display:block;">{% if account.is_primary %}Principal{% else %}Secundario{% endif %}</span>
-        </article>
-        {% else %}
-        <article class="pillar-card" style="grid-column:1 / -1;">
-          <strong>No hay correos registrados</strong>
-          <span>Agrega la primera cuenta desde el formulario superior.</span>
+      <div class="mail-grid" style="margin-top:20px;">
+        {% for metric in email_metrics %}
+        <article class="mail-card">
+          <span class="story-kicker">{{ metric.label }}</span>
+          <strong>{{ metric.value }}</strong>
+          <p>{{ metric.detail }}</p>
         </article>
         {% endfor %}
       </div>
@@ -83,29 +90,45 @@
 
   <section class="story-block mission-band">
     <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Editar cuentas</h2>
-      {% for account in email_accounts %}
-      <form class="contact-panel" action="/admin/emails/{{ account.id }}/update" method="post" style="margin-top:10px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <label>Nombre visible</label>
-        <input class="r-input" type="text" name="display_name" value="{{ account.display_name }}" required>
-        <label>Correo</label>
-        <input class="r-input" type="email" name="email" value="{{ account.email }}" required>
-        <label>Area</label>
-        <input class="r-input" type="text" name="area" value="{{ account.area }}" required>
-        <div class="hero-actions">
-          <button class="r-btn r-btn-ghost" type="submit">Guardar cambios</button>
-        </div>
-      </form>
-      <form action="/admin/correos/{{ account.id }}/principal" method="post" style="margin-top:6px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="r-btn" style="background:{% if account.is_primary %}rgba(57,202,127,0.22){% else %}rgba(0,182,200,0.16){% endif %};color:#fff;" type="submit">{% if account.is_primary %}Correo principal activo{% else %}Marcar como principal{% endif %}</button>
-      </form>
-      <form action="/admin/emails/{{ account.id }}/delete" method="post" style="margin-top:6px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="r-btn" style="background:rgba(236,106,95,0.2);color:#fff;" type="submit">Eliminar cuenta</button>
-      </form>
-      {% endfor %}
+      <h2 style="font-family:'Sora',sans-serif;">Canales de trabajo</h2>
+      <div class="mail-channel-grid">
+        {% for item in email_channels %}
+        <article class="mail-channel">
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.detail }}</p>
+          <a href="{{ item.href }}" class="r-btn r-btn-primary" style="margin-top:14px;">{{ item.cta }}</a>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="story-block">
+    <div class="r2030-grid reveal">
+      <h2 style="font-family:'Sora',sans-serif;">Cola de madurez del canal</h2>
+      <div class="mail-queue-grid">
+        {% for item in email_queue %}
+        <article class="mail-queue">
+          <span class="story-kicker">{{ item.status }}</span>
+          <strong>{{ item.name }}</strong>
+          <p>{{ item.detail }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="story-block mission-band">
+    <div class="r2030-grid reveal">
+      <h2 style="font-family:'Sora',sans-serif;">Playbooks de canal</h2>
+      <div class="mail-playbook-grid">
+        {% for item in email_playbooks %}
+        <article class="mail-playbook">
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.detail }}</p>
+        </article>
+        {% endfor %}
+      </div>
     </div>
   </section>
     </div>
