@@ -8,11 +8,21 @@ from datetime import datetime, timezone
 from urllib.parse import urlsplit
 from fastapi import FastAPI, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import logging
 
+from core.security import (
+    authenticate_admin_credentials,
+    clear_admin_session,
+    get_or_create_csrf_token,
+    is_admin_authenticated,
+    security_headers_middleware,
+    set_admin_session,
+    verify_csrf_token,
+)
 from db.database import SessionLocal
 from services.content_service import (
     add_email_account,
@@ -43,6 +53,7 @@ ALVENT_APP_EXTERNAL_BASE_URL = os.getenv(
 ).rstrip("/")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 PUBLIC_ALVENT_LOGIN_PATH = "/app/alven/login"
+RENSOF_SESSION_SECRET = os.getenv("RENSOF_SESSION_SECRET", "rensof-dev-session-secret")
 
 # FastAPI app
 app = FastAPI(
@@ -59,6 +70,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SessionMiddleware, secret_key=RENSOF_SESSION_SECRET, same_site="lax", https_only=False)
+app.middleware("http")(security_headers_middleware)
 
 # Mount assets
 try:
@@ -159,6 +172,9 @@ def _external_alvent_app_url(path: str = "") -> str:
 
 
 def _render_admin_login(request: Request):
+    if is_admin_authenticated(request):
+        return RedirectResponse(url="/admin", status_code=303)
+
     template_file = TEMPLATES_DIR / "admin_login.html"
     if not template_file.exists():
         return JSONResponse(status_code=404, content={"detail": "Admin login template not found"})
@@ -169,17 +185,34 @@ def _render_admin_login(request: Request):
             "active_page": "admin",
             "page_title": "Admin | RENSOF",
             "page_description": "Acceso a la plataforma de administracion de RENSOF.",
-            "csrf_token": "",
+            "csrf_token": get_or_create_csrf_token(request),
             "error_message": None,
         },
     )
 
 
+def _require_admin_redirect(request: Request):
+    if not is_admin_authenticated(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+    return None
+
+
+def _csrf_or_login_redirect(request: Request, csrf_token: str):
+    if not verify_csrf_token(request, csrf_token):
+        return RedirectResponse(url="/admin/login", status_code=303)
+    return None
+
+
 def _render_admin_dashboard(request: Request):
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+
     template_file = TEMPLATES_DIR / "admin.html"
     if not template_file.exists():
         return JSONResponse(status_code=404, content={"detail": "Admin dashboard template not found"})
     ops_context = _build_admin_ops_context(request, [])
+    csrf_token = get_or_create_csrf_token(request)
     return templates.TemplateResponse(
         request=request,
         name="admin.html",
@@ -187,7 +220,7 @@ def _render_admin_dashboard(request: Request):
             "active_page": "admin",
             "page_title": "Centro de Control | RENSOF Admin",
             "page_description": "Centro de control operativo de la plataforma RENSOF.",
-            "csrf_token": "",
+            "csrf_token": csrf_token,
             "products": [],
             "metrics": [],
             "cases": [],
@@ -198,10 +231,15 @@ def _render_admin_dashboard(request: Request):
 
 
 def _render_admin_publications(request: Request, publications: list, email_accounts: list):
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+
     template_file = TEMPLATES_DIR / "admin_publications.html"
     if not template_file.exists():
         return JSONResponse(status_code=404, content={"detail": "Admin publications template not found"})
     ops_context = _build_admin_ops_context(request, [])
+    csrf_token = get_or_create_csrf_token(request)
     publication_metrics = [
         {
             "label": "Piezas activas",
@@ -277,7 +315,7 @@ def _render_admin_publications(request: Request, publications: list, email_accou
             "active_page": "admin",
             "page_title": "Publicaciones | RENSOF Admin",
             "page_description": "Control editorial y desarrollo de contenidos de RENSOF.",
-            "csrf_token": "",
+            "csrf_token": csrf_token,
             "publications": publications,
             "email_accounts": email_accounts,
             "publication_metrics": publication_metrics,
@@ -299,10 +337,15 @@ def _render_admin_emails(
     principal_only: bool,
     inbox_summary: dict,
 ):
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+
     template_file = TEMPLATES_DIR / "admin_emails.html"
     if not template_file.exists():
         return JSONResponse(status_code=404, content={"detail": "Admin emails template not found"})
     ops_context = _build_admin_ops_context(request, [])
+    csrf_token = get_or_create_csrf_token(request)
     email_metrics = [
         {
             "label": "Canales activos",
@@ -378,7 +421,7 @@ def _render_admin_emails(
             "active_page": "admin",
             "page_title": "Correos | RENSOF Admin",
             "page_description": "Gobierno de canales de correo y flujo de contacto de RENSOF.",
-            "csrf_token": "",
+            "csrf_token": csrf_token,
             "email_accounts": email_accounts,
             "search_query": search_query,
             "selected_area": selected_area,
@@ -541,10 +584,15 @@ def _render_admin_inbox_page(
     selected_area: str,
     selected_status: str,
 ):
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+
     template_file = TEMPLATES_DIR / "admin_inbox.html"
     if not template_file.exists():
         return JSONResponse(status_code=404, content={"detail": "Admin inbox template not found"})
     ops_context = _build_admin_ops_context(request, messages)
+    csrf_token = get_or_create_csrf_token(request)
     return templates.TemplateResponse(
         request=request,
         name="admin_inbox.html",
@@ -552,7 +600,7 @@ def _render_admin_inbox_page(
             "active_page": "admin",
             "page_title": "Bandeja de Contacto | RENSOF Admin",
             "page_description": "Bandeja de mensajes de la plataforma de administracion RENSOF.",
-            "csrf_token": "",
+            "csrf_token": csrf_token,
             "messages": messages,
             "area_options": area_options,
             "search_query": search_query,
@@ -668,10 +716,48 @@ def admin_login_submit(
     request: Request,
     username: str = Form(""),
     password: str = Form(""),
+    csrf_token: str = Form(""),
 ):
-    """Temporary admin login flow to open inbox view from login button."""
-    _ = (request, username, password)
-    return RedirectResponse(url="/admin", status_code=303)
+    if not verify_csrf_token(request, csrf_token):
+        return templates.TemplateResponse(
+            request=request,
+            name="admin_login.html",
+            context={
+                "active_page": "admin",
+                "page_title": "Admin | RENSOF",
+                "page_description": "Acceso a la plataforma de administracion de RENSOF.",
+                "csrf_token": get_or_create_csrf_token(request),
+                "error_message": "Sesion invalida. Recarga la pagina e intenta de nuevo.",
+            },
+            status_code=403,
+        )
+
+    if authenticate_admin_credentials(username.strip(), password):
+        set_admin_session(request, username.strip())
+        return RedirectResponse(url="/admin", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_login.html",
+        context={
+            "active_page": "admin",
+            "page_title": "Admin | RENSOF",
+            "page_description": "Acceso a la plataforma de administracion de RENSOF.",
+            "csrf_token": get_or_create_csrf_token(request),
+            "error_message": "Credenciales invalidas.",
+        },
+        status_code=401,
+    )
+
+
+@app.post("/admin/logout")
+def admin_logout(request: Request, csrf_token: str = Form("")):
+    csrf_redirect = _csrf_or_login_redirect(request, csrf_token)
+    if csrf_redirect:
+        return csrf_redirect
+    clear_admin_session(request)
+    request.session.pop("rensof_csrf_token", None)
+    return RedirectResponse(url="/admin/login", status_code=303)
 
 
 @app.get("/admin/publicaciones")
@@ -718,7 +804,12 @@ def admin_update_inbox_message_status(
     status: str = Form("new"),
     csrf_token: str = Form(""),
 ):
-    _ = (request, csrf_token)
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+    csrf_redirect = _csrf_or_login_redirect(request, csrf_token)
+    if csrf_redirect:
+        return csrf_redirect
     with SessionLocal() as session:
         update_contact_message_status(session, message_id, status)
     return RedirectResponse(url="/admin/correos/bandeja", status_code=303)
@@ -737,7 +828,12 @@ def admin_add_publication(
     tags: str = Form(""),
     csrf_token: str = Form(""),
 ):
-    _ = (request, csrf_token)
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+    csrf_redirect = _csrf_or_login_redirect(request, csrf_token)
+    if csrf_redirect:
+        return csrf_redirect
     with SessionLocal() as session:
         add_publication(session, title, summary, category, author_name, contact_email, status, published_at, tags)
     return RedirectResponse(url="/admin/publicaciones", status_code=303)
@@ -757,7 +853,12 @@ def admin_update_publication_route(
     tags: str = Form(""),
     csrf_token: str = Form(""),
 ):
-    _ = (request, csrf_token)
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+    csrf_redirect = _csrf_or_login_redirect(request, csrf_token)
+    if csrf_redirect:
+        return csrf_redirect
     with SessionLocal() as session:
         update_publication(session, publication_id, title, summary, category, author_name, contact_email, status, published_at, tags)
     return RedirectResponse(url="/admin/publicaciones", status_code=303)
@@ -769,7 +870,12 @@ def admin_delete_publication_route(
     publication_id: int,
     csrf_token: str = Form(""),
 ):
-    _ = (request, csrf_token)
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+    csrf_redirect = _csrf_or_login_redirect(request, csrf_token)
+    if csrf_redirect:
+        return csrf_redirect
     with SessionLocal() as session:
         delete_publication(session, publication_id)
     return RedirectResponse(url="/admin/publicaciones", status_code=303)
@@ -783,7 +889,12 @@ def admin_add_email(
     area: str = Form(...),
     csrf_token: str = Form(""),
 ):
-    _ = (request, csrf_token)
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+    csrf_redirect = _csrf_or_login_redirect(request, csrf_token)
+    if csrf_redirect:
+        return csrf_redirect
     with SessionLocal() as session:
         add_email_account(session, display_name, email, area)
     return RedirectResponse(url="/admin/correos", status_code=303)
@@ -798,7 +909,12 @@ def admin_update_email_route(
     area: str = Form(...),
     csrf_token: str = Form(""),
 ):
-    _ = (request, csrf_token)
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+    csrf_redirect = _csrf_or_login_redirect(request, csrf_token)
+    if csrf_redirect:
+        return csrf_redirect
     with SessionLocal() as session:
         update_email_account(session, email_id, display_name, email, area)
     return RedirectResponse(url="/admin/correos", status_code=303)
@@ -810,7 +926,12 @@ def admin_delete_email_route(
     email_id: int,
     csrf_token: str = Form(""),
 ):
-    _ = (request, csrf_token)
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+    csrf_redirect = _csrf_or_login_redirect(request, csrf_token)
+    if csrf_redirect:
+        return csrf_redirect
     with SessionLocal() as session:
         delete_email_account(session, email_id)
     return RedirectResponse(url="/admin/correos", status_code=303)
@@ -822,7 +943,12 @@ def admin_set_primary_email(
     email_id: int,
     csrf_token: str = Form(""),
 ):
-    _ = (request, csrf_token)
+    redirect_response = _require_admin_redirect(request)
+    if redirect_response:
+        return redirect_response
+    csrf_redirect = _csrf_or_login_redirect(request, csrf_token)
+    if csrf_redirect:
+        return csrf_redirect
     with SessionLocal() as session:
         set_primary_email_account(session, email_id)
     return RedirectResponse(url="/admin/correos", status_code=303)
