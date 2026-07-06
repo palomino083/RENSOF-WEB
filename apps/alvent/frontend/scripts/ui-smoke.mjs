@@ -197,7 +197,14 @@ async function run() {
     const txt = String(msg.text() || "");
     const networkTarget = /ORB|websocket|webpack-hmr/i.test(txt);
     const isHttpStatusConsole = /Failed to load resource: the server responded with a status of \d{3}/i.test(txt);
+    const isNextRscFallbackNoise = /Failed to fetch RSC payload.*Falling back to browser navigation/i.test(txt);
     const normalized = `[${type}] ${txt.slice(0, 260)}`;
+
+    // Next puede registrar este error de forma intermitente cuando reintenta
+    // navegación entre rutas; no implica fallo funcional del módulo.
+    if (isNextRscFallbackNoise) {
+      return;
+    }
 
     if (networkTarget) {
       addUnique(evidence[currentModule].consoleTarget, normalized);

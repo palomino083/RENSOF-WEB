@@ -229,6 +229,38 @@ const esCanalPago = (value: string): value is CanalPago =>
 
 const SHOW_SOPORTE_SLIM_VIEW = true;
 
+const SOPORTE_QUICK_PROMPTS: Array<{ label: string; text: string; prioridad: SoportePrioridad }> = [
+  {
+    label: "No puedo ingresar",
+    text: "No puedo iniciar sesion, me sale error de acceso. Necesito recuperar acceso cuanto antes.",
+    prioridad: "ALTA",
+  },
+  {
+    label: "POS lento",
+    text: "El modulo POS esta lento y tarda mucho en confirmar ventas. Ocurre desde hoy en varias terminales.",
+    prioridad: "ALTA",
+  },
+  {
+    label: "Stock descuadrado",
+    text: "El inventario muestra stock distinto al esperado despues de ventas y ajustes. Necesito reconciliarlo.",
+    prioridad: "MEDIA",
+  },
+  {
+    label: "Plan y facturacion",
+    text: "Necesito validar si mi pago de plan ya fue aplicado y por que no veo los modulos esperados.",
+    prioridad: "MEDIA",
+  },
+];
+
+const buildWelcomeMessage = (): { id: string; role: "bot"; text: string } => ({
+  id: "soporte-bot-welcome",
+  role: "bot",
+  text: "Soy Superagente de Soporte ALVENT. Te ayudo a diagnosticar, priorizar y escalar a RENSOF con contexto tecnico.",
+});
+
+const buildChatStorageKey = (isSuperadmin: boolean, negocioId: number) =>
+  `alvent_support_chat_v2:${isSuperadmin ? "superadmin" : "usuario"}:${negocioId || "global"}`;
+
 const normalizarCanalPago = (value?: string | null): CanalPago => {
   const raw = String(value || "").trim().toLowerCase();
   return esCanalPago(raw) ? raw : "transferencia";
@@ -463,6 +495,7 @@ export default function ConfiguracionPage() {
     id: string;
     role: "user" | "bot";
     text: string;
+    meta?: string;
   };
 
   // ==========================
@@ -593,8 +626,10 @@ export default function ConfiguracionPage() {
   const [configAccessMode, setConfigAccessMode] = useState<ConfigAccessMode>("configuracion");
   const [soporteChatInput, setSoporteChatInput] = useState("");
   const [soporteChatPrioridad, setSoporteChatPrioridad] = useState<SoportePrioridad>("MEDIA");
-  const [soporteChatMessages, setSoporteChatMessages] = useState<SoporteChatMessage[]>([]);
+  const [soporteChatMessages, setSoporteChatMessages] = useState<SoporteChatMessage[]>([buildWelcomeMessage()]);
   const [soporteClasificacion, setSoporteClasificacion] = useState<SoporteClasificacion | null>(null);
+  const [loadingDiagnosticoSuperagente, setLoadingDiagnosticoSuperagente] = useState(false);
+  const [chatPersistReady, setChatPersistReady] = useState(false);
   const [planAmounts, setPlanAmounts] = useState({
     gratuito: 0,
     prueba: 15,
@@ -1849,6 +1884,53 @@ export default function ConfiguracionPage() {
   }, [getNegocioIdActivo, soporteFiltroEstado, soporteFiltroPrioridad, soportePage, soportePageSize]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const negocioId = getNegocioIdActivo();
+    const storageKey = buildChatStorageKey(isSuperadmin, negocioId);
+
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) {
+        setSoporteChatMessages([buildWelcomeMessage()]);
+        setSoporteClasificacion(null);
+        setSoporteChatPrioridad("MEDIA");
+        setChatPersistReady(true);
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as {
+        messages?: SoporteChatMessage[];
+        prioridad?: SoportePrioridad;
+        clasificacion?: SoporteClasificacion | null;
+      };
+
+      const restored = Array.isArray(parsed.messages) ? parsed.messages.slice(-24) : [];
+      setSoporteChatMessages(restored.length > 0 ? restored : [buildWelcomeMessage()]);
+      setSoporteChatPrioridad(parsed.prioridad || "MEDIA");
+      setSoporteClasificacion(parsed.clasificacion || null);
+    } catch {
+      setSoporteChatMessages([buildWelcomeMessage()]);
+      setSoporteClasificacion(null);
+      setSoporteChatPrioridad("MEDIA");
+    } finally {
+      setChatPersistReady(true);
+    }
+  }, [isSuperadmin, negocioSeleccionadoId, getNegocioIdActivo]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !chatPersistReady) return;
+    const negocioId = getNegocioIdActivo();
+    const storageKey = buildChatStorageKey(isSuperadmin, negocioId);
+    const payload = {
+      messages: soporteChatMessages.slice(-24),
+      prioridad: soporteChatPrioridad,
+      clasificacion: soporteClasificacion,
+    };
+    window.localStorage.setItem(storageKey, JSON.stringify(payload));
+  }, [chatPersistReady, isSuperadmin, negocioSeleccionadoId, getNegocioIdActivo, soporteChatMessages, soporteChatPrioridad, soporteClasificacion]);
+
+  useEffect(() => {
     setSoportePage(1);
   }, [soporteFiltroEstado, soporteFiltroPrioridad, negocioSeleccionadoId]);
 
@@ -1862,6 +1944,8 @@ export default function ConfiguracionPage() {
   }, [isSuperadmin, negocioSeleccionadoId, getNegocioIdActivo, cargarTicketsSoporte, soportePage]);
 
   const enviarMensajeSoporteChat = async () => {
+    if (loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente) return;
+
     const consulta = soporteChatInput.trim();
     if (consulta.length < 8) {
       setError("Describe mejor la consulta para usar el chat bot");
@@ -1893,6 +1977,7 @@ export default function ConfiguracionPage() {
           id: `soporte-bot-${Date.now()}`,
           role: "bot",
           text: `${clasif.resumen}\n\n${resp.recomendacion}\n\nFuente: ${resp.origen}`,
+          meta: `Categoria ${resp.categoria || clasif.categoria} | Prioridad sugerida ${clasif.prioridadSugerida}`,
         },
       ]);
     } catch (err: unknown) {
@@ -1903,6 +1988,7 @@ export default function ConfiguracionPage() {
           id: `soporte-bot-error-${Date.now()}`,
           role: "bot",
           text: construirFallbackSoporte(clasif),
+          meta: "Fallback local activado",
         },
       ]);
     } finally {
@@ -1911,6 +1997,8 @@ export default function ConfiguracionPage() {
   };
 
   const escalarChatSoporte = async () => {
+    if (loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente) return;
+
     const negocioId = getNegocioIdActivo();
     if (!negocioId && !isSuperadmin) {
       setError("Selecciona un negocio para registrar la consulta");
@@ -1926,6 +2014,10 @@ export default function ConfiguracionPage() {
     const clasif = soporteClasificacion || clasificarConsultaSoporte(ultimaConsulta);
     const ultimoBot = [...soporteChatMessages].reverse().find((m) => m.role === "bot")?.text?.trim() || "";
     const prioridadEscalada = elevarPrioridad(soporteChatPrioridad, clasif.prioridadSugerida);
+    const guardianContext = isSuperadmin && guardianStatus
+      ? `Guardian -> 5xx=${guardianStatus.metrics?.requests_5xx ?? 0}, excepciones=${guardianStatus.metrics?.exceptions_total ?? 0}, abiertos=${guardianStatus.open_incidents ?? 0}, safe_mode=${guardianStatus.safe_mode?.enabled ? "ON" : "OFF"}`
+      : "";
+
     const consultaEscalada = [
       ultimaConsulta,
       "",
@@ -1934,6 +2026,7 @@ export default function ConfiguracionPage() {
       `Confianza: ${Math.round(clasif.confianza * 100)}%`,
       `Prioridad sugerida: ${clasif.prioridadSugerida}`,
       `Checklist sugerido: ${clasif.checklist.join(" | ")}`,
+      guardianContext,
       ultimoBot ? `Ultima respuesta bot: ${ultimoBot.slice(0, 380)}` : "",
     ].filter(Boolean).join("\n");
 
@@ -1955,6 +2048,7 @@ export default function ConfiguracionPage() {
           id: `soporte-bot-ticket-${Date.now()}`,
           role: "bot",
           text: `Ticket #${resp.ticket.id} escalado a RENSOF con prioridad ${resp.ticket.prioridad} y categoría ${clasif.categoria.toUpperCase()}.`,
+          meta: `Escalado con contexto ${Math.round(clasif.confianza * 100)}%`,
         },
       ]);
 
@@ -1965,6 +2059,84 @@ export default function ConfiguracionPage() {
       setError(getApiErrorMessage(err, "No se pudo registrar la consulta"));
     } finally {
       setCreatingSoporte(false);
+    }
+  };
+
+  const limpiarConversacionChat = () => {
+    setSoporteChatMessages([buildWelcomeMessage()]);
+    setSoporteClasificacion(null);
+    setSoporteChatPrioridad("MEDIA");
+    setSoporteChatInput("");
+  };
+
+  const aplicarPromptRapido = (prompt: { text: string; prioridad: SoportePrioridad }) => {
+    setSoporteChatInput(prompt.text);
+    setSoporteChatPrioridad((prev) => elevarPrioridad(prev, prompt.prioridad));
+  };
+
+  const ejecutarDiagnosticoSuperagente = async () => {
+    if (!isSuperadmin || loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente) return;
+
+    try {
+      setLoadingDiagnosticoSuperagente(true);
+      setError("");
+
+      const [healthResp, statusResp, incidentsResp] = await Promise.all([
+        systemService.health(),
+        systemService.guardianStatus(),
+        systemService.guardianIncidentes({ limit: 8, includeAcked: false }),
+      ]);
+
+      const guardian = statusResp.guardian;
+      const topIncident = Array.isArray(incidentsResp.items) && incidentsResp.items.length > 0
+        ? incidentsResp.items[0]
+        : null;
+
+      const fiveXx = guardian?.metrics?.requests_5xx ?? 0;
+      const exceptions = guardian?.metrics?.exceptions_total ?? 0;
+      const openIncidents = guardian?.open_incidents ?? 0;
+      const safeMode = guardian?.safe_mode?.enabled ? "ON" : "OFF";
+
+      const recomendaciones: string[] = [];
+      if (fiveXx > 0 || exceptions > 0) {
+        recomendaciones.push("Revisar trazas de backend y endpoints con 5xx.");
+      }
+      if (openIncidents > 0) {
+        recomendaciones.push("Confirmar/ack incidentes Guardian pendientes.");
+      }
+      if (safeMode === "ON") {
+        recomendaciones.push("Validar impacto de Safe Mode antes de desactivarlo.");
+      }
+      if (recomendaciones.length === 0) {
+        recomendaciones.push("Sin alertas criticas. Mantener monitoreo y ejecutar smoke UI cada deploy.");
+      }
+
+      const diagnostico = [
+        "Diagnostico Superagente completado.",
+        `Health API: ${healthResp?.status || "OK"}`,
+        `Guardian: safe_mode=${safeMode}, abiertos=${openIncidents}, 5xx=${fiveXx}, excepciones=${exceptions}`,
+        topIncident ? `Ultimo incidente: ${topIncident.title} [${topIncident.severity}]` : "Ultimo incidente: sin pendientes",
+        "Acciones sugeridas:",
+        ...recomendaciones.map((item, idx) => `${idx + 1}. ${item}`),
+      ].join("\n");
+
+      setSoporteChatMessages((prev) => [
+        ...prev,
+        {
+          id: `soporte-bot-diagnostico-${Date.now()}`,
+          role: "bot",
+          text: diagnostico,
+          meta: "Fuente: Guardian Runtime + Health",
+        },
+      ]);
+
+      setConfigAccessMode("soporte");
+      setShowSoporteChatModal(true);
+      setSuccess("Diagnostico del Superagente generado en el chat de soporte");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo ejecutar el diagnostico del Superagente"));
+    } finally {
+      setLoadingDiagnosticoSuperagente(false);
     }
   };
 
@@ -2452,6 +2624,15 @@ export default function ConfiguracionPage() {
                           disabled={loadingGuardian || loadingGuardianIncidents}
                         >
                           {loadingGuardian || loadingGuardianIncidents ? "Consultando..." : "Probar GET estado"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`${styles.actionBtn} focus-ring`}
+                          onClick={() => void ejecutarDiagnosticoSuperagente()}
+                          disabled={loadingDiagnosticoSuperagente || loadingGuardian || loadingGuardianIncidents}
+                        >
+                          {loadingDiagnosticoSuperagente ? "Diagnosticando..." : "Diagnosticar y enviar al chat"}
                         </button>
 
                         <button
@@ -3953,6 +4134,28 @@ export default function ConfiguracionPage() {
             )}
           >
             <div className={styles.supportChatWindow}>
+              <div className={styles.supportChatQuickActions}>
+                {SOPORTE_QUICK_PROMPTS.map((prompt) => (
+                  <button
+                    key={`quick-${prompt.label}`}
+                    type="button"
+                    className={`${styles.supportQuickBtn} focus-ring`}
+                    onClick={() => aplicarPromptRapido(prompt)}
+                    disabled={loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente}
+                  >
+                    {prompt.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={`${styles.supportQuickBtn} ${styles.supportQuickBtnGhost} focus-ring`}
+                  onClick={limpiarConversacionChat}
+                  disabled={loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente}
+                >
+                  Limpiar chat
+                </button>
+              </div>
+
               {soporteClasificacion ? (
                 <div className={styles.chatBubbleIa}>
                   <strong>Clasificación automática</strong>
@@ -3972,8 +4175,18 @@ export default function ConfiguracionPage() {
                   >
                     <strong>{message.role === "user" ? "Usuario" : "Chatbot"}</strong>
                     <p>{message.text}</p>
+                    {message.meta ? <small className={styles.chatMetaLine}>{message.meta}</small> : null}
                   </div>
                 ))}
+
+                {(loadingSugerenciaIa || loadingDiagnosticoSuperagente) ? (
+                  <div className={styles.chatTypingRow}>
+                    <span className={styles.chatTypingDot} />
+                    <span className={styles.chatTypingDot} />
+                    <span className={styles.chatTypingDot} />
+                    <small>{loadingDiagnosticoSuperagente ? "Superagente diagnosticando..." : "Chatbot analizando incidencia..."}</small>
+                  </div>
+                ) : null}
               </div>
 
               <div className={styles.supportChatComposer}>
@@ -3997,6 +4210,12 @@ export default function ConfiguracionPage() {
                     rows={3}
                     value={soporteChatInput}
                     onChange={(e) => setSoporteChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void enviarMensajeSoporteChat();
+                      }
+                    }}
                     placeholder="Describe incidencia, mensaje de error y resultado esperado"
                   />
                 </label>
