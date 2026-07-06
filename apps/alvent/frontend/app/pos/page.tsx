@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -79,9 +79,9 @@ export default function PosPage() {
   const [enviarWhatsapp, setEnviarWhatsapp] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [loadingVentas, setLoadingVentas] = useState(false);
-  const [accionVentaId, setAccionVentaId] = useState<number | null>(null);
+  const [accionVentaId, setaccionVentaId] = useState<number | null>(null);
   const [busquedaProducto, setBusquedaProducto] = useState("");
-  const [codigoRapido, setCodigoRapido] = useState("");
+  const [codigoRapido, setcodigoRapido] = useState("");
   const [scanOpen, setScanOpen] = useState(false);
   const [scannerActivo, setScannerActivo] = useState(false);
   const [scanStatus, setScanStatus] = useState("Escaner listo");
@@ -141,7 +141,7 @@ export default function PosPage() {
     setScannerActivo(false);
   };
 
-  const buscarYAgregarPorCodigo = (codigo: string, origen: "scan" | "manual" = "manual") => {
+  const buscarYAgregarPorcodigo = (codigo: string, origen: "scan" | "manual" = "manual") => {
     const target = String(codigo || "").trim();
     if (!target) return;
 
@@ -160,7 +160,7 @@ export default function PosPage() {
     setError("");
 
     if (origen === "scan") {
-      setScanStatus(`Codigo detectado: ${target}`);
+      setScanStatus(`codigo detectado: ${target}`);
       setScanOpen(false);
       stopScanner();
     }
@@ -204,7 +204,7 @@ export default function PosPage() {
           if (Array.isArray(barcodes) && barcodes.length > 0) {
             const rawValue = String(barcodes[0]?.rawValue || "").trim();
             if (rawValue) {
-              buscarYAgregarPorCodigo(rawValue, "scan");
+              buscarYAgregarPorcodigo(rawValue, "scan");
             }
           }
         } catch {
@@ -276,7 +276,7 @@ export default function PosPage() {
     }
 
     try {
-      setAccionVentaId(venta.id);
+      setaccionVentaId(venta.id);
       setError("");
       setSuccess("");
       const motivo = prompt("Motivo (opcional):") || undefined;
@@ -293,7 +293,7 @@ export default function PosPage() {
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo procesar la postventa"));
     } finally {
-      setAccionVentaId(null);
+      setaccionVentaId(null);
     }
   };
 
@@ -695,19 +695,19 @@ export default function PosPage() {
                 <input
                   value={busquedaProducto}
                   onChange={(e) => setBusquedaProducto(e.target.value)}
-                  placeholder="Buscar por nombre o código"
+                  placeholder="Buscar por nombre o codigo"
                   className={`${styles.searchInput} focus-ring`}
                 />
                 <input
                   value={codigoRapido}
-                  onChange={(e) => setCodigoRapido(e.target.value)}
+                  onChange={(e) => setcodigoRapido(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      buscarYAgregarPorCodigo(codigoRapido, "manual");
-                      setCodigoRapido("");
+                      buscarYAgregarPorcodigo(codigoRapido, "manual");
+                      setcodigoRapido("");
                     }
                   }}
-                  placeholder="Código rápido"
+                  placeholder="codigo rápido"
                   className={`${styles.codeInput} focus-ring`}
                 />
                 <button
@@ -1026,16 +1026,16 @@ export default function PosPage() {
 
       <ModalCard
         open={scanOpen}
-        title="Escanear código de barras"
-        subtitle="Usa la cámara del celular para leer el código y agregar el producto"
+        title="Escanear codigo de barras"
+        subtitle="Usa la cámara del celular para leer el codigo y agregar el producto"
         actions={(
           <>
             <button
               type="button"
               className={styles.scanBtn}
               onClick={() => {
-                buscarYAgregarPorCodigo(codigoRapido, "manual");
-                setCodigoRapido("");
+                buscarYAgregarPorcodigo(codigoRapido, "manual");
+                setcodigoRapido("");
               }}
             >
               Agregar por codigo
@@ -1055,7 +1055,7 @@ export default function PosPage() {
           <div className={styles.scanStatus}>{scannerActivo ? scanStatus : "Escaner detenido"}</div>
           <input
             value={codigoRapido}
-            onChange={(e) => setCodigoRapido(e.target.value)}
+            onChange={(e) => setcodigoRapido(e.target.value)}
             placeholder="Si no detecta, escribe el codigo aqui"
             className="focus-ring"
           />

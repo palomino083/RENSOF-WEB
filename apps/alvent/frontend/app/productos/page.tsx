@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -80,7 +80,7 @@ const LABEL_COLUMNA: Record<ColumnaPresetKey, string> = {
 
 const CORE_COLUMNS_BEFORE: Array<{ key: ColumnaCoreKey; label: string; locked?: boolean }> = [
   { key: "foto", label: "Foto", locked: true },
-  { key: "codigo", label: "Código", locked: true },
+  { key: "codigo", label: "codigo", locked: true },
   { key: "nombre", label: "Nombre", locked: true },
 ];
 
@@ -98,7 +98,7 @@ const ATRIBUTOS_SUGERIDOS_CATALOGO = [
   "Proveedor",
   "Modelo",
   "SKU fabricante",
-  "Codigo de barras",
+  "codigo de barras",
   "Unidad medida",
   "Presentacion",
   "Contenido neto",
@@ -114,7 +114,7 @@ const ATRIBUTOS_SUGERIDOS_CATALOGO = [
   "Fecha vencimiento",
   "Registro sanitario",
   "Laboratorio",
-  "Ubicación almacén",
+  "ubicacion almacén",
   "Pasillo",
   "Estante",
   "Nivel",
@@ -265,7 +265,7 @@ export default function Productos() {
       setColumnasCustom(Array.isArray(resp.columnas_custom) ? resp.columnas_custom : []);
       setTiposCustom(Array.isArray(resp.tipos_custom) ? resp.tipos_custom : []);
       setColumnasVisibles(Array.isArray(resp.columnas_visibles) ? resp.columnas_visibles : []);
-      setSuccess(resp.mensaje || "Configuración de tabla guardada");
+      setSuccess(resp.mensaje || "configuración de tabla guardada");
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo guardar la configuración de tabla"));
     } finally {
@@ -823,7 +823,7 @@ export default function Productos() {
         )}
       >
         <input
-          placeholder="Código"
+          placeholder="codigo"
           disabled={editMode}
           value={form.codigo}
           onChange={(e) => setForm({ ...form, codigo: e.target.value })}

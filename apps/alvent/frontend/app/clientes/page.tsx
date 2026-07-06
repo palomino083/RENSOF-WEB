@@ -38,7 +38,7 @@ export default function ClientesPage() {
 
   const [nombre, setNombre] = useState("");
   const [dni, setDni] = useState("");
-  const [telefono, setTelefono] = useState("");
+  const [telefono, settelefono] = useState("");
   const [email, setEmail] = useState("");
 
   const [loadingSave, setLoadingSave] = useState(false);
@@ -72,7 +72,7 @@ export default function ClientesPage() {
   const limpiar = () => {
     setNombre("");
     setDni("");
-    setTelefono("");
+    settelefono("");
     setEmail("");
     setEditId(null);
   };
@@ -84,7 +84,7 @@ export default function ClientesPage() {
     setEditId(normalizarId(c.id));
     setNombre(c.nombre);
     setDni(sanitizarDni(c.dni));
-    setTelefono(sanitizarCelular(c.telefono || ""));
+    settelefono(sanitizarCelular(c.telefono || ""));
     setEmail(c.email || "");
   };
 
@@ -99,12 +99,12 @@ export default function ClientesPage() {
       }
 
       if (dni.length !== 8) {
-        alert("El DNI debe tener exactamente 8 digitos numericos");
+        alert("El DNI debe tener exactamente 8 dígitos numéricos");
         return;
       }
 
       if (telefono && telefono.length !== 9) {
-        alert("El celular debe tener exactamente 9 digitos numericos");
+        alert("El celular debe tener exactamente 9 dígitos numéricos");
         return;
       }
 
@@ -185,7 +185,7 @@ export default function ClientesPage() {
           <ExecutivePulseBar
             modulo="Clientes"
             estado={loadingList ? "Sincronizando" : "Operativo"}
-            foco="Relacion comercial con busqueda rapida y mantenimiento de datos maestros."
+            foco="Relacion comercial con búsqueda rápida y mantenimiento de datos maestros."
             accion={{ label: "Ir a ventas", href: "ventas" }}
             metricas={[
               { label: "Registrados", value: String(clientes.length) },
@@ -219,16 +219,16 @@ export default function ClientesPage() {
                   inputMode="numeric"
                   maxLength={8}
                 />
-                {Boolean(dni) && dni.length !== 8 ? <small className={styles.errorHint}>DNI incompleto: deben ser 8 digitos.</small> : null}
+                {Boolean(dni) && dni.length !== 8 ? <small className={styles.errorHint}>DNI incompleto: deben ser 8 dígitos.</small> : null}
                 <input
                   className="focus-ring"
                   value={telefono}
-                  onChange={(e) => setTelefono(sanitizarCelular(e.target.value))}
-                  placeholder="Telefono"
+                  onChange={(e) => settelefono(sanitizarCelular(e.target.value))}
+                  placeholder="Teléfono"
                   inputMode="numeric"
                   maxLength={9}
                 />
-                {Boolean(telefono) && telefono.length !== 9 ? <small className={styles.errorHint}>Celular incompleto: deben ser 9 digitos.</small> : null}
+                {Boolean(telefono) && telefono.length !== 9 ? <small className={styles.errorHint}>Celular incompleto: deben ser 9 dígitos.</small> : null}
                 <input
                   className="focus-ring"
                   value={email}
@@ -276,7 +276,7 @@ export default function ClientesPage() {
 
               {loadingList ? <p className={styles.msg}>Cargando clientes...</p> : null}
 
-              <DataTable headers={["Nombre", "DNI", "Telefono", "Email", "Acciones"]} minWidth={760}>
+              <DataTable headers={["Nombre", "DNI", "Teléfono", "Email", "Acciones"]} minWidth={760}>
                 {clientesFiltrados.map((c) => (
                   <tr key={c.id}>
                     <td>{c.nombre}</td>

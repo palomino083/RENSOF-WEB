@@ -184,7 +184,7 @@ export default function VentasPage() {
         ) : null}
 
         <DataTable
-          headers={["ID", "Fecha", "Metodo", "Estado", "Total", "Acciones"]}
+          headers={["ID", "Fecha", "Metodo", "Estado", "Total", "acciones"]}
           minWidth={920}
           density="comfy"
         >

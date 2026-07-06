@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -167,7 +167,7 @@ const MENU: MenuBlock[] = [
       { label: "Usuarios", href: "/usuarios", icon: "👤", key: "usuarios" },
       { label: "Empresa", href: "/empresa", icon: "🏢", key: "empresa" },
       { label: "Soporte", href: "/soporte", icon: "🤖", key: "soporte" },
-      { label: "Configuración", href: "/configuracion", icon: "⚙️", key: "configuracion" },
+      { label: "configuracion", href: "/configuracion", icon: "⚙️", key: "configuracion" },
       { label: "Finanzas", href: "/finanzas", icon: "🧾", key: "finanzas" },
     ],
   },
@@ -318,12 +318,12 @@ const menuFiltrado = useMemo(() => {
         type="button"
         className={`${styles.menuToggle} ${mobileOpen ? styles.menuToggleActive : ""}`}
         onClick={() => setMobileOpen((prev) => !prev)}
-        aria-label={mobileOpen ? "Ocultar menu" : "Mostrar menu"}
+        aria-label={mobileOpen ? "Ocultar menú" : "Mostrar menú"}
       >
         ☰
       </button>
 
-      {mobileOpen ? <button type="button" className={styles.mobileBackdrop} aria-label="Cerrar menu" onClick={() => setMobileOpen(false)} /> : null}
+      {mobileOpen ? <button type="button" className={styles.mobileBackdrop} aria-label="Cerrar menú" onClick={() => setMobileOpen(false)} /> : null}
 
       <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""} ${desktopCollapsed ? styles.sidebarCollapsed : ""}`}>
         <header className={styles.brand}>
@@ -336,7 +336,7 @@ const menuFiltrado = useMemo(() => {
               type="button"
               className={styles.desktopToggle}
               onClick={toggleDesktopSidebar}
-              aria-label={desktopCollapsed ? "Expandir menu lateral" : "Contraer menu lateral"}
+              aria-label={desktopCollapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
               title={desktopCollapsed ? "Expandir" : "Contraer"}
             >
               {desktopCollapsed ? "»" : "«"}

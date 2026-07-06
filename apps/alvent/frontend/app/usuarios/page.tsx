@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Menu from "@/components/Menu";
@@ -44,12 +44,12 @@ const PERMISOS_POR_ROL: Record<string, string[]> = {
     "Usuarios",
     "Empresa",
     "Soporte",
-    "Configuracion",
+    "configuracion",
     "Finanzas",
   ],
-  CAJERO: ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "Configuracion"],
-  VENDEDOR: ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "Configuracion"],
-  ALMACEN: ["Dashboard", "Productos", "Inventario", "Empresa", "Soporte", "Configuracion"],
+  CAJERO: ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "configuracion"],
+  VENDEDOR: ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "configuracion"],
+  ALMACEN: ["Dashboard", "Productos", "Inventario", "Empresa", "Soporte", "configuracion"],
 };
 
 const MODULOS_PERMISOS = [
@@ -65,7 +65,7 @@ const MODULOS_PERMISOS = [
   "Usuarios",
   "Empresa",
   "Soporte",
-  "Configuracion",
+  "configuracion",
   "Finanzas",
 ];
 
@@ -241,7 +241,7 @@ export default function UsuariosPage() {
     }
 
     if (form.dni && sanitizarDni(form.dni).length !== 8) {
-      setError("El DNI debe tener exactamente 8 digitos numericos");
+      setError("El DNI debe tener exactamente 8 dígitos numéricos");
       return;
     }
 
@@ -302,7 +302,7 @@ export default function UsuariosPage() {
     }
 
     if (form.dni && sanitizarDni(form.dni).length !== 8) {
-      setError("El DNI debe tener exactamente 8 digitos numericos");
+      setError("El DNI debe tener exactamente 8 dígitos numéricos");
       return;
     }
 
@@ -708,7 +708,7 @@ export default function UsuariosPage() {
                   maxLength={8}
                 />
                 {Boolean(form.dni) && sanitizarDni(form.dni).length !== 8 ? (
-                  <small className={styles.validationHint}>DNI incompleto: deben ser 8 digitos.</small>
+                  <small className={styles.validationHint}>DNI incompleto: deben ser 8 dígitos.</small>
                 ) : null}
                 <input
                   className="focus-ring"

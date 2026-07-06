@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -170,29 +170,29 @@ const PAYMENT_DESTINATIONS_DEFAULT: PaymentDestinations = {
     detalle: [
       "Banco: BCP",
       "Titular: RENSOF S.A.C.",
-      "Cuenta corriente: 191-2587456-0-21",
-      "CCI: 00219100258745602137",
+      "Cuenta corriente: xxxxxxxxxxxxxxxxxxxxx",
+      "CCI: yyyyyyyyyyyyyyyyy",
     ],
   },
   tarjeta: {
     titulo: "Pago con tarjeta (alineado a cuenta bancaria)",
     detalle: [
       "Deposita el abono en la misma cuenta bancaria oficial de ALVENT ERP PRO.",
-      "Banco: BCP - Cuenta corriente 191-2587456-0-21",
-      "CCI: 00219100258745602137",
+      "Banco: BCP - Cuenta corriente xxxxxxxxxxxxxxxxxxxxx",
+      "CCI: yyyyyyyyyyyyyyyyy",
     ],
   },
   yape: {
     titulo: "Yape",
     detalle: [
-      "Numero de abono Yape: 987 654 321",
+      "Numero de abono Yape: zzzzzzzzzzzz",
       "Titular: RENSOF S.A.C.",
     ],
   },
   plin: {
     titulo: "Plin",
     detalle: [
-      "Numero de abono Plin: 987 654 321",
+      "Numero de abono Plin: zzzzzzzzzzzz",
       "Titular: RENSOF S.A.C.",
     ],
   },
@@ -256,18 +256,18 @@ const SOPORTE_QUICK_PROMPTS: Array<{ label: string; text: string; prioridad: Sop
 const buildWelcomeMessage = (): { id: string; role: "bot"; text: string } => ({
   id: "soporte-bot-welcome",
   role: "bot",
-  text: "Hola, soy SofIA, tu asistente de soporte ALVENT. Te ayudo con diagnosticos tecnicos, estadisticas operativas y escalamiento a RENSOF, siempre con respeto, confidencialidad y cumplimiento normativo en PerÃº.",
+  text: "Hola, soy SofIA, tu asistente de soporte ALVENT. Te ayudo con diagnósticos tecnicos, estadísticas operativas y escalamiento a RENSOF, siempre con respeto, confidencialidad y cumplimiento normativo en Perú.",
 });
 
-type SofiaResponseLevel = "EJECUTIVO" | "TÃ‰CNICO" | "USUARIO_FINAL";
+type SofiaResponseLevel = "EJECUTIVO" | "TÉCNICO" | "USUARIO_FINAL";
 type SoporteTemplateKey = "ACCESO" | "SUNAT_FACTURACION" | "RENDIMIENTO" | "INVENTARIO_VENTAS" | "GENERAL";
 
 const buildSofiaOperatingContext = (level: SofiaResponseLevel, isFirstInteraction: boolean) => {
   const nivelDetalle =
     level === "EJECUTIVO"
       ? "Nivel de respuesta: EJECUTIVO (impacto, riesgo y decision)."
-      : level === "TÃ‰CNICO"
-        ? "Nivel de respuesta: TÃ‰CNICO (causa probable, pasos y validacion)."
+      : level === "TÉCNICO"
+        ? "Nivel de respuesta: TÉCNICO (causa probable, pasos y validacion)."
         : "Nivel de respuesta: USUARIO_FINAL (pasos simples y lenguaje claro).";
 
   const contextoBase = [
@@ -294,20 +294,20 @@ const buildSofiaOperatingContext = (level: SofiaResponseLevel, isFirstInteractio
   ].join("\n");
 };
 
-const construirRespuestaTecnicaBreve = (recomendacion: string, clasif: SoporteClasificacion) => {
-  const limpio = String(recomendacion || "").replace(/\s+/g, " ").trim();
+const construirRespuestaTecnicaBreve = (recomendación: string, clasif: SoporteClasificacion) => {
+  const limpio = String(recomendación || "").replace(/\s+/g, " ").trim();
   const frases = limpio
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const diagnostico = frases.slice(0, 1).join(" ") || clasif.resumen;
+  const diagnóstico = frases.slice(0, 1).join(" ") || clasif.resumen;
   const accion = clasif.checklist[0] || "Valida evento con hora exacta y usuario.";
-  const validacion = clasif.checklist[1] || "Confirma resultado tras la accion.";
+  const validacion = clasif.checklist[1] || "Confirma resultado tras la acción.";
 
   return [
-    `Diagnostico: ${diagnostico}`,
-    `Acción: ${accion}`,
+    `diagnóstico: ${diagnóstico}`,
+    `accion: ${accion}`,
     `Validacion: ${validacion}`,
   ].join("\n");
 };
@@ -316,7 +316,7 @@ const resolveSofiaLevelByRole = (rol: string, roles: string[] = [], isSuper = fa
   if (isSuper) return "EJECUTIVO";
   const normalized = [rol, ...roles].map((item) => normalizarRol(item));
   if (normalized.includes("SUPERADMIN")) return "EJECUTIVO";
-  if (normalized.includes("ADMINISTRADOR") || normalized.includes("ADMIN")) return "TÃ‰CNICO";
+  if (normalized.includes("ADMINISTRADOR") || normalized.includes("ADMIN")) return "TÉCNICO";
   return "USUARIO_FINAL";
 };
 
@@ -330,7 +330,7 @@ const INCIDENT_TEMPLATE_LABELS: Record<SoporteTemplateKey, string> = {
 
 const inferIncidentTemplateKey = (ticket?: SoporteTicket | null): SoporteTemplateKey => {
   if (!ticket) return "GENERAL";
-  const raw = `${ticket.asunto || ""} ${ticket.consulta || ""} ${ticket.recomendacion_ia || ""}`.toLowerCase();
+  const raw = `${ticket.asunto || ""} ${ticket.consulta || ""} ${ticket.recomendación_ia || ""}`.toLowerCase();
   if (/(login|ingresar|contrasena|contraseña|token|acceso|401|403)/.test(raw)) return "ACCESO";
   if (/(sunat|nubefact|factura|boleta|fiscal|comprobante)/.test(raw)) return "SUNAT_FACTURACION";
   if (/(lento|latencia|demora|500|error|caido|caído|timeout)/.test(raw)) return "RENDIMIENTO";
@@ -344,8 +344,8 @@ const buildTemplateReply = (template: SoporteTemplateKey, level: SofiaResponseLe
 
   const levelLine =
     level === "EJECUTIVO"
-      ? "Resumen ejecutivo: impacto controlado, accion inmediata y seguimiento con SLA."
-      : level === "TÃ‰CNICO"
+      ? "Resumen ejecutivo: impacto controlado, acción inmediata y seguimiento con SLA."
+      : level === "TÉCNICO"
         ? "Detalle tecnico: causa probable, validacion y evidencia requerida."
         : "Guia para usuario final: pasos claros para resolver rapido.";
 
@@ -353,15 +353,15 @@ const buildTemplateReply = (template: SoporteTemplateKey, level: SofiaResponseLe
     ACCESO: "Valida credenciales, estado del usuario, permisos de rol y sesion activa. Si persiste, envia hora exacta y mensaje mostrado.",
     SUNAT_FACTURACION: "Revisa integracion SUNAT activa, token vigente, series configuradas y RUC emisor valido. Luego prueba un comprobante controlado.",
     RENDIMIENTO: "Verifica latencia por modulo, incidentes Guardian y errores recientes. Comparte pantalla/modulo afectado y rango horario.",
-    INVENTARIO_VENTAS: "Contrasta stock esperado vs real, ultimo movimiento y caja activa. Valida tambien rol del usuario y negocio asociado.",
-    GENERAL: "Comparte modulo, accion, resultado esperado y mensaje exacto para responder con mayor precision.",
+    INVENTARIO_VENTAS: "Contrasta stock esperado vs real, último movimiento y caja activa. Valida también rol del usuario y negocio asociado.",
+    GENERAL: "Comparte módulo, acción, resultado esperado y mensaje exacto para responder con mayor precisión.",
   } as const;
 
   return [
     intro,
     levelLine,
     `Categoria atendida: ${INCIDENT_TEMPLATE_LABELS[template]}.`,
-    `Accion recomendada: ${base[template]}`,
+    `acción recomendada: ${base[template]}`,
     ticket ? `Referencia ticket #${ticket.id}.` : "",
     cierre,
   ].filter(Boolean).join("\n\n");
@@ -509,7 +509,7 @@ const clasificarConsultaSoporte = (consulta: string): SoporteClasificacion => {
       asunto: "Incidencia de inventario/productos",
       resumen: "Se detecta caso de inventario/productos. Verifiquemos datos y sincronía de stock.",
       checklist: [
-        "Producto/código afectado",
+        "Producto/codigo afectado",
         "Stock esperado vs mostrado",
         "Último movimiento relacionado",
       ],
@@ -517,7 +517,7 @@ const clasificarConsultaSoporte = (consulta: string): SoporteClasificacion => {
     ventas: {
       prioridadSugerida: "MEDIA",
       asunto: "Incidencia operativa de ventas/POS",
-      resumen: "Parece un incidente de ventas/POS. Revisemos flujo completo de transacción.",
+      resumen: "Parece un incidente de ventas/POS. Revisemos flujo completo de transaccion.",
       checklist: [
         "Hora de venta y usuario",
         "Paso exacto donde falla",
@@ -541,7 +541,7 @@ const clasificarConsultaSoporte = (consulta: string): SoporteClasificacion => {
       checklist: [
         "Endpoint o módulo de integración",
         "Payload resumido (sin secretos)",
-        "Código de respuesta y mensaje",
+        "codigo de respuesta y mensaje",
       ],
     },
     otro: {
@@ -570,8 +570,8 @@ const clasificarConsultaSoporte = (consulta: string): SoporteClasificacion => {
 const construirFallbackSoporte = (clasif: SoporteClasificacion, concise: boolean = false) => {
   if (concise) {
     return [
-      `Diagnostico: ${clasif.resumen}`,
-      `Acción: ${clasif.checklist[0] || "Validar evidencia tecnica del incidente."}`,
+      `diagnóstico: ${clasif.resumen}`,
+      `accion: ${clasif.checklist[0] || "Validar evidencia técnica del incidente."}`,
       `Validacion: ${clasif.checklist[1] || "Confirmar resultado y hora exacta."}`,
     ].join("\n");
   }
@@ -587,13 +587,13 @@ const construirFallbackSoporte = (clasif: SoporteClasificacion, concise: boolean
 };
 
 
-export default function ConfiguracionPage() {
+export default function SoportePage() {
   type ConfigAccessMode = "soporte" | "configuracion";
 
   type SimuladorEscenario = {
     id: string;
     nombre: string;
-    planCodigo: string;
+    plancodigo: string;
     override: {
       habilitado: boolean;
       usuarios_ilimitado: boolean;
@@ -665,7 +665,7 @@ export default function ConfiguracionPage() {
     sunat_habilitado: boolean;
   }>>([]);
   const [planControlSeleccionado, setPlanControlSeleccionado] = useState<string>("GRATUITO");
-  const [planControlAccion, setPlanControlAccion] = useState<"simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades">("simular");
+  const [planControlaccion, setPlanControlaccion] = useState<"simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades">("simular");
   const [planSimulado, setPlanSimulado] = useState<string>("BASICO");
   const [simuladorOverride, setSimuladorOverride] = useState({
     habilitado: false,
@@ -747,7 +747,7 @@ export default function ConfiguracionPage() {
   const [soporteClasificacion, setSoporteClasificacion] = useState<SoporteClasificacion | null>(null);
   const [sofiaResponseLevel, setSofiaResponseLevel] = useState<SofiaResponseLevel>("USUARIO_FINAL");
   const [atencionTemplateKey, setAtencionTemplateKey] = useState<SoporteTemplateKey>("GENERAL");
-  const [loadingDiagnosticoSuperagente, setLoadingDiagnosticoSuperagente] = useState(false);
+  const [loadingdiagnósticoSuperagente, setLoadingdiagnósticoSuperagente] = useState(false);
   const [chatPersistReady, setChatPersistReady] = useState(false);
   const [planAmounts, setPlanAmounts] = useState({
     gratuito: 0,
@@ -999,7 +999,7 @@ export default function ConfiguracionPage() {
 
     const negocioId = await resolverNegocioObjetivo("guardar logotipo");
     if (!negocioId) {
-      setError("Selecciona explicitamente el negocio objetivo antes de guardar logotipo");
+      setError("Selecciona explícitamente el negocio objetivo antes de guardar logotipo");
       return;
     }
 
@@ -1024,7 +1024,7 @@ export default function ConfiguracionPage() {
   const guardarDatosEmpresa = async () => {
     const negocioId = await resolverNegocioObjetivo("guardar datos de empresa");
     if (!negocioId) {
-      setError("Selecciona explicitamente el negocio objetivo antes de guardar datos de empresa");
+      setError("Selecciona explícitamente el negocio objetivo antes de guardar datos de empresa");
       return;
     }
 
@@ -1037,15 +1037,15 @@ export default function ConfiguracionPage() {
     const telefonoSanitizado = sanitizarCelular(businessForm.telefono);
     const whatsappSanitizado = sanitizarCelular(businessForm.whatsapp);
     if (rucSanitizado && rucSanitizado.length !== 11) {
-      setError("El RUC debe tener exactamente 11 digitos numericos");
+      setError("El RUC debe tener exactamente 11 dígitos numericos");
       return;
     }
     if (telefonoSanitizado && telefonoSanitizado.length !== 9) {
-      setError("El celular debe tener exactamente 9 digitos numericos");
+      setError("El celular debe tener exactamente 9 dígitos numericos");
       return;
     }
     if (whatsappSanitizado && whatsappSanitizado.length !== 9) {
-      setError("El WhatsApp debe tener exactamente 9 digitos numericos");
+      setError("El WhatsApp debe tener exactamente 9 dígitos numericos");
       return;
     }
 
@@ -1077,7 +1077,7 @@ export default function ConfiguracionPage() {
 
       let configSunatGuardada = true;
       try {
-        await negocioService.updateConfiguracion(negocioId, {
+        await negocioService.updateconfiguracion(negocioId, {
           integracion_sunat: vincularComprobantesSunat,
         });
       } catch {
@@ -1114,7 +1114,7 @@ export default function ConfiguracionPage() {
     }
   }, [getNegocioIdActivo]);
 
-  const cargarConfiguracionSunat = useCallback(async (negocioIdArg?: number) => {
+  const cargarconfiguracionSunat = useCallback(async (negocioIdArg?: number) => {
     const negocioId = negocioIdArg || getNegocioIdActivo();
     if (!negocioId) {
       setVincularComprobantesSunat(false);
@@ -1122,7 +1122,7 @@ export default function ConfiguracionPage() {
     }
 
     try {
-      const cfg = await negocioService.getConfiguracion(negocioId);
+      const cfg = await negocioService.getconfiguracion(negocioId);
       setVincularComprobantesSunat(Boolean(cfg?.integracion_sunat));
     } catch {
       setVincularComprobantesSunat(false);
@@ -1303,7 +1303,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("guardar montos");
     if (!negocioId) {
-      setError("Selecciona explicitamente el negocio objetivo para guardar montos");
+      setError("Selecciona explícitamente el negocio objetivo para guardar montos");
       return;
     }
 
@@ -1341,9 +1341,9 @@ export default function ConfiguracionPage() {
 
   const guardarLimitesPlanes = async () => {
     if (!isSuperadmin) return;
-    const negocioId = await resolverNegocioObjetivo("guardar limites");
+    const negocioId = await resolverNegocioObjetivo("guardar límites");
     if (!negocioId) {
-      setError("Selecciona explicitamente el negocio objetivo para guardar limites");
+      setError("Selecciona explícitamente el negocio objetivo para guardar límites");
       return;
     }
 
@@ -1410,20 +1410,20 @@ export default function ConfiguracionPage() {
     }
   };
 
-  const cambiarPlanNegocio = async (planCodigo: string) => {
+  const cambiarPlanNegocio = async (plancodigo: string) => {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("aplicar el plan");
     if (!negocioId) {
-      setError("Selecciona explicitamente el negocio objetivo para aplicar cambios de plan");
+      setError("Selecciona explícitamente el negocio objetivo para aplicar cambios de plan");
       return;
     }
-    if (normalizarPlan(planCodigo) === normalizarPlan(businessForm.plan)) return;
+    if (normalizarPlan(plancodigo) === normalizarPlan(businessForm.plan)) return;
 
     try {
       setChangingPlan(true);
       setError("");
       setSuccess("");
-      const actualizado = await negocioService.update(negocioId, { plan: normalizarPlan(planCodigo) });
+      const actualizado = await negocioService.update(negocioId, { plan: normalizarPlan(plancodigo) });
       setNegocio(actualizado);
       setBusinessForm((prev) => ({ ...prev, plan: normalizarPlan(actualizado.plan) }));
       setSuccess(`Plan actualizado a ${nombrePlan(actualizado.plan)} correctamente`);
@@ -1614,8 +1614,8 @@ export default function ConfiguracionPage() {
     ? PLAN_PRICE_MAP[planControlSeleccionadoData.codigo] as keyof typeof planAmounts
     : null;
   const negocioActivoId = getNegocioIdActivo();
-  const planControlAccionRequiereNegocio =
-    (planControlAccion === "aplicar" || planControlAccion === "guardar_monto" || planControlAccion === "guardar_limites")
+  const planControlaccionRequiereNegocio =
+    (planControlaccion === "aplicar" || planControlaccion === "guardar_monto" || planControlaccion === "guardar_limites")
     && !negocioActivoId;
   const canalPagoSeleccionado = normalizarCanalPago(solicitudPlan.canal_pago);
   const destinoCobroSeleccionado = paymentDestinations[canalPagoSeleccionado] || PAYMENT_DESTINATIONS_DEFAULT[canalPagoSeleccionado];
@@ -1636,29 +1636,29 @@ export default function ConfiguracionPage() {
     }));
   };
 
-  const ejecutarAccionPlanEjecutiva = async () => {
+  const ejecutaraccionPlanEjecutiva = async () => {
     if (!planControlSeleccionadoData) return;
-    if ((planControlAccion === "aplicar" || planControlAccion === "guardar_monto" || planControlAccion === "guardar_limites") && !negocioActivoId) {
-      setError("Selecciona un negocio para ejecutar esta accion");
+    if ((planControlaccion === "aplicar" || planControlaccion === "guardar_monto" || planControlaccion === "guardar_limites") && !negocioActivoId) {
+      setError("Selecciona un negocio para ejecutar esta acción");
       return;
     }
-    if (planControlAccion === "simular") {
+    if (planControlaccion === "simular") {
       setPlanSimulado(planControlSeleccionadoData.codigo);
       return;
     }
-    if (planControlAccion === "aplicar") {
+    if (planControlaccion === "aplicar") {
       await cambiarPlanNegocio(planControlSeleccionadoData.codigo);
       return;
     }
-    if (planControlAccion === "guardar_monto") {
+    if (planControlaccion === "guardar_monto") {
       await guardarMontosPlanes();
       return;
     }
-    if (planControlAccion === "guardar_limites") {
+    if (planControlaccion === "guardar_limites") {
       await guardarLimitesPlanes();
       return;
     }
-    if (planControlAccion === "bondades") {
+    if (planControlaccion === "bondades") {
       if (planControlSeleccionadoData.codigo !== "GRATUITO") {
         setError("La edicion de bondades aplica solo para el plan Gratuito");
         return;
@@ -1734,7 +1734,7 @@ export default function ConfiguracionPage() {
     const nuevo: SimuladorEscenario = {
       id: `esc-${Date.now()}`,
       nombre,
-      planCodigo: normalizarPlan(planSimulado),
+      plancodigo: normalizarPlan(planSimulado),
       override: { ...simuladorOverride, habilitado: true },
       fecha: new Date().toISOString(),
     };
@@ -1745,7 +1745,7 @@ export default function ConfiguracionPage() {
   };
 
   const cargarEscenarioGuardado = (escenario: SimuladorEscenario) => {
-    setPlanSimulado(normalizarPlan(escenario.planCodigo));
+    setPlanSimulado(normalizarPlan(escenario.plancodigo));
     setSimuladorOverride(escenario.override);
     setSuccess(`Escenario '${escenario.nombre}' cargado`);
   };
@@ -1851,7 +1851,7 @@ export default function ConfiguracionPage() {
     if (!negocioId) return;
     void cargarBranding(negocioId);
     void cargarTiposNegocioDesdeProductos();
-    void cargarConfiguracionSunat(negocioId);
+    void cargarconfiguracionSunat(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
     void cargarCuentasCobro(negocioId);
@@ -1864,7 +1864,7 @@ export default function ConfiguracionPage() {
     getNegocioIdActivo,
     cargarBranding,
     cargarTiposNegocioDesdeProductos,
-    cargarConfiguracionSunat,
+    cargarconfiguracionSunat,
     cargarPlanStats,
     cargarHistorialPlanes,
     cargarCuentasCobro,
@@ -1890,13 +1890,13 @@ export default function ConfiguracionPage() {
     if (!negocioId) return;
     void cargarBranding(negocioId);
     void cargarTiposNegocioDesdeProductos();
-    void cargarConfiguracionSunat(negocioId);
+    void cargarconfiguracionSunat(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
     void cargarCuentasCobro(negocioId);
     void cargarCatalogoPlanes(negocioId);
     void cargarMontosPlanes(negocioId);
-  }, [isSuperadmin, cargarBranding, cargarTiposNegocioDesdeProductos, cargarConfiguracionSunat, cargarPlanStats, cargarHistorialPlanes, cargarCuentasCobro, cargarCatalogoPlanes, cargarMontosPlanes]);
+  }, [isSuperadmin, cargarBranding, cargarTiposNegocioDesdeProductos, cargarconfiguracionSunat, cargarPlanStats, cargarHistorialPlanes, cargarCuentasCobro, cargarCatalogoPlanes, cargarMontosPlanes]);
 
   useEffect(() => {
     void cargarEscenariosSimulador();
@@ -2065,7 +2065,7 @@ export default function ConfiguracionPage() {
   }, [isSuperadmin, negocioSeleccionadoId, getNegocioIdActivo, cargarTicketsSoporte, soportePage]);
 
   const enviarMensajeSoporteChat = async () => {
-    if (loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente) return;
+    if (loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente) return;
 
     const consulta = soporteChatInput.trim();
     if (consulta.length < 8) {
@@ -2094,8 +2094,8 @@ export default function ConfiguracionPage() {
         consulta: `${consulta}\n\n${buildSofiaOperatingContext(sofiaResponseLevel, isFirstUserMessage)}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
       });
       const respuestaBot = isFirstUserMessage
-        ? `${clasif.resumen}\n\n${resp.recomendacion}\n\nFuente: ${resp.origen}`
-        : construirRespuestaTecnicaBreve(resp.recomendacion, clasif);
+        ? `${clasif.resumen}\n\n${resp.recomendación}\n\nFuente: ${resp.origen}`
+        : construirRespuestaTecnicaBreve(resp.recomendación, clasif);
       setSoporteChatMessages((prev) => [
         ...prev,
         {
@@ -2122,7 +2122,7 @@ export default function ConfiguracionPage() {
   };
 
   const escalarChatSoporte = async () => {
-    if (loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente) return;
+    if (loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente) return;
 
     const negocioId = getNegocioIdActivo();
     if (!negocioId && !isSuperadmin) {
@@ -2199,11 +2199,11 @@ export default function ConfiguracionPage() {
     setSoporteChatPrioridad((prev) => elevarPrioridad(prev, prompt.prioridad));
   };
 
-  const ejecutarDiagnosticoSuperagente = async () => {
-    if (!isSuperadmin || loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente) return;
+  const ejecutardiagnósticoSuperagente = async () => {
+    if (!isSuperadmin || loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente) return;
 
     try {
-      setLoadingDiagnosticoSuperagente(true);
+      setLoadingdiagnósticoSuperagente(true);
       setError("");
 
       const [healthResp, statusResp, incidentsResp] = await Promise.all([
@@ -2222,46 +2222,46 @@ export default function ConfiguracionPage() {
       const openIncidents = guardian?.open_incidents ?? 0;
       const safeMode = guardian?.safe_mode?.enabled ? "ON" : "OFF";
 
-      const recomendaciones: string[] = [];
+      const recomendaciónes: string[] = [];
       if (fiveXx > 0 || exceptions > 0) {
-        recomendaciones.push("Revisar trazas de backend y endpoints con 5xx.");
+        recomendaciónes.push("Revisar trazas de backend y endpoints con 5xx.");
       }
       if (openIncidents > 0) {
-        recomendaciones.push("Confirmar/ack incidentes Guardian pendientes.");
+        recomendaciónes.push("Confirmar/ack incidentes Guardian pendientes.");
       }
       if (safeMode === "ON") {
-        recomendaciones.push("Validar impacto de Safe Mode antes de desactivarlo.");
+        recomendaciónes.push("Validar impacto de Safe Mode antes de desactivarlo.");
       }
-      if (recomendaciones.length === 0) {
-        recomendaciones.push("Sin alertas criticas. Mantener monitoreo y ejecutar smoke UI cada deploy.");
+      if (recomendaciónes.length === 0) {
+        recomendaciónes.push("Sin alertas criticas. Mantener monitoreo y ejecutar smoke UI cada deploy.");
       }
 
-      const diagnostico = [
-        "Diagnostico Superagente completado.",
+      const diagnóstico = [
+        "diagnóstico Superagente completado.",
         `Health API: ${healthResp?.status || "OK"}`,
         `Guardian: safe_mode=${safeMode}, abiertos=${openIncidents}, 5xx=${fiveXx}, excepciones=${exceptions}`,
-        topIncident ? `Ultimo incidente: ${topIncident.title} [${topIncident.severity}]` : "Ultimo incidente: sin pendientes",
-        "Acciones sugeridas:",
-        ...recomendaciones.map((item, idx) => `${idx + 1}. ${item}`),
+        topIncident ? `Último incidente: ${topIncident.title} [${topIncident.severity}]` : "Último incidente: sin pendientes",
+        "acciones sugeridas:",
+        ...recomendaciónes.map((item, idx) => `${idx + 1}. ${item}`),
       ].join("\n");
 
       setSoporteChatMessages((prev) => [
         ...prev,
         {
-          id: `soporte-bot-diagnostico-${Date.now()}`,
+          id: `soporte-bot-diagnóstico-${Date.now()}`,
           role: "bot",
-          text: diagnostico,
+          text: diagnóstico,
           meta: "Fuente: Guardian Runtime + Health",
         },
       ]);
 
       setConfigAccessMode("soporte");
       setShowSoporteChatModal(true);
-      setSuccess("Diagnostico del Superagente generado en el chat de soporte");
+      setSuccess("diagnóstico del Superagente generado en el chat de soporte");
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "No se pudo ejecutar el diagnostico del Superagente"));
+      setError(getApiErrorMessage(err, "No se pudo ejecutar el diagnóstico del Superagente"));
     } finally {
-      setLoadingDiagnosticoSuperagente(false);
+      setLoadingdiagnósticoSuperagente(false);
     }
   };
 
@@ -2366,7 +2366,7 @@ export default function ConfiguracionPage() {
       setError("");
       await systemService.guardianSafeMode(
         enabled,
-        enabled ? "Activado manualmente desde panel Configuracion" : "Desactivado manualmente desde panel Configuracion"
+        enabled ? "Activado manualmente desde panel configuracion" : "Desactivado manualmente desde panel configuracion"
       );
       setSuccess(`Guardian Safe Mode ${enabled ? "activado" : "desactivado"}`);
       await cargarGuardianRuntime();
@@ -2383,7 +2383,7 @@ export default function ConfiguracionPage() {
     try {
       setAckingGuardianIncidentId(incidentId);
       setError("");
-      await systemService.guardianAckIncidente(incidentId, "Confirmado desde panel Configuracion");
+      await systemService.guardianAckIncidente(incidentId, "Confirmado desde panel configuracion");
       await cargarGuardianRuntime();
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo confirmar incidente"));
@@ -2442,7 +2442,7 @@ export default function ConfiguracionPage() {
       await cargarPlanStats();
     } catch (err) {
       console.error(err);
-      setError("No se pudo generar el backup. Verifica los permisos y limites de tu plan.");
+      setError("No se pudo generar el backup. Verifica los permisos y límites de tu plan.");
     } finally {
       setLoadingBackup(false);
     }
@@ -2501,8 +2501,8 @@ export default function ConfiguracionPage() {
     }
   };
 
-  const abrirPagoPlan = (planCodigo: string) => {
-    const normalizado = normalizarPlan(planCodigo);
+  const abrirPagoPlan = (plancodigo: string) => {
+    const normalizado = normalizarPlan(plancodigo);
     setPlanPagoObjetivo(normalizado);
     setSolicitudPlan((prev) => ({ ...prev, plan_objetivo: normalizado }));
     setComprobantePagoFile(null);
@@ -2840,10 +2840,10 @@ export default function ConfiguracionPage() {
                         <button
                           type="button"
                           className={`${styles.actionBtn} focus-ring`}
-                          onClick={() => void ejecutarDiagnosticoSuperagente()}
-                          disabled={loadingDiagnosticoSuperagente || loadingGuardian || loadingGuardianIncidents}
+                          onClick={() => void ejecutardiagnósticoSuperagente()}
+                          disabled={loadingdiagnósticoSuperagente || loadingGuardian || loadingGuardianIncidents}
                         >
-                          {loadingDiagnosticoSuperagente ? "Diagnosticando..." : "Diagnosticar y enviar al chat"}
+                          {loadingdiagnósticoSuperagente ? "Diagnosticando..." : "Diagnosticar y enviar al chat"}
                         </button>
 
                         <button
@@ -2878,7 +2878,7 @@ export default function ConfiguracionPage() {
                   </span>
 
                   <span className={styles.modeChipDesktop}>
-                    <strong>Modo: {configAccessMode === "soporte" ? "Soporte" : "Configuración"}</strong>
+                    <strong>Modo: {configAccessMode === "soporte" ? "Soporte" : "configuracion"}</strong>
                     <small>
                       {configAccessMode === "soporte"
                         ? "Atención asistida por IA y escalamiento a RENSOF"
@@ -2887,7 +2887,7 @@ export default function ConfiguracionPage() {
                   </span>
 
                   <span className={styles.modeChipMobile}>
-                    {configAccessMode === "soporte" ? "Soporte" : "Configuración"}
+                    {configAccessMode === "soporte" ? "Soporte" : "configuracion"}
                   </span>
                 </span>
               </div>
@@ -2897,9 +2897,9 @@ export default function ConfiguracionPage() {
 
           <ExecutivePulseBar
             modulo="Soporte"
-            estado={configAccessMode === "soporte" ? "Asistencia activa" : "Modo configuracion"}
+            estado={configAccessMode === "soporte" ? "Asistencia activa" : "Modo configuración"}
             foco="Atencion inteligente con SofIA y control de incidencias para cualquier tipo de negocio."
-            accion={{ label: "Abrir configuracion", href: "configuracion" }}
+            accion={{ label: "Abrir configuración", href: "configuracion" }}
             metricas={[
               { label: "Empresa", value: nombreEmpresa || "No definida" },
               { label: "Plan", value: planActual || "No definido", tone: "good" },
@@ -2989,7 +2989,7 @@ export default function ConfiguracionPage() {
                   onClick={() => setEmpresaTab("ubicacion")}
                   className={`${styles.tabBtn} ${empresaTab === "ubicacion" ? styles.tabBtnActive : ""}`}
                 >
-                  Ubicación
+                  ubicacion
                 </button>
                 <button
                   type="button"
@@ -3132,7 +3132,7 @@ export default function ConfiguracionPage() {
                           className="focus-ring"
                         >
                           <option value="PEN">Soles (PEN)</option>
-                          <option value="USD">Dolares (USD)</option>
+                          <option value="USD">Dólares (USD)</option>
                           <option value="EUR">Euros (EUR)</option>
                         </select>
                       </div>
@@ -3161,12 +3161,12 @@ export default function ConfiguracionPage() {
                           className="focus-ring"
                         >
                           <option value="es">Español</option>
-                          <option value="en">Ingles</option>
+                          <option value="en">Inglés</option>
                         </select>
                       </div>
 
                       <div className={`${styles.formRow} ${styles.fullRow}`}>
-                        <label htmlFor="empresa-descripcion">Descripción del negocio</label>
+                        <label htmlFor="empresa-descripcion">descripcion del negocio</label>
                         <textarea
                           id="empresa-descripcion"
                           value={businessForm.descripcion}
@@ -3192,10 +3192,10 @@ export default function ConfiguracionPage() {
                           inputMode="numeric"
                           maxLength={11}
                           pattern="[0-9]{11}"
-                          placeholder="11 digitos"
+                          placeholder="11 dígitos"
                           className="focus-ring"
                         />
-                        {rucInvalido ? <small className={styles.errorHint}>RUC incompleto: deben ser 11 digitos.</small> : null}
+                        {rucInvalido ? <small className={styles.errorHint}>RUC incompleto: deben ser 11 dígitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -3239,7 +3239,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "ubicacion" ? (
                   <div className={styles.companyBlock}>
-                    <h3>Contacto y ubicación</h3>
+                    <h3>Contacto y ubicacion</h3>
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-email">Correo</label>
@@ -3253,7 +3253,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-telefono">Telefono</label>
+                        <label htmlFor="empresa-telefono">Teléfono</label>
                         <input
                           id="empresa-telefono"
                           value={businessForm.telefono}
@@ -3263,7 +3263,7 @@ export default function ConfiguracionPage() {
                           pattern="[0-9]{9}"
                           className="focus-ring"
                         />
-                        {telefonoInvalido ? <small className={styles.errorHint}>Celular incompleto: deben ser 9 digitos.</small> : null}
+                        {telefonoInvalido ? <small className={styles.errorHint}>Celular incompleto: deben ser 9 dígitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -3277,7 +3277,7 @@ export default function ConfiguracionPage() {
                           pattern="[0-9]{9}"
                           className="focus-ring"
                         />
-                        {whatsappInvalido ? <small className={styles.errorHint}>WhatsApp incompleto: deben ser 9 digitos.</small> : null}
+                        {whatsappInvalido ? <small className={styles.errorHint}>WhatsApp incompleto: deben ser 9 dígitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -3291,7 +3291,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-direccion">Direccion</label>
+                        <label htmlFor="empresa-direccion">Dirección</label>
                         <input
                           id="empresa-direccion"
                           value={businessForm.direccion}
@@ -3331,7 +3331,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-postal">Codigo postal</label>
+                        <label htmlFor="empresa-postal">codigo postal</label>
                         <input
                           id="empresa-postal"
                           value={businessForm.codigo_postal}
@@ -3593,8 +3593,8 @@ export default function ConfiguracionPage() {
                       <small className={styles.helperText}>
                         Prioridad: {ticket.prioridad} | Usuario: {ticket.usuario_nombre}
                       </small>
-                      {ticket.recomendacion_ia ? (
-                        <small className={styles.helperText}>IA: {ticket.recomendacion_ia}</small>
+                      {ticket.recomendación_ia ? (
+                        <small className={styles.helperText}>IA: {ticket.recomendación_ia}</small>
                       ) : null}
                       {ticket.respuesta_superadmin ? (
                         <small className={styles.helperText}>Respuesta RENSOF: {ticket.respuesta_superadmin}</small>
@@ -3679,13 +3679,13 @@ export default function ConfiguracionPage() {
             />
 
             <p>
-              Resumen en tiempo real de limites consumidos para usuarios, reportes, soporte y productos.
+              Resumen en tiempo real de límites consumidos para usuarios, reportes, soporte y productos.
             </p>
 
             <div className={styles.planVisualBoard}>
               <header className={styles.planVisualHero}>
                 <p className={styles.planVisualEyebrow}>ALVENT PREMIUM 2026</p>
-                <h3 className={styles.planVisualHeadline}>Activa tu plan segun el ritmo de crecimiento</h3>
+                <h3 className={styles.planVisualHeadline}>Activa tu plan según el ritmo de crecimiento</h3>
                 <p className={styles.planVisualSubhead}>
                   Alternativas dinámicas conectadas al catálogo editable. {isSuperadmin ? "Como propietario del sistema, ajusta montos y límites desde esta misma sección." : "Solicita el plan ideal según tu consumo."}
                 </p>
@@ -3694,10 +3694,10 @@ export default function ConfiguracionPage() {
 
               <div className={styles.planVisualCallout}>
                 <div className={styles.planVisualCalloutCopy}>
-                  <strong>Activa ALVENT segun tu etapa comercial</strong>
+                  <strong>Activa ALVENT según tu etapa comercial</strong>
                   <p>
                     {isSuperadmin
-                      ? "Propietario del sistema: define capacidades y precios desde Configuración para que toda la vitrina de planes se actualice al instante."
+                      ? "Propietario del sistema: define capacidades y precios desde configuración para que toda la vitrina de planes se actualice al instante."
                       : "Empieza con el gratuito y escala a Básico, Pro o Premium cuando tu operación lo requiera."}
                   </p>
                   <div className={styles.planVisualMiniStrip} aria-label="Beneficios destacados">
@@ -3851,7 +3851,7 @@ export default function ConfiguracionPage() {
                       onClick={() => void guardarLimitesPlanes()}
                       disabled={savingPlanLimits}
                     >
-                      {savingPlanLimits ? "Guardando..." : "Guardar limites"}
+                      {savingPlanLimits ? "Guardando..." : "Guardar límites"}
                     </button>
                   </div>
                 </section>
@@ -3869,7 +3869,7 @@ export default function ConfiguracionPage() {
                 <section className={styles.planExecutiveControlBar}>
                   <div className={styles.planExecutiveControlHead}>
                     <strong>Panel ejecutivo de decisión</strong>
-                    <p>Una sola vista para elegir plan y ejecutar la accion requerida sin duplicar tarjetas.</p>
+                    <p>Una sola vista para elegir plan y ejecutar la acción requerida sin duplicar tarjetas.</p>
                   </div>
 
                   <div className={styles.planExecutiveControlGrid}>
@@ -3887,10 +3887,10 @@ export default function ConfiguracionPage() {
                     </label>
 
                     <label>
-                      Accion
+                      accion
                       <select
-                        value={planControlAccion}
-                        onChange={(e) => setPlanControlAccion(e.target.value as "simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades")}
+                        value={planControlaccion}
+                        onChange={(e) => setPlanControlaccion(e.target.value as "simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades")}
                         className="focus-ring"
                       >
                         <option value="simular">Simular plan</option>
@@ -3904,14 +3904,14 @@ export default function ConfiguracionPage() {
                     <button
                       type="button"
                       className={`${styles.planPickBtn} focus-ring`}
-                      onClick={() => void ejecutarAccionPlanEjecutiva()}
-                      disabled={!planControlSeleccionadoData || changingPlan || savingPlanAmounts || savingPlanLimits || Boolean(planControlAccionRequiereNegocio)}
-                      title={planControlAccionRequiereNegocio ? "Selecciona una empresa cliente en la sección Empresa" : ""}
+                      onClick={() => void ejecutaraccionPlanEjecutiva()}
+                      disabled={!planControlSeleccionadoData || changingPlan || savingPlanAmounts || savingPlanLimits || Boolean(planControlaccionRequiereNegocio)}
+                      title={planControlaccionRequiereNegocio ? "Selecciona una empresa cliente en la sección Empresa" : ""}
                     >
-                      {planControlAccion === "simular" ? "Ejecutar simulación" :
-                        planControlAccion === "aplicar" ? (changingPlan ? "Aplicando..." : "Aplicar plan") :
-                        planControlAccion === "guardar_monto" ? (savingPlanAmounts ? "Guardando..." : "Guardar montos") :
-                        planControlAccion === "guardar_limites" ? (savingPlanLimits ? "Guardando..." : "Guardar límites") :
+                      {planControlaccion === "simular" ? "Ejecutar simulación" :
+                        planControlaccion === "aplicar" ? (changingPlan ? "Aplicando..." : "Aplicar plan") :
+                        planControlaccion === "guardar_monto" ? (savingPlanAmounts ? "Guardando..." : "Guardar montos") :
+                        planControlaccion === "guardar_limites" ? (savingPlanLimits ? "Guardando..." : "Guardar límites") :
                         "Ir a bondades"}
                     </button>
                   </div>
@@ -4092,7 +4092,7 @@ export default function ConfiguracionPage() {
                     </label>
 
                     <label>
-                      Accion rapida
+                      acción rápida
                       <select
                         value={planControlSimulado ? "simulado" : "simular"}
                         onChange={(e) => {
@@ -4132,7 +4132,7 @@ export default function ConfiguracionPage() {
                   {loadingHistorialPlanes ? (
                     <p>Cargando historial...</p>
                   ) : historialPlanes.length === 0 ? (
-                    <p>Aun no hay pagos registrados.</p>
+                    <p>Aún no hay pagos registrados.</p>
                   ) : (
                     <div className={styles.planHistoryTableWrap}>
                       <table className={styles.planHistoryTable}>
@@ -4286,10 +4286,10 @@ export default function ConfiguracionPage() {
                   <p>{ticketAtencion.consulta}</p>
                 </div>
 
-                {ticketAtencion.recomendacion_ia ? (
+                {ticketAtencion.recomendación_ia ? (
                   <div className={styles.chatBubbleIa}>
                     <strong>IA</strong>
-                    <p>{ticketAtencion.recomendacion_ia}</p>
+                    <p>{ticketAtencion.recomendación_ia}</p>
                   </div>
                 ) : null}
 
@@ -4362,7 +4362,7 @@ export default function ConfiguracionPage() {
                   type="button"
                   onClick={() => void enviarMensajeSoporteChat()}
                   className={styles.confirmBtn}
-                  disabled={loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente}
+                  disabled={loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente}
                 >
                   {loadingSugerenciaIa ? "Consultando IA..." : "Consultar IA"}
                 </button>
@@ -4370,7 +4370,7 @@ export default function ConfiguracionPage() {
                   type="button"
                   onClick={() => void escalarChatSoporte()}
                   className={styles.actionBtn}
-                  disabled={loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente}
+                  disabled={loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente}
                 >
                   {creatingSoporte ? "Escalando..." : "Escalar a RENSOF"}
                 </button>
@@ -4378,7 +4378,7 @@ export default function ConfiguracionPage() {
                   type="button"
                   onClick={() => setShowSoporteChatModal(false)}
                   className={styles.cancelBtn}
-                  disabled={loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente}
+                  disabled={loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente}
                 >
                   Cerrar
                 </button>
@@ -4393,7 +4393,7 @@ export default function ConfiguracionPage() {
                     type="button"
                     className={`${styles.supportQuickBtn} focus-ring`}
                     onClick={() => aplicarPromptRapido(prompt)}
-                    disabled={loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente}
+                    disabled={loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente}
                   >
                     {prompt.label}
                   </button>
@@ -4402,7 +4402,7 @@ export default function ConfiguracionPage() {
                   type="button"
                   className={`${styles.supportQuickBtn} ${styles.supportQuickBtnGhost} focus-ring`}
                   onClick={limpiarConversacionChat}
-                  disabled={loadingSugerenciaIa || creatingSoporte || loadingDiagnosticoSuperagente}
+                  disabled={loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente}
                 >
                   Limpiar chat
                 </button>
@@ -4431,19 +4431,19 @@ export default function ConfiguracionPage() {
                   </div>
                 ))}
 
-                {(loadingSugerenciaIa || loadingDiagnosticoSuperagente) ? (
+                {(loadingSugerenciaIa || loadingdiagnósticoSuperagente) ? (
                   <div className={styles.chatTypingRow}>
                     <span className={styles.chatTypingDot} />
                     <span className={styles.chatTypingDot} />
                     <span className={styles.chatTypingDot} />
-                    <small>{loadingDiagnosticoSuperagente ? "SofIA diagnosticando operación..." : "SofIA analizando incidencia..."}</small>
+                    <small>{loadingdiagnósticoSuperagente ? "SofIA diagnosticando operación..." : "SofIA analizando incidencia..."}</small>
                   </div>
                 ) : null}
               </div>
 
               <div className={styles.supportChatComposer}>
                 <p className={styles.chatLevelHint}>
-                  Nivel activo: <strong>{sofiaResponseLevel}</strong>. SofIA adapta profundidad y lenguaje automaticamente segÃºn el rol.
+                  Nivel activo: <strong>{sofiaResponseLevel}</strong>. SofIA adapta profundidad y lenguaje automaticamente según el rol.
                 </p>
 
                 <label className={styles.formRow}>

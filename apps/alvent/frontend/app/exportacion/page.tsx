@@ -433,7 +433,7 @@ export default function ExportacionPage() {
           <ExecutivePulseBar
             modulo="Exportacion"
             estado={exportingExcel || exportingPdf ? "Generando" : "Listo"}
-            foco="Consolidacion controlada de datos para auditoria, direccion y despliegue." 
+            foco="Consolidación controlada de datos para auditoría, dirección y despliegue."
             accion={{ label: "Abrir reportes", href: "reportes" }}
             metricas={[
               { label: "Modulos", value: String(selectedExportCount) },

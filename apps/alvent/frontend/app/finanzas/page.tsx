@@ -34,14 +34,14 @@ const PLAN_AMOUNT_BY_CODE: Record<string, PlanAmountKey> = {
 
 const PLAN_ORDER = ["GRATUITO", "PRUEBA", "BASICO", "LITE", "PRO", "PREMIUM", "SIN_PLAN"];
 
-const normalizarCodigoPlan = (plan: string) =>
+const normalizarcodigoPlan = (plan: string) =>
   String(plan || "SIN_PLAN")
     .trim()
     .toUpperCase()
     .replace(/\s+/g, "_");
 
 const formatPlanLabel = (plan: string) => {
-  const code = normalizarCodigoPlan(plan);
+  const code = normalizarcodigoPlan(plan);
   if (code === "SIN_PLAN") return "Sin plan";
   return code
     .toLowerCase()
@@ -340,7 +340,7 @@ export default function FinanzasPage() {
   }, [ingresos]);
 
   const getPlanAmount = useCallback((plan: string) => {
-    const amountKey = PLAN_AMOUNT_BY_CODE[normalizarCodigoPlan(plan)];
+    const amountKey = PLAN_AMOUNT_BY_CODE[normalizarcodigoPlan(plan)];
     return amountKey ? Number(planAmounts[amountKey] || 0) : 0;
   }, [planAmounts]);
 
@@ -348,7 +348,7 @@ export default function FinanzasPage() {
     const map = new Map<string, { plan: string; clientes: number }>();
 
     negocios.forEach((negocio) => {
-      const plan = normalizarCodigoPlan(negocio.plan || "SIN_PLAN");
+      const plan = normalizarcodigoPlan(negocio.plan || "SIN_PLAN");
       const current = map.get(plan) || { plan, clientes: 0 };
       current.clientes += 1;
       map.set(plan, current);
@@ -365,7 +365,7 @@ export default function FinanzasPage() {
     const map = new Map<string, { plan: string; ingresos: number; movimientos: number }>();
 
     ingresos.forEach((row) => {
-      const plan = normalizarCodigoPlan(row.plan_solicitado || "SIN_PLAN");
+      const plan = normalizarcodigoPlan(row.plan_solicitado || "SIN_PLAN");
       const current = map.get(plan) || { plan, ingresos: 0, movimientos: 0 };
       current.ingresos += Number(row.monto || 0);
       current.movimientos += 1;
@@ -434,7 +434,7 @@ export default function FinanzasPage() {
             modulo="Finanzas"
             estado={loading ? "Sincronizando" : "Operativo"}
             foco="Control contable mensual con lectura de utilidad y cierre de periodo."
-            accion={{ label: "Ir a Configuración", href: "configuracion" }}
+            accion={{ label: "Ir a configuración", href: "configuracion" }}
             metricas={[
               { label: "Ingresos", value: `S/${totalIngresos.toFixed(2)}`, tone: "good" },
               { label: "Gastos", value: `S/${totalGastos.toFixed(2)}`, tone: "warn" },
@@ -450,7 +450,7 @@ export default function FinanzasPage() {
           {success ? <p className={styles.successBox}>{success}</p> : null}
 
           <section className={styles.card}>
-            <Toolbar title="Periodo de analisis" right={<StatusBadge text={loading ? "Cargando" : periodo} variant="neutral" />} />
+            <Toolbar title="Periodo de análisis" right={<StatusBadge text={loading ? "Cargando" : periodo} variant="neutral" />} />
             <div className={styles.periodRow}>
               <input
                 type="month"
@@ -488,7 +488,7 @@ export default function FinanzasPage() {
               right={<StatusBadge text={loadingPlanFinanciero ? "Actualizando" : "Vista financiera"} variant="info" />}
             />
             <p className={styles.mutedText}>
-              La administraciÃ³n completa de planes permanece en ConfiguraciÃ³n. Finanzas muestra lectura econÃ³mica:
+              La administración completa de planes permanece en configuración. Finanzas muestra lectura económica:
               ingresos del periodo, clientes por plan, MRR estimado y pagos pendientes.
             </p>
 
@@ -513,7 +513,7 @@ export default function FinanzasPage() {
                   window.location.href = appPath("configuracion");
                 }}
               >
-                Administrar planes en ConfiguraciÃ³n
+                Administrar planes en configuración
               </button>
             </div>
 
@@ -536,12 +536,12 @@ export default function FinanzasPage() {
               <article className={styles.financialPlanCard}>
                 <span>Pagos pendientes</span>
                 <strong>{pagosPendientes}</strong>
-                <small>Solicitudes en validaciÃ³n</small>
+                <small>Solicitudes en validación</small>
               </article>
               <article className={styles.financialPlanCard}>
-                <span>Plan mÃ¡s contratado</span>
+                <span>Plan más contratado</span>
                 <strong>{planMasContratado}</strong>
-                <small>SegÃºn empresas actuales</small>
+                <small>Según empresas actuales</small>
               </article>
             </div>
 
@@ -579,7 +579,7 @@ export default function FinanzasPage() {
           <section className={styles.card}>
             <Toolbar title="Movimientos por plan y mes" right={<StatusBadge text={loading ? "Cargando" : `${ingresos.length} registros`} variant="neutral" />} />
             <p>
-              Se muestran solo activaciones con estado aplicado, agrupadas por mes y plan para leer rapido ingreso,
+              Se muestran solo activaciones con estado aplicado, agrupadas por mes y plan para leer rápido ingreso,
               cantidad de movimientos y negocios impactados.
             </p>
 
@@ -657,7 +657,7 @@ export default function FinanzasPage() {
                 <input type="date" value={form.fecha_gasto} onChange={(e) => setForm((prev) => ({ ...prev, fecha_gasto: e.target.value }))} className="focus-ring" />
               </label>
               <label className={styles.fullRow}>
-                Descripción
+                descripcion
                 <input type="text" value={form.descripcion} onChange={(e) => setForm((prev) => ({ ...prev, descripcion: e.target.value }))} className="focus-ring" placeholder="Ej. Servicio de hosting" />
               </label>
               <label>
@@ -687,7 +687,7 @@ export default function FinanzasPage() {
                   <tr>
                     <th>Fecha</th>
                     <th>Categoría</th>
-                    <th>Descripción</th>
+                    <th>descripcion</th>
                     <th>Proveedor</th>
                     <th>Monto</th>
                     <th>Comprobante</th>
@@ -751,7 +751,7 @@ export default function FinanzasPage() {
                 <tbody>
                   {cierres.length === 0 ? (
                     <tr>
-                      <td colSpan={5}>Aun no hay cierres mensuales registrados.</td>
+                      <td colSpan={5}>Aún no hay cierres mensuales registrados.</td>
                     </tr>
                   ) : (
                     cierres.map((cierre) => (

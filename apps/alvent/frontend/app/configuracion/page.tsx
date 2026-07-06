@@ -161,29 +161,29 @@ const PAYMENT_DESTINATIONS_DEFAULT: PaymentDestinations = {
     detalle: [
       "Banco: BCP",
       "Titular: RENSOF S.A.C.",
-      "Cuenta corriente: 191-2587456-0-21",
-      "CCI: 00219100258745602137",
+      "Cuenta corriente: xxxxxxxxxxxxxxxxxxxxx",
+      "CCI: yyyyyyyyyyyyyyyyy",
     ],
   },
   tarjeta: {
     titulo: "Pago con tarjeta (alineado a cuenta bancaria)",
     detalle: [
       "Deposita el abono en la misma cuenta bancaria oficial de ALVENT ERP PRO.",
-      "Banco: BCP - Cuenta corriente 191-2587456-0-21",
-      "CCI: 00219100258745602137",
+      "Banco: BCP - Cuenta corriente xxxxxxxxxxxxxxxxxxxxx",
+      "CCI: yyyyyyyyyyyyyyyyy",
     ],
   },
   yape: {
     titulo: "Yape",
     detalle: [
-      "Numero de abono Yape: 987 654 321",
+      "Numero de abono Yape: zzzzzzzzzzzz",
       "Titular: RENSOF S.A.C.",
     ],
   },
   plin: {
     titulo: "Plin",
     detalle: [
-      "Numero de abono Plin: 987 654 321",
+      "Numero de abono Plin: zzzzzzzzzzzz",
       "Titular: RENSOF S.A.C.",
     ],
   },
@@ -297,7 +297,7 @@ export default function ConfiguracionPage() {
   type SimuladorEscenario = {
     id: string;
     nombre: string;
-    planCodigo: string;
+    plancodigo: string;
     override: {
       habilitado: boolean;
       usuarios_ilimitado: boolean;
@@ -367,7 +367,7 @@ export default function ConfiguracionPage() {
     sunat_habilitado: boolean;
   }>>([]);
   const [planControlSeleccionado, setPlanControlSeleccionado] = useState<string>("GRATUITO");
-  const [planControlAccion, setPlanControlAccion] = useState<"simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades">("simular");
+  const [planControlaccion, setPlanControlaccion] = useState<"simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades">("simular");
   const [planSimulado, setPlanSimulado] = useState<string>("BASICO");
   const [simuladorOverride, setSimuladorOverride] = useState({
     habilitado: false,
@@ -701,7 +701,7 @@ export default function ConfiguracionPage() {
 
     const negocioId = await resolverNegocioObjetivo("guardar logotipo");
     if (!negocioId) {
-      setError("Selecciona explicitamente el negocio objetivo antes de guardar logotipo");
+      setError("Selecciona explícitamente el negocio objetivo antes de guardar logotipo");
       return;
     }
 
@@ -726,7 +726,7 @@ export default function ConfiguracionPage() {
   const guardarDatosEmpresa = async () => {
     const negocioId = await resolverNegocioObjetivo("guardar datos de empresa");
     if (!negocioId) {
-      setError("Selecciona explicitamente el negocio objetivo antes de guardar datos de empresa");
+      setError("Selecciona explícitamente el negocio objetivo antes de guardar datos de empresa");
       return;
     }
 
@@ -779,7 +779,7 @@ export default function ConfiguracionPage() {
 
       let configSunatGuardada = true;
       try {
-        await negocioService.updateConfiguracion(negocioId, {
+        await negocioService.updateconfiguracion(negocioId, {
           integracion_sunat: vincularComprobantesSunat,
         });
       } catch {
@@ -816,7 +816,7 @@ export default function ConfiguracionPage() {
     }
   }, [getNegocioIdActivo]);
 
-  const cargarConfiguracionSunat = useCallback(async (negocioIdArg?: number) => {
+  const cargarconfiguracionSunat = useCallback(async (negocioIdArg?: number) => {
     const negocioId = negocioIdArg || getNegocioIdActivo();
     if (!negocioId) {
       setVincularComprobantesSunat(false);
@@ -824,7 +824,7 @@ export default function ConfiguracionPage() {
     }
 
     try {
-      const cfg = await negocioService.getConfiguracion(negocioId);
+      const cfg = await negocioService.getconfiguracion(negocioId);
       setVincularComprobantesSunat(Boolean(cfg?.integracion_sunat));
     } catch {
       setVincularComprobantesSunat(false);
@@ -1005,7 +1005,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("guardar montos");
     if (!negocioId) {
-      setError("Selecciona explicitamente el negocio objetivo para guardar montos");
+      setError("Selecciona explícitamente el negocio objetivo para guardar montos");
       return;
     }
 
@@ -1043,9 +1043,9 @@ export default function ConfiguracionPage() {
 
   const guardarLimitesPlanes = async () => {
     if (!isSuperadmin) return;
-    const negocioId = await resolverNegocioObjetivo("guardar limites");
+    const negocioId = await resolverNegocioObjetivo("guardar límites");
     if (!negocioId) {
-      setError("Selecciona explicitamente el negocio objetivo para guardar limites");
+      setError("Selecciona explícitamente el negocio objetivo para guardar límites");
       return;
     }
 
@@ -1112,20 +1112,20 @@ export default function ConfiguracionPage() {
     }
   };
 
-  const cambiarPlanNegocio = async (planCodigo: string) => {
+  const cambiarPlanNegocio = async (plancodigo: string) => {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("aplicar el plan");
     if (!negocioId) {
-      setError("Selecciona explicitamente el negocio objetivo para aplicar cambios de plan");
+      setError("Selecciona explícitamente el negocio objetivo para aplicar cambios de plan");
       return;
     }
-    if (normalizarPlan(planCodigo) === normalizarPlan(businessForm.plan)) return;
+    if (normalizarPlan(plancodigo) === normalizarPlan(businessForm.plan)) return;
 
     try {
       setChangingPlan(true);
       setError("");
       setSuccess("");
-      const actualizado = await negocioService.update(negocioId, { plan: normalizarPlan(planCodigo) });
+      const actualizado = await negocioService.update(negocioId, { plan: normalizarPlan(plancodigo) });
       setNegocio(actualizado);
       setBusinessForm((prev) => ({ ...prev, plan: normalizarPlan(actualizado.plan) }));
       setSuccess(`Plan actualizado a ${nombrePlan(actualizado.plan)} correctamente`);
@@ -1316,8 +1316,8 @@ export default function ConfiguracionPage() {
     ? PLAN_PRICE_MAP[planControlSeleccionadoData.codigo] as keyof typeof planAmounts
     : null;
   const negocioActivoId = getNegocioIdActivo();
-  const planControlAccionRequiereNegocio =
-    (planControlAccion === "aplicar" || planControlAccion === "guardar_monto" || planControlAccion === "guardar_limites")
+  const planControlaccionRequiereNegocio =
+    (planControlaccion === "aplicar" || planControlaccion === "guardar_monto" || planControlaccion === "guardar_limites")
     && !negocioActivoId;
   const canalPagoSeleccionado = normalizarCanalPago(solicitudPlan.canal_pago);
   const destinoCobroSeleccionado = paymentDestinations[canalPagoSeleccionado] || PAYMENT_DESTINATIONS_DEFAULT[canalPagoSeleccionado];
@@ -1338,29 +1338,29 @@ export default function ConfiguracionPage() {
     }));
   };
 
-  const ejecutarAccionPlanEjecutiva = async () => {
+  const ejecutaraccionPlanEjecutiva = async () => {
     if (!planControlSeleccionadoData) return;
-    if ((planControlAccion === "aplicar" || planControlAccion === "guardar_monto" || planControlAccion === "guardar_limites") && !negocioActivoId) {
-      setError("Selecciona un negocio para ejecutar esta accion");
+    if ((planControlaccion === "aplicar" || planControlaccion === "guardar_monto" || planControlaccion === "guardar_limites") && !negocioActivoId) {
+      setError("Selecciona un negocio para ejecutar esta acción");
       return;
     }
-    if (planControlAccion === "simular") {
+    if (planControlaccion === "simular") {
       setPlanSimulado(planControlSeleccionadoData.codigo);
       return;
     }
-    if (planControlAccion === "aplicar") {
+    if (planControlaccion === "aplicar") {
       await cambiarPlanNegocio(planControlSeleccionadoData.codigo);
       return;
     }
-    if (planControlAccion === "guardar_monto") {
+    if (planControlaccion === "guardar_monto") {
       await guardarMontosPlanes();
       return;
     }
-    if (planControlAccion === "guardar_limites") {
+    if (planControlaccion === "guardar_limites") {
       await guardarLimitesPlanes();
       return;
     }
-    if (planControlAccion === "bondades") {
+    if (planControlaccion === "bondades") {
       if (planControlSeleccionadoData.codigo !== "GRATUITO") {
         setError("La edicion de bondades aplica solo para el plan Gratuito");
         return;
@@ -1436,7 +1436,7 @@ export default function ConfiguracionPage() {
     const nuevo: SimuladorEscenario = {
       id: `esc-${Date.now()}`,
       nombre,
-      planCodigo: normalizarPlan(planSimulado),
+      plancodigo: normalizarPlan(planSimulado),
       override: { ...simuladorOverride, habilitado: true },
       fecha: new Date().toISOString(),
     };
@@ -1447,7 +1447,7 @@ export default function ConfiguracionPage() {
   };
 
   const cargarEscenarioGuardado = (escenario: SimuladorEscenario) => {
-    setPlanSimulado(normalizarPlan(escenario.planCodigo));
+    setPlanSimulado(normalizarPlan(escenario.plancodigo));
     setSimuladorOverride(escenario.override);
     setSuccess(`Escenario '${escenario.nombre}' cargado`);
   };
@@ -1551,7 +1551,7 @@ export default function ConfiguracionPage() {
     if (!negocioId) return;
     void cargarBranding(negocioId);
     void cargarTiposNegocioDesdeProductos();
-    void cargarConfiguracionSunat(negocioId);
+    void cargarconfiguracionSunat(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
     void cargarCuentasCobro(negocioId);
@@ -1564,7 +1564,7 @@ export default function ConfiguracionPage() {
     getNegocioIdActivo,
     cargarBranding,
     cargarTiposNegocioDesdeProductos,
-    cargarConfiguracionSunat,
+    cargarconfiguracionSunat,
     cargarPlanStats,
     cargarHistorialPlanes,
     cargarCuentasCobro,
@@ -1590,13 +1590,13 @@ export default function ConfiguracionPage() {
     if (!negocioId) return;
     void cargarBranding(negocioId);
     void cargarTiposNegocioDesdeProductos();
-    void cargarConfiguracionSunat(negocioId);
+    void cargarconfiguracionSunat(negocioId);
     void cargarPlanStats();
     void cargarHistorialPlanes(negocioId);
     void cargarCuentasCobro(negocioId);
     void cargarCatalogoPlanes(negocioId);
     void cargarMontosPlanes(negocioId);
-  }, [isSuperadmin, cargarBranding, cargarTiposNegocioDesdeProductos, cargarConfiguracionSunat, cargarPlanStats, cargarHistorialPlanes, cargarCuentasCobro, cargarCatalogoPlanes, cargarMontosPlanes]);
+  }, [isSuperadmin, cargarBranding, cargarTiposNegocioDesdeProductos, cargarconfiguracionSunat, cargarPlanStats, cargarHistorialPlanes, cargarCuentasCobro, cargarCatalogoPlanes, cargarMontosPlanes]);
 
   useEffect(() => {
     void cargarEscenariosSimulador();
@@ -1770,7 +1770,7 @@ export default function ConfiguracionPage() {
         {
           id: `soporte-bot-${Date.now()}`,
           role: "bot",
-          text: `${resp.recomendacion} (${resp.origen})`,
+          text: `${resp.recomendación} (${resp.origen})`,
         },
       ]);
     } catch (err: unknown) {
@@ -1914,7 +1914,7 @@ export default function ConfiguracionPage() {
       setError("");
       await systemService.guardianSafeMode(
         enabled,
-        enabled ? "Activado manualmente desde panel Configuracion" : "Desactivado manualmente desde panel Configuracion"
+        enabled ? "Activado manualmente desde panel configuracion" : "Desactivado manualmente desde panel configuracion"
       );
       setSuccess(`Guardian Safe Mode ${enabled ? "activado" : "desactivado"}`);
       await cargarGuardianRuntime();
@@ -1931,7 +1931,7 @@ export default function ConfiguracionPage() {
     try {
       setAckingGuardianIncidentId(incidentId);
       setError("");
-      await systemService.guardianAckIncidente(incidentId, "Confirmado desde panel Configuracion");
+      await systemService.guardianAckIncidente(incidentId, "Confirmado desde panel configuracion");
       await cargarGuardianRuntime();
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo confirmar incidente"));
@@ -2049,8 +2049,8 @@ export default function ConfiguracionPage() {
     }
   };
 
-  const abrirPagoPlan = (planCodigo: string) => {
-    const normalizado = normalizarPlan(planCodigo);
+  const abrirPagoPlan = (plancodigo: string) => {
+    const normalizado = normalizarPlan(plancodigo);
     setPlanPagoObjetivo(normalizado);
     setSolicitudPlan((prev) => ({ ...prev, plan_objetivo: normalizado }));
     setComprobantePagoFile(null);
@@ -2179,7 +2179,7 @@ export default function ConfiguracionPage() {
                   </span>
 
                   <span className={styles.modeChipDesktop}>
-                    <strong>Modo: {configAccessMode === "soporte" ? "Soporte" : "Configuración"}</strong>
+                    <strong>Modo: {configAccessMode === "soporte" ? "Soporte" : "configuracion"}</strong>
                     <small>
                       {configAccessMode === "soporte"
                         ? "Atención asistida por IA y escalamiento a RENSOF"
@@ -2188,7 +2188,7 @@ export default function ConfiguracionPage() {
                   </span>
 
                   <span className={styles.modeChipMobile}>
-                    {configAccessMode === "soporte" ? "Soporte" : "Configuración"}
+                    {configAccessMode === "soporte" ? "Soporte" : "configuracion"}
                   </span>
                 </span>
               </div>
@@ -2197,7 +2197,7 @@ export default function ConfiguracionPage() {
           </section>
 
           <ExecutivePulseBar
-            modulo="Configuracion"
+            modulo="configuracion"
             estado={configAccessMode === "soporte" ? "Modo soporte" : "Modo configuración"}
             foco="Gobierno operativo y personalizacion adaptable para cualquier escala de negocio."
             accion={{ label: "Ir a empresa", href: "empresa" }}
@@ -2287,7 +2287,7 @@ export default function ConfiguracionPage() {
                   onClick={() => setEmpresaTab("ubicacion")}
                   className={`${styles.tabBtn} ${empresaTab === "ubicacion" ? styles.tabBtnActive : ""}`}
                 >
-                  Ubicación
+                  ubicacion
                 </button>
                 <button
                   type="button"
@@ -2430,7 +2430,7 @@ export default function ConfiguracionPage() {
                           className="focus-ring"
                         >
                           <option value="PEN">Soles (PEN)</option>
-                          <option value="USD">Dolares (USD)</option>
+                          <option value="USD">Dólares (USD)</option>
                           <option value="EUR">Euros (EUR)</option>
                         </select>
                       </div>
@@ -2459,12 +2459,12 @@ export default function ConfiguracionPage() {
                           className="focus-ring"
                         >
                           <option value="es">Español</option>
-                          <option value="en">Ingles</option>
+                          <option value="en">Inglés</option>
                         </select>
                       </div>
 
                       <div className={`${styles.formRow} ${styles.fullRow}`}>
-                        <label htmlFor="empresa-descripcion">Descripción del negocio</label>
+                        <label htmlFor="empresa-descripcion">descripcion del negocio</label>
                         <textarea
                           id="empresa-descripcion"
                           value={businessForm.descripcion}
@@ -2490,10 +2490,10 @@ export default function ConfiguracionPage() {
                           inputMode="numeric"
                           maxLength={11}
                           pattern="[0-9]{11}"
-                          placeholder="11 digitos"
+                          placeholder="11 dígitos"
                           className="focus-ring"
                         />
-                        {rucInvalido ? <small className={styles.errorHint}>RUC incompleto: deben ser 11 digitos.</small> : null}
+                        {rucInvalido ? <small className={styles.errorHint}>RUC incompleto: deben ser 11 dígitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -2537,7 +2537,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "ubicacion" ? (
                   <div className={styles.companyBlock}>
-                    <h3>Contacto y ubicación</h3>
+                    <h3>Contacto y ubicacion</h3>
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-email">Correo</label>
@@ -2551,7 +2551,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-telefono">Telefono</label>
+                        <label htmlFor="empresa-telefono">Teléfono</label>
                         <input
                           id="empresa-telefono"
                           value={businessForm.telefono}
@@ -2561,7 +2561,7 @@ export default function ConfiguracionPage() {
                           pattern="[0-9]{9}"
                           className="focus-ring"
                         />
-                        {telefonoInvalido ? <small className={styles.errorHint}>Celular incompleto: deben ser 9 digitos.</small> : null}
+                        {telefonoInvalido ? <small className={styles.errorHint}>Celular incompleto: deben ser 9 dígitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -2575,7 +2575,7 @@ export default function ConfiguracionPage() {
                           pattern="[0-9]{9}"
                           className="focus-ring"
                         />
-                        {whatsappInvalido ? <small className={styles.errorHint}>WhatsApp incompleto: deben ser 9 digitos.</small> : null}
+                        {whatsappInvalido ? <small className={styles.errorHint}>WhatsApp incompleto: deben ser 9 dígitos.</small> : null}
                       </div>
 
                       <div className={styles.formRow}>
@@ -2589,7 +2589,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-direccion">Direccion</label>
+                        <label htmlFor="empresa-direccion">Dirección</label>
                         <input
                           id="empresa-direccion"
                           value={businessForm.direccion}
@@ -2629,7 +2629,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-postal">Codigo postal</label>
+                        <label htmlFor="empresa-postal">codigo postal</label>
                         <input
                           id="empresa-postal"
                           value={businessForm.codigo_postal}
@@ -2879,8 +2879,8 @@ export default function ConfiguracionPage() {
                       <small className={styles.helperText}>
                         Prioridad: {ticket.prioridad} | Usuario: {ticket.usuario_nombre}
                       </small>
-                      {ticket.recomendacion_ia ? (
-                        <small className={styles.helperText}>IA: {ticket.recomendacion_ia}</small>
+                      {ticket.recomendación_ia ? (
+                        <small className={styles.helperText}>IA: {ticket.recomendación_ia}</small>
                       ) : null}
                       {ticket.respuesta_superadmin ? (
                         <small className={styles.helperText}>Respuesta RENSOF: {ticket.respuesta_superadmin}</small>
@@ -2941,7 +2941,7 @@ export default function ConfiguracionPage() {
               />
 
               <p>
-                Usa esta opcion solo cuando sea necesario. Requiere confirmacion con credenciales de administrador.
+                Usa esta opción solo cuando sea necesario. Requiere confirmación con credenciales de administrador.
               </p>
 
               <button
@@ -2981,7 +2981,7 @@ export default function ConfiguracionPage() {
                   <strong>Activa ALVENT según tu etapa comercial</strong>
                   <p>
                     {isSuperadmin
-                      ? "Propietario del sistema: define capacidades y precios desde Configuración para que toda la vitrina de planes se actualice al instante."
+                      ? "Propietario del sistema: define capacidades y precios desde configuración para que toda la vitrina de planes se actualice al instante."
                       : "Empieza con el gratuito y escala a Básico, Pro o Premium cuando tu operación lo requiera."}
                   </p>
                   <div className={styles.planVisualMiniStrip} aria-label="Beneficios destacados">
@@ -3180,10 +3180,10 @@ export default function ConfiguracionPage() {
                     </label>
 
                     <label>
-                      Accion
+                      accion
                       <select
-                        value={planControlAccion}
-                        onChange={(e) => setPlanControlAccion(e.target.value as "simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades")}
+                        value={planControlaccion}
+                        onChange={(e) => setPlanControlaccion(e.target.value as "simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades")}
                         className="focus-ring"
                       >
                         <option value="simular">Simular plan</option>
@@ -3197,14 +3197,14 @@ export default function ConfiguracionPage() {
                     <button
                       type="button"
                       className={`${styles.planPickBtn} focus-ring`}
-                      onClick={() => void ejecutarAccionPlanEjecutiva()}
-                      disabled={!planControlSeleccionadoData || changingPlan || savingPlanAmounts || savingPlanLimits || Boolean(planControlAccionRequiereNegocio)}
-                      title={planControlAccionRequiereNegocio ? "Selecciona una empresa cliente en la sección Empresa" : ""}
+                      onClick={() => void ejecutaraccionPlanEjecutiva()}
+                      disabled={!planControlSeleccionadoData || changingPlan || savingPlanAmounts || savingPlanLimits || Boolean(planControlaccionRequiereNegocio)}
+                      title={planControlaccionRequiereNegocio ? "Selecciona una empresa cliente en la sección Empresa" : ""}
                     >
-                      {planControlAccion === "simular" ? "Ejecutar simulación" :
-                        planControlAccion === "aplicar" ? (changingPlan ? "Aplicando..." : "Aplicar plan") :
-                        planControlAccion === "guardar_monto" ? (savingPlanAmounts ? "Guardando..." : "Guardar montos") :
-                        planControlAccion === "guardar_limites" ? (savingPlanLimits ? "Guardando..." : "Guardar límites") :
+                      {planControlaccion === "simular" ? "Ejecutar simulación" :
+                        planControlaccion === "aplicar" ? (changingPlan ? "Aplicando..." : "Aplicar plan") :
+                        planControlaccion === "guardar_monto" ? (savingPlanAmounts ? "Guardando..." : "Guardar montos") :
+                        planControlaccion === "guardar_limites" ? (savingPlanLimits ? "Guardando..." : "Guardar límites") :
                         "Ir a bondades"}
                     </button>
                   </div>
@@ -3385,7 +3385,7 @@ export default function ConfiguracionPage() {
                     </label>
 
                     <label>
-                      Acción rápida
+                      accion rápida
                       <select
                         value={planControlSimulado ? "simulado" : "simular"}
                         onChange={(e) => {
@@ -3425,7 +3425,7 @@ export default function ConfiguracionPage() {
                   {loadingHistorialPlanes ? (
                     <p>Cargando historial...</p>
                   ) : historialPlanes.length === 0 ? (
-                    <p>Aun no hay pagos registrados.</p>
+                    <p>Aún no hay pagos registrados.</p>
                   ) : (
                     <div className={styles.planHistoryTableWrap}>
                       <table className={styles.planHistoryTable}>
@@ -3576,10 +3576,10 @@ export default function ConfiguracionPage() {
                   <p>{ticketAtencion.consulta}</p>
                 </div>
 
-                {ticketAtencion.recomendacion_ia ? (
+                {ticketAtencion.recomendación_ia ? (
                   <div className={styles.chatBubbleIa}>
                     <strong>IA</strong>
-                    <p>{ticketAtencion.recomendacion_ia}</p>
+                    <p>{ticketAtencion.recomendación_ia}</p>
                   </div>
                 ) : null}
 
