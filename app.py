@@ -172,6 +172,67 @@ def _external_alvent_app_url(path: str = "") -> str:
     return f"{ALVENT_APP_EXTERNAL_BASE_URL}/login"
 
 
+def _alvent_frontend_proxy_url(path: str = "", query: str = "") -> str:
+    """Build upstream URL for ALVENT frontend while keeping public host as rensof.pe."""
+    base = ALVENT_APP_EXTERNAL_BASE_URL.rstrip("/")
+    normalized = path.lstrip("/")
+    target = f"{base}/{normalized}" if normalized else base
+    if query:
+        target = f"{target}?{query}"
+    return target
+
+
+async def _proxy_alvent_frontend_request(request: Request, path: str = "") -> Response:
+    target_url = _alvent_frontend_proxy_url(path=path, query=request.url.query)
+
+    excluded_request_headers = {"host", "content-length", "accept-encoding", "connection"}
+    forwarded_headers = {
+        key: value
+        for key, value in request.headers.items()
+        if key.lower() not in excluded_request_headers
+    }
+    forwarded_headers["x-forwarded-host"] = request.headers.get("host", "")
+    forwarded_headers["x-forwarded-proto"] = request.url.scheme
+
+    body = await request.body()
+
+    async with httpx.AsyncClient(follow_redirects=False, timeout=60.0) as client:
+        upstream = await client.request(
+            method=request.method,
+            url=target_url,
+            headers=forwarded_headers,
+            content=body,
+        )
+
+    excluded_response_headers = {
+        "content-encoding",
+        "transfer-encoding",
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "te",
+        "trailers",
+        "upgrade",
+    }
+    response_headers = {
+        key: value
+        for key, value in upstream.headers.items()
+        if key.lower() not in excluded_response_headers
+    }
+
+    location = response_headers.get("location")
+    if location and location.startswith(ALVENT_APP_EXTERNAL_BASE_URL.rstrip("/")):
+        response_headers["location"] = location.replace(ALVENT_APP_EXTERNAL_BASE_URL.rstrip("/"), "/alven/app", 1)
+
+    return Response(
+        content=upstream.content,
+        status_code=upstream.status_code,
+        headers=response_headers,
+        media_type=upstream.headers.get("content-type"),
+    )
+
+
 def _render_admin_login(request: Request):
     if is_admin_authenticated(request):
         return RedirectResponse(url="/admin", status_code=303)
@@ -687,19 +748,23 @@ def redirect_public_alvent_login_legacy(request: Request):
 def redirect_public_alvent_login(request: Request):
     """Canonical public ALVENT login entrypoint."""
     _ = request
-    return RedirectResponse(url=_external_alvent_app_url())
+    return RedirectResponse(url="/alven/app/login", status_code=307)
 
-@app.get("/alven/app")
-def redirect_alven_app(request: Request):
-    """Redirect to ALVENT app root"""
-    _ = request
-    return RedirectResponse(url=_external_alvent_app_url())
+@app.api_route("/alven/app", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def proxy_alven_app(request: Request):
+    """Proxy ALVENT app root to preserve public host prefix."""
+    try:
+        return await _proxy_alvent_frontend_request(request)
+    except httpx.RequestError:
+        return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
 
-@app.get("/alven/app/{path:path}")
-def redirect_alven_app_path(request: Request, path: str):
-    """Redirect ALVENT app paths without exposing localhost."""
-    _ = request
-    return RedirectResponse(url=_external_alvent_app_url(path))
+@app.api_route("/alven/app/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def proxy_alven_app_path(request: Request, path: str):
+    """Proxy ALVENT app paths without exposing upstream host."""
+    try:
+        return await _proxy_alvent_frontend_request(request, path)
+    except httpx.RequestError:
+        return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
 
 @app.api_route("/alven/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def proxy_alven_api(request: Request, path: str):
