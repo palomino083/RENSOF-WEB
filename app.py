@@ -758,6 +758,18 @@ async def proxy_alven_app(request: Request):
     except httpx.RequestError:
         return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
 
+
+@app.api_route("/alven/app/alven/app", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route("/alven/app/alven/app/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def redirect_alven_double_prefix(request: Request, path: str = ""):
+    """Canonicalize duplicated ALVENT basePath emitted by stale frontend chunks."""
+    canonical = "/alven/app"
+    if path:
+        canonical = f"{canonical}/{path.lstrip('/')}"
+    if request.url.query:
+        canonical = f"{canonical}?{request.url.query}"
+    return RedirectResponse(url=canonical, status_code=308)
+
 @app.api_route("/alven/app/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def proxy_alven_app_path(request: Request, path: str):
     """Proxy ALVENT app paths without exposing upstream host."""
