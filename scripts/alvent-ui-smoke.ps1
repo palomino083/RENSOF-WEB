@@ -1,5 +1,5 @@
 param(
-  [string]$BaseUrl = "http://127.0.0.1:3001",
+  [string]$BaseUrl = "",
   [string]$User = "Admin",
   [string]$Password = "123456",
   [string]$OutputPath = "",
@@ -14,6 +14,34 @@ $repoRoot = Split-Path -Path $PSScriptRoot -Parent
 $frontendDir = Join-Path $repoRoot "apps/alvent/frontend"
 $runner = Join-Path $frontendDir "scripts/ui-smoke.mjs"
 $reportDir = Join-Path $repoRoot "scripts/reports"
+
+function Test-UrlAvailable {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Url
+  )
+
+  try {
+    $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -Method Get -TimeoutSec 6
+    return ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500)
+  } catch {
+    return $false
+  }
+}
+
+if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
+  $localBaseUrl = "http://127.0.0.1:3001"
+  $localProbe = "$localBaseUrl/alven/app/login"
+  $remoteBaseUrl = if ($env:RENSOF_PUBLIC_ORIGIN) { $env:RENSOF_PUBLIC_ORIGIN.TrimEnd('/') } else { "https://www.rensof.pe" }
+
+  if (Test-UrlAvailable -Url $localProbe) {
+    $BaseUrl = $localBaseUrl
+    Write-Host "[INFO] UI smoke en modo LOCAL." -ForegroundColor Cyan
+  } else {
+    $BaseUrl = $remoteBaseUrl
+    Write-Host "[INFO] UI smoke en modo REMOTO." -ForegroundColor Cyan
+  }
+}
 
 if (-not (Test-Path $runner)) {
   throw "No se encontro runner UI smoke en $runner"
