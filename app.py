@@ -24,6 +24,7 @@ ALVENT_APP_EXTERNAL_BASE_URL = os.getenv(
     "ALVENT_APP_EXTERNAL_BASE_URL", "https://alvent-frontend.onrender.com/alven/app"
 ).rstrip("/")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+PUBLIC_ALVENT_LOGIN_PATH = "/app/alven/login"
 
 # FastAPI app
 app = FastAPI(
@@ -94,7 +95,7 @@ def _serve_alven_landing(request: Request):
                 "active_page": "servicios",
                 "page_title": "ALVENT ERP PRO | RENSOF",
                 "page_description": "Plataforma comercial para ventas, inventario, caja y reportes en tiempo real.",
-                "alvent_app_url": _internalize_url(ALVENT_APP_URL, "/alven/app/login"),
+                "alvent_app_url": PUBLIC_ALVENT_LOGIN_PATH,
             },
         )
 
@@ -236,6 +237,13 @@ def redirect_alven(request: Request):
 
 @app.get("/alven/login")
 def redirect_alven_login(request: Request):
+    """Legacy ALVENT login alias preserved for compatibility."""
+    _ = request
+    return RedirectResponse(url=PUBLIC_ALVENT_LOGIN_PATH)
+
+
+@app.get("/app/alven/login")
+def redirect_public_alvent_login(request: Request):
     """Public ALVENT login alias from RENSOF marketing pages."""
     _ = request
     return RedirectResponse(url=_external_alvent_app_url())
