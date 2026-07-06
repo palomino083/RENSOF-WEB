@@ -47,15 +47,16 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", "/alven/")
-ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/alvent/app").rstrip("/")
+ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/app/alvent").rstrip("/")
 ALVENT_BACKEND_ORIGIN = os.getenv("ALVENT_BACKEND_ORIGIN", "").rstrip("/")
 ALVENT_APP_EXTERNAL_BASE_URL = os.getenv(
     "ALVENT_APP_EXTERNAL_BASE_URL", "https://alvent-frontend.onrender.com/alven/app"
 ).rstrip("/")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 PUBLIC_ALVENT_LOGIN_PATH = "/app/alvent/login"
-PUBLIC_ALVENT_APP_BASE_PATH = "/alvent/app"
+PUBLIC_ALVENT_APP_BASE_PATH = "/app/alvent"
 LEGACY_ALVENT_APP_BASE_PATH = "/alven/app"
+LEGACY_ALVENT_APP_BASE_PATH_ALT = "/alvent/app"
 RENSOF_SESSION_SECRET = os.getenv("RENSOF_SESSION_SECRET", "rensof-dev-session-secret")
 
 # FastAPI app
@@ -751,10 +752,12 @@ def redirect_public_alvent_login_legacy(request: Request):
 
 
 @app.get("/app/alvent/login")
-def redirect_public_alvent_login(request: Request):
+async def redirect_public_alvent_login(request: Request):
     """Canonical public ALVENT login entrypoint."""
-    _ = request
-    return RedirectResponse(url=f"{PUBLIC_ALVENT_APP_BASE_PATH}/login", status_code=307)
+    try:
+        return await _proxy_alvent_frontend_request(request, "login")
+    except httpx.RequestError:
+        return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
 
 
 @app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
@@ -777,8 +780,10 @@ async def proxy_alvent_app_public_path(request: Request, path: str):
 
 @app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 @app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH}/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH_ALT}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH_ALT}/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def redirect_legacy_alvent_app_base(request: Request, path: str = ""):
-    """Redirect legacy /alven/app path to canonical /alvent/app path."""
+    """Redirect legacy /alven/app or /alvent/app paths to canonical /app/alvent."""
     target = PUBLIC_ALVENT_APP_BASE_PATH
     if path:
         target = f"{target}/{path.lstrip('/')}"
