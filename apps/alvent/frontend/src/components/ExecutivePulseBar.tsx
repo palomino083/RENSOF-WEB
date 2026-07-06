@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { appPath } from "@/utils/appPath";
+import { APP_BASE_PATH, appPath } from "@/utils/appPath";
 import styles from "./ExecutivePulseBar.module.css";
 
 type PulseTone = "neutral" | "good" | "warn" | "critical";
@@ -22,6 +22,32 @@ type ExecutivePulseBarProps = {
   metricas: PulseMetric[];
   accion?: PulseAction;
 };
+
+function resolveActionHref(href: string) {
+  const raw = String(href || "").trim();
+  if (!raw) return appPath("");
+
+  if (/^https?:\/\//i.test(raw)) return raw;
+
+  const noOrigin = raw.replace(/^https?:\/\/[^/]+/i, "");
+  const parts = noOrigin.match(/^([^?#]*)(.*)$/);
+  let pathPart = parts?.[1] || "";
+  const suffix = parts?.[2] || "";
+
+  pathPart = pathPart.startsWith("/") ? pathPart : `/${pathPart}`;
+
+  const prefixedBase = `${APP_BASE_PATH}/`;
+  while (pathPart.startsWith(prefixedBase)) {
+    pathPart = pathPart.slice(APP_BASE_PATH.length);
+  }
+
+  if (pathPart === APP_BASE_PATH) {
+    pathPart = "/";
+  }
+
+  const normalized = pathPart === "/" ? "" : pathPart;
+  return `${appPath(normalized)}${suffix}`;
+}
 
 export default function ExecutivePulseBar({
   modulo,
@@ -56,7 +82,7 @@ export default function ExecutivePulseBar({
       <footer className={styles.foot}>
         <span className={styles.timestamp}>Actualizado: {new Date().toLocaleTimeString("es-PE")}</span>
         {accion ? (
-          <Link href={appPath(accion.href)} className={styles.action}>
+          <Link href={resolveActionHref(accion.href)} className={styles.action}>
             {accion.label}
           </Link>
         ) : null}
