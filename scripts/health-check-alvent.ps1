@@ -30,8 +30,8 @@ if ($isLocalMode) {
 } else {
   Write-Host "[INFO] Health check en modo REMOTO (Render/produccion)." -ForegroundColor Cyan
   $backendBase = $remoteBackendBase
-  $frontendLoginUrl = "$remoteSiteBase/app/alven/login"
-  $frontendDashboardUrl = "$remoteSiteBase/alven/app/dashboard"
+  $frontendLoginUrl = "$remoteSiteBase/alvent/app/login"
+  $frontendDashboardUrl = "$remoteSiteBase/alvent/app/dashboard"
 }
 
 # Direct backend API endpoints
@@ -169,7 +169,7 @@ Assert-StatusCode -Actual ([int]$loginPage.StatusCode) -Expected 200 -Message "F
 
 Assert-ContainsAny -Content $loginPage.Content -Patterns @("Iniciar sesi[oó]n", "ALVENT ERP", "Dashboard", "Premium POS") -Message "Frontend shell no contiene el contenido esperado."
 
-$assetPattern = '/alven/app/_next/static/[^"<> ]+'
+$assetPattern = '/alven/app/_next/static/[^"<> ]+|/alvent/app/_next/static/[^"<> ]+'
 $assetMatches = [regex]::Matches($loginPage.Content, $assetPattern)
 if ($assetMatches.Count -eq 0) {
   if ($loginPage.Content -match "Acceso de contingencia") {
@@ -192,6 +192,9 @@ if ($assetMatches.Count -eq 0) {
 
 if ($assetMatches.Count -gt 0) {
   $firstAssetPath = $assetMatches[0].Value
+  if ($firstAssetPath.StartsWith('/alven/app/')) {
+    $firstAssetPath = $firstAssetPath -replace '^/alven/app/', '/alvent/app/'
+  }
   $frontendBaseUri = [System.Uri]$frontendLoginUrl
   $firstAssetUrl = "$($frontendBaseUri.Scheme)://$($frontendBaseUri.Authority)$firstAssetPath"
   $firstAsset = Invoke-WithRetry -Message "Asset estatico _next no disponible aun" -Action {
