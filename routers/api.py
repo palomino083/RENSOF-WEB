@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 
-from app.db.database import SessionLocal
-from app.services.content_service import get_email_accounts, get_home_content, get_publications
+from db.database import SessionLocal
+from services.content_service import get_email_accounts, get_home_content, get_publications
 
 router = APIRouter(prefix="/api/v1", tags=["content"])
 

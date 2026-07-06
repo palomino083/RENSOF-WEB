@@ -7,7 +7,7 @@ from fastapi import APIRouter, Form, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.core.config import (
+from core.config import (
     BASE_DIR,
     ALVENT_APP_URL,
     ALVENT_BACKEND_LOCAL_ORIGIN,
@@ -17,8 +17,8 @@ from app.core.config import (
     ALVENT_FRONTEND_ORIGIN,
     TEMPLATES_DIR,
 )
-from app.db.database import SessionLocal
-from app.services.content_service import add_contact_message, get_email_accounts, get_home_content, get_primary_email_account, get_publications
+from db.database import SessionLocal
+from services.content_service import add_contact_message, get_email_accounts, get_home_content, get_primary_email_account, get_publications
 
 router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))

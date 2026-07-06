@@ -2,8 +2,8 @@ from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from app.core.config import TEMPLATES_DIR
-from app.core.security import (
+from core.config import TEMPLATES_DIR
+from core.security import (
     authenticate_admin_credentials,
     clear_admin_session,
     get_or_create_csrf_token,
@@ -11,8 +11,8 @@ from app.core.security import (
     set_admin_session,
     verify_csrf_token,
 )
-from app.db.database import SessionLocal
-from app.services.content_service import (
+from db.database import SessionLocal
+from services.content_service import (
     add_case_study,
     add_email_account,
     add_metric,

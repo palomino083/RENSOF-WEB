@@ -4,7 +4,7 @@ from typing import Any
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.db.models import (
+from db.models import (
     CaseStudyRecord,
     ContactMessageRecord,
     EmailAccountRecord,
@@ -12,7 +12,7 @@ from app.db.models import (
     ProductRecord,
     PublicationRecord,
 )
-from app.models.content import (
+from models.content import (
     CaseStudy,
     ContactMessage,
     EmailAccount,

@@ -3,7 +3,7 @@ from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from app.core.config import BASE_DIR
+from core.config import BASE_DIR
 
 DB_PATH = Path(BASE_DIR) / "rensof.db"
 DB_URL = f"sqlite:///{DB_PATH}"

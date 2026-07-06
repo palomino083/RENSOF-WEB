@@ -1,6 +1,6 @@
-from app.db.database import Base, SessionLocal, engine
-from app.db import models  # noqa: F401
-from app.db.seed import seed_database
+from db.database import Base, SessionLocal, engine
+from db import models  # noqa: F401
+from db.seed import seed_database
 
 
 def init_db() -> None:

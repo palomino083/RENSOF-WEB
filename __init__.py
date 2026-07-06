@@ -7,10 +7,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.core.config import ASSETS_DIR, TEMPLATES_DIR
-from app.core.security import security_headers_middleware
-from app.db import init_db
-from app.routers import admin, api, pages
+from core.config import ASSETS_DIR, TEMPLATES_DIR
+from core.security import security_headers_middleware
+from db import init_db
+from routers import admin, api, pages
 
 
 def create_app() -> FastAPI:
