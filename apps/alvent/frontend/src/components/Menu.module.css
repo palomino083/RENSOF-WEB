@@ -15,6 +15,11 @@
   cursor: pointer;
 }
 
+.menuToggleActive {
+  background: linear-gradient(145deg, rgba(14, 116, 144, 0.96), rgba(8, 47, 73, 0.96));
+  border-color: rgba(103, 232, 249, 0.55);
+}
+
 .mobileBackdrop {
   position: fixed;
   inset: 0;
@@ -39,12 +44,45 @@
     radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.18), transparent 42%),
     linear-gradient(180deg, rgba(8, 19, 38, 0.98) 0%, rgba(15, 23, 42, 0.97) 100%);
   box-shadow: 0 24px 60px rgba(2, 6, 23, 0.38);
+  transition: width 0.2s ease, padding 0.2s ease;
+}
+
+.sidebarCollapsed {
+  width: 88px;
+  padding: 14px 10px;
 }
 
 .brand {
   padding: 8px 10px 14px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.22);
   margin-bottom: 8px;
+}
+
+.brandRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.brandText {
+  min-width: 0;
+}
+
+.desktopToggle {
+  display: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #cbd5e1;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.desktopToggle:hover {
+  background: rgba(30, 41, 59, 0.9);
 }
 
 .brandTitle {
@@ -54,12 +92,26 @@
   color: #f8fafc;
 }
 
+.brandTitleHidden {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 .brandTag {
   font-size: 11px;
   margin-top: 3px;
   color: #67e8f9;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.brandTagHidden {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 
 .menuScroll {
@@ -80,6 +132,10 @@
   letter-spacing: 0.08em;
 }
 
+.sectionHidden {
+  display: none;
+}
+
 .item {
   display: flex;
   align-items: center;
@@ -91,6 +147,14 @@
   color: #e2e8f0;
   font-weight: 600;
   transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.itemLabel {
+  white-space: nowrap;
+}
+
+.itemLabelHidden {
+  display: none;
 }
 
 .item:hover {
@@ -109,6 +173,15 @@
   text-align: center;
 }
 
+.sidebarCollapsed .item {
+  justify-content: center;
+  padding: 11px 10px;
+}
+
+.sidebarCollapsed .icon {
+  width: auto;
+}
+
 .userCard {
   margin-top: 12px;
   padding: 12px;
@@ -117,9 +190,17 @@
   border: 1px solid rgba(148, 163, 184, 0.24);
 }
 
+.userCardCollapsed {
+  padding: 8px;
+}
+
 .userName {
   font-weight: 800;
   color: #f8fafc;
+}
+
+.userTextHidden {
+  display: none;
 }
 
 .userRole {
@@ -146,6 +227,10 @@
   font-weight: 700;
 }
 
+.userCardCollapsed .logoutBtn {
+  padding: 8px;
+}
+
 .logoutBtn:hover {
   background: linear-gradient(160deg, rgba(220, 38, 38, 0.94), rgba(153, 27, 27, 0.94));
 }
@@ -154,9 +239,24 @@
   .menuToggle {
     display: none;
   }
+
+  .desktopToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 1024px) {
+  .sidebarCollapsed {
+    width: 292px;
+    padding: 18px 14px;
+  }
+
+  .desktopToggle {
+    display: none;
+  }
+
   .sidebar {
     position: fixed;
     left: 0;

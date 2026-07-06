@@ -177,6 +177,7 @@ export default function Menu() {
   const [usuario, setUsuario] = useState<Usuario>({});
   const [configMenuFocus, setConfigMenuFocus] = useState<"soporte" | "configuracion" | "empresa">("configuracion");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const pathname = usePathname();
 
   const toAppHref = (href: string) => {
@@ -273,6 +274,22 @@ export default function Menu() {
     setMobileOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("alvent_menu_desktop_collapsed");
+    setDesktopCollapsed(stored === "1");
+  }, []);
+
+  const toggleDesktopSidebar = () => {
+    setDesktopCollapsed((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("alvent_menu_desktop_collapsed", next ? "1" : "0");
+      }
+      return next;
+    });
+  };
+
   /* =========================
      🔐 FILTRO POR PERMISOS
   ========================= */
@@ -299,19 +316,32 @@ const menuFiltrado = useMemo(() => {
     <>
       <button
         type="button"
-        className={styles.menuToggle}
+        className={`${styles.menuToggle} ${mobileOpen ? styles.menuToggleActive : ""}`}
         onClick={() => setMobileOpen((prev) => !prev)}
-        aria-label={mobileOpen ? "Cerrar menu" : "Abrir menu"}
+        aria-label={mobileOpen ? "Ocultar menu" : "Mostrar menu"}
       >
-        {mobileOpen ? "×" : "☰"}
+        ☰
       </button>
 
       {mobileOpen ? <button type="button" className={styles.mobileBackdrop} aria-label="Cerrar menu" onClick={() => setMobileOpen(false)} /> : null}
 
-      <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""}`}>
+      <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""} ${desktopCollapsed ? styles.sidebarCollapsed : ""}`}>
         <header className={styles.brand}>
-          <h2 className={styles.brandTitle}>ALVENT ERP PRO</h2>
-          <p className={styles.brandTag}>Control operacional premium</p>
+          <div className={styles.brandRow}>
+            <div className={styles.brandText}>
+              <h2 className={`${styles.brandTitle} ${desktopCollapsed ? styles.brandTitleHidden : ""}`}>ALVENT ERP PRO</h2>
+              <p className={`${styles.brandTag} ${desktopCollapsed ? styles.brandTagHidden : ""}`}>Control operacional premium</p>
+            </div>
+            <button
+              type="button"
+              className={styles.desktopToggle}
+              onClick={toggleDesktopSidebar}
+              aria-label={desktopCollapsed ? "Expandir menu lateral" : "Contraer menu lateral"}
+              title={desktopCollapsed ? "Expandir" : "Contraer"}
+            >
+              {desktopCollapsed ? "»" : "«"}
+            </button>
+          </div>
         </header>
 
         <nav className={styles.menuScroll}>
@@ -319,12 +349,14 @@ const menuFiltrado = useMemo(() => {
             <div key={idx} className={styles.block}>
           {"section" in block ? (
             <>
-              <p className={styles.section}>{block.section}</p>
+              <p className={`${styles.section} ${desktopCollapsed ? styles.sectionHidden : ""}`}>{block.section}</p>
+
 
               {block.items.map((item: MenuItem) => (
                 <Link
                   key={`${item.key}-${item.href}`}
                   href={toAppHref(item.href)}
+                  title={desktopCollapsed ? item.label : undefined}
                   onClick={() => {
                     if (typeof window === "undefined") return;
 
@@ -355,30 +387,31 @@ const menuFiltrado = useMemo(() => {
                   className={`${styles.item} ${isItemActive(item) ? styles.itemActive : ""}`}
                 >
                   <span className={styles.icon}>{item.icon}</span>
-                  {item.label}
+                  <span className={`${styles.itemLabel} ${desktopCollapsed ? styles.itemLabelHidden : ""}`}>{item.label}</span>
                 </Link>
               ))}
             </>
           ) : (
             <Link
               href={toAppHref(block.href)}
+              title={desktopCollapsed ? block.label : undefined}
               onClick={() => setMobileOpen(false)}
               className={`${styles.item} ${isItemActive(block) ? styles.itemActive : ""}`}
             >
               <span className={styles.icon}>{block.icon}</span>
-              {block.label}
+              <span className={`${styles.itemLabel} ${desktopCollapsed ? styles.itemLabelHidden : ""}`}>{block.label}</span>
             </Link>
           )}
             </div>
           ))}
         </nav>
 
-        <div className={styles.userCard}>
-          <strong className={styles.userName}>{nombreVisible}</strong>
+        <div className={`${styles.userCard} ${desktopCollapsed ? styles.userCardCollapsed : ""}`}>
+          <strong className={`${styles.userName} ${desktopCollapsed ? styles.userTextHidden : ""}`}>{nombreVisible}</strong>
 
-          <p className={styles.userRole}>{rolEtiqueta}</p>
+          <p className={`${styles.userRole} ${desktopCollapsed ? styles.userTextHidden : ""}`}>{rolEtiqueta}</p>
           {esSuperadmin ? (
-            <p className={styles.superBadge}>Sin negocio fijo</p>
+            <p className={`${styles.superBadge} ${desktopCollapsed ? styles.userTextHidden : ""}`}>Sin negocio fijo</p>
           ) : null}
 
           <button
@@ -391,8 +424,9 @@ const menuFiltrado = useMemo(() => {
               window.location.href = appPath("login");
             }}
             className={styles.logoutBtn}
+            title={desktopCollapsed ? "Cerrar sesion" : undefined}
           >
-            Cerrar sesion
+            {desktopCollapsed ? "↩" : "Cerrar sesion"}
           </button>
         </div>
       </aside>
