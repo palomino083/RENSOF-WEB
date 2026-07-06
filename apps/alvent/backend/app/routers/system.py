@@ -1,5 +1,7 @@
 from datetime import datetime
 from pathlib import Path
+import os
+import re
 import sqlite3
 import shutil
 import tempfile
@@ -7,6 +9,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from fastapi.responses import FileResponse
+import httpx
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.database.database import DATABASE_URL, SessionLocal, get_db, engine
@@ -61,6 +64,126 @@ class GuardianAckRequest(BaseModel):
 class GuardianSafeModeRequest(BaseModel):
     enabled: bool
     reason: Optional[str] = None
+
+
+SOFIA_OPENAI_MODEL = os.getenv("SOFIA_OPENAI_MODEL", "gpt-5.5")
+SOFIA_OPENAI_TIMEOUT = float(os.getenv("SOFIA_OPENAI_TIMEOUT", "12"))
+SOFIA_MAX_INPUT_CHARS = int(os.getenv("SOFIA_MAX_INPUT_CHARS", "3500"))
+SOFIA_MAX_OUTPUT_TOKENS = int(os.getenv("SOFIA_MAX_OUTPUT_TOKENS", "900"))
+SOFIA_ENABLE_OPENAI = str(os.getenv("SOFIA_ENABLE_OPENAI", "true")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _clip_text(value: str, limit: int = SOFIA_MAX_INPUT_CHARS) -> str:
+    text = str(value or "").strip()
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit]}\n\n[Texto recortado por limite de seguridad]"
+
+
+def _redact_sensitive_text(value: str) -> str:
+    text = str(value or "")
+    text = re.sub(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", "[correo]", text, flags=re.I)
+    text = re.sub(r"\b(?:\+?51)?\s?9\d{2}[\s-]?\d{3}[\s-]?\d{3}\b", "[telefono]", text)
+    text = re.sub(r"\b\d{8,11}\b", "[documento]", text)
+    return text
+
+
+def _guardian_snapshot_for_sofia() -> str:
+    try:
+        status = runtime_guardian.get_status()
+    except Exception:
+        return "Guardian no disponible."
+
+    metrics = status.get("metrics", {})
+    safe_mode = status.get("safe_mode", {})
+    return (
+        "Guardian ALVENT: "
+        f"safe_mode={'ON' if safe_mode.get('enabled') else 'OFF'}, "
+        f"5xx={metrics.get('requests_5xx', 0)}, "
+        f"excepciones={metrics.get('exceptions_total', 0)}, "
+        f"5xx_consecutivos={metrics.get('consecutive_5xx', 0)}, "
+        f"incidentes_abiertos={status.get('open_incidents', 0)}."
+    )
+
+
+def _sofia_developer_instructions(nivel: str, categoria_local: str) -> str:
+    return "\n".join([
+        "Eres SofIA, asistente tecnico y humano de soporte para ALVENT ERP PRO y RENSOF.",
+        "Responde siempre en espa?ol claro, amable, preciso y con tono humano profesional.",
+        "No inventes datos, credenciales, estados de pago, diagnosticos definitivos ni acciones ya ejecutadas.",
+        "Si falta evidencia, pide exactamente los datos minimos: modulo, accion, hora, mensaje de error, usuario/rol y resultado esperado.",
+        "No solicites contrase?as, tokens, claves API, datos completos de tarjetas ni documentos completos.",
+        "Si hay riesgo fiscal, perdida de ventas, caida de servicio, errores 5xx repetidos o safe mode activo, recomienda escalar a RENSOF.",
+        "Entrega la respuesta con secciones breves: Diagnostico probable, Accion inmediata, Verificacion, Escalamiento.",
+        f"Nivel de respuesta: {nivel}.",
+        f"Categoria local preliminar: {categoria_local}.",
+    ])
+
+
+def _build_sofia_input(asunto: str | None, consulta: str, current_user: Optional[dict], categoria_local: str) -> str:
+    rol = str((current_user or {}).get("rol") or "usuario").upper().strip()
+    is_superadmin = bool((current_user or {}).get("is_superadmin"))
+    negocio_id = str((current_user or {}).get("negocio_id") or "sin_negocio")
+    payload = "\n".join([
+        f"Asunto: {_redact_sensitive_text(asunto or 'Consulta de soporte')}",
+        f"Consulta: {_redact_sensitive_text(consulta)}",
+        f"Rol usuario: {rol}",
+        f"Superadmin: {'si' if is_superadmin else 'no'}",
+        f"Negocio: {negocio_id}",
+        f"Categoria local: {categoria_local}",
+        _guardian_snapshot_for_sofia(),
+    ])
+    return _clip_text(payload)
+
+
+def _generar_respuesta_sofia_openai(
+    asunto: str | None,
+    consulta: str,
+    current_user: Optional[dict],
+    local_result: dict,
+) -> dict | None:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not SOFIA_ENABLE_OPENAI or not api_key:
+        return None
+
+    categoria = str(local_result.get("categoria") or "general")
+    nivel = str(local_result.get("nivel") or _resolver_nivel_sofia(current_user, consulta))
+    payload = {
+        "model": SOFIA_OPENAI_MODEL,
+        "instructions": _sofia_developer_instructions(nivel, categoria),
+        "input": _build_sofia_input(asunto, consulta, current_user, categoria),
+        "max_output_tokens": SOFIA_MAX_OUTPUT_TOKENS,
+    }
+
+    try:
+        with httpx.Client(timeout=SOFIA_OPENAI_TIMEOUT) as client:
+            response = client.post(
+                "https://api.openai.com/v1/responses",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+    except Exception:
+        fallback = dict(local_result)
+        fallback["origen"] = "SOFIA_LOCAL_FALLBACK"
+        return fallback
+
+    output_text = str(data.get("output_text") or "").strip()
+    if not output_text:
+        fallback = dict(local_result)
+        fallback["origen"] = "SOFIA_LOCAL_FALLBACK"
+        return fallback
+
+    return {
+        "categoria": categoria,
+        "recomendacion": output_text,
+        "origen": "SOFIA_OPENAI",
+        "nivel": nivel,
+    }
 
 
 def _normalizar_prioridad(value: str | None) -> str:
@@ -173,7 +296,7 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str, current_user: Optio
     nivel = _resolver_nivel_sofia(current_user, f"{asunto or ''} {consulta or ''}")
 
     if any(word in texto for word in ["sunat", "nubefact", "boleta", "factura", "comprobante"]):
-        return _envolver_respuesta_sofia(
+        local_result = _envolver_respuesta_sofia(
             "fiscal",
             (
                 "Verifica en Configuracion/Fiscal: integracion SUNAT activa, RUC emisor valido, token API vigente y series B/F configuradas. "
@@ -181,9 +304,10 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str, current_user: Optio
             ),
             nivel,
         )
+        return _generar_respuesta_sofia_openai(asunto, consulta, current_user, local_result) or local_result
 
     if any(word in texto for word in ["no carga", "error 500", "distors", "estilo", "css", "hydration"]):
-        return _envolver_respuesta_sofia(
+        local_result = _envolver_respuesta_sofia(
             "frontend",
             (
                 "Reinicia frontend local, limpia cache .next y recarga la pagina. "
@@ -191,9 +315,10 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str, current_user: Optio
             ),
             nivel,
         )
+        return _generar_respuesta_sofia_openai(asunto, consulta, current_user, local_result) or local_result
 
     if any(word in texto for word in ["stock", "inventario", "producto", "venta", "caja"]):
-        return _envolver_respuesta_sofia(
+        local_result = _envolver_respuesta_sofia(
             "operacion",
             (
                 "Confirma que la caja este abierta y que el producto tenga stock suficiente. "
@@ -201,8 +326,9 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str, current_user: Optio
             ),
             nivel,
         )
+        return _generar_respuesta_sofia_openai(asunto, consulta, current_user, local_result) or local_result
 
-    return _envolver_respuesta_sofia(
+    local_result = _envolver_respuesta_sofia(
         "general",
         (
             "Recopila contexto minimo: modulo, accion, resultado esperado, mensaje de error y hora del incidente. "
@@ -210,6 +336,7 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str, current_user: Optio
         ),
         nivel,
     )
+    return _generar_respuesta_sofia_openai(asunto, consulta, current_user, local_result) or local_result
 
 
 def _resolver_negocio_soporte(current_user: dict, negocio_id_payload: Optional[int]) -> Optional[int]:

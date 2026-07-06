@@ -43,6 +43,24 @@ const parseNegocioId = (value: unknown) => {
   return Number.isSafeInteger(id) && id > 0 ? id : 0;
 };
 
+const formatCurrency = (value: number) => `S/${Number(value || 0).toFixed(2)}`;
+
+const getIngresoMonthKey = (fecha: string) => {
+  const date = new Date(fecha);
+  if (Number.isNaN(date.getTime())) return "Sin fecha";
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${date.getFullYear()}-${month}`;
+};
+
+const formatMonthLabel = (key: string) => {
+  if (!/^\d{4}-\d{2}$/.test(key)) return key;
+  const [year, month] = key.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString("es-PE", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
 export default function FinanzasPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -250,6 +268,52 @@ export default function FinanzasPage() {
   const totalGastos = useMemo(() => gastos.reduce((acc, row) => acc + Number(row.monto || 0), 0), [gastos]);
   const utilidad = totalIngresos - totalGastos;
 
+  const ingresosAgrupados = useMemo(() => {
+    const months = new Map<string, Map<string, { rows: IngresoPlan[]; total: number }>>();
+
+    ingresos.forEach((row) => {
+      const monthKey = getIngresoMonthKey(row.fecha);
+      const planKey = String(row.plan_solicitado || "SIN_PLAN").toUpperCase();
+      if (!months.has(monthKey)) months.set(monthKey, new Map());
+      const planMap = months.get(monthKey)!;
+      const current = planMap.get(planKey) || { rows: [], total: 0 };
+      current.rows.push(row);
+      current.total += Number(row.monto || 0);
+      planMap.set(planKey, current);
+    });
+
+    return Array.from(months.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([monthKey, planMap]) => {
+        const plans = Array.from(planMap.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([plan, data]) => ({ plan, ...data }));
+        return {
+          monthKey,
+          monthLabel: formatMonthLabel(monthKey),
+          plans,
+          total: plans.reduce((acc, plan) => acc + plan.total, 0),
+          count: plans.reduce((acc, plan) => acc + plan.rows.length, 0),
+        };
+      });
+  }, [ingresos]);
+
+  const resumenPorPlan = useMemo(() => {
+    const map = new Map<string, { total: number; count: number; negocios: Set<number> }>();
+    ingresos.forEach((row) => {
+      const plan = String(row.plan_solicitado || "SIN_PLAN").toUpperCase();
+      const current = map.get(plan) || { total: 0, count: 0, negocios: new Set<number>() };
+      current.total += Number(row.monto || 0);
+      current.count += 1;
+      current.negocios.add(Number(row.negocio_id || 0));
+      map.set(plan, current);
+    });
+
+    return Array.from(map.entries())
+      .map(([plan, data]) => ({ plan, ...data, negociosCount: data.negocios.size }))
+      .sort((a, b) => b.total - a.total);
+  }, [ingresos]);
+
   const planVisualCards = useMemo(() => {
     return planCatalogo
       .filter((plan) => PLANES_VISIBLES_EN_SECCION.includes(normalizarPlan(plan.codigo) as (typeof PLANES_VISIBLES_EN_SECCION)[number]))
@@ -388,11 +452,23 @@ export default function FinanzasPage() {
           </section>
 
           <section className={styles.card}>
-            <Toolbar title="Movimientos por plan" right={<StatusBadge text={loading ? "Cargando" : `${ingresos.length} registros`} variant="neutral" />} />
+            <Toolbar title="Movimientos por plan y mes" right={<StatusBadge text={loading ? "Cargando" : `${ingresos.length} registros`} variant="neutral" />} />
             <p>
-              Se muestran solo activaciones con estado aplicado. Los ingresos se calculan con el tarifario vigente del
-              negocio al momento de la consulta.
+              Se muestran solo activaciones con estado aplicado, agrupadas por mes y plan para leer rapido ingreso,
+              cantidad de movimientos y negocios impactados.
             </p>
+
+            {resumenPorPlan.length > 0 ? (
+              <div className={styles.planSummaryGrid}>
+                {resumenPorPlan.map((item) => (
+                  <article key={item.plan} className={styles.planSummaryCard}>
+                    <span>{item.plan}</span>
+                    <strong>{formatCurrency(item.total)}</strong>
+                    <small>{item.count} movimientos | {item.negociosCount} negocios</small>
+                  </article>
+                ))}
+              </div>
+            ) : null}
 
             <div className={styles.tableWrap}>
               <table className={styles.table}>
@@ -412,16 +488,28 @@ export default function FinanzasPage() {
                       <td colSpan={6}>No hay movimientos aplicados para mostrar.</td>
                     </tr>
                   ) : (
-                    ingresos.map((row, idx) => (
-                      <tr key={`${row.negocio_id}-${row.fecha}-${idx}`}>
-                        <td>{new Date(row.fecha).toLocaleDateString("es-PE")}</td>
-                        <td>{row.negocio_id} - {row.negocio_nombre}</td>
-                        <td>{row.plan_solicitado}</td>
-                        <td>{row.canal_pago}</td>
-                        <td>{row.referencia_pago}</td>
-                        <td>S/{Number(row.monto || 0).toFixed(2)}</td>
-                      </tr>
-                    ))
+                    ingresosAgrupados.flatMap((month) => [
+                      <tr key={`month-${month.monthKey}`} className={styles.groupMonthRow}>
+                        <td colSpan={5}>{month.monthLabel} | {month.count} movimientos</td>
+                        <td>{formatCurrency(month.total)}</td>
+                      </tr>,
+                      ...month.plans.flatMap((plan) => [
+                        <tr key={`plan-${month.monthKey}-${plan.plan}`} className={styles.groupPlanRow}>
+                          <td colSpan={5}>Plan {plan.plan} | {plan.rows.length} movimientos</td>
+                          <td>{formatCurrency(plan.total)}</td>
+                        </tr>,
+                        ...plan.rows.map((row, idx) => (
+                          <tr key={`${month.monthKey}-${plan.plan}-${row.negocio_id}-${row.fecha}-${idx}`}>
+                            <td>{new Date(row.fecha).toLocaleDateString("es-PE")}</td>
+                            <td>{row.negocio_id} - {row.negocio_nombre}</td>
+                            <td>{row.plan_solicitado}</td>
+                            <td>{row.canal_pago}</td>
+                            <td>{row.referencia_pago}</td>
+                            <td>{formatCurrency(Number(row.monto || 0))}</td>
+                          </tr>
+                        )),
+                      ]),
+                    ])
                   )}
                 </tbody>
               </table>

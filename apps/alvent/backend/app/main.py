@@ -459,9 +459,17 @@ app.add_exception_handler(
 # CORS
 # ==========================================
 
+def _cors_origins() -> list[str]:
+    raw = os.getenv(
+        "ALVENT_CORS_ORIGINS",
+        "https://www.rensof.pe,https://rensof.pe,http://127.0.0.1:3001,http://localhost:3001",
+    )
+    return [origin.strip().rstrip("/") for origin in raw.split(",") if origin.strip()]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

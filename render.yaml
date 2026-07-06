@@ -1,4 +1,4 @@
-services:
+﻿services:
   - type: web
     name: rensof-web
     runtime: python
@@ -41,3 +41,19 @@ services:
     rootDir: apps/alvent/backend
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT app.main:app
+    disk:
+      name: alvent-uploads
+      mountPath: /opt/render/project/src/apps/alvent/backend/app/uploads
+      sizeGB: 1
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SOFIA_ENABLE_OPENAI
+        value: true
+      - key: SOFIA_OPENAI_MODEL
+        value: gpt-5.5
+      - key: SOFIA_OPENAI_TIMEOUT
+        value: 12
+      - key: ALVENT_CORS_ORIGINS
+        value: https://www.rensof.pe,https://rensof.pe,https://rensof-web.onrender.com
+

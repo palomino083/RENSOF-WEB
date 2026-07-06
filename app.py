@@ -528,14 +528,14 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
         },
         {
             "label": "Superficies vigiladas",
-            "value": "6",
-            "detail": "Publico, contacto, ALVENT, admin, publicaciones y gateway.",
+            "value": "8",
+            "detail": "Publico, contacto, ALVENT, admin, publicaciones, gateway, SofIA y Guardian.",
             "tone": "neutral",
         },
         {
             "label": "Cobertura de control",
-            "value": "5/5",
-            "detail": "Rutas criticas, contenido, leads, acceso y operacion.",
+            "value": "7/7",
+            "detail": "Rutas criticas, contenido, leads, acceso, operacion, IA y contingencia.",
             "tone": "success",
         },
         {
@@ -571,6 +571,12 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
             "detail": "Entrada, clasificacion, SLA y asignacion comercial.",
             "href": "/admin/correos/bandeja",
         },
+        {
+            "name": "SofIA y Guardian",
+            "status": "Vigilado",
+            "detail": "Soporte inteligente, fallback local, safe mode e incidentes adversos.",
+            "href": "/app/alvent/login",
+        },
     ]
 
     alerts = [
@@ -594,7 +600,7 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
     playbooks = [
         {
             "title": "Validar acceso principal",
-            "detail": "Comprobar home, /app/alvent/login y /admin/login despues de cada publicacion.",
+            "detail": "Comprobar home, /app/alvent/login, /admin/login, SofIA y Guardian despues de cada publicacion.",
             "href": PUBLIC_ALVENT_LOGIN_PATH,
             "cta": "Abrir acceso ALVENT",
         },
@@ -631,7 +637,7 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
         "ops_status_counts": status_counts,
         "ops_refreshed_at": refreshed_at,
         "superagent_name": "RENSOF Platform Ops Superagent",
-        "superagent_scope": "mantenimiento, despliegues, vigilancia, alertas e incidencias",
+        "superagent_scope": "mantenimiento, despliegues, vigilancia, SofIA, Guardian, safe mode, alertas e incidencias adversas",
     }
 
 
@@ -834,6 +840,12 @@ async def redirect_alven_double_prefix(request: Request, path: str = ""):
     if request.url.query:
         canonical = f"{canonical}?{request.url.query}"
     return RedirectResponse(url=canonical, status_code=308)
+
+@app.api_route("/uploads/{path:path}", methods=["GET", "HEAD", "OPTIONS"])
+async def proxy_alvent_uploads_public(request: Request, path: str):
+    """Public read alias for ALVENT uploaded files served through the RENSOF gateway."""
+    return await proxy_alven_api(request, f"uploads/{path.lstrip('/')}")
+
 
 @app.api_route("/alven/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def proxy_alven_api(request: Request, path: str):
