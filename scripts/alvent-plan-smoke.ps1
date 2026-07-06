@@ -32,10 +32,29 @@ function Invoke-Api {
     return [pscustomobject]@{ ok = $true; status = 200; data = $response; error = $null }
   } catch {
     $status = -1
-    if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
-      $status = [int]$_.Exception.Response.StatusCode
+    $responseProp = $_.Exception.PSObject.Properties["Response"]
+    if ($null -ne $responseProp -and $null -ne $responseProp.Value) {
+      $statusCodeProp = $responseProp.Value.PSObject.Properties["StatusCode"]
+      if ($null -ne $statusCodeProp -and $null -ne $statusCodeProp.Value) {
+        $status = [int]$statusCodeProp.Value
+      }
     }
-    $errMsg = if ($_.ErrorDetails.Message) { $_.ErrorDetails.Message } else { $_.Exception.Message }
+    $errMsg = "Error no detallado"
+    $errorDetailsProp = $_.PSObject.Properties["ErrorDetails"]
+    if ($null -ne $errorDetailsProp -and $null -ne $errorDetailsProp.Value) {
+      $messageProp = $errorDetailsProp.Value.PSObject.Properties["Message"]
+      if ($null -ne $messageProp -and -not [string]::IsNullOrWhiteSpace([string]$messageProp.Value)) {
+        $errMsg = [string]$messageProp.Value
+      }
+    }
+
+    if ($errMsg -eq "Error no detallado") {
+      $exceptionMessageProp = $_.Exception.PSObject.Properties["Message"]
+      if ($null -ne $exceptionMessageProp -and -not [string]::IsNullOrWhiteSpace([string]$exceptionMessageProp.Value)) {
+        $errMsg = [string]$exceptionMessageProp.Value
+      }
+    }
+
     return [pscustomobject]@{ ok = $false; status = $status; data = $null; error = $errMsg }
   }
 }
