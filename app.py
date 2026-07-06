@@ -180,6 +180,99 @@ def _render_admin_dashboard(request: Request):
     )
 
 
+def _render_admin_publications(request: Request):
+    template_file = TEMPLATES_DIR / "admin_publications.html"
+    if not template_file.exists():
+        return JSONResponse(status_code=404, content={"detail": "Admin publications template not found"})
+    ops_context = _build_admin_ops_context(request, [])
+    publication_metrics = [
+        {
+            "label": "Piezas activas",
+            "value": "06",
+            "detail": "Home, ALVENT, servicios, nosotros, contacto y publicaciones.",
+        },
+        {
+            "label": "Narrativas clave",
+            "value": "04",
+            "detail": "Posicionamiento, producto, captacion y soporte institucional.",
+        },
+        {
+            "label": "Backlog editorial",
+            "value": "03",
+            "detail": "Recursos por consolidar en investigaciones, casos y guias funcionales.",
+        },
+    ]
+    editorial_tracks = [
+        {
+            "title": "Linea institucional",
+            "detail": "Mantener consistencia entre vision de RENSOF, propuesta de valor y llamadas a accion publicas.",
+            "href": "/publicaciones",
+            "cta": "Ver modulo publico",
+        },
+        {
+            "title": "ALVENT y producto",
+            "detail": "Sincronizar fichas, beneficios, accesos y contenido comercial con el flujo real del aplicativo.",
+            "href": "/app/alven/login",
+            "cta": "Abrir acceso ALVENT",
+        },
+        {
+            "title": "Captacion y contacto",
+            "detail": "Alinear publicaciones con formularios, demo ejecutiva y bandeja de leads para conversion real.",
+            "href": "/admin/correos/bandeja",
+            "cta": "Abrir bandeja",
+        },
+    ]
+    publication_queue = [
+        {
+            "name": "Caso de uso ALVENT",
+            "status": "Prioridad alta",
+            "detail": "Documento comercial corto para ventas, inventario, caja y dashboard ejecutivo.",
+        },
+        {
+            "name": "Marco de inteligencia RENSOF",
+            "status": "En desarrollo",
+            "detail": "Pieza madre para explicar plataforma, verticales y arquitectura de marca.",
+        },
+        {
+            "name": "Guia de despliegue institucional",
+            "status": "Vigilancia",
+            "detail": "Bitacora de cambios criticos para evitar drift entre codigo, deploy y experiencia publica.",
+        },
+    ]
+    publication_playbooks = [
+        {
+            "title": "Priorizar contenido de negocio",
+            "detail": "Publicar primero piezas que soportan captacion, demo y lectura de valor del producto.",
+        },
+        {
+            "title": "Validar coherencia de rutas",
+            "detail": "Cada CTA editorial debe resolver a una ruta activa del sitio o del aplicativo.",
+        },
+        {
+            "title": "Sincronizar con operaciones",
+            "detail": "Toda actualizacion editorial debe reflejar acceso ALVENT, admin y formularios sin contradicciones.",
+        },
+    ]
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_publications.html",
+        context={
+            "active_page": "admin",
+            "page_title": "Publicaciones | RENSOF Admin",
+            "page_description": "Control editorial y desarrollo de contenidos de RENSOF.",
+            "csrf_token": "",
+            "publications": [],
+            "email_accounts": [],
+            "publication_metrics": publication_metrics,
+            "editorial_tracks": editorial_tracks,
+            "publication_queue": publication_queue,
+            "publication_playbooks": publication_playbooks,
+            **ops_context,
+            "admin_section": "publications",
+        },
+    )
+
+
 def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> dict:
     total_messages = len(messages)
     status_counts = {
@@ -440,6 +533,12 @@ def admin_login_submit(
     """Temporary admin login flow to open inbox view from login button."""
     _ = (request, username, password)
     return RedirectResponse(url="/admin", status_code=303)
+
+
+@app.get("/admin/publicaciones")
+def admin_publications(request: Request):
+    """Serve RENSOF admin publications control module."""
+    return _render_admin_publications(request)
 
 
 @app.get("/admin/correos/bandeja")

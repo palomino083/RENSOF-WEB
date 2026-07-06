@@ -1,6 +1,66 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+  .pub-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .pub-card,
+  .pub-track,
+  .pub-queue,
+  .pub-playbook {
+    border-radius: 20px;
+    border: 1px solid rgba(126, 214, 255, 0.16);
+    background: linear-gradient(180deg, rgba(8, 22, 37, 0.92), rgba(6, 16, 29, 0.92));
+    box-shadow: 0 18px 38px rgba(0, 10, 25, 0.28);
+    padding: 20px;
+  }
+
+  .pub-card strong,
+  .pub-track strong,
+  .pub-queue strong,
+  .pub-playbook strong {
+    display: block;
+    margin-top: 10px;
+    font-size: 1.2rem;
+  }
+
+  .pub-card p,
+  .pub-track p,
+  .pub-queue p,
+  .pub-playbook p {
+    color: var(--r-text-soft);
+  }
+
+  .pub-track-grid,
+  .pub-queue-grid,
+  .pub-playbook-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  @media (max-width: 1080px) {
+    .pub-grid,
+    .pub-track-grid,
+    .pub-queue-grid,
+    .pub-playbook-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .pub-grid,
+    .pub-track-grid,
+    .pub-queue-grid,
+    .pub-playbook-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
 <main class="page-main" style="padding-top: 84px;">
   <div class="admin-shell">
     {% include "partials/admin_sidebar.html" %}
@@ -9,78 +69,66 @@
   <section class="story-block">
     <div class="r2030-grid reveal">
       <span class="story-kicker">Admin</span>
-      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Modulo de publicaciones</h1>
-      <p class="story-text">Gestiona el repositorio editorial, su estado, fecha, tags y correo asignado.</p>
+      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Control editorial y desarrollo</h1>
+      <p class="story-text">Usa este modulo para gobernar narrativa, backlog de contenido, piezas de negocio y consistencia entre lo publicado y lo que la plataforma realmente opera.</p>
       <div class="hero-actions" style="margin-top:16px;">
         <a href="/admin" class="r-btn r-btn-ghost">Centro de control</a>
-        <a href="/admin/correos" class="r-btn r-btn-ghost">Correos</a>
         <a href="/admin/correos/bandeja" class="r-btn r-btn-primary">Bandeja</a>
+        <a href="/publicaciones" class="r-btn r-btn-ghost">Ver publicaciones publicas</a>
+      </div>
+      <div class="pub-grid" style="margin-top:20px;">
+        {% for metric in publication_metrics %}
+        <article class="pub-card">
+          <span class="story-kicker">{{ metric.label }}</span>
+          <strong>{{ metric.value }}</strong>
+          <p>{{ metric.detail }}</p>
+        </article>
+        {% endfor %}
       </div>
     </div>
   </section>
 
   <section class="story-block mission-band">
     <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Nueva publicacion</h2>
-      <form class="contact-panel" action="/admin/publications/add" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <label>Titulo</label><input class="r-input" type="text" name="title" required>
-        <label>Resumen</label><textarea class="r-textarea" name="summary" rows="3" required></textarea>
-        <label>Categoria</label><input class="r-input" type="text" name="category" required>
-        <label>Autor</label><input class="r-input" type="text" name="author_name" required>
-        <label>Estado</label>
-        <select class="r-select" name="status" required>
-          <option value="draft">draft</option>
-          <option value="published">published</option>
-        </select>
-        <label>Fecha de publicacion</label><input class="r-input" type="datetime-local" name="published_at">
-        <label>Tags (separados por coma)</label><input class="r-input" type="text" name="tags" placeholder="ia, prospectiva, sostenibilidad">
-        <label>Correo asignado</label>
-        <select class="r-select" name="contact_email" required>
-          {% for account in email_accounts %}
-          <option value="{{ account.email }}">{{ account.display_name }} | {{ account.area }} | {{ account.email }}</option>
-          {% endfor %}
-        </select>
-        <button class="r-btn r-btn-primary" type="submit">Agregar publicacion</button>
-      </form>
+      <h2 style="font-family:'Sora',sans-serif;">Frentes editoriales</h2>
+      <div class="pub-track-grid">
+        {% for track in editorial_tracks %}
+        <article class="pub-track">
+          <strong>{{ track.title }}</strong>
+          <p>{{ track.detail }}</p>
+          <a href="{{ track.href }}" class="r-btn r-btn-primary" style="margin-top:14px;">{{ track.cta }}</a>
+        </article>
+        {% endfor %}
+      </div>
     </div>
   </section>
 
   <section class="story-block">
     <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Publicaciones registradas</h2>
-      {% for publication in publications %}
-      <form class="contact-panel" action="/admin/publications/{{ publication.id }}/update" method="post" style="margin-top:10px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <input class="r-input" type="text" name="title" value="{{ publication.title }}" required>
-        <textarea class="r-textarea" name="summary" rows="3" required>{{ publication.summary }}</textarea>
-        <input class="r-input" type="text" name="category" value="{{ publication.category }}" required>
-        <input class="r-input" type="text" name="author_name" value="{{ publication.author_name }}" required>
-        <select class="r-select" name="status" required>
-          <option value="draft" {% if publication.status == 'draft' %}selected{% endif %}>draft</option>
-          <option value="published" {% if publication.status == 'published' %}selected{% endif %}>published</option>
-        </select>
-        <input class="r-input" type="datetime-local" name="published_at" value="{{ publication.published_at.strftime('%Y-%m-%dT%H:%M') if publication.published_at else '' }}">
-        <input class="r-input" type="text" name="tags" value="{{ publication.tags }}" placeholder="ia, prospectiva, sostenibilidad">
-        <select class="r-select" name="contact_email" required>
-          {% for account in email_accounts %}
-          <option value="{{ account.email }}" {% if publication.contact_email == account.email %}selected{% endif %}>{{ account.display_name }} | {{ account.area }} | {{ account.email }}</option>
-          {% endfor %}
-        </select>
-        <div class="hero-actions">
-          <button class="r-btn r-btn-ghost" type="submit">Guardar</button>
-        </div>
-      </form>
-      <form action="/admin/publications/{{ publication.id }}/delete" method="post" style="margin-top:6px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="r-btn" style="background:rgba(236,106,95,0.2);color:#fff;" type="submit">Eliminar</button>
-      </form>
-      {% else %}
-      <article class="pillar-card">
-        <strong>Sin publicaciones</strong>
-        <span>Crea la primera publicacion desde el formulario superior.</span>
-      </article>
-      {% endfor %}
+      <h2 style="font-family:'Sora',sans-serif;">Cola de desarrollo editorial</h2>
+      <div class="pub-queue-grid">
+        {% for item in publication_queue %}
+        <article class="pub-queue">
+          <span class="story-kicker">{{ item.status }}</span>
+          <strong>{{ item.name }}</strong>
+          <p>{{ item.detail }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="story-block mission-band">
+    <div class="r2030-grid reveal">
+      <h2 style="font-family:'Sora',sans-serif;">Playbooks editoriales</h2>
+      <div class="pub-playbook-grid">
+        {% for item in publication_playbooks %}
+        <article class="pub-playbook">
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.detail }}</p>
+        </article>
+        {% endfor %}
+      </div>
     </div>
   </section>
     </div>
