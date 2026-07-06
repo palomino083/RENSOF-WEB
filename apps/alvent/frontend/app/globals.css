@@ -18,6 +18,9 @@
   --secondary: #64748b;
   --accent: #14b8a6;
   --ink: #020617;
+  --luxury-navy: #081326;
+  --luxury-cyan: #06b6d4;
+  --luxury-amber: #f59e0b;
 
   --success: #16a34a;
   --warning: #f59e0b;
@@ -25,6 +28,7 @@
 
   --bg: #f4f7fb;
   --surface: #ffffff;
+  --app-shell-bg: #f6f8fd;
 
   --text: #0f172a;
   --muted: #64748b;
@@ -72,6 +76,11 @@ body {
   color: var(--foreground);
   font-family: var(--font-ui);
   text-rendering: optimizeLegibility;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(14, 165, 233, 0.18), transparent 34%),
+    radial-gradient(circle at 100% 20%, rgba(245, 158, 11, 0.14), transparent 30%),
+    linear-gradient(180deg, #f8fbff 0%, var(--app-shell-bg) 100%);
+  background-attachment: fixed;
 }
 
 body[data-theme="executive-dark"] {
@@ -100,12 +109,28 @@ body[data-theme="executive-dark"] .glass-panel {
 .app-layout {
   display: flex;
   min-height: 100vh;
+  position: relative;
 }
 
 .app-content {
   flex: 1;
-  padding: 30px;
+  min-width: 0;
+  padding: clamp(16px, 2.3vw, 30px);
   overflow: auto;
+}
+
+.window-column {
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 20px;
+  box-shadow: 0 22px 60px rgba(8, 19, 38, 0.11);
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 1024px) {
+  .app-content {
+    padding: 16px;
+  }
 }
 
 /* =====================================================

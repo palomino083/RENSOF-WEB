@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { appPath } from "@/utils/appPath";
+import styles from "./Menu.module.css";
 
 /* =========================
    🔐 TIPOS ERP
@@ -175,6 +176,7 @@ const MENU: MenuBlock[] = [
 export default function Menu() {
   const [usuario, setUsuario] = useState<Usuario>({});
   const [configMenuFocus, setConfigMenuFocus] = useState<"soporte" | "configuracion" | "empresa">("configuracion");
+  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
   const toAppHref = (href: string) => {
@@ -267,6 +269,10 @@ export default function Menu() {
     window.localStorage.setItem("alvent_menu_focus_config", "configuracion");
   }, [pathname]);
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
   /* =========================
      🔐 FILTRO POR PERMISOS
   ========================= */
@@ -290,40 +296,30 @@ const menuFiltrado = useMemo(() => {
 }, [permisos]);
 
   return (
-    <aside
-      style={{
-        width: "260px",
-        background: "#0F172A",
-        color: "white",
-        minHeight: "100vh",
-        padding: "20px",
-      }}
-    >
-      {/* HEADER */}
-      <h2>ALVENT ERP PRO</h2>
+    <>
+      <button
+        type="button"
+        className={styles.menuToggle}
+        onClick={() => setMobileOpen((prev) => !prev)}
+        aria-label={mobileOpen ? "Cerrar menu" : "Abrir menu"}
+      >
+        {mobileOpen ? "×" : "☰"}
+      </button>
 
-      <p style={{ fontSize: "12px", color: "#94A3B8" }}>
-        
-      </p>
+      {mobileOpen ? <button type="button" className={styles.mobileBackdrop} aria-label="Cerrar menu" onClick={() => setMobileOpen(false)} /> : null}
 
-      <hr />
+      <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""}`}>
+        <header className={styles.brand}>
+          <h2 className={styles.brandTitle}>ALVENT ERP PRO</h2>
+          <p className={styles.brandTag}>Control operacional premium</p>
+        </header>
 
-      {/* =========================
-          RENDER MENÚ
-      ========================= */}
-      {menuFiltrado.map((block: any, idx: number) => (
-        <div key={idx} style={{ marginBottom: "10px" }}>
+        <nav className={styles.menuScroll}>
+          {menuFiltrado.map((block: any, idx: number) => (
+            <div key={idx} className={styles.block}>
           {"section" in block ? (
             <>
-              <p
-                style={{
-                  fontSize: "11px",
-                  color: "#64748B",
-                  marginTop: "10px",
-                }}
-              >
-                {block.section}
-              </p>
+              <p className={styles.section}>{block.section}</p>
 
               {block.items.map((item: MenuItem) => (
                 <Link
@@ -353,27 +349,12 @@ const menuFiltrado = useMemo(() => {
                       setConfigMenuFocus("configuracion");
                       window.dispatchEvent(new CustomEvent("alvent-config-menu-focus", { detail: { mode: "configuracion" } }));
                     }
+
+                    setMobileOpen(false);
                   }}
-                  style={{
-                    display: "flex",
-                    padding: "10px",
-                    marginBottom: "5px",
-                    borderRadius: "8px",
-                    textDecoration: "none",
-                    background: isItemActive(item)
-                      ? "#FACC15"
-                      : "transparent",
-                    color: isItemActive(item)
-                      ? "#111827"
-                      : "white",
-                    fontWeight: isItemActive(item)
-                      ? "bold"
-                      : "normal",
-                  }}
+                  className={`${styles.item} ${isItemActive(item) ? styles.itemActive : ""}`}
                 >
-                  <span style={{ marginRight: "10px" }}>
-                    {item.icon}
-                  </span>
+                  <span className={styles.icon}>{item.icon}</span>
                   {item.label}
                 </Link>
               ))}
@@ -381,64 +362,40 @@ const menuFiltrado = useMemo(() => {
           ) : (
             <Link
               href={toAppHref(block.href)}
-              style={{
-                display: "flex",
-                padding: "10px",
-                borderRadius: "8px",
-                textDecoration: "none",
-                background: isItemActive(block)
-                  ? "#FACC15"
-                  : "transparent",
-                color: isItemActive(block)
-                  ? "#111827"
-                  : "white",
-                fontWeight: isItemActive(block)
-                  ? "bold"
-                  : "normal",
-              }}
+              onClick={() => setMobileOpen(false)}
+              className={`${styles.item} ${isItemActive(block) ? styles.itemActive : ""}`}
             >
-              <span style={{ marginRight: "10px" }}>
-                {block.icon}
-              </span>
+              <span className={styles.icon}>{block.icon}</span>
               {block.label}
             </Link>
           )}
+            </div>
+          ))}
+        </nav>
+
+        <div className={styles.userCard}>
+          <strong className={styles.userName}>{nombreVisible}</strong>
+
+          <p className={styles.userRole}>{rolEtiqueta}</p>
+          {esSuperadmin ? (
+            <p className={styles.superBadge}>Sin negocio fijo</p>
+          ) : null}
+
+          <button
+            onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("refreshToken");
+              localStorage.removeItem("usuario_id");
+              localStorage.removeItem("negocio_id");
+              localStorage.removeItem("usuario");
+              window.location.href = appPath("login");
+            }}
+            className={styles.logoutBtn}
+          >
+            Cerrar sesion
+          </button>
         </div>
-      ))}
-
-      <hr />
-
-      {/* USUARIO */}
-      <div style={{ marginTop: "20px" }}>
-        <strong>{nombreVisible}</strong>
-
-        <p style={{ color: "#94A3B8", marginBottom: esSuperadmin ? "2px" : "10px" }}>{rolEtiqueta}</p>
-        {esSuperadmin ? (
-          <p style={{ color: "#fbbf24", fontSize: "12px", marginTop: 0, marginBottom: "10px" }}>
-            Sin negocio fijo
-          </p>
-        ) : null}
-
-        <button
-          onClick={() => {
-            localStorage.removeItem("token");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("usuario_id");
-            localStorage.removeItem("negocio_id");
-            localStorage.removeItem("usuario");
-            window.location.href = appPath("login");
-          }}
-          style={{
-            width: "100%",
-            padding: "10px",
-            borderRadius: "6px",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          🚪 Cerrar sesión
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
