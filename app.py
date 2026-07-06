@@ -4,6 +4,7 @@ RENSOF Gateway - Servidor simplificado para RENSOF website + ALVENT
 
 from pathlib import Path
 import os
+from datetime import datetime, timezone
 from urllib.parse import urlsplit
 from fastapi import FastAPI, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -157,10 +158,139 @@ def _render_admin_login(request: Request):
     )
 
 
+def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> dict:
+    total_messages = len(messages)
+    status_counts = {
+        "new": sum(1 for message in messages if getattr(message, "status", "") == "new"),
+        "read": sum(1 for message in messages if getattr(message, "status", "") == "read"),
+        "archived": sum(1 for message in messages if getattr(message, "status", "") == "archived"),
+    }
+    unresolved_messages = status_counts["new"] + status_counts["read"]
+    refreshed_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    host_name = request.url.hostname or "www.rensof.pe"
+
+    metrics = [
+        {
+            "label": "Mensajes activos",
+            "value": str(unresolved_messages),
+            "detail": "Consultas que requieren lectura, respuesta o clasificacion.",
+            "tone": "primary",
+        },
+        {
+            "label": "Superficies vigiladas",
+            "value": "6",
+            "detail": "Publico, contacto, ALVENT, admin, publicaciones y gateway.",
+            "tone": "neutral",
+        },
+        {
+            "label": "Cobertura de control",
+            "value": "5/5",
+            "detail": "Rutas criticas, contenido, leads, acceso y operacion.",
+            "tone": "success",
+        },
+        {
+            "label": "Ultimo refresh",
+            "value": refreshed_at,
+            "detail": f"Host maestro {host_name}.",
+            "tone": "neutral",
+        },
+    ]
+
+    control_surfaces = [
+        {
+            "name": "Sitio institucional",
+            "status": "Operativo",
+            "detail": "Home, navegacion, formularios y rutas publicas.",
+            "href": "/",
+        },
+        {
+            "name": "Acceso ALVENT",
+            "status": "Vigilado",
+            "detail": "Ingreso publico bajo /app/alven/login y acceso al dashboard.",
+            "href": PUBLIC_ALVENT_LOGIN_PATH,
+        },
+        {
+            "name": "Backoffice RENSOF",
+            "status": "Operativo",
+            "detail": "Control editorial, correos y seguimiento administrativo.",
+            "href": "/admin",
+        },
+        {
+            "name": "Pipeline de contacto",
+            "status": "Listo",
+            "detail": "Entrada, clasificacion, SLA y asignacion comercial.",
+            "href": "/admin/correos/bandeja",
+        },
+    ]
+
+    alerts = [
+        {
+            "level": "Alta prioridad",
+            "title": "Convergencia de accesos ALVENT",
+            "detail": "Toda la navegacion publica ya apunta a /app/alven/login; revisar produccion tras cada deploy para evitar 404 transitorios.",
+        },
+        {
+            "level": "Monitoreo",
+            "title": "Bandeja sin backlog critico",
+            "detail": "No hay mensajes nuevos en cola. Mantener trazabilidad y captacion con seguimiento a formularios.",
+        },
+        {
+            "level": "Infraestructura",
+            "title": "Backend ALVENT enlazado",
+            "detail": "El gateway conserva enlace a backend dedicado para API y autenticacion controlada.",
+        },
+    ]
+
+    playbooks = [
+        {
+            "title": "Validar acceso principal",
+            "detail": "Comprobar home, /app/alven/login y /admin/login despues de cada publicacion.",
+            "href": PUBLIC_ALVENT_LOGIN_PATH,
+            "cta": "Abrir acceso ALVENT",
+        },
+        {
+            "title": "Triage de leads",
+            "detail": "Aplicar filtros, priorizar estado new y derivar a responsable comercial o editorial.",
+            "href": "/admin/correos/bandeja",
+            "cta": "Abrir bandeja",
+        },
+        {
+            "title": "Control editorial",
+            "detail": "Revisar publicaciones, contenido vigente y narrativa de producto antes de anunciar cambios.",
+            "href": "/admin/publicaciones",
+            "cta": "Ver publicaciones",
+        },
+    ]
+
+    watch_routes = [
+        {"path": "/", "purpose": "Captura de demanda y posicionamiento"},
+        {"path": PUBLIC_ALVENT_LOGIN_PATH, "purpose": "Ingreso comercial y operativo"},
+        {"path": "/admin/login", "purpose": "Gobierno de plataforma"},
+        {"path": "/contacto#contactForm", "purpose": "Pipeline de adquisicion"},
+    ]
+
+    return {
+        "admin_section": "inbox",
+        "ops_metrics": metrics,
+        "ops_surfaces": control_surfaces,
+        "ops_alerts": alerts,
+        "ops_playbooks": playbooks,
+        "ops_watch_routes": watch_routes,
+        "ops_total_messages": total_messages,
+        "ops_unresolved_messages": unresolved_messages,
+        "ops_status_counts": status_counts,
+        "ops_refreshed_at": refreshed_at,
+        "superagent_name": "RENSOF Platform Ops Superagent",
+        "superagent_scope": "mantenimiento, despliegues, vigilancia, alertas e incidencias",
+    }
+
+
 def _render_admin_inbox(request: Request):
     template_file = TEMPLATES_DIR / "admin_inbox.html"
     if not template_file.exists():
         return JSONResponse(status_code=404, content={"detail": "Admin inbox template not found"})
+    messages: list = []
+    ops_context = _build_admin_ops_context(request, messages)
     return templates.TemplateResponse(
         request=request,
         name="admin_inbox.html",
@@ -169,11 +299,12 @@ def _render_admin_inbox(request: Request):
             "page_title": "Bandeja de Contacto | RENSOF Admin",
             "page_description": "Bandeja de mensajes de la plataforma de administracion RENSOF.",
             "csrf_token": "",
-            "messages": [],
+            "messages": messages,
             "area_options": [],
             "search_query": "",
             "selected_area": "",
             "selected_status": "",
+            **ops_context,
         },
     )
 

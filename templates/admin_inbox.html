@@ -1,6 +1,159 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+  .ops-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .ops-card,
+  .ops-surface,
+  .ops-alert,
+  .ops-playbook,
+  .ops-route,
+  .ops-agent {
+    border-radius: 20px;
+    border: 1px solid rgba(126, 214, 255, 0.16);
+    background: linear-gradient(180deg, rgba(8, 22, 37, 0.92), rgba(6, 16, 29, 0.92));
+    box-shadow: 0 18px 38px rgba(0, 10, 25, 0.28);
+  }
+
+  .ops-card {
+    padding: 18px;
+  }
+
+  .ops-card strong {
+    display: block;
+    margin-top: 10px;
+    font-size: 1.55rem;
+    font-family: 'Sora', 'Segoe UI', Tahoma, sans-serif;
+  }
+
+  .ops-card span,
+  .ops-surface p,
+  .ops-alert p,
+  .ops-playbook p,
+  .ops-route p,
+  .ops-agent p,
+  .ops-card p {
+    color: var(--r-text-soft);
+  }
+
+  .ops-tone-success {
+    border-color: rgba(57, 202, 127, 0.28);
+  }
+
+  .ops-tone-primary {
+    border-color: rgba(0, 206, 209, 0.28);
+  }
+
+  .ops-surface-grid,
+  .ops-alert-grid,
+  .ops-playbook-grid,
+  .ops-routes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .ops-surface,
+  .ops-alert,
+  .ops-playbook,
+  .ops-route,
+  .ops-agent {
+    padding: 20px;
+  }
+
+  .ops-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(14, 45, 71, 0.6);
+    color: #8ee7ff;
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .ops-status::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #39ca7f;
+    box-shadow: 0 0 0 6px rgba(57, 202, 127, 0.12);
+  }
+
+  .ops-section-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: end;
+    margin-bottom: 18px;
+  }
+
+  .ops-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .ops-mini-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+  }
+
+  .ops-mini-kpis article {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(11, 31, 50, 0.56);
+    border: 1px solid rgba(126, 214, 255, 0.12);
+  }
+
+  .ops-mini-kpis strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 1.2rem;
+  }
+
+  .ops-empty {
+    display: grid;
+    gap: 14px;
+  }
+
+  @media (max-width: 1080px) {
+    .ops-grid,
+    .ops-surface-grid,
+    .ops-alert-grid,
+    .ops-playbook-grid,
+    .ops-routes-grid,
+    .ops-mini-kpis {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .ops-grid,
+    .ops-surface-grid,
+    .ops-alert-grid,
+    .ops-playbook-grid,
+    .ops-routes-grid,
+    .ops-mini-kpis {
+      grid-template-columns: 1fr;
+    }
+
+    .ops-section-head {
+      align-items: start;
+      flex-direction: column;
+    }
+  }
+</style>
 <main class="page-main" style="padding-top: 84px;">
   <div class="admin-shell">
     {% include "partials/admin_sidebar.html" %}
@@ -9,19 +162,125 @@
   <section class="story-block">
     <div class="r2030-grid reveal">
       <span class="story-kicker">Admin</span>
-      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Bandeja de contacto</h1>
-      <p class="story-text">Visualiza y clasifica las consultas recibidas desde los formularios publicos.</p>
+      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Centro de mando inteligente</h1>
+      <p class="story-text">Controla contacto, contenido, accesos criticos y operacion de RENSOF desde una misma consola con visibilidad ejecutiva, vigilancia y respuesta rapida.</p>
       <div class="hero-actions" style="margin-top:16px;">
         <a href="/admin/correos" class="r-btn r-btn-ghost">Volver a correos</a>
         <a href="/admin/publicaciones" class="r-btn r-btn-ghost">Publicaciones</a>
+        <a href="/app/alven/login" class="r-btn r-btn-primary">Abrir ALVENT</a>
         <a href="/admin" class="r-btn r-btn-ghost">Volver al panel</a>
+      </div>
+      <div class="ops-mini-kpis">
+        <article>
+          <span>Mensajes nuevos</span>
+          <strong>{{ ops_status_counts.new }}</strong>
+        </article>
+        <article>
+          <span>Mensajes leidos</span>
+          <strong>{{ ops_status_counts.read }}</strong>
+        </article>
+        <article>
+          <span>Archivados</span>
+          <strong>{{ ops_status_counts.archived }}</strong>
+        </article>
       </div>
     </div>
   </section>
 
   <section class="story-block mission-band">
     <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Filtros</h2>
+      <div class="ops-section-head">
+        <div>
+          <span class="story-kicker">Visibilidad ejecutiva</span>
+          <h2 class="story-title" style="font-size:clamp(1.5rem,3.8vw,2.5rem)">Estado total de la plataforma</h2>
+        </div>
+        <p class="story-text" style="max-width:520px; margin:0;">Actualizado {{ ops_refreshed_at }}. Esta vista concentra operacion comercial, accesos clave, vigilancia de rutas y acciones de respuesta.</p>
+      </div>
+      <div class="ops-grid">
+        {% for metric in ops_metrics %}
+        <article class="ops-card ops-tone-{{ metric.tone }}">
+          <span class="story-kicker">{{ metric.label }}</span>
+          <strong>{{ metric.value }}</strong>
+          <p>{{ metric.detail }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="story-block">
+    <div class="r2030-grid reveal">
+      <div class="ops-section-head">
+        <div>
+          <span class="story-kicker">Radar operativo</span>
+          <h2 class="story-title" style="font-size:clamp(1.5rem,3.8vw,2.4rem)">Superficies bajo vigilancia</h2>
+        </div>
+        <p class="story-text" style="max-width:520px; margin:0;">Cada modulo debe operar sin friccion: captacion, producto, administracion y respuesta a incidencias.</p>
+      </div>
+      <div class="ops-surface-grid">
+        {% for surface in ops_surfaces %}
+        <article class="ops-surface">
+          <span class="ops-status">{{ surface.status }}</span>
+          <h3 style="margin:0 0 8px;">{{ surface.name }}</h3>
+          <p>{{ surface.detail }}</p>
+          <a href="{{ surface.href }}" class="r-btn r-btn-ghost" style="margin-top:12px;">Abrir modulo</a>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="story-block mission-band">
+    <div class="r2030-grid reveal">
+      <div class="ops-section-head">
+        <div>
+          <span class="story-kicker">Alertas y respuesta</span>
+          <h2 class="story-title" style="font-size:clamp(1.5rem,3.8vw,2.4rem)">Incidencias que debes vigilar</h2>
+        </div>
+        <p class="story-text" style="max-width:520px; margin:0;">Las prioridades criticas se exponen primero para evitar desalineacion entre sitio publico, ALVENT y backoffice.</p>
+      </div>
+      <div class="ops-alert-grid">
+        {% for alert in ops_alerts %}
+        <article class="ops-alert">
+          <span class="story-kicker">{{ alert.level }}</span>
+          <h3 style="margin:10px 0 8px;">{{ alert.title }}</h3>
+          <p>{{ alert.detail }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="story-block">
+    <div class="r2030-grid reveal">
+      <div class="ops-section-head">
+        <div>
+          <span class="story-kicker">Playbooks</span>
+          <h2 class="story-title" style="font-size:clamp(1.5rem,3.8vw,2.4rem)">Acciones listas para ejecutar</h2>
+        </div>
+        <p class="story-text" style="max-width:520px; margin:0;">Convierte el panel en operacion diaria: verificar, priorizar, corregir y volver a validar.</p>
+      </div>
+      <div class="ops-playbook-grid">
+        {% for playbook in ops_playbooks %}
+        <article class="ops-playbook">
+          <h3 style="margin:0 0 8px;">{{ playbook.title }}</h3>
+          <p>{{ playbook.detail }}</p>
+          <a href="{{ playbook.href }}" class="r-btn r-btn-primary" style="margin-top:12px;">{{ playbook.cta }}</a>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="story-block mission-band">
+    <div class="r2030-grid reveal">
+      <div class="ops-section-head">
+        <div>
+          <span class="story-kicker">Bandeja viva</span>
+          <h2 style="font-family:'Sora',sans-serif; margin:0;">Filtros y cola operativa</h2>
+        </div>
+        <p class="story-text" style="max-width:520px; margin:0;">Clasifica por busqueda, area y estado para mantener SLA, conversion y trazabilidad.</p>
+      </div>
       <form class="contact-panel" action="/admin/correos/bandeja" method="get">
         <label>Busqueda</label>
         <input class="r-input" type="text" name="q" value="{{ search_query }}" placeholder="Nombre, correo, tema o mensaje">
@@ -49,6 +308,16 @@
 
   <section class="story-block">
     <div class="r2030-grid reveal">
+      <div class="ops-routes-grid" style="margin-bottom:18px;">
+        {% for route in ops_watch_routes %}
+        <article class="ops-route">
+          <span class="story-kicker">Ruta critica</span>
+          <h3 style="margin:10px 0 8px;">{{ route.path }}</h3>
+          <p>{{ route.purpose }}</p>
+        </article>
+        {% endfor %}
+      </div>
+
       {% for message in messages %}
       <article class="contact-panel" style="margin-top:10px;">
         <div class="hero-actions" style="justify-content:space-between; align-items:flex-start; gap:12px;">
@@ -73,11 +342,34 @@
         </form>
       </article>
       {% else %}
-      <article class="pillar-card">
-        <strong>Sin mensajes</strong>
-        <span>No hay mensajes en la bandeja para los filtros actuales.</span>
+      <article class="ops-agent ops-empty">
+        <span class="story-kicker">Sin backlog</span>
+        <strong style="font-size:1.35rem;">No hay mensajes en la bandeja para los filtros actuales.</strong>
+        <p>Usa este margen para revisar captacion, consistencia de rutas, estado del acceso ALVENT y contenido editorial antes de que escalen incidencias.</p>
       </article>
       {% endfor %}
+    </div>
+  </section>
+
+  <section class="story-block mission-band">
+    <div class="r2030-grid reveal">
+      <div class="ops-section-head">
+        <div>
+          <span class="story-kicker">Superagente</span>
+          <h2 class="story-title" style="font-size:clamp(1.5rem,3.8vw,2.4rem)">{{ superagent_name }}</h2>
+        </div>
+        <p class="story-text" style="max-width:520px; margin:0;">Cobertura: {{ superagent_scope }}.</p>
+      </div>
+      <article class="ops-agent">
+        <div class="ops-list">
+          <p>Este agente queda preparado para actuar como soporte operativo de plataforma: mantenimiento preventivo, verificacion post-deploy, vigilancia de rutas criticas, triage de alertas y respuesta frente a incidencias.</p>
+          <p>Usalo para revisar accesos, ejecutar checks puntuales, priorizar fallos, proponer correcciones pequenas y documentar estado operativo antes de cada publicacion.</p>
+          <div class="hero-actions">
+            <a href="/admin" class="r-btn r-btn-ghost">Volver al centro de control</a>
+            <a href="/app/alven/login" class="r-btn r-btn-primary">Ver acceso principal</a>
+          </div>
+        </div>
+      </article>
     </div>
   </section>
     </div>
