@@ -255,8 +255,17 @@ const SOPORTE_QUICK_PROMPTS: Array<{ label: string; text: string; prioridad: Sop
 const buildWelcomeMessage = (): { id: string; role: "bot"; text: string } => ({
   id: "soporte-bot-welcome",
   role: "bot",
-  text: "Soy Superagente de Soporte ALVENT. Te ayudo a diagnosticar, priorizar y escalar a RENSOF con contexto tecnico.",
+  text: "Hola, soy SofIA, tu asistente de soporte ALVENT. Te ayudo con diagnosticos tecnicos, estadisticas operativas y escalamiento a RENSOF, siempre con respeto, confidencialidad y cumplimiento normativo en Peru.",
 });
+
+const SOFIA_OPERATING_CONTEXT = [
+  "[Protocolo SofIA]",
+  "Identidad: SofIA, asistente de soporte ALVENT.",
+  "Tono: saludo cordial, trato respetuoso y lenguaje profesional.",
+  "Privacidad: proteger datos personales y evitar exponer informacion sensible.",
+  "Marco normativo: actuar bajo normativa aplicable del Peru (Ley 29733 y buenas practicas de seguridad).",
+  "Objetivo: diagnostico claro, accionable y orientado a continuidad operativa.",
+].join("\n");
 
 const buildChatStorageKey = (isSuperadmin: boolean, negocioId: number) =>
   `alvent_support_chat_v2:${isSuperadmin ? "superadmin" : "usuario"}:${negocioId || "global"}`;
@@ -1948,7 +1957,7 @@ export default function ConfiguracionPage() {
 
     const consulta = soporteChatInput.trim();
     if (consulta.length < 8) {
-      setError("Describe mejor la consulta para usar el chat bot");
+      setError("Describe mejor la consulta para usar SofIA");
       return;
     }
 
@@ -1969,7 +1978,7 @@ export default function ConfiguracionPage() {
       setError("");
       const resp = await systemService.sugerenciaIaSoporte({
         asunto: clasif.asunto,
-        consulta: `${consulta}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
+        consulta: `${consulta}\n\n${SOFIA_OPERATING_CONTEXT}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
       });
       setSoporteChatMessages((prev) => [
         ...prev,
@@ -2007,7 +2016,7 @@ export default function ConfiguracionPage() {
 
     const ultimaConsulta = [...soporteChatMessages].reverse().find((m) => m.role === "user")?.text?.trim() || "";
     if (ultimaConsulta.length < 8) {
-      setError("Primero envía una consulta en el chat bot");
+      setError("Primero envia una consulta en SofIA");
       return;
     }
 
@@ -2593,7 +2602,7 @@ export default function ConfiguracionPage() {
                 {isSuperadmin && showSoporteInteligente ? (
                   <section className={styles.supportInteligentePanel}>
                     <p className={styles.supportInteligenteIntro}>
-                      Atención de incidencias centralizada para RENSOF. Abre el soporte en línea para conversar con el chat bot y escalar tickets.
+                      Atención de incidencias centralizada para RENSOF. Abre el soporte en línea para conversar con SofIA y escalar tickets.
                     </p>
 
                     <section id="cfg-guardian" className={styles.guardianPanel}>
@@ -3245,7 +3254,7 @@ export default function ConfiguracionPage() {
               {isSuperadmin && showSoporteInteligente ? (
                 <div className={styles.supportInteligentePanel}>
                   <p className={styles.supportInteligenteIntro}>
-                    Atención de incidencias centralizada para RENSOF. Abre el soporte en línea para conversar con el chat bot y escalar tickets.
+                      Atención de incidencias centralizada para RENSOF. Abre el soporte en línea para conversar con SofIA y escalar tickets.
                   </p>
 
                   {isSuperadmin ? (
@@ -4102,8 +4111,8 @@ export default function ConfiguracionPage() {
 
           <ModalCard
             open={showSoporteChatModal}
-            title="Ventana de Soporte"
-            subtitle="Chat bot asistido por IA con escalamiento a RENSOF"
+            title="SofIA - Soporte Inteligente"
+            subtitle="Asistente de soporte ALVENT con escalamiento a RENSOF"
             actions={(
               <>
                 <button
@@ -4173,7 +4182,7 @@ export default function ConfiguracionPage() {
                     key={message.id}
                     className={message.role === "user" ? styles.chatBubbleUser : styles.chatBubbleIa}
                   >
-                    <strong>{message.role === "user" ? "Usuario" : "Chatbot"}</strong>
+                    <strong>{message.role === "user" ? "Usuario" : "SofIA"}</strong>
                     <p>{message.text}</p>
                     {message.meta ? <small className={styles.chatMetaLine}>{message.meta}</small> : null}
                   </div>
@@ -4184,7 +4193,7 @@ export default function ConfiguracionPage() {
                     <span className={styles.chatTypingDot} />
                     <span className={styles.chatTypingDot} />
                     <span className={styles.chatTypingDot} />
-                    <small>{loadingDiagnosticoSuperagente ? "Superagente diagnosticando..." : "Chatbot analizando incidencia..."}</small>
+                    <small>{loadingDiagnosticoSuperagente ? "SofIA diagnosticando operacion..." : "SofIA analizando incidencia..."}</small>
                   </div>
                 ) : null}
               </div>

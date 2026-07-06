@@ -99,41 +99,72 @@ def _normalizar_prioridad_filtro(value: str | None) -> Optional[str]:
     return None
 
 
+def _envolver_respuesta_sofia(categoria: str, recomendacion_base: str) -> dict:
+    intro = (
+        "Hola, soy SofIA, asistente de soporte de ALVENT. "
+        "Con gusto te ayudo con un analisis tecnico claro y respetuoso."
+    )
+    marco = (
+        "Actuo bajo confidencialidad y reserva de datos personales, "
+        "siguiendo la Ley N. 29733 (Proteccion de Datos Personales) y buenas practicas "
+        "de seguridad y trazabilidad aplicables en el Peru."
+    )
+    cierre = (
+        "Si compartes mas contexto (modulo, hora, mensaje exacto y resultado esperado), "
+        "podre darte un diagnostico mas preciso y, de ser necesario, escalarlo a RENSOF."
+    )
+
+    recomendacion = "\n\n".join([
+        intro,
+        f"Diagnostico inicial ({categoria.upper()}): {recomendacion_base}",
+        marco,
+        cierre,
+    ])
+
+    return {
+        "categoria": categoria,
+        "recomendacion": recomendacion,
+        "origen": "SOFIA_LOCAL",
+    }
+
+
 def _sugerir_respuesta_ia(asunto: str | None, consulta: str) -> dict:
     texto = f"{asunto or ''} {consulta or ''}".lower()
 
     if any(word in texto for word in ["sunat", "nubefact", "boleta", "factura", "comprobante"]):
-        return {
-            "categoria": "fiscal",
-            "recomendacion": (
-                "Verifica en Configuración/Fiscal: integración SUNAT activa, RUC emisor válido, token API vigente y series B/F configuradas. "
+        return _envolver_respuesta_sofia(
+            "fiscal",
+            (
+                "Verifica en Configuracion/Fiscal: integracion SUNAT activa, RUC emisor valido, token API vigente y series B/F configuradas. "
                 "Luego prueba una boleta en POS y revisa el estado SUNAT devuelto por la venta."
             ),
-        }
+        )
 
     if any(word in texto for word in ["no carga", "error 500", "distors", "estilo", "css", "hydration"]):
-        return {
-            "categoria": "frontend",
-            "recomendacion": (
-                "Reinicia frontend local, limpia caché .next y recarga la página. Si persiste, valida consola del navegador y ejecuta lint/build para detectar inconsistencias."
+        return _envolver_respuesta_sofia(
+            "frontend",
+            (
+                "Reinicia frontend local, limpia cache .next y recarga la pagina. "
+                "Si persiste, valida consola del navegador y ejecuta lint/build para detectar inconsistencias."
             ),
-        }
+        )
 
     if any(word in texto for word in ["stock", "inventario", "producto", "venta", "caja"]):
-        return {
-            "categoria": "operacion",
-            "recomendacion": (
-                "Confirma que la caja esté abierta y que el producto tenga stock suficiente. Revisa en POS si el usuario pertenece al negocio correcto y que no tenga restricciones de rol."
+        return _envolver_respuesta_sofia(
+            "operacion",
+            (
+                "Confirma que la caja este abierta y que el producto tenga stock suficiente. "
+                "Revisa en POS si el usuario pertenece al negocio correcto y que no tenga restricciones de rol."
             ),
-        }
+        )
 
-    return {
-        "categoria": "general",
-        "recomendacion": (
-            "Recopila contexto mínimo: módulo, acción, resultado esperado, mensaje de error y hora del incidente. "
-            "Con eso el superadministrador puede diagnosticar y responder más rápido."
+    return _envolver_respuesta_sofia(
+        "general",
+        (
+            "Recopila contexto minimo: modulo, accion, resultado esperado, mensaje de error y hora del incidente. "
+            "Con eso el superadministrador puede diagnosticar y responder mas rapido."
         ),
-    }
+    )
 
 
 def _resolver_negocio_soporte(current_user: dict, negocio_id_payload: Optional[int]) -> Optional[int]:
@@ -434,7 +465,7 @@ def sugerir_soporte_ia(
         "ok": True,
         "categoria": result["categoria"],
         "recomendacion": result["recomendacion"],
-        "origen": "IA_LOCAL",
+        "origen": result.get("origen", "SOFIA_LOCAL"),
     }
 
 
@@ -563,7 +594,7 @@ def crear_ticket_soporte(
         "sugerencia_ia": {
             "categoria": sugerencia["categoria"],
             "recomendacion": sugerencia["recomendacion"],
-            "origen": "IA_LOCAL",
+            "origen": sugerencia.get("origen", "SOFIA_LOCAL"),
         },
     }
 
