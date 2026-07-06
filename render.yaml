@@ -17,7 +17,7 @@ services:
       - key: ALVENT_BACKEND_ORIGIN
         value: https://alvent-backend.onrender.com
       - key: ALVENT_APP_URL
-        value: /alven/app/login
+        value: /app/alvent/login
       - key: ALVENT_APP_EXTERNAL_BASE_URL
         value: https://alvent-frontend.onrender.com/alven/app
 

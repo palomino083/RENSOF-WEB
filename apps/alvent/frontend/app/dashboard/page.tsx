@@ -99,6 +99,23 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const REQUEST_TIMEOUT_MS = 15000;
+
+  const withTimeout = async <T,>(promise: Promise<T>, fallbackMessage: string): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise<T>((_, reject) => {
+          timer = setTimeout(() => {
+            reject(new Error(fallbackMessage));
+          }, REQUEST_TIMEOUT_MS);
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  };
 
   const [showResetModal, setShowResetModal] = useState(false);
   const [password, setPassword] = useState("");
@@ -146,7 +163,10 @@ export default function Dashboard() {
     try {
       setLoading(true);
       setError("");
-      const overview = await dashboardService.getOverview();
+      const overview = await withTimeout(
+        dashboardService.getOverview(),
+        "Tiempo de espera agotado al cargar dashboard"
+      );
       setData(overview);
       setLastUpdatedAt(new Date());
     } catch (err) {
@@ -189,7 +209,7 @@ export default function Dashboard() {
     }, 60000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* =====================================================
      RESET

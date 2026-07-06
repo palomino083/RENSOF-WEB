@@ -6,10 +6,11 @@ from pathlib import Path
 import os
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
+import httpx
 from fastapi import FastAPI, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import logging
@@ -52,7 +53,7 @@ ALVENT_APP_EXTERNAL_BASE_URL = os.getenv(
     "ALVENT_APP_EXTERNAL_BASE_URL", "https://alvent-frontend.onrender.com/alven/app"
 ).rstrip("/")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-PUBLIC_ALVENT_LOGIN_PATH = "/app/alven/login"
+PUBLIC_ALVENT_LOGIN_PATH = "/app/alvent/login"
 RENSOF_SESSION_SECRET = os.getenv("RENSOF_SESSION_SECRET", "rensof-dev-session-secret")
 
 # FastAPI app
@@ -267,7 +268,7 @@ def _render_admin_publications(request: Request, publications: list, email_accou
         {
             "title": "ALVENT y producto",
             "detail": "Sincronizar fichas, beneficios, accesos y contenido comercial con el flujo real del aplicativo.",
-            "href": "/app/alven/login",
+            "href": PUBLIC_ALVENT_LOGIN_PATH,
             "cta": "Abrir acceso ALVENT",
         },
         {
@@ -486,7 +487,7 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
         {
             "name": "Acceso ALVENT",
             "status": "Vigilado",
-            "detail": "Ingreso publico bajo /app/alven/login y acceso al dashboard.",
+            "detail": "Ingreso publico bajo /app/alvent/login y acceso al dashboard.",
             "href": PUBLIC_ALVENT_LOGIN_PATH,
         },
         {
@@ -507,7 +508,7 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
         {
             "level": "Alta prioridad",
             "title": "Convergencia de accesos ALVENT",
-            "detail": "Toda la navegacion publica ya apunta a /app/alven/login; revisar produccion tras cada deploy para evitar 404 transitorios.",
+            "detail": "Toda la navegacion publica ya apunta a /app/alvent/login; revisar produccion tras cada deploy para evitar 404 transitorios.",
         },
         {
             "level": "Monitoreo",
@@ -524,7 +525,7 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
     playbooks = [
         {
             "title": "Validar acceso principal",
-            "detail": "Comprobar home, /app/alven/login y /admin/login despues de cada publicacion.",
+            "detail": "Comprobar home, /app/alvent/login y /admin/login despues de cada publicacion.",
             "href": PUBLIC_ALVENT_LOGIN_PATH,
             "cta": "Abrir acceso ALVENT",
         },
@@ -676,8 +677,15 @@ def redirect_alven_login(request: Request):
 
 
 @app.get("/app/alven/login")
+def redirect_public_alvent_login_legacy(request: Request):
+    """Legacy alias kept for compatibility; canonical path is /app/alvent/login."""
+    _ = request
+    return RedirectResponse(url=PUBLIC_ALVENT_LOGIN_PATH, status_code=308)
+
+
+@app.get("/app/alvent/login")
 def redirect_public_alvent_login(request: Request):
-    """Public ALVENT login alias from RENSOF marketing pages."""
+    """Canonical public ALVENT login entrypoint."""
     _ = request
     return RedirectResponse(url=_external_alvent_app_url())
 
@@ -693,12 +701,64 @@ def redirect_alven_app_path(request: Request, path: str):
     _ = request
     return RedirectResponse(url=_external_alvent_app_url(path))
 
-@app.api_route("/alven/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-def redirect_alven_api(path: str):
-    """Redirect ALVENT backend API to configured origin only."""
+@app.api_route("/alven/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def proxy_alven_api(request: Request, path: str):
+    """Proxy ALVENT backend API preserving auth headers and method/body."""
     if not ALVENT_BACKEND_ORIGIN:
         return JSONResponse(status_code=503, content={"detail": "ALVENT backend unavailable"})
-    return RedirectResponse(url=f"{ALVENT_BACKEND_ORIGIN}/{path}")
+
+    target_url = f"{ALVENT_BACKEND_ORIGIN.rstrip('/')}/{path.lstrip('/')}"
+    if request.url.query:
+        target_url = f"{target_url}?{request.url.query}"
+
+    excluded_request_headers = {"host", "content-length", "accept-encoding", "connection"}
+    forwarded_headers = {
+        key: value
+        for key, value in request.headers.items()
+        if key.lower() not in excluded_request_headers
+    }
+    forwarded_headers["x-forwarded-host"] = request.headers.get("host", "")
+    forwarded_headers["x-forwarded-proto"] = request.url.scheme
+
+    try:
+        body = await request.body()
+        async with httpx.AsyncClient(follow_redirects=False, timeout=60.0) as client:
+            upstream = await client.request(
+                method=request.method,
+                url=target_url,
+                headers=forwarded_headers,
+                content=body,
+            )
+    except httpx.RequestError:
+        return JSONResponse(status_code=503, content={"detail": "ALVENT backend unavailable"})
+
+    excluded_response_headers = {
+        "content-encoding",
+        "transfer-encoding",
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "te",
+        "trailers",
+        "upgrade",
+    }
+    response_headers = {
+        key: value
+        for key, value in upstream.headers.items()
+        if key.lower() not in excluded_response_headers
+    }
+
+    location = response_headers.get("location")
+    if location and location.startswith(ALVENT_BACKEND_ORIGIN.rstrip("/")):
+        response_headers["location"] = location.replace(ALVENT_BACKEND_ORIGIN.rstrip("/"), "/alven/api", 1)
+
+    return Response(
+        content=upstream.content,
+        status_code=upstream.status_code,
+        headers=response_headers,
+        media_type=upstream.headers.get("content-type"),
+    )
 
 @app.get("/admin")
 def admin_root(request: Request):

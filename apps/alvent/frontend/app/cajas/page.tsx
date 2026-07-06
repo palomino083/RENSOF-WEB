@@ -32,6 +32,24 @@ export default function CajasPage() {
   const [loading, setLoading] = useState(true);
   const [movimientos, setMovimientos] = useState<MovimientoCaja[]>([]);
 
+  const REQUEST_TIMEOUT_MS = 15000;
+
+  const withTimeout = async <T,>(promise: Promise<T>, fallbackMessage: string): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise<T>((_, reject) => {
+          timer = setTimeout(() => {
+            reject(new Error(fallbackMessage));
+          }, REQUEST_TIMEOUT_MS);
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  };
+
   const cajaAbierta = estadoCaja === "ABIERTA";
 
   const formatoMoneda = (valor: number) =>
@@ -44,10 +62,13 @@ export default function CajasPage() {
   const cargarCaja = async () => {
     try {
       setMensajeError("");
-      const [caja, movimientosData] = await Promise.all([
-        cajaService.actual(),
-        cajaService.movimientos().catch(() => []),
-      ]);
+      const [caja, movimientosData] = await withTimeout(
+        Promise.all([
+          cajaService.actual(),
+          cajaService.movimientos().catch(() => []),
+        ]),
+        "Tiempo de espera agotado al consultar caja"
+      );
 
       setMovimientos(Array.isArray(movimientosData) ? movimientosData.slice(0, 20) : []);
 
@@ -78,7 +99,7 @@ export default function CajasPage() {
 
   useEffect(() => {
     cargarCaja();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const abrirCaja = async () => {
     try {

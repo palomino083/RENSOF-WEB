@@ -35,6 +35,7 @@ export const API_URL = resolveApiUrl();
 
 export const api = axios.create({
   baseURL: API_URL,
+  timeout: 20000,
   headers: {
     "Content-Type": "application/json",
   },

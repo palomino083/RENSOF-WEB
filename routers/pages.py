@@ -920,6 +920,11 @@ async def alven_app_login(request: Request) -> Response:
     return response
 
 
+@router.get("/app/alvent/login", response_model=None)
+def public_alvent_login_alias() -> Response:
+    return RedirectResponse("/alven/app/login", status_code=307)
+
+
 @router.get("/alvent", response_model=None)
 def alvent_legacy_redirect() -> Response:
     return RedirectResponse("/alven", status_code=308)

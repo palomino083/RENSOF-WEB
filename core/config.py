@@ -10,7 +10,7 @@ ALVENT_FRONTEND_LOCAL_ORIGIN: Final = os.getenv("ALVENT_FRONTEND_LOCAL_ORIGIN", 
 ALVENT_FRONTEND_BASE_PATH: Final = os.getenv("ALVENT_FRONTEND_BASE_PATH", "/alven/app")
 ALVENT_BACKEND_ORIGIN: Final = os.getenv("ALVENT_BACKEND_ORIGIN", "https://alvent-backend.onrender.com")
 ALVENT_BACKEND_LOCAL_ORIGIN: Final = os.getenv("ALVENT_BACKEND_LOCAL_ORIGIN", "http://127.0.0.1:8001")
-ALVENT_APP_URL: Final = os.getenv("ALVENT_APP_URL", "/alven/app/login")
+ALVENT_APP_URL: Final = os.getenv("ALVENT_APP_URL", "/app/alvent/login")
 
 PAGES: Final = {
     "": "index.html",
