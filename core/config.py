@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Final
 
-BASE_DIR: Final = Path(__file__).resolve().parents[2]
+BASE_DIR: Final = Path(__file__).resolve().parents[1]
 TEMPLATES_DIR: Final = BASE_DIR / "templates"
 ASSETS_DIR: Final = BASE_DIR / "assets"
 ALVENT_FRONTEND_ORIGIN: Final = os.getenv("ALVENT_FRONTEND_ORIGIN", "https://alvent-frontend.onrender.com")

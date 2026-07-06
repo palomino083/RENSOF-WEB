@@ -26,6 +26,7 @@ from core.security import (
 )
 from db.database import SessionLocal
 from services.content_service import (
+    add_contact_message,
     add_email_account,
     add_publication,
     delete_email_account,
@@ -695,6 +696,43 @@ async def contacto():
     return _serve_named_page("contacto")
 
 
+@app.post("/contacto/enviar")
+def enviar_contacto(
+    full_name: str = Form(..., alias="nombre"),
+    email: str = Form(...),
+    message: str = Form(..., alias="mensaje"),
+    redirect_to: str = Form("/contacto"),
+    topic: str = Form("", alias="servicio"),
+    organization: str = Form("", alias="organizacion"),
+    area: str = Form("", alias="sector"),
+    assigned_email: str = Form("", alias="canal_correo"),
+    source_page: str = Form("contacto"),
+):
+    with SessionLocal() as session:
+        add_contact_message(
+            session,
+            full_name=full_name,
+            email=email,
+            organization=organization,
+            topic=topic,
+            area=area,
+            assigned_email=assigned_email,
+            message=message,
+            source_page=source_page,
+        )
+
+    if "#" in redirect_to:
+        base_redirect, fragment = redirect_to.split("#", 1)
+    else:
+        base_redirect, fragment = redirect_to, ""
+
+    separator = "&" if "?" in base_redirect else "?"
+    final_redirect = f"{base_redirect}{separator}sent=1"
+    if fragment:
+        final_redirect = f"{final_redirect}#{fragment}"
+    return RedirectResponse(final_redirect, status_code=303)
+
+
 @app.get("/proyectos")
 async def proyectos():
     return _serve_named_page("proyectos")
@@ -743,12 +781,6 @@ def redirect_alven_login(request: Request):
     _ = request
     return RedirectResponse(url=PUBLIC_ALVENT_LOGIN_PATH)
 
-
-@app.get("/app/alven/login")
-def redirect_public_alvent_login_legacy(request: Request):
-    """Legacy alias kept for compatibility; canonical path is /app/alvent/login."""
-    _ = request
-    return RedirectResponse(url=PUBLIC_ALVENT_LOGIN_PATH, status_code=308)
 
 
 @app.get("/app/alvent/login")
