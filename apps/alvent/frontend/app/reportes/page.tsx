@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ventasService } from "@/services/ventasService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {

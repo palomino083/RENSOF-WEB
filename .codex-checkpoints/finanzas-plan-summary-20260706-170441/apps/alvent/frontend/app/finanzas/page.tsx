@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Menu from "@/components/Menu";
@@ -6,47 +6,28 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import Toolbar from "@/components/ui/Toolbar";
 import StatusBadge from "@/components/ui/StatusBadge";
+import PlanVisualCards from "@/features/planes/components/PlanVisualCards";
+import {
+  formatLimite,
+  PLANES_VISIBLES_EN_SECCION,
+  PLAN_PRICE_MAP,
+  PLAN_VISUAL_META,
+  normalizarPlan,
+} from "@/features/planes/visualNarrative";
 import { negocioService, type Negocio } from "@/services/negocioService";
 import { finanzasService, type CierreMensual, type GastoOperativo, type IngresoPlan } from "@/services/finanzasService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { appPath } from "@/utils/appPath";
 import styles from "./page.module.css";
 
-const DEFAULT_PLAN_AMOUNTS = {
-  gratuito: 0,
-  prueba: 15,
-  basico: 20,
-  lite: 35,
-  pro: 45,
-  premium: 65,
-};
-
-type PlanAmountKey = keyof typeof DEFAULT_PLAN_AMOUNTS;
-
-const PLAN_AMOUNT_BY_CODE: Record<string, PlanAmountKey> = {
-  GRATUITO: "gratuito",
-  PRUEBA: "prueba",
-  BASICO: "basico",
-  LITE: "lite",
-  PRO: "pro",
-  PREMIUM: "premium",
-};
-
-const PLAN_ORDER = ["GRATUITO", "PRUEBA", "BASICO", "LITE", "PRO", "PREMIUM", "SIN_PLAN"];
-
-const normalizarCodigoPlan = (plan: string) =>
-  String(plan || "SIN_PLAN")
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, "_");
-
-const formatPlanLabel = (plan: string) => {
-  const code = normalizarCodigoPlan(plan);
-  if (code === "SIN_PLAN") return "Sin plan";
-  return code
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+type PlanCatalogItem = {
+  codigo: string;
+  nombre: string;
+  usuarios_limite: number | null;
+  reportes_habilitado: boolean;
+  reportes_limite: number | null;
+  backups_habilitado: boolean;
+  backups_limite: number | null;
 };
 
 const periodoActual = () => {
@@ -93,9 +74,15 @@ export default function FinanzasPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [negocios, setNegocios] = useState<Negocio[]>([]);
   const [negocioObjetivoId, setNegocioObjetivoId] = useState<number>(0);
-  const [pagosPendientes, setPagosPendientes] = useState(0);
-  const [loadingPlanFinanciero, setLoadingPlanFinanciero] = useState(false);
-  const [planAmounts, setPlanAmounts] = useState({ ...DEFAULT_PLAN_AMOUNTS });
+  const [planCatalogo, setPlanCatalogo] = useState<PlanCatalogItem[]>([]);
+  const [planAmounts, setPlanAmounts] = useState({
+    gratuito: 0,
+    prueba: 15,
+    basico: 20,
+    lite: 35,
+    pro: 45,
+    premium: 65,
+  });
 
   const [form, setForm] = useState({
     categoria: "Operaciones",
@@ -126,38 +113,26 @@ export default function FinanzasPage() {
     }
   };
 
-  const cargarLecturaFinancieraPlanes = useCallback(async (negocioId: number, listaNegocios: Negocio[] = negocios) => {
-    try {
-      setLoadingPlanFinanciero(true);
-
-      if (negocioId) {
-        const montos = await negocioService.getPlanAmounts(negocioId);
-        if (montos?.montos) {
-          setPlanAmounts(montos.montos);
-        }
-      }
-
-      if (listaNegocios.length === 0) {
-        setPagosPendientes(0);
-        return;
-      }
-
-      const historiales = await Promise.allSettled(
-        listaNegocios.map((negocio) => negocioService.getPlanHistory(Number(negocio.id)))
-      );
-
-      const pendientes = historiales.reduce((acc, item) => {
-        if (item.status !== "fulfilled") return acc;
-        return acc + item.value.filter((row) => String(row.estado || "").toUpperCase() === "PENDIENTE_VALIDACION").length;
-      }, 0);
-
-      setPagosPendientes(pendientes);
-    } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "No se pudo cargar el resumen financiero de planes"));
-    } finally {
-      setLoadingPlanFinanciero(false);
+  const cargarPlanes = async (negocioId: number) => {
+    if (!negocioId) {
+      setPlanCatalogo([]);
+      return;
     }
-  }, [negocios]);
+
+    try {
+      const [catalogo, montos] = await Promise.all([
+        negocioService.getEditablePlanCatalog(negocioId),
+        negocioService.getPlanAmounts(negocioId),
+      ]);
+
+      setPlanCatalogo(Array.isArray(catalogo.planes) ? catalogo.planes : []);
+      if (montos?.montos) {
+        setPlanAmounts(montos.montos);
+      }
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo cargar narrativa de planes"));
+    }
+  };
 
   useEffect(() => {
     void cargarTodo(periodo);
@@ -178,8 +153,8 @@ export default function FinanzasPage() {
   }, []);
 
   useEffect(() => {
-    void cargarLecturaFinancieraPlanes(negocioObjetivoId, negocios);
-  }, [negocioObjetivoId, negocios, cargarLecturaFinancieraPlanes]);
+    void cargarPlanes(negocioObjetivoId);
+  }, [negocioObjetivoId]);
 
   const limpiarFormulario = () => {
     setForm({
@@ -339,81 +314,41 @@ export default function FinanzasPage() {
       .sort((a, b) => b.total - a.total);
   }, [ingresos]);
 
-  const getPlanAmount = useCallback((plan: string) => {
-    const amountKey = PLAN_AMOUNT_BY_CODE[normalizarCodigoPlan(plan)];
-    return amountKey ? Number(planAmounts[amountKey] || 0) : 0;
-  }, [planAmounts]);
-
-  const clientesPorPlan = useMemo(() => {
-    const map = new Map<string, { plan: string; clientes: number }>();
-
-    negocios.forEach((negocio) => {
-      const plan = normalizarCodigoPlan(negocio.plan || "SIN_PLAN");
-      const current = map.get(plan) || { plan, clientes: 0 };
-      current.clientes += 1;
-      map.set(plan, current);
-    });
-
-    return Array.from(map.values()).sort((a, b) => {
-      const orderA = PLAN_ORDER.indexOf(a.plan);
-      const orderB = PLAN_ORDER.indexOf(b.plan);
-      return (orderA === -1 ? 999 : orderA) - (orderB === -1 ? 999 : orderB);
-    });
-  }, [negocios]);
-
-  const ingresosPorPlanFinanciero = useMemo(() => {
-    const map = new Map<string, { plan: string; ingresos: number; movimientos: number }>();
-
-    ingresos.forEach((row) => {
-      const plan = normalizarCodigoPlan(row.plan_solicitado || "SIN_PLAN");
-      const current = map.get(plan) || { plan, ingresos: 0, movimientos: 0 };
-      current.ingresos += Number(row.monto || 0);
-      current.movimientos += 1;
-      map.set(plan, current);
-    });
-
-    return map;
-  }, [ingresos]);
-
-  const resumenFinancieroPlanes = useMemo(() => {
-    const planes = new Set<string>();
-    clientesPorPlan.forEach((item) => planes.add(item.plan));
-    ingresosPorPlanFinanciero.forEach((_, plan) => planes.add(plan));
-
-    return Array.from(planes)
+  const planVisualCards = useMemo(() => {
+    return planCatalogo
+      .filter((plan) => PLANES_VISIBLES_EN_SECCION.includes(normalizarPlan(plan.codigo) as (typeof PLANES_VISIBLES_EN_SECCION)[number]))
       .map((plan) => {
-        const clientes = clientesPorPlan.find((item) => item.plan === plan)?.clientes || 0;
-        const ingresosInfo = ingresosPorPlanFinanciero.get(plan);
-        return {
-          plan,
-          clientes,
-          mrr: clientes * getPlanAmount(plan),
-          ingresosPeriodo: ingresosInfo?.ingresos || 0,
-          movimientosPeriodo: ingresosInfo?.movimientos || 0,
+        const codigo = normalizarPlan(plan.codigo);
+        const meta = PLAN_VISUAL_META[codigo] || {
+          subtitulo: "Alternativa configurable",
+          lema: "Plan editable desde el panel propietario",
+          accentClass: "pro" as const,
         };
-      })
-      .sort((a, b) => {
-        const orderA = PLAN_ORDER.indexOf(a.plan);
-        const orderB = PLAN_ORDER.indexOf(b.plan);
-        return (orderA === -1 ? 999 : orderA) - (orderB === -1 ? 999 : orderB);
+        const amountKey = PLAN_PRICE_MAP[codigo] as keyof typeof planAmounts;
+        const precio = amountKey ? Number(planAmounts[amountKey] || 0) : 0;
+
+        return {
+          key: codigo,
+          titulo: `Plan ${plan.nombre}`,
+          subtitulo: meta.subtitulo,
+          accentClass: meta.accentClass,
+          lema: meta.lema,
+          precio: `S/${precio.toFixed(0)}`,
+          beneficios: [
+            { icon: "user" as const, text: `Usuarios: ${formatLimite(plan.usuarios_limite)}` },
+            {
+              icon: "chart" as const,
+              text: plan.reportes_habilitado ? `Reportes: ${formatLimite(plan.reportes_limite)}` : "Reportes: no incluidos",
+            },
+            {
+              icon: "shield" as const,
+              text: plan.backups_habilitado ? `Backups: ${formatLimite(plan.backups_limite)}` : "Backups: no incluidos",
+            },
+            { icon: "briefcase" as const, text: "Escalable por negocio" },
+          ],
+        };
       });
-  }, [clientesPorPlan, ingresosPorPlanFinanciero, getPlanAmount]);
-
-  const totalClientesConPlan = useMemo(
-    () => clientesPorPlan.reduce((acc, item) => acc + item.clientes, 0),
-    [clientesPorPlan]
-  );
-
-  const mrrMensualEstimado = useMemo(
-    () => resumenFinancieroPlanes.reduce((acc, item) => acc + item.mrr, 0),
-    [resumenFinancieroPlanes]
-  );
-
-  const planMasContratado = useMemo(() => {
-    if (clientesPorPlan.length === 0) return "Sin datos";
-    const top = [...clientesPorPlan].sort((a, b) => b.clientes - a.clientes)[0];
-    return `${formatPlanLabel(top.plan)} (${top.clientes})`;
-  }, [clientesPorPlan]);
+  }, [planCatalogo, planAmounts]);
 
   return (
     <ProtectedRoute>
@@ -483,24 +418,20 @@ export default function FinanzasPage() {
           </section>
 
           <section className={styles.card}>
-            <Toolbar
-              title="Resumen financiero de planes"
-              right={<StatusBadge text={loadingPlanFinanciero ? "Actualizando" : "Vista financiera"} variant="info" />}
-            />
-            <p className={styles.mutedText}>
-              La administraciÃ³n completa de planes permanece en ConfiguraciÃ³n. Finanzas muestra lectura econÃ³mica:
-              ingresos del periodo, clientes por plan, MRR estimado y pagos pendientes.
+            <Toolbar title="Narrativa dinámica de planes" right={<StatusBadge text="Unificado con Configuración" variant="info" />} />
+            <p>
+              Alternativas comerciales conectadas al catálogo real y montos editables. El propietario del sistema ajusta capacidad y precio desde Configuración.
             </p>
 
             <div className={styles.periodRow}>
               <label className={styles.selectorInline}>
-                Empresa base para montos
+                Empresa objetivo para lectura de montos
                 <select
                   value={negocioObjetivoId || ""}
                   onChange={(e) => setNegocioObjetivoId(parseNegocioId(e.target.value))}
                   className="focus-ring"
                 >
-                  <option value="">Usar montos base</option>
+                  <option value="">Seleccionar empresa</option>
                   {negocios.map((n) => (
                     <option key={n.id} value={n.id}>{n.id} - {n.nombre}</option>
                   ))}
@@ -513,69 +444,13 @@ export default function FinanzasPage() {
                   window.location.href = appPath("configuracion");
                 }}
               >
-                Administrar planes en ConfiguraciÃ³n
+                Ir a Configuración de planes
               </button>
             </div>
 
-            <div className={styles.financialPlanGrid}>
-              <article className={styles.financialPlanCard}>
-                <span>MRR mensual estimado</span>
-                <strong>{formatCurrency(mrrMensualEstimado)}</strong>
-                <small>Clientes actuales por monto del plan</small>
-              </article>
-              <article className={styles.financialPlanCard}>
-                <span>Clientes por plan</span>
-                <strong>{totalClientesConPlan}</strong>
-                <small>{resumenFinancieroPlanes.length} planes con lectura</small>
-              </article>
-              <article className={styles.financialPlanCard}>
-                <span>Ingresos del periodo</span>
-                <strong>{formatCurrency(totalIngresos)}</strong>
-                <small>{ingresos.length} movimientos aplicados</small>
-              </article>
-              <article className={styles.financialPlanCard}>
-                <span>Pagos pendientes</span>
-                <strong>{pagosPendientes}</strong>
-                <small>Solicitudes en validaciÃ³n</small>
-              </article>
-              <article className={styles.financialPlanCard}>
-                <span>Plan mÃ¡s contratado</span>
-                <strong>{planMasContratado}</strong>
-                <small>SegÃºn empresas actuales</small>
-              </article>
-            </div>
-
-            <div className={styles.tableWrap}>
-              <table className={`${styles.table} ${styles.financialPlanTable}`}>
-                <thead>
-                  <tr>
-                    <th>Plan</th>
-                    <th>Clientes actuales</th>
-                    <th>MRR estimado</th>
-                    <th>Ingresos del periodo</th>
-                    <th>Movimientos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {resumenFinancieroPlanes.length === 0 ? (
-                    <tr>
-                      <td colSpan={5}>No hay datos financieros de planes para mostrar.</td>
-                    </tr>
-                  ) : (
-                    resumenFinancieroPlanes.map((item) => (
-                      <tr key={item.plan}>
-                        <td>{formatPlanLabel(item.plan)}</td>
-                        <td>{item.clientes}</td>
-                        <td>{formatCurrency(item.mrr)}</td>
-                        <td>{formatCurrency(item.ingresosPeriodo)}</td>
-                        <td>{item.movimientosPeriodo}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <PlanVisualCards cards={planVisualCards} />
           </section>
+
           <section className={styles.card}>
             <Toolbar title="Movimientos por plan y mes" right={<StatusBadge text={loading ? "Cargando" : `${ingresos.length} registros`} variant="neutral" />} />
             <p>
