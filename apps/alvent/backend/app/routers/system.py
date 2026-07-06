@@ -116,7 +116,7 @@ def _sofia_developer_instructions(nivel: str, categoria_local: str) -> str:
         "Si hay riesgo fiscal, perdida de ventas, caida de servicio, errores 5xx repetidos o safe mode activo, recomienda escalar a RENSOF.",
         "Entrega la respuesta con secciones breves: Diagnostico probable, Accion inmediata, Verificacion, Escalamiento.",
         f"Nivel de respuesta: {nivel}.",
-        f"Categoria local preliminar: {categoria_local}.",
+        f"CategorÃ­a local preliminar: {categoria_local}.",
     ])
 
 
@@ -130,7 +130,7 @@ def _build_sofia_input(asunto: str | None, consulta: str, current_user: Optional
         f"Rol usuario: {rol}",
         f"Superadmin: {'si' if is_superadmin else 'no'}",
         f"Negocio: {negocio_id}",
-        f"Categoria local: {categoria_local}",
+        f"CategorÃ­a local: {categoria_local}",
         _guardian_snapshot_for_sofia(),
     ])
     return _clip_text(payload)
@@ -228,7 +228,7 @@ def _resolver_nivel_sofia(current_user: dict | None, texto_contexto: str) -> str
     if "nivel de respuesta: ejecutivo" in text or "nivel ejecutivo" in text:
         return "EJECUTIVO"
     if "nivel de respuesta: tecnico" in text or "nivel tecnico" in text:
-        return "TECNICO"
+        return "TÃ‰CNICO"
     if "nivel de respuesta: usuario_final" in text or "usuario final" in text:
         return "USUARIO_FINAL"
 
@@ -238,7 +238,7 @@ def _resolver_nivel_sofia(current_user: dict | None, texto_contexto: str) -> str
 
         rol = str(current_user.get("rol") or "").upper().strip()
         if rol in {"ADMIN", "ADMINISTRADOR", "SUPERADMIN"}:
-            return "TECNICO"
+            return "TÃ‰CNICO"
 
     return "USUARIO_FINAL"
 
@@ -265,9 +265,9 @@ def _envolver_respuesta_sofia(categoria: str, recomendacion_base: str, nivel: st
             "Resumen ejecutivo: impacto operativo, riesgo actual y accion recomendada inmediata para continuidad. "
             f"Accion sugerida: {recomendacion_base}"
         )
-    elif nivel_normalizado == "TECNICO":
+    elif nivel_normalizado == "TÃ‰CNICO":
         recomendacion_nivel = (
-            "Detalle tecnico: identifica modulo, endpoint/flujo, causa probable y verificacion esperada. "
+            "Detalle tÃ©cnico: identifica modulo, endpoint/flujo, causa probable y verificacion esperada. "
             f"Paso a paso tecnico: {recomendacion_base}"
         )
     else:

@@ -182,7 +182,7 @@ def crear_gasto(
 
     categoria = str(data.categoria or "").strip()
     if categoria not in CATEGORIAS_GASTO:
-        raise HTTPException(status_code=400, detail="Categoria no permitida")
+        raise HTTPException(status_code=400, detail="CategorÃ­a no permitida")
 
     gasto = GastoOperativo(
         categoria=categoria,
@@ -215,7 +215,7 @@ def editar_gasto(
     if "categoria" in payload:
         categoria = str(payload["categoria"] or "").strip()
         if categoria not in CATEGORIAS_GASTO:
-            raise HTTPException(status_code=400, detail="Categoria no permitida")
+            raise HTTPException(status_code=400, detail="CategorÃ­a no permitida")
         gasto.categoria = categoria
     if "descripcion" in payload:
         gasto.descripcion = str(payload["descripcion"] or "").strip()

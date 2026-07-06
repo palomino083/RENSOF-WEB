@@ -38,7 +38,7 @@ export default function ClientesPage() {
 
   const [nombre, setNombre] = useState("");
   const [dni, setDni] = useState("");
-  const [telefono, setTelefono] = useState("");
+  const [telefono, setTelÃ©fono] = useState("");
   const [email, setEmail] = useState("");
 
   const [loadingSave, setLoadingSave] = useState(false);
@@ -72,7 +72,7 @@ export default function ClientesPage() {
   const limpiar = () => {
     setNombre("");
     setDni("");
-    setTelefono("");
+    setTelÃ©fono("");
     setEmail("");
     setEditId(null);
   };
@@ -84,7 +84,7 @@ export default function ClientesPage() {
     setEditId(normalizarId(c.id));
     setNombre(c.nombre);
     setDni(sanitizarDni(c.dni));
-    setTelefono(sanitizarCelular(c.telefono || ""));
+    setTelÃ©fono(sanitizarCelular(c.telefono || ""));
     setEmail(c.email || "");
   };
 
@@ -223,8 +223,8 @@ export default function ClientesPage() {
                 <input
                   className="focus-ring"
                   value={telefono}
-                  onChange={(e) => setTelefono(sanitizarCelular(e.target.value))}
-                  placeholder="Telefono"
+                  onChange={(e) => setTelÃ©fono(sanitizarCelular(e.target.value))}
+                  placeholder="TelÃ©fono"
                   inputMode="numeric"
                   maxLength={9}
                 />
@@ -276,7 +276,7 @@ export default function ClientesPage() {
 
               {loadingList ? <p className={styles.msg}>Cargando clientes...</p> : null}
 
-              <DataTable headers={["Nombre", "DNI", "Telefono", "Email", "Acciones"]} minWidth={760}>
+              <DataTable headers={["Nombre", "DNI", "TelÃ©fono", "Email", "Acciones"]} minWidth={760}>
                 {clientesFiltrados.map((c) => (
                   <tr key={c.id}>
                     <td>{c.nombre}</td>

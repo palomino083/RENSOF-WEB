@@ -72,7 +72,7 @@
         const payload = await response.json();
 
         if (!response.ok) {
-          throw new Error(payload.detail || "No se pudo iniciar sesion");
+          throw new Error(payload.detail || "No se pudo iniciar sesiÃ³n");
         }
 
         const rol = normalizarRol(payload.rol || "");
@@ -98,7 +98,7 @@
           window.location.href = "/alven/app/pos";
         }, 900);
       } catch (error) {
-        status.textContent = error && error.message ? error.message : "Error inesperado al iniciar sesion";
+        status.textContent = error && error.message ? error.message : "Error inesperado al iniciar sesiÃ³n";
       } finally {
         submitBtn.disabled = false;
       }

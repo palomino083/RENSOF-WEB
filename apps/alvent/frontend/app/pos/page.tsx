@@ -160,7 +160,7 @@ export default function PosPage() {
     setError("");
 
     if (origen === "scan") {
-      setScanStatus(`Codigo detectado: ${target}`);
+      setScanStatus(`CÃ³digo detectado: ${target}`);
       setScanOpen(false);
       stopScanner();
     }
@@ -271,7 +271,7 @@ export default function PosPage() {
 
   const aplicarPostVenta = async (venta: VentaReciente, tipo: "anular" | "devolver") => {
     const etiqueta = tipo === "anular" ? "anular" : "devolver";
-    if (!confirm(`¿Deseas ${etiqueta} la venta #${venta.id}? Esta accion repone stock.`)) {
+    if (!confirm(`¿Deseas ${etiqueta} la venta #${venta.id}? Esta acciÃ³n repone stock.`)) {
       return;
     }
 
@@ -841,7 +841,7 @@ export default function PosPage() {
             {requiereComprobante ? (
               <>
                 <div className={styles.formRow}>
-                  <label htmlFor="cliente-nombre">Cliente / Razon social</label>
+                  <label htmlFor="cliente-nombre">Cliente / RazÃ³n social</label>
                   <input
                     id="cliente-nombre"
                     value={clienteNombre}
@@ -918,7 +918,7 @@ export default function PosPage() {
                 </div>
 
                 <small>
-                  Si completas cliente + documento, se registra automaticamente en tu base de clientes.
+                  Si completas cliente + documento, se registra automÃ¡ticamente en tu base de clientes.
                 </small>
               </>
             ) : (
@@ -973,7 +973,7 @@ export default function PosPage() {
         />
 
         <p className={styles.postventaHint}>
-          Gestiona ventas recientes desde POS. Al anular o devolver, el stock se repone automaticamente.
+          Gestiona ventas recientes desde POS. Al anular o devolver, el stock se repone automÃ¡ticamente.
         </p>
 
         <DataTable

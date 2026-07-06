@@ -108,7 +108,7 @@ export default function CajasPage() {
       const usuarioId = Number(localStorage.getItem("usuario_id") || 0);
 
       if (!usuarioId) {
-        setMensajeError("Sesion invalida. Vuelve a iniciar sesion.");
+        setMensajeError("SesiÃ³n invÃ¡lida. Vuelve a iniciar sesiÃ³n.");
         return;
       }
 
@@ -145,7 +145,7 @@ export default function CajasPage() {
         <Menu />
         <main className={`${styles.shell} app-content`}>
           <section className={styles.hero}>
-            <p className={styles.eyebrow}>Gestion de efectivo</p>
+            <p className={styles.eyebrow}>GestiÃ³n de efectivo</p>
             <h1>Caja inteligente</h1>
             <p>Sincronizando estado operativo...</p>
           </section>
@@ -164,7 +164,7 @@ export default function CajasPage() {
       <Menu />
       <main className={`${styles.shell} app-content`}>
       <section className={styles.hero}>
-        <p className={styles.eyebrow}>Gestion de efectivo</p>
+        <p className={styles.eyebrow}>GestiÃ³n de efectivo</p>
         <h1>Caja inteligente</h1>
         <p>
           Visualiza el estado operativo en tiempo real y ejecuta aperturas o cierres con

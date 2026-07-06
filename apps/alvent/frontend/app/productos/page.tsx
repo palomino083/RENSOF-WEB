@@ -98,7 +98,7 @@ const ATRIBUTOS_SUGERIDOS_CATALOGO = [
   "Proveedor",
   "Modelo",
   "SKU fabricante",
-  "Codigo barras",
+  "CÃ³digo de barras",
   "Unidad medida",
   "Presentacion",
   "Contenido neto",
@@ -665,7 +665,7 @@ export default function Productos() {
       <ExecutivePulseBar
         modulo="Productos"
         estado={loading ? "Sincronizando" : "Catalogo operativo"}
-        foco="Gestion comercial de portafolio, precio y utilidad con lectura de riesgo de stock."
+        foco="GestiÃ³n comercial de portafolio, precio y utilidad con lectura de riesgo de stock."
         accion={{ label: "Ir a inventario", href: "inventario" }}
         metricas={[
           { label: "Catalogo", value: String(productos.length) },

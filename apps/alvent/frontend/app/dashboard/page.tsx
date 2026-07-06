@@ -336,7 +336,7 @@ export default function Dashboard() {
           <ExecutivePulseBar
             modulo="Dashboard"
             estado={data?.kpis.caja_abierta ? "Caja abierta" : "Caja cerrada"}
-            foco="Operacion consolidada de ventas, caja e inventario en tiempo real."
+            foco="OperaciÃ³n consolidada de ventas, caja e inventario en tiempo real."
             accion={{ label: "Abrir reportes", href: "reportes" }}
             metricas={[
               { label: "Ventas", value: String(data?.kpis.ventas ?? 0) },
