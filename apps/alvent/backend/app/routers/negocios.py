@@ -1124,15 +1124,15 @@ def solicitar_cambio_plan(
             "plan_vigente_hasta": getattr(pago_existente, "plan_vigente_hasta", None),
             "referencia_pago": referencia,
             "estado": pago_existente.estado,
-            "validaciÃ³n_modo_solicitada": "AUTO",
-            "validaciÃ³n_modo_aplicada": "AUTO" if str(pago_existente.estado).upper() == "APLICADO" else "MANUAL",
+            "validacion_modo_solicitada": "AUTO",
+            "validacion_modo_aplicada": "AUTO" if str(pago_existente.estado).upper() == "APLICADO" else "MANUAL",
             "riesgo_score": 0,
             "riesgo_nivel": "BAJO",
         }
 
-    validaciÃ³n_modo = str(data.validaciÃ³n_modo or "AUTO").strip().upper()
-    if validaciÃ³n_modo not in {"AUTO", "MANUAL"}:
-        raise HTTPException(status_code=400, detail="Modo de validaciÃ³n no valido")
+    validacion_modo = str(data.validacion_modo or "AUTO").strip().upper()
+    if validacion_modo not in {"AUTO", "MANUAL"}:
+        raise HTTPException(status_code=400, detail="Modo de validacion no valido")
 
     if not bool(data.declaracion_anti_fraude):
         raise HTTPException(status_code=400, detail="Debes aceptar la declaracion antifraude para continuar")
@@ -1145,7 +1145,7 @@ def solicitar_cambio_plan(
     riesgo_score = 0
     if canal == "efectivo":
         riesgo_score += 4
-    if validaciÃ³n_modo == "AUTO":
+    if validacion_modo == "AUTO":
         riesgo_score += 2
     if not comprobante_url:
         riesgo_score += 3
@@ -1177,18 +1177,18 @@ def solicitar_cambio_plan(
     elif riesgo_score >= 5:
         riesgo_nivel = "MEDIO"
 
-    validaciÃ³n_modo_aplicada = validaciÃ³n_modo
-    if validaciÃ³n_modo == "AUTO" and riesgo_score >= 5:
-        validaciÃ³n_modo_aplicada = "MANUAL"
+    validacion_modo_aplicada = validacion_modo
+    if validacion_modo == "AUTO" and riesgo_score >= 5:
+        validacion_modo_aplicada = "MANUAL"
 
-    estado_pago = "APLICADO" if validaciÃ³n_modo_aplicada == "AUTO" else "PENDIENTE_VALIDACION"
+    estado_pago = "APLICADO" if validacion_modo_aplicada == "AUTO" else "PENDIENTE_VALIDACION"
 
     descripcion = (
         f"solicitud_plan negocio={negocio_id} actual={plan_actual} "
         f"solicitado={plan_solicitado} tipo={'RENOVACION' if es_renovacion else 'CAMBIO'} "
         f"dias={duracion_dias if duracion_dias is not None else 'SIN_LIMITE'} "
         f"ref={referencia[:40]} canal={canal[:20]} "
-        f"validaciÃ³n={validaciÃ³n_modo}->{validaciÃ³n_modo_aplicada} estado={estado_pago} "
+        f"validacion={validacion_modo}->{validacion_modo_aplicada} estado={estado_pago} "
         f"riesgo={riesgo_nivel}:{riesgo_score} obs={observaciones[:60]}"
     )
 
@@ -1243,11 +1243,11 @@ def solicitar_cambio_plan(
     mensaje = (
         "Pago registrado. Tu nuevo plan fue activado automaticamente."
         if estado_pago == "APLICADO"
-        else "Pago registrado en revision manual. El plan se activara tras la validaciÃ³n antifraude."
+        else "Pago registrado en revision manual. El plan se activara tras la validacion antifraude."
     )
 
-    if validaciÃ³n_modo == "AUTO" and validaciÃ³n_modo_aplicada == "MANUAL":
-        mensaje += " Se detecto riesgo y se forzo validaciÃ³n manual de seguridad."
+    if validacion_modo == "AUTO" and validacion_modo_aplicada == "MANUAL":
+        mensaje += " Se detecto riesgo y se forzo validacion manual de seguridad."
 
     return {
         "ok": True,
@@ -1259,8 +1259,8 @@ def solicitar_cambio_plan(
         "plan_vigente_hasta": plan_vigente_hasta,
         "referencia_pago": referencia,
         "estado": estado_pago,
-        "validaciÃ³n_modo_solicitada": validaciÃ³n_modo,
-        "validaciÃ³n_modo_aplicada": validaciÃ³n_modo_aplicada,
+        "validacion_modo_solicitada": validacion_modo,
+        "validacion_modo_aplicada": validacion_modo_aplicada,
         "riesgo_score": riesgo_score,
         "riesgo_nivel": riesgo_nivel,
     }

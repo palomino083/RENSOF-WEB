@@ -77,7 +77,7 @@ export default function RegisterPage() {
         nombre: negocioBase,
         tipo: "tienda",
         plan: "GRATUITO",
-        descripcion: "Negocio creado automÃ¡ticamente en registro",
+        descripcion: "Negocio creado automaticamente en registro",
       });
 
       // 3. Asociar usuario con negocio

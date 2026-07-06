@@ -74,7 +74,7 @@
       <div class="hero-actions" style="margin-top:16px;">
         <a href="/admin" class="r-btn r-btn-ghost">Centro de control</a>
         <a href="/admin/correos/bandeja" class="r-btn r-btn-primary">Bandeja</a>
-        <a href="/publicaciÃ³nes" class="r-btn r-btn-ghost">Ver publicaciÃ³nes publicas</a>
+        <a href="/publicaciones" class="r-btn r-btn-ghost">Ver publicaciones publicas</a>
       </div>
       <div class="pub-grid" style="margin-top:20px;">
         {% for metric in publication_metrics %}
@@ -101,7 +101,7 @@
         {% endfor %}
       </div>
 
-      <h2 style="font-family:'Sora',sans-serif; margin-top:26px;">Nueva publicaciÃ³n</h2>
+      <h2 style="font-family:'Sora',sans-serif; margin-top:26px;">Nueva publicacion</h2>
       <form class="contact-panel" action="/admin/publications/add" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <label>Titulo</label><input class="r-input" type="text" name="title" required>
@@ -113,7 +113,7 @@
           <option value="draft">draft</option>
           <option value="published">published</option>
         </select>
-        <label>Fecha de publicaciÃ³n</label><input class="r-input" type="datetime-local" name="published_at">
+        <label>Fecha de publicacion</label><input class="r-input" type="datetime-local" name="published_at">
         <label>Tags (separados por coma)</label><input class="r-input" type="text" name="tags" placeholder="ia, prospectiva, sostenibilidad">
         <label>Correo asignado</label>
         <select class="r-select" name="contact_email" required>
@@ -121,7 +121,7 @@
           <option value="{{ account.email }}">{{ account.display_name }} | {{ account.area }} | {{ account.email }}</option>
           {% endfor %}
         </select>
-        <button class="r-btn r-btn-primary" type="submit">Agregar publicaciÃ³n</button>
+        <button class="r-btn r-btn-primary" type="submit">Agregar publicacion</button>
       </form>
     </div>
   </section>
@@ -168,8 +168,8 @@
       </form>
       {% else %}
       <article class="pillar-card" style="margin-top:12px;">
-        <strong>Sin publicaciÃ³nes</strong>
-        <span>Crea la primera publicaciÃ³n desde el formulario superior.</span>
+        <strong>Sin publicaciones</strong>
+        <span>Crea la primera publicacion desde el formulario superior.</span>
       </article>
       {% endfor %}
     </div>

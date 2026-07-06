@@ -10,7 +10,7 @@
       <strong>Centro de control</strong>
       <span>Vista general y modulos base</span>
     </a>
-    <a href="/admin/publicaciÃ³nes" class="admin-sidebar-link {% if admin_section == 'publications' %}is-active{% endif %}">
+    <a href="/admin/publicaciones" class="admin-sidebar-link {% if admin_section == 'publications' %}is-active{% endif %}">
       <strong>Publicaciones</strong>
       <span>Repositorio editorial y asignaciones</span>
     </a>
@@ -37,7 +37,7 @@
     <a href="/" class="r-btn r-btn-ghost">Ver sitio publico</a>
     <form action="/admin/logout" method="post">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button class="r-btn" style="background:rgba(236,106,95,0.2);color:#fff; width:100%;" type="submit">Cerrar sesiÃ³n</button>
+      <button class="r-btn" style="background:rgba(236,106,95,0.2);color:#fff; width:100%;" type="submit">Cerrar sesion</button>
     </form>
   </div>
 </aside>

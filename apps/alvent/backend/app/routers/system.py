@@ -116,7 +116,7 @@ def _sofia_developer_instructions(nivel: str, categoria_local: str) -> str:
         "Si hay riesgo fiscal, perdida de ventas, caida de servicio, errores 5xx repetidos o safe mode activo, recomienda escalar a RENSOF.",
         "Entrega la respuesta con secciones breves: Diagnostico probable, Accion inmediata, Verificacion, Escalamiento.",
         f"Nivel de respuesta: {nivel}.",
-        f"CategorÃ­a local preliminar: {categoria_local}.",
+        f"Categoria local preliminar: {categoria_local}.",
     ])
 
 
@@ -130,7 +130,7 @@ def _build_sofia_input(asunto: str | None, consulta: str, current_user: Optional
         f"Rol usuario: {rol}",
         f"Superadmin: {'si' if is_superadmin else 'no'}",
         f"Negocio: {negocio_id}",
-        f"CategorÃ­a local: {categoria_local}",
+        f"Categoria local: {categoria_local}",
         _guardian_snapshot_for_sofia(),
     ])
     return _clip_text(payload)
@@ -267,7 +267,7 @@ def _envolver_respuesta_sofia(categoria: str, recomendacion_base: str, nivel: st
         )
     elif nivel_normalizado == "TÃ‰CNICO":
         recomendacion_nivel = (
-            "Detalle tÃ©cnico: identifica modulo, endpoint/flujo, causa probable y verificacion esperada. "
+            "Detalle tecnico: identifica modulo, endpoint/flujo, causa probable y verificacion esperada. "
             f"Paso a paso tecnico: {recomendacion_base}"
         )
     else:

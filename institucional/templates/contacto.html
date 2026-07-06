@@ -27,7 +27,7 @@
 
         <label for="servicio">Producto de interes</label>
         <select id="servicio" class="r-select" name="servicio" required>
-          <option value="">Selecciona una opciÃ³n</option>
+          <option value="">Selecciona una opcion</option>
           {% for product in products %}
           <option>{{ product.name }} - {{ product.subtitle }}</option>
           {% endfor %}
@@ -45,7 +45,7 @@
         <textarea id="mensaje" class="r-textarea" name="mensaje" rows="5" required minlength="12"></textarea>
 
         <button class="r-btn r-btn-primary" type="submit">Enviar consulta</button>
-        <p id="formNote" style="margin-top:12px; color:var(--r-text-soft);">TambiÃ©n puedes escribir a contacto@rensof.pe.</p>
+        <p id="formNote" style="margin-top:12px; color:var(--r-text-soft);">Tambien puedes escribir a contacto@rensof.pe.</p>
       </form>
     </div>
   </section>

@@ -9,7 +9,7 @@
   <section class="story-block">
     <div class="r2030-grid reveal">
       <span class="story-kicker">Admin</span>
-      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Modulo de publicaciÃ³nes</h1>
+      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Modulo de publicaciones</h1>
       <p class="story-text">Gestiona el repositorio editorial, su estado, fecha, tags y correo asignado.</p>
       <div class="hero-actions" style="margin-top:16px;">
         <a href="/admin" class="r-btn r-btn-ghost">Centro de control</a>
@@ -21,7 +21,7 @@
 
   <section class="story-block mission-band">
     <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Nueva publicaciÃ³n</h2>
+      <h2 style="font-family:'Sora',sans-serif;">Nueva publicacion</h2>
       <form class="contact-panel" action="/admin/publications/add" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <label>Titulo</label><input class="r-input" type="text" name="title" required>
@@ -33,7 +33,7 @@
           <option value="draft">draft</option>
           <option value="published">published</option>
         </select>
-        <label>Fecha de publicaciÃ³n</label><input class="r-input" type="datetime-local" name="published_at">
+        <label>Fecha de publicacion</label><input class="r-input" type="datetime-local" name="published_at">
         <label>Tags (separados por coma)</label><input class="r-input" type="text" name="tags" placeholder="ia, prospectiva, sostenibilidad">
         <label>Correo asignado</label>
         <select class="r-select" name="contact_email" required>
@@ -41,7 +41,7 @@
           <option value="{{ account.email }}">{{ account.display_name }} | {{ account.area }} | {{ account.email }}</option>
           {% endfor %}
         </select>
-        <button class="r-btn r-btn-primary" type="submit">Agregar publicaciÃ³n</button>
+        <button class="r-btn r-btn-primary" type="submit">Agregar publicacion</button>
       </form>
     </div>
   </section>
@@ -77,8 +77,8 @@
       </form>
       {% else %}
       <article class="pillar-card">
-        <strong>Sin publicaciÃ³nes</strong>
-        <span>Crea la primera publicaciÃ³n desde el formulario superior.</span>
+        <strong>Sin publicaciones</strong>
+        <span>Crea la primera publicacion desde el formulario superior.</span>
       </article>
       {% endfor %}
     </div>

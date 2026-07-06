@@ -147,7 +147,7 @@ const PLAN_BONDAD_SOURCES = PLANES_VISIBLES_EN_SECCION;
 type CanalPago = "transferencia" | "tarjeta" | "yape" | "plin";
 type DestinoCobro = { titulo: string; detalle: string[] };
 type PaymentDestinations = Record<CanalPago, DestinoCobro>;
-type SoporteCategorÃ­a = "acceso" | "facturacion" | "inventario" | "ventas" | "rendimiento" | "integracion" | "otro";
+type SoporteCategoria = "acceso" | "facturacion" | "inventario" | "ventas" | "rendimiento" | "integracion" | "otro";
 type SoporteClasificacion = {
   categoria: SoporteCategoria;
   prioridadSugerida: SoportePrioridad;
@@ -233,12 +233,12 @@ const SHOW_SOPORTE_SLIM_VIEW = true;
 const SOPORTE_QUICK_PROMPTS: Array<{ label: string; text: string; prioridad: SoportePrioridad }> = [
   {
     label: "No puedo ingresar",
-    text: "No puedo iniciar sesiÃ³n, me sale error de acceso. Necesito recuperar acceso cuanto antes.",
+    text: "No puedo iniciar sesion, me sale error de acceso. Necesito recuperar acceso cuanto antes.",
     prioridad: "ALTA",
   },
   {
     label: "POS lento",
-    text: "El mÃ³dulo POS estÃ¡ lento y tarda mucho en confirmar ventas. Ocurre desde hoy en varias terminales.",
+    text: "El modulo POS esta lento y tarda mucho en confirmar ventas. Ocurre desde hoy en varias terminales.",
     prioridad: "ALTA",
   },
   {
@@ -256,7 +256,7 @@ const SOPORTE_QUICK_PROMPTS: Array<{ label: string; text: string; prioridad: Sop
 const buildWelcomeMessage = (): { id: string; role: "bot"; text: string } => ({
   id: "soporte-bot-welcome",
   role: "bot",
-  text: "Hola, soy SofIA, tu asistente de soporte ALVENT. Te ayudo con diagnÃ³sticos tÃ©cnicos, estadÃ­sticas operativas y escalamiento a RENSOF, siempre con respeto, confidencialidad y cumplimiento normativo en PerÃº.",
+  text: "Hola, soy SofIA, tu asistente de soporte ALVENT. Te ayudo con diagnosticos tecnicos, estadisticas operativas y escalamiento a RENSOF, siempre con respeto, confidencialidad y cumplimiento normativo en PerÃº.",
 });
 
 type SofiaResponseLevel = "EJECUTIVO" | "TÃ‰CNICO" | "USUARIO_FINAL";
@@ -267,7 +267,7 @@ const buildSofiaOperatingContext = (level: SofiaResponseLevel, isFirstInteractio
     level === "EJECUTIVO"
       ? "Nivel de respuesta: EJECUTIVO (impacto, riesgo y decision)."
       : level === "TÃ‰CNICO"
-        ? "Nivel de respuesta: TÃ‰CNICO (causa probable, pasos y validaciÃ³n)."
+        ? "Nivel de respuesta: TÃ‰CNICO (causa probable, pasos y validacion)."
         : "Nivel de respuesta: USUARIO_FINAL (pasos simples y lenguaje claro).";
 
   const contextoBase = [
@@ -303,12 +303,12 @@ const construirRespuestaTecnicaBreve = (recomendacion: string, clasif: SoporteCl
 
   const diagnostico = frases.slice(0, 1).join(" ") || clasif.resumen;
   const accion = clasif.checklist[0] || "Valida evento con hora exacta y usuario.";
-  const validaciÃ³n = clasif.checklist[1] || "Confirma resultado tras la acciÃ³n.";
+  const validacion = clasif.checklist[1] || "Confirma resultado tras la accion.";
 
   return [
     `Diagnostico: ${diagnostico}`,
-    `AcciÃ³n: ${accion}`,
-    `ValidaciÃ³n: ${validaciÃ³n}`,
+    `Accion: ${accion}`,
+    `Validacion: ${validacion}`,
   ].join("\n");
 };
 
@@ -344,24 +344,24 @@ const buildTemplateReply = (template: SoporteTemplateKey, level: SofiaResponseLe
 
   const levelLine =
     level === "EJECUTIVO"
-      ? "Resumen ejecutivo: impacto controlado, acciÃ³n inmediata y seguimiento con SLA."
+      ? "Resumen ejecutivo: impacto controlado, accion inmediata y seguimiento con SLA."
       : level === "TÃ‰CNICO"
-        ? "Detalle tÃ©cnico: causa probable, validaciÃ³n y evidencia requerida."
-        : "GuÃ­a para usuario final: pasos claros para resolver rÃ¡pido.";
+        ? "Detalle tecnico: causa probable, validacion y evidencia requerida."
+        : "Guia para usuario final: pasos claros para resolver rapido.";
 
   const base = {
-    ACCESO: "Valida credenciales, estado del usuario, permisos de rol y sesiÃ³n activa. Si persiste, envÃ­a hora exacta y mensaje mostrado.",
+    ACCESO: "Valida credenciales, estado del usuario, permisos de rol y sesion activa. Si persiste, envia hora exacta y mensaje mostrado.",
     SUNAT_FACTURACION: "Revisa integracion SUNAT activa, token vigente, series configuradas y RUC emisor valido. Luego prueba un comprobante controlado.",
     RENDIMIENTO: "Verifica latencia por modulo, incidentes Guardian y errores recientes. Comparte pantalla/modulo afectado y rango horario.",
     INVENTARIO_VENTAS: "Contrasta stock esperado vs real, ultimo movimiento y caja activa. Valida tambien rol del usuario y negocio asociado.",
-    GENERAL: "Comparte mÃ³dulo, acciÃ³n, resultado esperado y mensaje exacto para responder con mayor precision.",
+    GENERAL: "Comparte modulo, accion, resultado esperado y mensaje exacto para responder con mayor precision.",
   } as const;
 
   return [
     intro,
     levelLine,
-    `CategorÃ­a atendida: ${INCIDENT_TEMPLATE_LABELS[template]}.`,
-    `AcciÃ³n recomendada: ${base[template]}`,
+    `Categoria atendida: ${INCIDENT_TEMPLATE_LABELS[template]}.`,
+    `Accion recomendada: ${base[template]}`,
     ticket ? `Referencia ticket #${ticket.id}.` : "",
     cierre,
   ].filter(Boolean).join("\n\n");
@@ -477,7 +477,7 @@ const clasificarConsultaSoporte = (consulta: string): SoporteClasificacion => {
   const top = ordered[0];
   const second = ordered[1];
 
-  let categoria: SoporteCategorÃ­a = "otro";
+  let categoria: SoporteCategoria = "otro";
   if (top && top[1] > 0) categoria = top[0] as SoporteCategoria;
 
   const margen = Math.max(0, (top?.[1] || 0) - (second?.[1] || 0));
@@ -571,8 +571,8 @@ const construirFallbackSoporte = (clasif: SoporteClasificacion, concise: boolean
   if (concise) {
     return [
       `Diagnostico: ${clasif.resumen}`,
-      `AcciÃ³n: ${clasif.checklist[0] || "Validar evidencia tÃ©cnica del incidente."}`,
-      `ValidaciÃ³n: ${clasif.checklist[1] || "Confirmar resultado y hora exacta."}`,
+      `Accion: ${clasif.checklist[0] || "Validar evidencia tecnica del incidente."}`,
+      `Validacion: ${clasif.checklist[1] || "Confirmar resultado y hora exacta."}`,
     ].join("\n");
   }
 
@@ -707,7 +707,7 @@ export default function ConfiguracionPage() {
     plan_objetivo: "PRO",
     referencia_pago: "",
     canal_pago: "transferencia",
-    validaciÃ³n_modo: "MANUAL" as "AUTO" | "MANUAL",
+    validacion_modo: "MANUAL" as "AUTO" | "MANUAL",
     declaracion_anti_fraude: true,
     observaciones: "",
   });
@@ -999,7 +999,7 @@ export default function ConfiguracionPage() {
 
     const negocioId = await resolverNegocioObjetivo("guardar logotipo");
     if (!negocioId) {
-      setError("Selecciona explÃ­citamente el negocio objetivo antes de guardar logotipo");
+      setError("Selecciona explicitamente el negocio objetivo antes de guardar logotipo");
       return;
     }
 
@@ -1024,7 +1024,7 @@ export default function ConfiguracionPage() {
   const guardarDatosEmpresa = async () => {
     const negocioId = await resolverNegocioObjetivo("guardar datos de empresa");
     if (!negocioId) {
-      setError("Selecciona explÃ­citamente el negocio objetivo antes de guardar datos de empresa");
+      setError("Selecciona explicitamente el negocio objetivo antes de guardar datos de empresa");
       return;
     }
 
@@ -1303,7 +1303,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("guardar montos");
     if (!negocioId) {
-      setError("Selecciona explÃ­citamente el negocio objetivo para guardar montos");
+      setError("Selecciona explicitamente el negocio objetivo para guardar montos");
       return;
     }
 
@@ -1343,7 +1343,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("guardar limites");
     if (!negocioId) {
-      setError("Selecciona explÃ­citamente el negocio objetivo para guardar limites");
+      setError("Selecciona explicitamente el negocio objetivo para guardar limites");
       return;
     }
 
@@ -1414,7 +1414,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("aplicar el plan");
     if (!negocioId) {
-      setError("Selecciona explÃ­citamente el negocio objetivo para aplicar cambios de plan");
+      setError("Selecciona explicitamente el negocio objetivo para aplicar cambios de plan");
       return;
     }
     if (normalizarPlan(planCodigo) === normalizarPlan(businessForm.plan)) return;
@@ -1533,7 +1533,7 @@ export default function ConfiguracionPage() {
     productos_limite: number | null;
     sunat_habilitado: boolean;
   }) => {
-    // Superadmin debe ver exactamente el catÃ¡logo editable guardado en esta pantalla.
+    // Superadmin debe ver exactamente el catalogo editable guardado en esta pantalla.
     if (plan.codigo === "GRATUITO" && !isSuperadmin) return datosPlanGratuitoPromocional;
     return plan;
   };
@@ -1906,7 +1906,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) {
       pendingPlanApprovalsRef.current = pendingPlanApprovals;
       if (pendingPlanApprovals > 0) {
-        setPlanApprovalAlertText(`Tu solicitud de plan sigue en validaciÃ³n. Pendientes: ${pendingPlanApprovals}.`);
+        setPlanApprovalAlertText(`Tu solicitud de plan sigue en validacion. Pendientes: ${pendingPlanApprovals}.`);
       } else {
         setPlanApprovalAlertText("");
       }
@@ -2102,7 +2102,7 @@ export default function ConfiguracionPage() {
           id: `soporte-bot-${Date.now()}`,
           role: "bot",
           text: respuestaBot,
-          meta: `CategorÃ­a ${resp.categoria || clasif.categoria} | Prioridad sugerida ${clasif.prioridadSugerida} | Nivel ${resp.nivel || sofiaResponseLevel}`,
+          meta: `Categoria ${resp.categoria || clasif.categoria} | Prioridad sugerida ${clasif.prioridadSugerida} | Nivel ${resp.nivel || sofiaResponseLevel}`,
         },
       ]);
     } catch (err: unknown) {
@@ -2366,7 +2366,7 @@ export default function ConfiguracionPage() {
       setError("");
       await systemService.guardianSafeMode(
         enabled,
-        enabled ? "Activado manualmente desde panel ConfiguraciÃ³n" : "Desactivado manualmente desde panel ConfiguraciÃ³n"
+        enabled ? "Activado manualmente desde panel Configuracion" : "Desactivado manualmente desde panel Configuracion"
       );
       setSuccess(`Guardian Safe Mode ${enabled ? "activado" : "desactivado"}`);
       await cargarGuardianRuntime();
@@ -2383,7 +2383,7 @@ export default function ConfiguracionPage() {
     try {
       setAckingGuardianIncidentId(incidentId);
       setError("");
-      await systemService.guardianAckIncidente(incidentId, "Confirmado desde panel ConfiguraciÃ³n");
+      await systemService.guardianAckIncidente(incidentId, "Confirmado desde panel Configuracion");
       await cargarGuardianRuntime();
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo confirmar incidente"));
@@ -2480,17 +2480,17 @@ export default function ConfiguracionPage() {
         plan_objetivo: planPagoObjetivo,
         referencia_pago: solicitudPlan.referencia_pago.trim(),
         canal_pago: canalPagoSeleccionado,
-        validaciÃ³n_modo: "MANUAL",
+        validacion_modo: "MANUAL",
         declaracion_anti_fraude: true,
         observaciones: solicitudPlan.observaciones.trim() || undefined,
         comprobante_url,
       });
 
-      const detalleSeguridad = `Nivel de riesgo: ${resp.riesgo_nivel} (score ${resp.riesgo_score}). Validacion aplicada: ${resp.validaciÃ³n_modo_aplicada}.`;
+      const detalleSeguridad = `Nivel de riesgo: ${resp.riesgo_nivel} (score ${resp.riesgo_score}). Validacion aplicada: ${resp.validacion_modo_aplicada}.`;
       setSuccess(`${resp.mensaje} ${detalleSeguridad}`);
       setShowPagoPlanModal(false);
       setComprobantePagoFile(null);
-      setSolicitudPlan((prev) => ({ ...prev, referencia_pago: "", observaciones: "", declaracion_anti_fraude: true, validaciÃ³n_modo: "MANUAL" }));
+      setSolicitudPlan((prev) => ({ ...prev, referencia_pago: "", observaciones: "", declaracion_anti_fraude: true, validacion_modo: "MANUAL" }));
       await cargarBranding(negocioId);
       await cargarPlanStats();
       await cargarHistorialPlanes(negocioId);
@@ -2899,7 +2899,7 @@ export default function ConfiguracionPage() {
             modulo="Soporte"
             estado={configAccessMode === "soporte" ? "Asistencia activa" : "Modo configuracion"}
             foco="Atencion inteligente con SofIA y control de incidencias para cualquier tipo de negocio."
-            accion={{ label: "Abrir configuraciÃ³n", href: "configuracion" }}
+            accion={{ label: "Abrir configuracion", href: "configuracion" }}
             metricas={[
               { label: "Empresa", value: nombreEmpresa || "No definida" },
               { label: "Plan", value: planActual || "No definido", tone: "good" },
@@ -2921,7 +2921,7 @@ export default function ConfiguracionPage() {
                 onClick={() => {
                   if (isSuperadmin) {
                     setFiltroEstadoHistorialPlan("PENDIENTE_VALIDACION");
-                    irASeccion("cfg-plan-validaciÃ³nes");
+                    irASeccion("cfg-plan-validaciones");
                     return;
                   }
                   irASeccion("cfg-plan");
@@ -3199,7 +3199,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-razon">RazÃ³n social</label>
+                        <label htmlFor="empresa-razon">Razon social</label>
                         <input
                           id="empresa-razon"
                           value={businessForm.razon_social}
@@ -3253,7 +3253,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-telefono">TelÃ©fono</label>
+                        <label htmlFor="empresa-telefono">Telefono</label>
                         <input
                           id="empresa-telefono"
                           value={businessForm.telefono}
@@ -3281,7 +3281,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-pais">PaÃ­s</label>
+                        <label htmlFor="empresa-pais">Pais</label>
                         <input
                           id="empresa-pais"
                           value={businessForm.pais}
@@ -3291,7 +3291,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-direccion">DirecciÃ³n</label>
+                        <label htmlFor="empresa-direccion">Direccion</label>
                         <input
                           id="empresa-direccion"
                           value={businessForm.direccion}
@@ -3331,7 +3331,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-postal">CÃ³digo postal</label>
+                        <label htmlFor="empresa-postal">Codigo postal</label>
                         <input
                           id="empresa-postal"
                           value={businessForm.codigo_postal}
@@ -3862,14 +3862,14 @@ export default function ConfiguracionPage() {
                     <p>Usa la empresa cliente seleccionada en la sección Empresa para ejecutar cambios de plan.</p>
                   </div>
                   {!negocioActivoId ? (
-                    <small className={styles.helperText}>Sin empresa cliente seleccionada, aplicar plan estarÃ¡ bloqueado.</small>
+                    <small className={styles.helperText}>Sin empresa cliente seleccionada, aplicar plan estara bloqueado.</small>
                   ) : null}
                 </section>
 
                 <section className={styles.planExecutiveControlBar}>
                   <div className={styles.planExecutiveControlHead}>
                     <strong>Panel ejecutivo de decisión</strong>
-                    <p>Una sola vista para elegir plan y ejecutar la acciÃ³n requerida sin duplicar tarjetas.</p>
+                    <p>Una sola vista para elegir plan y ejecutar la accion requerida sin duplicar tarjetas.</p>
                   </div>
 
                   <div className={styles.planExecutiveControlGrid}>
@@ -3973,7 +3973,7 @@ export default function ConfiguracionPage() {
                   </div>
                 </section>
 
-                <section id="cfg-plan-validaciÃ³nes" className={styles.planHistoryBox}>
+                <section id="cfg-plan-validaciones" className={styles.planHistoryBox}>
                   <div className={styles.planHistoryHead}>
                     <h4>Validación de pagos de planes</h4>
                     <label className={styles.planHistoryFilter}>
@@ -4073,7 +4073,7 @@ export default function ConfiguracionPage() {
 
                 <section className={styles.planExecutiveControlBar}>
                   <div className={styles.planExecutiveControlHead}>
-                    <strong>DecisiÃ³n de plan</strong>
+                    <strong>Decision de plan</strong>
                     <p>Selecciona un plan, simula su efecto y activa de inmediato desde un solo bloque.</p>
                   </div>
 
@@ -4092,7 +4092,7 @@ export default function ConfiguracionPage() {
                     </label>
 
                     <label>
-                      AcciÃ³n rÃ¡pida
+                      Accion rapida
                       <select
                         value={planControlSimulado ? "simulado" : "simular"}
                         onChange={(e) => {
@@ -4443,7 +4443,7 @@ export default function ConfiguracionPage() {
 
               <div className={styles.supportChatComposer}>
                 <p className={styles.chatLevelHint}>
-                  Nivel activo: <strong>{sofiaResponseLevel}</strong>. SofIA adapta profundidad y lenguaje automÃ¡ticamente segÃºn el rol.
+                  Nivel activo: <strong>{sofiaResponseLevel}</strong>. SofIA adapta profundidad y lenguaje automaticamente segÃºn el rol.
                 </p>
 
                 <label className={styles.formRow}>

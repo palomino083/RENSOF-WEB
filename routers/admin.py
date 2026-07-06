@@ -135,7 +135,7 @@ def admin_page(request: Request):
         "admin.html",
         {
             "page_title": "Admin | RENSOF",
-            "page_description": "Panel de administraciÃ³n de contenido RENSOF.",
+            "page_description": "Panel de administracion de contenido RENSOF.",
             "active_page": "admin",
             "admin_section": "dashboard",
             "csrf_token": csrf_token,
@@ -188,7 +188,7 @@ def admin_email_accounts_legacy(request: Request):
     return RedirectResponse("/admin/correos", status_code=303)
 
 
-@router.get("/publicaciÃ³nes")
+@router.get("/publicaciones")
 def admin_publications_page(request: Request):
     redirect_response = _require_admin(request)
     if redirect_response:

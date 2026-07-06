@@ -33,7 +33,7 @@ import styles from "./page.module.css";
 
 const PLAN_OPTIONS = [
   { value: "GRATUITO", label: "Gratuito" },
-  { value: "BASICO", label: "BÃ¡sico" },
+  { value: "BASICO", label: "Basico" },
   { value: "PRO", label: "Pro" },
   { value: "PREMIUM", label: "Premium" },
 ] as const;
@@ -410,7 +410,7 @@ export default function ConfiguracionPage() {
     plan_objetivo: "PRO",
     referencia_pago: "",
     canal_pago: "transferencia",
-    validaciÃ³n_modo: "MANUAL" as "AUTO" | "MANUAL",
+    validacion_modo: "MANUAL" as "AUTO" | "MANUAL",
     declaracion_anti_fraude: true,
     observaciones: "",
   });
@@ -450,7 +450,7 @@ export default function ConfiguracionPage() {
     {
       id: "soporte-bot-welcome",
       role: "bot",
-      text: "Hola, soy el chat bot de soporte de ALVENT. CuÃ©ntame tu incidencia y te recomiendo una soluciÃ³n inicial.",
+      text: "Hola, soy el chat bot de soporte de ALVENT. Cuentame tu incidencia y te recomiendo una solucion inicial.",
     },
   ]);
   const [planAmounts, setPlanAmounts] = useState({
@@ -604,7 +604,7 @@ export default function ConfiguracionPage() {
   const guardarTipoNegocioEmpresaEnProductos = async (tipoValue?: string) => {
     const tipo = normalizarTipoNegocio(tipoValue || businessForm.tipo);
     if (!tipo) {
-      setError("Selecciona un tipo de negocio vÃ¡lido");
+      setError("Selecciona un tipo de negocio valido");
       return false;
     }
 
@@ -648,7 +648,7 @@ export default function ConfiguracionPage() {
   const crearTipoNegocioEmpresa = async () => {
     const tipo = normalizarTipoNegocio(nuevoTipoNegocioEmpresa);
     if (!tipo) {
-      setError("Ingresa un tipo de negocio vÃ¡lido");
+      setError("Ingresa un tipo de negocio valido");
       return;
     }
 
@@ -663,7 +663,7 @@ export default function ConfiguracionPage() {
       ...prev,
       nombre: "RENSOF SAC",
       tipo: "desarrollo_software",
-      descripcion: "Servicios de tecnologÃ­a, software empresarial y transformaciÃ³n digital.",
+      descripcion: "Servicios de tecnologia, software empresarial y transformacion digital.",
       razon_social: "RENSOF S.A.C.",
       pais: "Peru",
       moneda: "PEN",
@@ -703,7 +703,7 @@ export default function ConfiguracionPage() {
 
     const negocioId = await resolverNegocioObjetivo("guardar logotipo");
     if (!negocioId) {
-      setError("Selecciona explÃ­citamente el negocio objetivo antes de guardar logotipo");
+      setError("Selecciona explicitamente el negocio objetivo antes de guardar logotipo");
       return;
     }
 
@@ -728,7 +728,7 @@ export default function ConfiguracionPage() {
   const guardarDatosEmpresa = async () => {
     const negocioId = await resolverNegocioObjetivo("guardar datos de empresa");
     if (!negocioId) {
-      setError("Selecciona explÃ­citamente el negocio objetivo antes de guardar datos de empresa");
+      setError("Selecciona explicitamente el negocio objetivo antes de guardar datos de empresa");
       return;
     }
 
@@ -792,7 +792,7 @@ export default function ConfiguracionPage() {
       setSuccess(
         configSunatGuardada
           ? "Datos de la empresa actualizados correctamente"
-          : "Datos de la empresa actualizados, pero no se pudo guardar la vinculaciÃ³n SUNAT"
+          : "Datos de la empresa actualizados, pero no se pudo guardar la vinculacion SUNAT"
       );
       await cargarPlanStats();
     } catch (err) {
@@ -814,7 +814,7 @@ export default function ConfiguracionPage() {
       const data = await negocioService.getEditablePlanCatalog(negocioId);
       setPlanCatalogo(Array.isArray(data.planes) ? data.planes : []);
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "No se pudo cargar el catÃ¡logo de planes"));
+      setError(getApiErrorMessage(err, "No se pudo cargar el catalogo de planes"));
     }
   }, [getNegocioIdActivo]);
 
@@ -1007,7 +1007,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("guardar montos");
     if (!negocioId) {
-      setError("Selecciona explÃ­citamente el negocio objetivo para guardar montos");
+      setError("Selecciona explicitamente el negocio objetivo para guardar montos");
       return;
     }
 
@@ -1047,7 +1047,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("guardar limites");
     if (!negocioId) {
-      setError("Selecciona explÃ­citamente el negocio objetivo para guardar limites");
+      setError("Selecciona explicitamente el negocio objetivo para guardar limites");
       return;
     }
 
@@ -1118,7 +1118,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("aplicar el plan");
     if (!negocioId) {
-      setError("Selecciona explÃ­citamente el negocio objetivo para aplicar cambios de plan");
+      setError("Selecciona explicitamente el negocio objetivo para aplicar cambios de plan");
       return;
     }
     if (normalizarPlan(planCodigo) === normalizarPlan(businessForm.plan)) return;
@@ -1237,7 +1237,7 @@ export default function ConfiguracionPage() {
     productos_limite: number | null;
     sunat_habilitado: boolean;
   }) => {
-    // Superadmin debe ver exactamente el catÃ¡logo editable guardado en esta pantalla.
+    // Superadmin debe ver exactamente el catalogo editable guardado en esta pantalla.
     if (plan.codigo === "GRATUITO" && !isSuperadmin) return datosPlanGratuitoPromocional;
     return plan;
   };
@@ -1611,7 +1611,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin) {
       pendingPlanApprovalsRef.current = pendingPlanApprovals;
       if (pendingPlanApprovals > 0) {
-        setPlanApprovalAlertText(`Tu solicitud de plan sigue en validaciÃ³n. Pendientes: ${pendingPlanApprovals}.`);
+        setPlanApprovalAlertText(`Tu solicitud de plan sigue en validacion. Pendientes: ${pendingPlanApprovals}.`);
       } else {
         setPlanApprovalAlertText("");
       }
@@ -1729,7 +1729,7 @@ export default function ConfiguracionPage() {
       setSoporteTotal(Number(resp?.pagination?.total || 0));
       setSoporteTotalPages(Math.max(1, Number(resp?.pagination?.total_pages || 1)));
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "No se pudo cargar el soporte tÃ©cnico"));
+      setError(getApiErrorMessage(err, "No se pudo cargar el soporte tecnico"));
     } finally {
       setLoadingSoporte(false);
     }
@@ -1785,7 +1785,7 @@ export default function ConfiguracionPage() {
         {
           id: `soporte-bot-error-${Date.now()}`,
           role: "bot",
-          text: "No pude generar la recomendaciÃ³n IA en este momento.",
+          text: "No pude generar la recomendacion IA en este momento.",
         },
       ]);
     } finally {
@@ -1802,7 +1802,7 @@ export default function ConfiguracionPage() {
 
     const ultimaConsulta = [...soporteChatMessages].reverse().find((m) => m.role === "user")?.text?.trim() || "";
     if (ultimaConsulta.length < 8) {
-      setError("Primero envÃ­a una consulta en el chat bot");
+      setError("Primero envia una consulta en el chat bot");
       return;
     }
 
@@ -1852,7 +1852,7 @@ export default function ConfiguracionPage() {
     if (!isSuperadmin || !ticketAtencion) return;
 
     if (atencionForm.respuesta.trim().length < 4) {
-      setError("Debes ingresar una respuesta mÃ­nima para atender el ticket");
+      setError("Debes ingresar una respuesta minima para atender el ticket");
       return;
     }
 
@@ -1919,7 +1919,7 @@ export default function ConfiguracionPage() {
       setError("");
       await systemService.guardianSafeMode(
         enabled,
-        enabled ? "Activado manualmente desde panel ConfiguraciÃ³n" : "Desactivado manualmente desde panel ConfiguraciÃ³n"
+        enabled ? "Activado manualmente desde panel Configuracion" : "Desactivado manualmente desde panel Configuracion"
       );
       setSuccess(`Guardian Safe Mode ${enabled ? "activado" : "desactivado"}`);
       await cargarGuardianRuntime();
@@ -1936,7 +1936,7 @@ export default function ConfiguracionPage() {
     try {
       setAckingGuardianIncidentId(incidentId);
       setError("");
-      await systemService.guardianAckIncidente(incidentId, "Confirmado desde panel ConfiguraciÃ³n");
+      await systemService.guardianAckIncidente(incidentId, "Confirmado desde panel Configuracion");
       await cargarGuardianRuntime();
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "No se pudo confirmar incidente"));
@@ -2033,17 +2033,17 @@ export default function ConfiguracionPage() {
         plan_objetivo: planPagoObjetivo,
         referencia_pago: solicitudPlan.referencia_pago.trim(),
         canal_pago: canalPagoSeleccionado,
-        validaciÃ³n_modo: "MANUAL",
+        validacion_modo: "MANUAL",
         declaracion_anti_fraude: true,
         observaciones: solicitudPlan.observaciones.trim() || undefined,
         comprobante_url,
       });
 
-      const detalleSeguridad = `Nivel de riesgo: ${resp.riesgo_nivel} (score ${resp.riesgo_score}). Validacion aplicada: ${resp.validaciÃ³n_modo_aplicada}.`;
+      const detalleSeguridad = `Nivel de riesgo: ${resp.riesgo_nivel} (score ${resp.riesgo_score}). Validacion aplicada: ${resp.validacion_modo_aplicada}.`;
       setSuccess(`${resp.mensaje} ${detalleSeguridad}`);
       setShowPagoPlanModal(false);
       setComprobantePagoFile(null);
-      setSolicitudPlan((prev) => ({ ...prev, referencia_pago: "", observaciones: "", declaracion_anti_fraude: true, validaciÃ³n_modo: "MANUAL" }));
+      setSolicitudPlan((prev) => ({ ...prev, referencia_pago: "", observaciones: "", declaracion_anti_fraude: true, validacion_modo: "MANUAL" }));
       await cargarBranding(negocioId);
       await cargarPlanStats();
       await cargarHistorialPlanes(negocioId);
@@ -2173,7 +2173,7 @@ export default function ConfiguracionPage() {
           <section className={styles.hero}>
             <div className={styles.heroContent}>
               <p className={styles.eyebrow}>Centro de control</p>
-              <h1>ConfiguraciÃ³n empresarial</h1>
+              <h1>Configuracion empresarial</h1>
               <p>Gestiona acciones sensibles del sistema con mayor claridad y seguridad.</p>
               <div className={styles.modeChipRow}>
                 <span className={`${styles.modeChip} ${configAccessMode === "soporte" ? styles.modeChipSupport : styles.modeChipConfig}`}>
@@ -2182,16 +2182,16 @@ export default function ConfiguracionPage() {
                   </span>
 
                   <span className={styles.modeChipDesktop}>
-                    <strong>Modo: {configAccessMode === "soporte" ? "Soporte" : "ConfiguraciÃ³n"}</strong>
+                    <strong>Modo: {configAccessMode === "soporte" ? "Soporte" : "Configuracion"}</strong>
                     <small>
                       {configAccessMode === "soporte"
-                        ? "AtenciÃ³n asistida por IA y escalamiento a RENSOF"
-                        : "AdministraciÃ³n general del sistema y controles de negocio"}
+                        ? "Atencion asistida por IA y escalamiento a RENSOF"
+                        : "Administracion general del sistema y controles de negocio"}
                     </small>
                   </span>
 
                   <span className={styles.modeChipMobile}>
-                    {configAccessMode === "soporte" ? "Soporte" : "ConfiguraciÃ³n"}
+                    {configAccessMode === "soporte" ? "Soporte" : "Configuracion"}
                   </span>
                 </span>
               </div>
@@ -2225,7 +2225,7 @@ export default function ConfiguracionPage() {
                 onClick={() => {
                   if (isSuperadmin) {
                     setFiltroEstadoHistorialPlan("PENDIENTE_VALIDACION");
-                    irASeccion("cfg-plan-validaciÃ³nes");
+                    irASeccion("cfg-plan-validaciones");
                     return;
                   }
                   irASeccion("cfg-plan");
@@ -2288,7 +2288,7 @@ export default function ConfiguracionPage() {
                   onClick={() => setEmpresaTab("ubicacion")}
                   className={`${styles.tabBtn} ${empresaTab === "ubicacion" ? styles.tabBtnActive : ""}`}
                 >
-                  UbicaciÃ³n
+                  Ubicacion
                 </button>
                 <button
                   type="button"
@@ -2328,7 +2328,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "general" ? (
                   <div className={styles.companyBlock}>
-                    <h3>InformaciÃ³n general</h3>
+                    <h3>Informacion general</h3>
 
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
@@ -2365,7 +2365,7 @@ export default function ConfiguracionPage() {
                             </button>
                           </div>
                           <small className={styles.helperText}>
-                            Si no encuentras el tipo en la lista, crea uno nuevo y guÃ¡rdalo.
+                            Si no encuentras el tipo en la lista, crea uno nuevo y guardalo.
                           </small>
                           <div className={styles.tipoNegocioInline}>
                             <input
@@ -2452,7 +2452,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={`${styles.formRow} ${styles.fullRow}`}>
-                        <label htmlFor="empresa-descripcion">DescripciÃ³n del negocio</label>
+                        <label htmlFor="empresa-descripcion">Descripcion del negocio</label>
                         <textarea
                           id="empresa-descripcion"
                           value={businessForm.descripcion}
@@ -2467,7 +2467,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "fiscal" ? (
                   <div className={styles.companyBlock}>
-                    <h3>InformaciÃ³n fiscal</h3>
+                    <h3>Informacion fiscal</h3>
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-ruc">RUC</label>
@@ -2485,7 +2485,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-razon">RazÃ³n social</label>
+                        <label htmlFor="empresa-razon">Razon social</label>
                         <input
                           id="empresa-razon"
                           value={businessForm.razon_social}
@@ -2516,7 +2516,7 @@ export default function ConfiguracionPage() {
                           <option value="si">Si, vincular comprobantes</option>
                         </select>
                         <small className={styles.helperText}>
-                          Si se activa, las boletas y facturas intentarÃ¡n enviarse a SUNAT mediante la integraciÃ³n configurada.
+                          Si se activa, las boletas y facturas intentaran enviarse a SUNAT mediante la integracion configurada.
                         </small>
                       </div>
                     </div>
@@ -2525,7 +2525,7 @@ export default function ConfiguracionPage() {
 
                 {empresaTab === "ubicacion" ? (
                   <div className={styles.companyBlock}>
-                    <h3>Contacto y ubicaciÃ³n</h3>
+                    <h3>Contacto y ubicacion</h3>
                     <div className={styles.businessGrid}>
                       <div className={styles.formRow}>
                         <label htmlFor="empresa-email">Correo</label>
@@ -2539,7 +2539,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-telefono">TelÃ©fono</label>
+                        <label htmlFor="empresa-telefono">Telefono</label>
                         <input
                           id="empresa-telefono"
                           value={businessForm.telefono}
@@ -2567,7 +2567,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-pais">PaÃ­s</label>
+                        <label htmlFor="empresa-pais">Pais</label>
                         <input
                           id="empresa-pais"
                           value={businessForm.pais}
@@ -2577,7 +2577,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-direccion">DirecciÃ³n</label>
+                        <label htmlFor="empresa-direccion">Direccion</label>
                         <input
                           id="empresa-direccion"
                           value={businessForm.direccion}
@@ -2617,7 +2617,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-postal">CÃ³digo postal</label>
+                        <label htmlFor="empresa-postal">Codigo postal</label>
                         <input
                           id="empresa-postal"
                           value={businessForm.codigo_postal}
@@ -2752,7 +2752,7 @@ export default function ConfiguracionPage() {
               {hasAdminSupportAccess && showSoporteInteligente ? (
                 <div className={styles.supportInteligentePanel}>
                   <p className={styles.supportInteligenteIntro}>
-                    AtenciÃ³n de incidencias centralizada para RENSOF. Abre el soporte en lÃ­nea para conversar con el chat bot y escalar tickets.
+                    Atencion de incidencias centralizada para RENSOF. Abre el soporte en linea para conversar con el chat bot y escalar tickets.
                   </p>
 
                   {isSuperadmin ? (
@@ -2766,7 +2766,7 @@ export default function ConfiguracionPage() {
                       </div>
 
                       <p className={styles.helperText}>
-                        Vigilancia activa de errores y latencia con autocuraciÃ³n controlada para el nÃºcleo ALVENT.
+                        Vigilancia activa de errores y latencia con autocuracion controlada para el nÃºcleo ALVENT.
                       </p>
 
                       <div className={styles.guardianMetrics}>
@@ -2817,7 +2817,7 @@ export default function ConfiguracionPage() {
                                 <small className={styles.helperText}>Detalle: {String(incident.details.reason)}</small>
                               ) : null}
                               {incident.auto_action ? (
-                                <small className={styles.helperText}>Auto acciÃ³n: {incident.auto_action}</small>
+                                <small className={styles.helperText}>Auto accion: {incident.auto_action}</small>
                               ) : null}
 
                               <div className={styles.supportActions}>
@@ -2922,7 +2922,7 @@ export default function ConfiguracionPage() {
                     Anterior
                   </button>
                   <span>
-                    PÃ¡gina {soportePage} de {soporteTotalPages}
+                    Pagina {soportePage} de {soporteTotalPages}
                   </span>
                   <button
                     type="button"
@@ -2941,11 +2941,11 @@ export default function ConfiguracionPage() {
             <article className={`${styles.card} ${styles.dangerCard}`}>
               <Toolbar
                 title="Reinicio de sistema"
-                right={<StatusBadge text="OperaciÃ³n sensible" variant="danger" />}
+                right={<StatusBadge text="Operacion sensible" variant="danger" />}
               />
 
               <p>
-                Usa esta opciÃ³n solo cuando sea necesario. Requiere confirmaciÃ³n con credenciales de administrador.
+                Usa esta opcion solo cuando sea necesario. Requiere confirmacion con credenciales de administrador.
               </p>
 
               <button
@@ -2973,7 +2973,7 @@ export default function ConfiguracionPage() {
                 <p className={styles.planVisualEyebrow}>ALVENT PREMIUM 2026</p>
                 <h3 className={styles.planVisualHeadline}>Activa tu plan segun el ritmo de crecimiento</h3>
                 <p className={styles.planVisualSubhead}>
-                  Alternativas dinÃ¡micas conectadas al catÃ¡logo editable. {isSuperadmin ? "Como propietario del sistema, ajusta montos y lÃ­mites desde esta misma secciÃ³n." : "Solicita el plan ideal segÃºn tu consumo."}
+                  Alternativas dinamicas conectadas al catalogo editable. {isSuperadmin ? "Como propietario del sistema, ajusta montos y limites desde esta misma seccion." : "Solicita el plan ideal segÃºn tu consumo."}
                 </p>
               </header>
               <PlanVisualCards cards={planVisualCards} />
@@ -2983,8 +2983,8 @@ export default function ConfiguracionPage() {
                   <strong>Activa ALVENT segun tu etapa comercial</strong>
                   <p>
                     {isSuperadmin
-                      ? "Propietario del sistema: define capacidades y precios desde ConfiguraciÃ³n para que toda la vitrina de planes se actualice al instante."
-                      : "Empieza con el gratuito y escala a BÃ¡sico, Pro o Premium cuando tu operaciÃ³n lo requiera."}
+                      ? "Propietario del sistema: define capacidades y precios desde Configuracion para que toda la vitrina de planes se actualice al instante."
+                      : "Empieza con el gratuito y escala a Basico, Pro o Premium cuando tu operacion lo requiera."}
                   </p>
                   <div className={styles.planVisualMiniStrip} aria-label="Beneficios destacados">
                     <span title="Respuestas inteligentes">{renderBenefitIcon("spark")}</span>
@@ -3030,7 +3030,7 @@ export default function ConfiguracionPage() {
                   </div>
 
                   <div className={styles.freePlanBoostQuickActions}>
-                    <span>Guardar todo el catÃ¡logo de montos:</span>
+                    <span>Guardar todo el catalogo de montos:</span>
                     <button
                       type="button"
                       className={`${styles.saveBusinessBtn} focus-ring`}
@@ -3044,11 +3044,11 @@ export default function ConfiguracionPage() {
 
                 <section className={styles.planAmountsBox}>
                   <div>
-                    <h4>LÃ­mites editables por plan</h4>
-                    <p>Define usuarios, reportes, soporte y cantidad de productos por plan. Estos lÃ­mites se aplican al negocio seleccionado.</p>
+                    <h4>Limites editables por plan</h4>
+                    <p>Define usuarios, reportes, soporte y cantidad de productos por plan. Estos limites se aplican al negocio seleccionado.</p>
                     {!negocioActivoId ? (
                       <small className={styles.helperText}>
-                        Sin negocio objetivo seleccionado: puedes seleccionar plan para anÃ¡lisis, pero aplicar requiere elegir una empresa.
+                        Sin negocio objetivo seleccionado: puedes seleccionar plan para analisis, pero aplicar requiere elegir una empresa.
                       </small>
                     ) : null}
                   </div>
@@ -3130,7 +3130,7 @@ export default function ConfiguracionPage() {
                   </div>
 
                   <div className={styles.freePlanBoostQuickActions}>
-                    <span>Guardar lÃ­mites efectivos del catÃ¡logo:</span>
+                    <span>Guardar limites efectivos del catalogo:</span>
                     <button
                       type="button"
                       className={`${styles.saveBusinessBtn} focus-ring`}
@@ -3145,17 +3145,17 @@ export default function ConfiguracionPage() {
                 <section className={styles.planAmountsBox}>
                   <div>
                     <h4>Empresa cliente para aplicar plan</h4>
-                    <p>Usa la empresa cliente seleccionada en la secciÃ³n Empresa para ejecutar cambios de plan.</p>
+                    <p>Usa la empresa cliente seleccionada en la seccion Empresa para ejecutar cambios de plan.</p>
                   </div>
                   {!negocioActivoId ? (
-                    <small className={styles.helperText}>Sin empresa cliente seleccionada, aplicar plan estarÃ¡ bloqueado.</small>
+                    <small className={styles.helperText}>Sin empresa cliente seleccionada, aplicar plan estara bloqueado.</small>
                   ) : null}
                 </section>
 
                 <section className={styles.planExecutiveControlBar}>
                   <div className={styles.planExecutiveControlHead}>
-                    <strong>Panel ejecutivo de decisiÃ³n</strong>
-                    <p>Una sola vista para elegir plan y ejecutar la acciÃ³n requerida sin duplicar tarjetas.</p>
+                    <strong>Panel ejecutivo de decision</strong>
+                    <p>Una sola vista para elegir plan y ejecutar la accion requerida sin duplicar tarjetas.</p>
                   </div>
 
                   <div className={styles.planExecutiveControlGrid}>
@@ -3182,7 +3182,7 @@ export default function ConfiguracionPage() {
                         <option value="simular">Simular plan</option>
                         <option value="aplicar">Aplicar plan al negocio</option>
                         <option value="guardar_monto">Guardar montos</option>
-                        <option value="guardar_limites">Guardar lÃ­mites</option>
+                        <option value="guardar_limites">Guardar limites</option>
                         <option value="bondades">Ir a bondades del gratuito</option>
                       </select>
                     </label>
@@ -3192,12 +3192,12 @@ export default function ConfiguracionPage() {
                       className={`${styles.planPickBtn} focus-ring`}
                       onClick={() => void ejecutarAccionPlanEjecutiva()}
                       disabled={!planControlSeleccionadoData || changingPlan || savingPlanAmounts || savingPlanLimits || Boolean(planControlAccionRequiereNegocio)}
-                      title={planControlAccionRequiereNegocio ? "Selecciona una empresa cliente en la secciÃ³n Empresa" : ""}
+                      title={planControlAccionRequiereNegocio ? "Selecciona una empresa cliente en la seccion Empresa" : ""}
                     >
-                      {planControlAccion === "simular" ? "Ejecutar simulaciÃ³n" :
+                      {planControlAccion === "simular" ? "Ejecutar simulacion" :
                         planControlAccion === "aplicar" ? (changingPlan ? "Aplicando..." : "Aplicar plan") :
                         planControlAccion === "guardar_monto" ? (savingPlanAmounts ? "Guardando..." : "Guardar montos") :
-                        planControlAccion === "guardar_limites" ? (savingPlanLimits ? "Guardando..." : "Guardar lÃ­mites") :
+                        planControlAccion === "guardar_limites" ? (savingPlanLimits ? "Guardando..." : "Guardar limites") :
                         "Ir a bondades"}
                     </button>
                   </div>
@@ -3224,7 +3224,7 @@ export default function ConfiguracionPage() {
                           <article key={`cuenta-${canal.value}`} className={styles.paymentAccountCard}>
                             <h5>{canal.label}</h5>
                             <label>
-                              TÃ­tulo
+                              Titulo
                               <input
                                 type="text"
                                 className="focus-ring"
@@ -3233,7 +3233,7 @@ export default function ConfiguracionPage() {
                               />
                             </label>
                             <label>
-                              Detalle (una lÃ­nea por dato)
+                              Detalle (una linea por dato)
                               <textarea
                                 className="focus-ring"
                                 value={(cuenta?.detalle || []).join("\n")}
@@ -3259,9 +3259,9 @@ export default function ConfiguracionPage() {
                   </div>
                 </section>
 
-                <section id="cfg-plan-validaciÃ³nes" className={styles.planHistoryBox}>
+                <section id="cfg-plan-validaciones" className={styles.planHistoryBox}>
                   <div className={styles.planHistoryHead}>
-                    <h4>ValidaciÃ³n de pagos de planes</h4>
+                    <h4>Validacion de pagos de planes</h4>
                     <label className={styles.planHistoryFilter}>
                       Estado
                       <select
@@ -3294,7 +3294,7 @@ export default function ConfiguracionPage() {
                             <th>Canal</th>
                             <th>Referencia</th>
                             <th>Comprobante</th>
-                            <th>AcciÃ³n</th>
+                            <th>Accion</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -3359,7 +3359,7 @@ export default function ConfiguracionPage() {
 
                 <section className={styles.planExecutiveControlBar}>
                   <div className={styles.planExecutiveControlHead}>
-                    <strong>DecisiÃ³n de plan</strong>
+                    <strong>Decision de plan</strong>
                     <p>Selecciona un plan, simula su efecto y activa de inmediato desde un solo bloque.</p>
                   </div>
 
@@ -3378,7 +3378,7 @@ export default function ConfiguracionPage() {
                     </label>
 
                     <label>
-                      AcciÃ³n rÃ¡pida
+                      Accion rapida
                       <select
                         value={planControlSimulado ? "simulado" : "simular"}
                         onChange={(e) => {
@@ -3538,7 +3538,7 @@ export default function ConfiguracionPage() {
 
           <ModalCard
             open={showAtencionSoporteModal}
-            title="AtenciÃ³n RENSOF - Soporte"
+            title="Atencion RENSOF - Soporte"
             subtitle={ticketAtencion ? `Ticket #${ticketAtencion.id} - ${ticketAtencion.asunto}` : "Atender consulta"}
             actions={(
               <>
@@ -3579,7 +3579,7 @@ export default function ConfiguracionPage() {
                 ) : null}
 
                 <label className={styles.formRow}>
-                  Estado de atenciÃ³n
+                  Estado de atencion
                   <select
                     className="focus-ring"
                     value={atencionForm.estado}
@@ -3597,7 +3597,7 @@ export default function ConfiguracionPage() {
                     rows={4}
                     value={atencionForm.respuesta}
                     onChange={(e) => setAtencionForm((prev) => ({ ...prev, respuesta: e.target.value }))}
-                    placeholder="Escribe diagnÃ³stico, pasos aplicados y recomendaciÃ³n final"
+                    placeholder="Escribe diagnostico, pasos aplicados y recomendacion final"
                   />
                 </label>
               </div>

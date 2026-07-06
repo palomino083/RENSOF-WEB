@@ -154,7 +154,7 @@ export const systemService = {
       categoria: string;
       recomendacion: string;
       origen: string;
-      nivel?: "EJECUTIVO" | "TECNICO" | "USUARIO_FINAL";
+      nivel?: "EJECUTIVO" | "TÃ‰CNICO" | "USUARIO_FINAL";
     };
   },
 

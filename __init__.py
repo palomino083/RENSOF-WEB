@@ -62,7 +62,7 @@ def create_app() -> FastAPI:
             "404.html",
             {
                 "page_title": "Pagina no encontrada | RENSOF",
-                "page_description": "La direcciÃ³n solicitada no estÃ¡ disponible o fue movida.",
+                "page_description": "La direccion solicitada no esta disponible o fue movida.",
                 "active_page": "",
             },
             status_code=404,

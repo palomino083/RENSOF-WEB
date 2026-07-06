@@ -369,7 +369,7 @@ export default function FinanzasPage() {
             modulo="Finanzas"
             estado={loading ? "Sincronizando" : "Operativo"}
             foco="Control contable mensual con lectura de utilidad y cierre de periodo."
-            accion={{ label: "Ir a ConfiguraciÃ³n", href: "configuracion" }}
+            accion={{ label: "Ir a Configuracion", href: "configuracion" }}
             metricas={[
               { label: "Ingresos", value: `S/${totalIngresos.toFixed(2)}`, tone: "good" },
               { label: "Gastos", value: `S/${totalGastos.toFixed(2)}`, tone: "warn" },
@@ -454,7 +454,7 @@ export default function FinanzasPage() {
           <section className={styles.card}>
             <Toolbar title="Movimientos por plan y mes" right={<StatusBadge text={loading ? "Cargando" : `${ingresos.length} registros`} variant="neutral" />} />
             <p>
-              Se muestran solo activaciones con estado aplicado, agrupadas por mes y plan para leer rÃ¡pido ingreso,
+              Se muestran solo activaciones con estado aplicado, agrupadas por mes y plan para leer rapido ingreso,
               cantidad de movimientos y negocios impactados.
             </p>
 

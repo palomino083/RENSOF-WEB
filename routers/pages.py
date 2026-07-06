@@ -861,7 +861,7 @@ def home(request: Request, sent: int = Query(default=0)):
             "page_title": "RENSOF | Plataforma de Inteligencia Estrategica",
             "page_description": (
                 "RENSOF es una plataforma de inteligencia estrategica que transforma datos "
-                "en decisiones estratÃ©gicas para organizaciones de Latinoamerica."
+                "en decisiones estrategicas para organizaciones de Latinoamerica."
             ),
             "page_og_title": "RENSOF | Plataforma de Inteligencia Estrategica",
             "page_og_description": "Tecnologia, analitica y aplicaciones especializadas para transformar informacion en decisiones con impacto real.",
@@ -1379,13 +1379,13 @@ async def alven_api_negocios_subpath_proxy_or_fallback(
         return JSONResponse(
             {
                 "ok": True,
-                "mensaje": "Pago registrado en revision manual. El plan se activara tras la validaciÃ³n antifraude.",
+                "mensaje": "Pago registrado en revision manual. El plan se activara tras la validacion antifraude.",
                 "plan_actual": str(nuevo["plan_actual"]),
                 "plan_solicitado": str(nuevo["plan_solicitado"]),
                 "referencia_pago": str(nuevo["referencia_pago"]),
                 "estado": str(nuevo["estado"]),
-                "validaciÃ³n_modo_solicitada": "MANUAL",
-                "validaciÃ³n_modo_aplicada": "MANUAL",
+                "validacion_modo_solicitada": "MANUAL",
+                "validacion_modo_aplicada": "MANUAL",
                 "riesgo_score": 2,
                 "riesgo_nivel": "BAJO",
             },
@@ -1649,18 +1649,18 @@ def nosotros(request: Request):
     )
 
 
-@router.get("/publicaciÃ³nes", response_class=HTMLResponse)
-def publicaciÃ³nes(request: Request, q: str = Query(default="")):
+@router.get("/publicaciones", response_class=HTMLResponse)
+def publicaciones(request: Request, q: str = Query(default="")):
     with SessionLocal() as session:
         publications = get_publications(session, query=q, status="published")
     return templates.TemplateResponse(
         request,
-        "publicaciÃ³nes.html",
+        "publicaciones.html",
         {
             "publications": publications,
             "search_query": q,
             "total_results": len(publications),
-            "active_page": "publicaciÃ³nes",
+            "active_page": "publicaciones",
             "page_title": "Publicaciones | RENSOF",
             "page_description": "Centro de conocimiento y observatorio de inteligencia estrategica.",
         },

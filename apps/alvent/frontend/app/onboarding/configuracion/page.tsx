@@ -14,7 +14,7 @@ export default function OnboardingConfiguracionRedirectPage() {
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "24px" }}>
       <p style={{ color: "#334155", fontWeight: 600 }}>
-        Redirigiendo a InformaciÃ³n de la empresa...
+        Redirigiendo a Informacion de la empresa...
       </p>
     </main>
   );

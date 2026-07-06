@@ -404,7 +404,7 @@ export default function UsuariosPage() {
      🗑️ ELIMINAR
   ========================= */
   const eliminarUsuario = async (id: number) => {
-    if (!confirm("¿Eliminar usuario? Esta acciÃ³n no se puede deshacer.")) return;
+    if (!confirm("¿Eliminar usuario? Esta accion no se puede deshacer.")) return;
 
     try {
       setRowAction({ id, type: "delete" });
