@@ -377,18 +377,18 @@
 .inicio-solutions-grid {
   margin-top: 24px;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .inicio-solution-card {
-  padding: 18px 14px 14px;
+  padding: 20px 16px 16px;
   border-radius: 14px;
   border: 1px solid #e4ebf2;
   background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
   display: flex;
   flex-direction: column;
-  min-height: 242px;
+  min-height: 224px;
   transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
 }
 
@@ -429,15 +429,15 @@
 .inicio-solution-card h3 {
   margin: 12px 0 8px;
   color: #14253b;
-  font-size: 1rem;
+  font-size: 1.02rem;
   line-height: 1.2;
 }
 
 .inicio-solution-card p {
   margin: 0;
   color: #516375;
-  font-size: 0.84rem;
-  line-height: 1.5;
+  font-size: 0.9rem;
+  line-height: 1.55;
   flex: 1;
 }
 
@@ -445,7 +445,7 @@
   margin-top: 14px;
   color: #179f57;
   text-decoration: none;
-  font-size: 0.84rem;
+  font-size: 0.88rem;
   font-weight: 700;
 }
 
@@ -1187,7 +1187,7 @@
   }
 
   .inicio-solutions-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .inicio-why-grid {
