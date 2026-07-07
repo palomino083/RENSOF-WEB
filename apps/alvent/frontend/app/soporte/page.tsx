@@ -1122,7 +1122,7 @@ export default function SoportePage() {
     }
 
     try {
-      const cfg = await negocioService.getconfiguracion(negocioId);
+      const cfg = await negocioService.getConfiguracion(negocioId);
       setVincularComprobantesSunat(Boolean(cfg?.integracion_sunat));
     } catch {
       setVincularComprobantesSunat(false);
