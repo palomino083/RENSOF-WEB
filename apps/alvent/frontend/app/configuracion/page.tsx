@@ -372,6 +372,7 @@ export default function ConfiguracionPage() {
     reinicio_habilitado: boolean;
     productos_limite: number | null;
     sunat_habilitado: boolean;
+    puntos_recuperacion_habilitado: boolean;
   }>>([]);
   const [planControlSeleccionado, setPlanControlSeleccionado] = useState<string>("GRATUITO");
   const [planControlaccion, setPlanControlaccion] = useState<"simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades">("simular");
@@ -1092,6 +1093,7 @@ export default function ConfiguracionPage() {
         reinicio_habilitado: Boolean(plan.reinicio_habilitado),
         productos_limite: plan.productos_limite,
         sunat_habilitado: Boolean(plan.sunat_habilitado),
+        puntos_recuperacion_habilitado: Boolean(plan.puntos_recuperacion_habilitado),
       }));
       const data = await negocioService.updateEditablePlanCatalog(negocioId, payload);
       setPlanCatalogo(Array.isArray(data.planes) ? data.planes : []);

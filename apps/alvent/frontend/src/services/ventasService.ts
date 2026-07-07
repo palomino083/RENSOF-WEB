@@ -35,6 +35,7 @@ export const ventasService = {
     const res = await api.post("/ventas/", data);
     return res.data as {
       mensaje: string;
+      id?: number;
       venta_id: number;
       total: number;
       comprobante_pdf_url?: string | null;
