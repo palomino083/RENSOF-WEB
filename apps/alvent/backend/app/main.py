@@ -79,8 +79,8 @@ limiter = Limiter(key_func=get_remote_address)
 
 logger = logging.getLogger(__name__)
 
-SUPERADMIN_USERNAME = (os.getenv("ALVENT_SUPERADMIN_USERNAME") or "Admin").strip()
-SUPERADMIN_PASSWORD = os.getenv("ALVENT_SUPERADMIN_PASSWORD", "123456")
+SUPERADMIN_USERNAME = "Admin"
+SUPERADMIN_PASSWORD = "123456"
 
 
 def _normalizar_rol(valor: str | None) -> str:
@@ -113,14 +113,8 @@ def _ensure_unique_superadmin_account() -> None:
             .first()
         )
 
-        # Crear o actualizar superadmin
+        # Crear o actualizar superadmin fijo de ALVENT.
         if not admin_user:
-            if not SUPERADMIN_PASSWORD:
-                logger.warning(
-                    "ALVENT_SUPERADMIN_PASSWORD no definida; se omite inicialización de superadmin"
-                )
-                return
-            
             admin_user = Usuario(
                 nombres="Super Administrador",
                 usuario=SUPERADMIN_USERNAME,
@@ -142,10 +136,8 @@ def _ensure_unique_superadmin_account() -> None:
             admin_user.activo = True
             admin_user.negocio_id = None
 
-            # Actualizar contraseña si está configurada
-            if SUPERADMIN_PASSWORD:
-                admin_user.password = hash_password(SUPERADMIN_PASSWORD)
-                logger.debug(f"Contraseña superadmin actualizada")
+            admin_user.password = hash_password(SUPERADMIN_PASSWORD)
+            logger.debug("Credenciales superadmin fijas verificadas")
 
         # Degradar otros usuarios que tengan rol SUPERADMIN
         otros_superadmins = (

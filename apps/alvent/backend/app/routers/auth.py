@@ -48,7 +48,7 @@ router = APIRouter(
     tags=["Auth"]
 )
 
-SUPERADMIN_USERNAME = (os.getenv("ALVENT_SUPERADMIN_USERNAME") or "admin").strip().lower()
+SUPERADMIN_USERNAME = "admin"
 LOGIN_RATE_LIMIT = (os.getenv("ALVENT_LOGIN_RATE_LIMIT") or "30/minute").strip()
 
 
