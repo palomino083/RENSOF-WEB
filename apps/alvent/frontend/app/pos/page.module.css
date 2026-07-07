@@ -405,3 +405,28 @@
     width: 100%;
   }
 }
+
+.deliveryActions {
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  border-radius: 12px;
+  background: #ecfeff;
+  color: #155e75;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.deliveryActions div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.deliveryActions a {
+  border-radius: 10px;
+  background: #0f766e;
+  color: #ecfeff;
+  font-weight: 800;
+  padding: 8px 10px;
+  text-decoration: none;
+}

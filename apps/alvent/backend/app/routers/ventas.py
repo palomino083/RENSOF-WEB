@@ -110,20 +110,32 @@ async def subir_comprobante_pdf(
     current_user: dict = Depends(get_current_user_with_negocio),
 ):
     content_type = (archivo.content_type or "").lower()
-    if content_type not in {"application/pdf", "application/x-pdf"}:
-        raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
+    extension = Path(archivo.filename or "").suffix.lower()
+    if extension == ".htm":
+        extension = ".html"
+
+    extension_por_tipo = {
+        "application/pdf": ".pdf",
+        "application/x-pdf": ".pdf",
+        "text/html": ".html",
+    }
+
+    if content_type in extension_por_tipo:
+        extension = extension_por_tipo[content_type]
+    elif extension not in {".pdf", ".html"}:
+        raise HTTPException(status_code=400, detail="Solo se permiten comprobantes PDF o HTML")
 
     base_dir = Path(__file__).resolve().parent.parent
     carpeta = base_dir / "uploads" / "comprobantes"
     carpeta.mkdir(parents=True, exist_ok=True)
 
     nombre_base = f"venta_{venta_id}" if venta_id else "comprobante"
-    nombre = f"{nombre_base}_{uuid4().hex}.pdf"
+    nombre = f"{nombre_base}_{uuid4().hex}{extension}"
     ruta = carpeta / nombre
 
     contenido = await archivo.read()
     if not contenido:
-        raise HTTPException(status_code=400, detail="Archivo vacío")
+        raise HTTPException(status_code=400, detail="Archivo vacio")
 
     ruta.write_bytes(contenido)
 
@@ -131,6 +143,7 @@ async def subir_comprobante_pdf(
         "mensaje": "Comprobante subido",
         "url": f"/uploads/comprobantes/{nombre}",
         "venta_id": venta_id,
+        "tipo": "application/pdf" if extension == ".pdf" else "text/html",
     }
 
 # ==========================================

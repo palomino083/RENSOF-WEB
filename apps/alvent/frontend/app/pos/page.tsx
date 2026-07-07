@@ -53,6 +53,13 @@ type NegocioBranding = {
   logo_url?: string | null;
 };
 
+type ShareLinks = {
+  email?: string;
+  whatsapp?: string;
+  comprobanteUrl?: string;
+  ventaId?: number | null;
+};
+
 type VentaReciente = {
   id: number;
   fecha: string;
@@ -87,7 +94,7 @@ export default function PosPage() {
   const [scanStatus, setScanStatus] = useState("Escaner listo");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [negocioBranding, setNegocioBranding] = useState<NegocioBranding | null>(null);
+  const [shareLinks, setShareLinks] = useState<ShareLinks | null>(null);  const [negocioBranding, setNegocioBranding] = useState<NegocioBranding | null>(null);
   const [ventasRecientes, setVentasRecientes] = useState<VentaReciente[]>([]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -279,7 +286,7 @@ export default function PosPage() {
       setaccionVentaId(venta.id);
       setError("");
       setSuccess("");
-      const motivo = prompt("Motivo (opcional):") || undefined;
+      setShareLinks(null);      const motivo = prompt("Motivo (opcional):") || undefined;
 
       if (tipo === "anular") {
         await ventasService.anularVenta(venta.id, motivo);
@@ -396,38 +403,66 @@ export default function PosPage() {
     return nuevo.id || null;
   };
 
-  const compartirComprobante = (ventaId: number | null, totalVenta: number, pdfUrl?: string) => {
-    if (tipoComprobante === "NINGUNO") return;
+  const normalizarWhatsAppDestino = (value: string) => {
+    const numero = limpiarNumero(value);
+    if (numero.length === 9) return `51${numero}`;
+    if (numero.startsWith("51") && numero.length === 11) return numero;
+    return numero;
+  };
+
+  const abrirEnlaceEntrega = (url: string) => {
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    return Boolean(win);
+  };
+
+  const compartirComprobante = (ventaId: number | null, totalVenta: number, comprobanteUrl?: string) => {
+    if (tipoComprobante === "NINGUNO") return null;
 
     const empresa = nombreEmpresaComprobante();
     const cliente = clienteNombre.trim() || "Cliente";
     const doc = limpiarNumero(clienteDocumento);
     const resumen = [
       `Comprobante ${tipoComprobante}`,
-      ventaId ? `Operación #${ventaId}` : "Operación registrada",
+      ventaId ? `Operacion #${ventaId}` : "Operacion registrada",
       `Cliente: ${cliente}`,
       doc ? `Documento: ${doc}` : "",
-      `Método: ${metodo_pago}`,
+      `Metodo: ${metodo_pago}`,
       `Total: ${formatMoney(totalVenta)}`,
-      pdfUrl ? `PDF: ${pdfUrl}` : "",
+      comprobanteUrl ? `Comprobante digital: ${comprobanteUrl}` : "",
       `Gracias por tu compra en ${empresa}`,
     ]
       .filter(Boolean)
       .join("\n");
 
+    const links: ShareLinks = {
+      ventaId,
+      comprobanteUrl,
+    };
+    let abiertos = 0;
+
     if (enviarEmail && clienteEmail.trim()) {
       const subject = encodeURIComponent(`${tipoComprobante} ${empresa}`);
       const body = encodeURIComponent(resumen);
-      window.open(`mailto:${clienteEmail.trim()}?subject=${subject}&body=${body}`, "_blank");
+      links.email = `mailto:${clienteEmail.trim()}?subject=${subject}&body=${body}`;
+      if (abrirEnlaceEntrega(links.email)) abiertos += 1;
     }
 
     if (enviarWhatsapp && clienteWhatsapp.trim()) {
-      const numero = limpiarNumero(clienteWhatsapp);
+      const numero = normalizarWhatsAppDestino(clienteWhatsapp);
       if (numero) {
         const text = encodeURIComponent(resumen);
-        window.open(`https://wa.me/${numero}?text=${text}`, "_blank");
+        links.whatsapp = `https://wa.me/${numero}?text=${text}`;
+        if (abrirEnlaceEntrega(links.whatsapp)) abiertos += 1;
       }
     }
+
+    if (!links.email && !links.whatsapp) return null;
+
+    if (abiertos === 0) {
+      setError("El navegador bloqueo las ventanas de envio. Usa los botones de entrega que quedan debajo del mensaje de venta registrada.");
+    }
+
+    return links;
   };
 
   // =========================
@@ -586,7 +621,8 @@ export default function PosPage() {
         }
       }
 
-      compartirComprobante(ventaId, total, comprobantePdfUrl);
+      const entregaLinks = compartirComprobante(ventaId, total, comprobantePdfUrl);
+      setShareLinks(entregaLinks);
 
       const comprobanteLabel = tipoComprobante === "NINGUNO" ? "Sin comprobante" : tipoComprobante;
 
@@ -609,9 +645,11 @@ export default function PosPage() {
       await cargarProductos();
       await cargarVentasRecientes();
 
-      setSuccess(`Venta #${ventaId || ""} registrada correctamente`);
+      setSuccess(`Venta #${ventaId || ""} registrada correctamente${entregaLinks ? ". Comprobante listo para enviar." : ""}`);
 
-      router.push(appPath("ventas"));
+      if (!entregaLinks) {
+        router.push(appPath("ventas"));
+      }
     } catch (err: unknown) {
       alert(getApiErrorMessage(err, "Error creando venta"));
       setError(getApiErrorMessage(err, "Error creando venta"));
@@ -685,7 +723,28 @@ export default function PosPage() {
 
       {error ? <p className={styles.errorBox}>{error}</p> : null}
       {success ? <p className={styles.successBox}>{success}</p> : null}
-
+      {shareLinks ? (
+        <div className={styles.deliveryActions}>
+          <strong>Comprobante listo para entregar</strong>
+          <div>
+            {shareLinks.email ? (
+              <a href={shareLinks.email} className="focus-ring">
+                Abrir correo
+              </a>
+            ) : null}
+            {shareLinks.whatsapp ? (
+              <a href={shareLinks.whatsapp} target="_blank" rel="noopener noreferrer" className="focus-ring">
+                Abrir WhatsApp
+              </a>
+            ) : null}
+            {shareLinks.comprobanteUrl ? (
+              <a href={shareLinks.comprobanteUrl} target="_blank" rel="noopener noreferrer" className="focus-ring">
+                Ver comprobante
+              </a>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       <section className={`${styles.grid} uiEnter`} data-stagger="2">
         <article className={`${styles.card} ${styles.productsCard}`}>
           <Toolbar
