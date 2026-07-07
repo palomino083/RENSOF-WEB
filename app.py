@@ -807,7 +807,7 @@ async def experiencias(request: Request):
         name="proyectos.html",
         context={
             "active_page": "experiencias",
-            "page_title": "Experiencias de exito | RENSOF",
+            "page_title": "Experiencias de éxito | RENSOF",
             "page_description": "Experiencias RENSOF aplicadas a negocios, gestion publica, inversion, territorio y decisiones reales.",
         },
     )
