@@ -297,7 +297,7 @@ export default function EmpresaPage() {
   type SimuladorEscenario = {
     id: string;
     nombre: string;
-    plancodigo: string;
+    planCodigo: string;
     override: {
       habilitado: boolean;
       usuarios_ilimitado: boolean;
@@ -1114,20 +1114,20 @@ export default function EmpresaPage() {
     }
   };
 
-  const cambiarPlanNegocio = async (plancodigo: string) => {
+  const cambiarPlanNegocio = async (planCodigo: string) => {
     if (!isSuperadmin) return;
     const negocioId = await resolverNegocioObjetivo("aplicar el plan");
     if (!negocioId) {
       setError("Selecciona explícitamente el negocio objetivo para aplicar cambios de plan");
       return;
     }
-    if (normalizarPlan(plancodigo) === normalizarPlan(businessForm.plan)) return;
+    if (normalizarPlan(planCodigo) === normalizarPlan(businessForm.plan)) return;
 
     try {
       setChangingPlan(true);
       setError("");
       setSuccess("");
-      const actualizado = await negocioService.update(negocioId, { plan: normalizarPlan(plancodigo) });
+      const actualizado = await negocioService.update(negocioId, { plan: normalizarPlan(planCodigo) });
       setNegocio(actualizado);
       setBusinessForm((prev) => ({ ...prev, plan: normalizarPlan(actualizado.plan) }));
       setSuccess(`Plan actualizado a ${nombrePlan(actualizado.plan)} correctamente`);
@@ -1438,7 +1438,7 @@ export default function EmpresaPage() {
     const nuevo: SimuladorEscenario = {
       id: `esc-${Date.now()}`,
       nombre,
-      plancodigo: normalizarPlan(planSimulado),
+      planCodigo: normalizarPlan(planSimulado),
       override: { ...simuladorOverride, habilitado: true },
       fecha: new Date().toISOString(),
     };
@@ -1449,7 +1449,7 @@ export default function EmpresaPage() {
   };
 
   const cargarEscenarioGuardado = (escenario: SimuladorEscenario) => {
-    setPlanSimulado(normalizarPlan(escenario.plancodigo));
+    setPlanSimulado(normalizarPlan(escenario.planCodigo));
     setSimuladorOverride(escenario.override);
     setSuccess(`Escenario '${escenario.nombre}' cargado`);
   };
@@ -2054,8 +2054,8 @@ export default function EmpresaPage() {
     }
   };
 
-  const abrirPagoPlan = (plancodigo: string) => {
-    const normalizado = normalizarPlan(plancodigo);
+  const abrirPagoPlan = (planCodigo: string) => {
+    const normalizado = normalizarPlan(planCodigo);
     setPlanPagoObjetivo(normalizado);
     setSolicitudPlan((prev) => ({ ...prev, plan_objetivo: normalizado }));
     setComprobantePagoFile(null);
