@@ -1,98 +1,27 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="r2030-main recursos-page">
-  <section class="hero-2030 story-block recursos-hero" id="sectores">
-    <div class="r2030-grid recursos-hero-grid reveal">
-      <article class="recursos-copy">
-        <span class="story-kicker">Recursos / Casos y sectores</span>
-        <h1 class="story-title">Soluciones para cada <span class="inicio-highlight">realidad</span></h1>
-        <p class="story-text">Diseñamos arquitecturas de decisión para instituciones públicas, empresas, territorios y proyectos que requieren evidencia, velocidad y visión estratégica.</p>
-        <div class="hero-actions">
-          <a class="r-btn r-btn-primary" href="#sectores-lista">Ver sectores</a>
-          <a class="r-btn r-btn-ghost" href="#casos">Ver casos</a>
-        </div>
+<main class="r2030-main premium-page">
+  <section class="premium-hero premium-cases">
+    <div class="r2030-grid premium-hero-grid reveal is-visible">
+      <article class="premium-hero-copy">
+        <span class="story-kicker">Casos y sectores</span>
+        <h1 class="premium-title">Soluciones para realidades empresariales, públicas y territoriales.</h1>
+        <p class="premium-lead">Adaptamos la inteligencia RENSOF a sectores que requieren control, evidencia, trazabilidad y resultados medibles.</p>
       </article>
-
-      <article class="recursos-visual contact-panel" aria-label="Arquitecturas de decisión RENSOF">
-        <div class="recursos-map-panel">
-          <span>Gestión pública</span>
-          <span>Agricultura digital</span>
-          <span>Inversión</span>
-          <span>Ambiente</span>
-          <span>Prospectiva</span>
-          <span>Comercio</span>
-        </div>
-        <div class="recursos-mini-grid">
-          <article><strong>Diagnóstico</strong><span>Problemas y brechas</span></article>
-          <article><strong>Modelo</strong><span>Datos y escenarios</span></article>
-          <article><strong>Impacto</strong><span>Resultados medibles</span></article>
-        </div>
-      </article>
+      <article class="premium-map-card"><strong>23 regiones</strong><span>Capacidad de análisis territorial y sectorial</span></article>
     </div>
   </section>
 
-  <section class="story-block recursos-sector-section" id="sectores-lista">
-    <div class="r2030-grid reveal">
-      <div class="recursos-section-head">
-        <span class="story-kicker">Sectores</span>
-        <h2 class="story-title">Arquitecturas de decisión para entornos complejos</h2>
-        <p class="story-text">Cada sector requiere información precisa, procesos claros y herramientas tecnológicas adaptadas a sus objetivos.</p>
-      </div>
-
-      <div class="recursos-sector-grid">
-        {% for sector in sectors %}
-        <article class="recursos-card sector-item">
-          <span class="recursos-sector-icon">{{ loop.index }}</span>
-          <h3>{{ sector.title }}</h3>
-          <p>{{ sector.description }}</p>
-        </article>
-        {% else %}
-        <article class="recursos-empty contact-panel">
-          <span class="story-kicker">Sin sectores registrados</span>
-          <h3>Aún no se han publicado sectores.</h3>
-          <p>Cuando se registren sectores, aparecerán en esta sección.</p>
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-
-  <section class="story-block recursos-case-section" id="casos">
-    <div class="r2030-grid reveal">
-      <div class="recursos-section-head">
-        <span class="story-kicker">Casos</span>
-        <h2 class="story-title">Implementaciones de alto impacto</h2>
-        <p class="story-text">Mostramos aplicaciones, experiencias y líneas de trabajo que conectan tecnología, análisis y resultados concretos.</p>
-      </div>
-
-      <div class="recursos-case-grid">
-        {% for case in cases %}
-        <article class="recursos-case-card case-card">
-          <div class="case-media" style="background-image:linear-gradient(150deg, rgba(11,31,50,0.35), {{ case.overlay }}), url('{{ case.media }}');"></div>
-          <div class="case-body">
-            <h3>{{ case.title }}</h3>
-            <p>{{ case.description }}</p>
-          </div>
-        </article>
-        {% else %}
-        <article class="recursos-empty contact-panel">
-          <span class="story-kicker">Sin casos registrados</span>
-          <h3>Aún no se han publicado casos.</h3>
-          <p>Cuando se registren casos, aparecerán en esta sección.</p>
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-
-  <section class="story-block recursos-cta-section">
-    <div class="r2030-grid reveal">
-      <article class="recursos-cta-card contact-panel">
-        <span class="story-kicker">De la información al impacto</span>
-        <h2>Diseñamos soluciones digitales alineadas a cada territorio, sector y organización.</h2>
-        <p class="story-text">Nuestro enfoque combina inteligencia artificial, analítica, gestión de proyectos y conocimiento aplicado para fortalecer decisiones públicas y privadas.</p>
-      </article>
+  <section class="premium-section">
+    <div class="r2030-grid premium-section-head reveal"><span class="story-kicker">Sectores</span><h2>Arquitecturas de decisión para cada realidad.</h2></div>
+    <div class="r2030-grid premium-card-grid three reveal">
+      <article class="premium-sector-card"><span>Gobierno</span><h3>Gestión pública</h3><p>Presupuesto, proyectos, brechas, servicios y control de resultados.</p></article>
+      <article class="premium-sector-card"><span>Empresa</span><h3>Comercio y operación</h3><p>Ventas, inventario, caja, clientes, rentabilidad y reportes diarios.</p></article>
+      <article class="premium-sector-card"><span>Territorio</span><h3>Planeamiento y GIS</h3><p>Capas espaciales, mapas, alertas y análisis de conectividad territorial.</p></article>
+      <article class="premium-sector-card"><span>Inversión</span><h3>Carteras y evaluación</h3><p>VAN, TIR, sensibilidad, priorización y seguimiento físico-financiero.</p></article>
+      <article class="premium-sector-card"><span>Ambiente</span><h3>Capital natural</h3><p>Agua, carbono, biodiversidad, paisaje y beneficios ecosistémicos.</p></article>
+      <article class="premium-sector-card"><span>Futuro</span><h3>Prospectiva</h3><p>Señales tempranas, escenarios y rutas estratégicas frente a incertidumbre.</p></article>
     </div>
   </section>
 </main>

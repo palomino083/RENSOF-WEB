@@ -1,110 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="r2030-main contacto-page">
-  <section class="hero-2030 story-block contacto-hero" id="contacto">
-    <div class="r2030-grid contacto-hero-grid reveal">
-      <article class="contacto-copy">
+<main class="r2030-main premium-page">
+  <section class="premium-hero premium-contact">
+    <div class="r2030-grid premium-hero-grid reveal is-visible">
+      <article class="premium-hero-copy">
         <span class="story-kicker">Contacto</span>
-        <h1 class="story-title">Conversemos sobre la próxima solución inteligente para tu organización</h1>
-        <p class="story-text">Cuéntanos qué proceso deseas optimizar. En RENSOF te ayudamos a convertir datos, operaciones y objetivos estratégicos en plataformas digitales listas para generar impacto.</p>
-
-        <div class="contacto-badges" aria-label="Canales de atención RENSOF">
-          <p>Diagnóstico inicial</p>
-          <p>Demo personalizada</p>
-          <p>Implementación modular</p>
-          <p>Soporte especializado</p>
-        </div>
-
-        <div class="contacto-direct-card">
-          <span>Correo principal</span>
-          <strong>{{ primary_email.email if primary_email else 'contacto@rensof.pe' }}</strong>
-          <p>También puedes completar el formulario y derivaremos tu consulta al equipo correspondiente.</p>
-        </div>
+        <h1 class="premium-title">Agenda una demostración ejecutiva.</h1>
+        <p class="premium-lead">Cuéntanos qué decisión necesitas mejorar. Te ayudaremos a definir la aplicación, el alcance y la ruta de implementación.</p>
+        <div class="premium-contact-points"><span>Respuesta prioritaria</span><span>Diagnóstico inicial</span><span>Demo guiada</span></div>
       </article>
+      <article class="premium-contact-panel"><strong>contacto@rensof.pe</strong><span>Canal institucional</span><p>Atendemos consultas de aplicaciones, alianzas, soporte y demostraciones.</p></article>
+    </div>
+  </section>
 
-      <form class="contacto-form-panel" id="contactForm" action="/contacto/enviar" method="POST">
-        <input type="hidden" name="redirect_to" value="/contacto">
+  <section class="premium-section" id="contactForm">
+    <div class="r2030-grid premium-contact-grid reveal">
+      <form class="premium-form-card" action="/contacto/enviar" method="POST">
+        <input type="hidden" name="redirect_to" value="/contacto#contactForm">
         <input type="hidden" name="source_page" value="contacto">
-
-        <div class="contacto-form-head">
-          <span>Solicitar información</span>
-          <h2>Describe tu necesidad</h2>
-          <p>Responderemos con una orientación clara sobre la solución, el alcance y los siguientes pasos.</p>
-        </div>
-
-        {% if message_sent %}
-        <p class="contacto-success">Tu consulta fue enviada y registrada correctamente en la bandeja de contacto.</p>
-        {% endif %}
-
-        <div class="contacto-field-grid">
-          <label for="nombre">Nombre completo
-            <input id="nombre" class="r-input" type="text" name="nombre" required minlength="3" placeholder="Ingresa tu nombre">
-          </label>
-
-          <label for="email">Correo electrónico
-            <input id="email" class="r-input" type="email" name="email" required placeholder="nombre@empresa.com">
-          </label>
-        </div>
-
-        <label for="servicio">Producto o servicio de interés
-          <select id="servicio" class="r-select" name="servicio" required>
-            <option value="">Selecciona una opción</option>
-            {% for product in products %}
-            <option>{{ product.name }} - {{ product.subtitle }}</option>
-            {% endfor %}
-          </select>
-        </label>
-
-        <label for="canal_correo">Área de atención
-          <select id="canal_correo" class="r-select" name="canal_correo" required>
-            <option value="">Selecciona un correo</option>
-            {% for account in email_accounts %}
-            <option value="{{ account.email }}">{{ account.display_name }} | {{ account.area }} | {{ account.email }}{% if account.is_primary %} | principal{% endif %}</option>
-            {% endfor %}
-          </select>
-        </label>
-
-        <label for="mensaje">Mensaje
-          <textarea id="mensaje" class="r-textarea" name="mensaje" rows="5" required minlength="12" placeholder="Cuéntanos brevemente qué problema deseas resolver, qué sistema necesitas o qué proceso buscas mejorar."></textarea>
-        </label>
-
-        <button class="r-btn r-btn-primary" type="submit">Enviar consulta</button>
-        <p id="formNote" class="contacto-note">También puedes escribir directamente a contacto@rensof.pe.</p>
+        {% if message_sent %}<p class="premium-success">Consulta enviada correctamente. Te contactaremos pronto.</p>{% endif %}
+        <label for="nombre">Nombre completo</label><input id="nombre" class="r-input" type="text" name="nombre" required minlength="3">
+        <label for="email">Correo</label><input id="email" class="r-input" type="email" name="email" required>
+        <label for="organizacion">Organización</label><input id="organizacion" class="r-input" type="text" name="organizacion" placeholder="Empresa, entidad o proyecto">
+        <label for="servicio">Producto de interés</label><select id="servicio" class="r-select" name="servicio" required><option value="">Selecciona una opción</option><option>ALVENT ERP PRO</option><option>Gestión pública</option><option>Proyectos de inversión</option><option>Agricultura digital</option><option>Prospectiva</option><option>Valoración económica</option><option>Implementación integral</option></select>
+        <label for="sector">Tipo de organización</label><select id="sector" class="r-select" name="sector"><option value="">Selecciona una opción</option><option>Empresa privada</option><option>Entidad pública</option><option>Organización agrícola</option><option>Investigación / Academia</option><option>Proyecto ambiental</option></select>
+        <label for="canal_correo">Canal de atención</label><select id="canal_correo" class="r-select" name="canal_correo"><option value="contacto@rensof.pe">Contacto general | contacto@rensof.pe</option>{% for account in email_accounts %}<option value="{{ account.email }}">{{ account.display_name }} | {{ account.area }} | {{ account.email }}</option>{% endfor %}</select>
+        <label for="mensaje">Mensaje</label><textarea id="mensaje" class="r-textarea" name="mensaje" rows="5" required minlength="12" placeholder="Describe brevemente tu necesidad, proceso o decisión que deseas mejorar."></textarea>
+        <button class="r-btn r-btn-primary" type="submit">Solicitar reunión</button>
       </form>
-    </div>
-  </section>
-
-  <section class="story-block contacto-section-soft">
-    <div class="r2030-grid reveal">
-      <div class="contacto-section-head">
-        <span class="story-kicker">Correos de atención</span>
-        <h2>Canales especializados para cada necesidad</h2>
-        <p>Derivamos cada consulta al equipo adecuado para responder con mayor precisión técnica, comercial o institucional.</p>
-      </div>
-
-      <div class="contacto-channel-grid">
-        {% for account in email_accounts %}
-        <article class="contacto-channel-card">
-          <span class="contacto-channel-icon">@</span>
-          <h3>{{ account.display_name }}</h3>
-          <p>{{ account.area }}</p>
-          <strong>{{ account.email }}</strong>
-          <small>{% if account.is_primary %}Cuenta principal{% else %}Cuenta secundaria{% endif %}</small>
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-
-  <section class="story-block contacto-cta-section">
-    <div class="r2030-grid reveal">
-      <article class="contacto-cta-card">
-        <span class="story-kicker">Siguiente paso</span>
-        <h2>Diseñemos una solución alineada a tus objetivos</h2>
-        <p>Podemos ayudarte a implementar aplicaciones empresariales, sistemas de gestión pública, herramientas de análisis, soluciones de agricultura digital o plataformas de valoración económica.</p>
-        <a class="r-btn r-btn-primary" href="#contactForm">Solicitar demo o reunión</a>
-      </article>
+      <aside class="premium-side-stack">
+        <article><span>01</span><h3>Diagnóstico</h3><p>Identificamos tu necesidad y datos disponibles.</p></article>
+        <article><span>02</span><h3>Demo</h3><p>Mostramos el flujo que mejor encaja con tu organización.</p></article>
+        <article><span>03</span><h3>Implementación</h3><p>Definimos módulos, usuarios y ruta de despliegue.</p></article>
+      </aside>
     </div>
   </section>
 </main>

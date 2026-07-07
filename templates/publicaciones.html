@@ -1,89 +1,34 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="r2030-main recursos-page">
-  <section class="hero-2030 story-block recursos-hero" id="publicaciones">
-    <div class="r2030-grid recursos-hero-grid reveal">
-      <article class="recursos-copy">
-        <span class="story-kicker">Recursos / Publicaciones</span>
-        <h1 class="story-title">Centro de conocimiento <span class="inicio-highlight">estratégico</span></h1>
-        <p class="story-text">Compartimos investigación aplicada, notas técnicas, modelos, visualizaciones y aprendizajes de campo para apoyar decisiones basadas en evidencia.</p>
-        <div class="hero-actions">
-          <a class="r-btn r-btn-primary" href="#publicaciones-lista">Explorar publicaciones</a>
-          <a class="r-btn r-btn-ghost" href="/proyectos">Ver casos y sectores</a>
-        </div>
+<main class="r2030-main premium-page">
+  <section class="premium-hero premium-resources">
+    <div class="r2030-grid premium-hero-grid reveal is-visible">
+      <article class="premium-hero-copy">
+        <span class="story-kicker">Recursos</span>
+        <h1 class="premium-title">Observatorio RENSOF para decidir con datos.</h1>
+        <p class="premium-lead">Guías, metodologías y análisis aplicados sobre inteligencia artificial, inversión, gestión pública, agricultura digital y capital natural.</p>
       </article>
-
-      <article class="recursos-visual contact-panel" aria-label="Panel de recursos RENSOF">
-        <div class="recursos-orbit">
-          <span class="recursos-core">R</span>
-          <i>IA</i>
-          <i>Datos</i>
-          <i>Modelos</i>
-          <i>Impacto</i>
-        </div>
-        <div class="recursos-mini-grid">
-          <article><strong>Investigación</strong><span>Publicaciones aplicadas</span></article>
-          <article><strong>Analítica</strong><span>Indicadores y tableros</span></article>
-          <article><strong>Decisión</strong><span>Evidencia para actuar</span></article>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <section class="story-block recursos-search-section" id="publicaciones-lista">
-    <div class="r2030-grid reveal">
-      <div class="recursos-section-head">
-        <span class="story-kicker">Biblioteca técnica</span>
-        <h2 class="story-title">Publicaciones, notas y documentos de trabajo</h2>
-        <p class="story-text">Filtra por título, resumen, categoría, autor o etiqueta para ubicar rápidamente el contenido que necesitas.</p>
-      </div>
-
-      <form method="get" action="/publicaciones" class="recursos-search-card contact-panel">
+      <form method="get" action="/publicaciones" class="premium-search-card">
         <label for="q">Buscar recursos</label>
-        <div class="recursos-search-row">
-          <input id="q" class="r-input" type="text" name="q" value="{{ search_query }}" placeholder="Ejemplo: prospectiva, IA, capital natural">
-          <button class="r-btn r-btn-primary" type="submit">Buscar</button>
-          <a href="/publicaciones" class="r-btn r-btn-ghost">Limpiar</a>
-        </div>
-        <p>Resultados encontrados: <strong>{{ total_results }}</strong></p>
+        <input id="q" class="r-input" type="text" name="q" value="{{ search_query | default('') }}" placeholder="IA, prospectiva, capital natural">
+        <button class="r-btn r-btn-primary" type="submit">Buscar</button>
       </form>
-
-      <div class="recursos-publication-grid">
-        {% for publication in publications %}
-        <article class="recursos-card pillar-card">
-          <div class="recursos-card-top">
-            <span>{{ publication.category }}</span>
-            <small>{{ publication.status }}</small>
-          </div>
-          <h3>{{ publication.title }}</h3>
-          <p>{{ publication.summary }}</p>
-          <div class="recursos-meta">
-            <span>Autor: {{ publication.author_name }}</span>
-            <span>Fecha: {{ publication.published_at.strftime('%Y-%m-%d') if publication.published_at else 'Sin fecha' }}</span>
-            <span>Tags: {{ publication.tags | join(', ') if publication.tags else 'Sin tags' }}</span>
-            {% if publication.contact_email %}<span>Contacto: {{ publication.contact_email }}</span>{% endif %}
-          </div>
-        </article>
-        {% else %}
-        <article class="recursos-empty contact-panel">
-          <span class="story-kicker">Sin resultados</span>
-          <h3>No se encontraron publicaciones</h3>
-          <p>Prueba con otra palabra clave o limpia el filtro para ver todos los recursos disponibles.</p>
-          <a href="/publicaciones" class="r-btn r-btn-primary">Ver todos los recursos</a>
-        </article>
-        {% endfor %}
-      </div>
     </div>
   </section>
 
-  <section class="story-block recursos-cta-section">
-    <div class="r2030-grid reveal">
-      <article class="recursos-cta-card contact-panel">
-        <span class="story-kicker">Conocimiento que se transforma en acción</span>
-        <h2>Convertimos información técnica en decisiones estratégicas.</h2>
-        <p class="story-text">RENSOF integra ciencia, tecnología, analítica avanzada y experiencia sectorial para producir recursos útiles, aplicables y orientados a resultados.</p>
-      </article>
+  <section class="premium-section">
+    <div class="r2030-grid premium-card-grid three reveal">
+      {% for publication in publications %}
+      <article class="premium-resource-card"><span>{{ publication.category }}</span><h3>{{ publication.title }}</h3><p>{{ publication.summary }}</p><small>{{ publication.author_name }}{% if publication.published_at %} · {{ publication.published_at.strftime('%Y-%m-%d') }}{% endif %}</small></article>
+      {% else %}
+      <article class="premium-resource-card"><span>Guía</span><h3>Comercio digital con ALVENT</h3><p>Buenas prácticas para ordenar ventas, inventario, caja e indicadores de rentabilidad.</p></article>
+      <article class="premium-resource-card"><span>Metodología</span><h3>Evaluación de proyectos</h3><p>Criterios para comparar alternativas, medir sensibilidad y priorizar inversiones.</p></article>
+      <article class="premium-resource-card"><span>Observatorio</span><h3>Capital natural y sostenibilidad</h3><p>Cómo incorporar agua, carbono y biodiversidad en decisiones de inversión.</p></article>
+      <article class="premium-resource-card"><span>Prospectiva</span><h3>Escenarios de futuro</h3><p>Señales tempranas y tendencias para decidir antes que cambie el entorno.</p></article>
+      <article class="premium-resource-card"><span>Gestión pública</span><h3>Tableros de resultados</h3><p>Indicadores ejecutivos para seguimiento de presupuesto, brechas y servicios.</p></article>
+      <article class="premium-resource-card"><span>Agricultura digital</span><h3>Datos para productividad</h3><p>IoT, satélite y analítica para mejorar decisiones agrícolas.</p></article>
+      {% endfor %}
     </div>
   </section>
 </main>

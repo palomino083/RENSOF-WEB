@@ -90,12 +90,16 @@ except Exception as e:
 
 @app.get("/")
 async def home(request: Request):
-    """Serve canonical homepage matching institutional visual baseline."""
-    file_path = BASE_DIR / "index.html"
-    if file_path.exists():
-        with open(file_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return {"message": "RENSOF Gateway"}
+    """Render public home from the unified Jinja template system."""
+    return templates.TemplateResponse(
+        request=request,
+        name="home.html",
+        context={
+            "active_page": "inicio",
+            "page_title": "RENSOF | Plataforma de Inteligencia Estratégica",
+            "page_description": "RENSOF desarrolla aplicaciones de inteligencia estratégica para transformar datos en decisiones de alto impacto.",
+        },
+    )
 
 @app.get("/index.html")
 async def index():
@@ -688,18 +692,73 @@ def _render_admin_inbox_page(
 
 
 @app.get("/nosotros")
-async def nosotros():
-    return _serve_named_page("nosotros")
+async def nosotros(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="nosotros.html",
+        context={
+            "active_page": "nosotros",
+            "page_title": "Nosotros | RENSOF",
+            "page_description": "Conoce RENSOF, plataforma peruana de inteligencia estratégica, analítica avanzada y aplicaciones digitales.",
+        },
+    )
 
 
 @app.get("/publicaciones")
-async def publicaciones():
-    return _serve_named_page("publicaciones")
+async def publicaciones(request: Request, q: str = ""):
+    publications = []
+    try:
+        with SessionLocal() as session:
+            content = get_admin_content(session)
+            publications = content.get("publications", [])
+    except Exception as exc:
+        logger.warning(f"No se pudo cargar publicaciones públicas: {exc}")
+    if q:
+        query = q.lower().strip()
+        publications = [
+            item for item in publications
+            if query in getattr(item, "title", "").lower()
+            or query in getattr(item, "summary", "").lower()
+            or query in getattr(item, "category", "").lower()
+            or query in getattr(item, "author_name", "").lower()
+        ]
+    return templates.TemplateResponse(
+        request=request,
+        name="publicaciones.html",
+        context={
+            "active_page": "publicaciones",
+            "page_title": "Recursos | RENSOF",
+            "page_description": "Recursos, guías y conocimiento aplicado de RENSOF para decidir con datos.",
+            "publications": publications,
+            "search_query": q,
+            "total_results": len(publications),
+        },
+    )
 
 
 @app.get("/contacto")
-async def contacto():
-    return _serve_named_page("contacto")
+async def contacto(request: Request):
+    email_accounts = []
+    primary_email = None
+    try:
+        with SessionLocal() as session:
+            content = get_admin_content(session)
+            email_accounts = content.get("email_accounts", [])
+            primary_email = next((a for a in email_accounts if getattr(a, "is_primary", False)), None)
+    except Exception as exc:
+        logger.warning(f"No se pudo cargar contexto de contacto: {exc}")
+    return templates.TemplateResponse(
+        request=request,
+        name="contacto.html",
+        context={
+            "active_page": "contacto",
+            "page_title": "Contacto | RENSOF",
+            "page_description": "Solicita una demo o comunícate con el equipo RENSOF para implementar aplicaciones inteligentes.",
+            "email_accounts": email_accounts,
+            "primary_email": primary_email,
+            "message_sent": request.query_params.get("sent") == "1",
+        },
+    )
 
 
 @app.post("/contacto/enviar")
@@ -740,13 +799,29 @@ def enviar_contacto(
 
 
 @app.get("/proyectos")
-async def proyectos():
-    return _serve_named_page("proyectos")
+async def proyectos(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="proyectos.html",
+        context={
+            "active_page": "proyectos",
+            "page_title": "Casos y sectores | RENSOF",
+            "page_description": "Sectores y casos de uso donde RENSOF aplica tecnología, analítica y decisión estratégica.",
+        },
+    )
 
 
 @app.get("/servicios")
-async def servicios():
-    return _serve_named_page("servicios")
+async def servicios(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="servicios.html",
+        context={
+            "active_page": "servicios",
+            "page_title": "Aplicaciones | RENSOF",
+            "page_description": "Aplicaciones RENSOF para comercio, gestión pública, inversión, agricultura digital, prospectiva y valoración económica.",
+        },
+    )
 
 # ==========================================
 # HEALTH CHECKS
