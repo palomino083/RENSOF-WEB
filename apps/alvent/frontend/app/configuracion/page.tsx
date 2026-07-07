@@ -1770,7 +1770,7 @@ export default function ConfiguracionPage() {
         {
           id: `soporte-bot-${Date.now()}`,
           role: "bot",
-          text: `${resp.recomendacion} (${resp.origen})`,
+          text: `${resp.recomendación} (${resp.origen})`,
         },
       ]);
     } catch (err: unknown) {
