@@ -1,34 +1,98 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="page-main" style="padding-top: 84px;">
-  <section class="story-block">
+<main class="r2030-main recursos-page">
+  <section class="hero-2030 story-block recursos-hero" id="sectores">
+    <div class="r2030-grid recursos-hero-grid reveal">
+      <article class="recursos-copy">
+        <span class="story-kicker">Recursos / Casos y sectores</span>
+        <h1 class="story-title">Soluciones para cada <span class="inicio-highlight">realidad</span></h1>
+        <p class="story-text">Diseñamos arquitecturas de decisión para instituciones públicas, empresas, territorios y proyectos que requieren evidencia, velocidad y visión estratégica.</p>
+        <div class="hero-actions">
+          <a class="r-btn r-btn-primary" href="#sectores-lista">Ver sectores</a>
+          <a class="r-btn r-btn-ghost" href="#casos">Ver casos</a>
+        </div>
+      </article>
+
+      <article class="recursos-visual contact-panel" aria-label="Arquitecturas de decisión RENSOF">
+        <div class="recursos-map-panel">
+          <span>Gestión pública</span>
+          <span>Agricultura digital</span>
+          <span>Inversión</span>
+          <span>Ambiente</span>
+          <span>Prospectiva</span>
+          <span>Comercio</span>
+        </div>
+        <div class="recursos-mini-grid">
+          <article><strong>Diagnóstico</strong><span>Problemas y brechas</span></article>
+          <article><strong>Modelo</strong><span>Datos y escenarios</span></article>
+          <article><strong>Impacto</strong><span>Resultados medibles</span></article>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="story-block recursos-sector-section" id="sectores-lista">
     <div class="r2030-grid reveal">
-      <span class="story-kicker">Sectores</span>
-      <h1 class="story-title" style="font-size:clamp(1.9rem,4.8vw,3.4rem)">Arquitecturas de decision para cada realidad</h1>
-      <div class="sector-flow" style="margin-top:16px;">
+      <div class="recursos-section-head">
+        <span class="story-kicker">Sectores</span>
+        <h2 class="story-title">Arquitecturas de decisión para entornos complejos</h2>
+        <p class="story-text">Cada sector requiere información precisa, procesos claros y herramientas tecnológicas adaptadas a sus objetivos.</p>
+      </div>
+
+      <div class="recursos-sector-grid">
         {% for sector in sectors %}
-        <article class="sector-item">
+        <article class="recursos-card sector-item">
+          <span class="recursos-sector-icon">{{ loop.index }}</span>
           <h3>{{ sector.title }}</h3>
           <p>{{ sector.description }}</p>
+        </article>
+        {% else %}
+        <article class="recursos-empty contact-panel">
+          <span class="story-kicker">Sin sectores registrados</span>
+          <h3>Aún no se han publicado sectores.</h3>
+          <p>Cuando se registren sectores, aparecerán en esta sección.</p>
         </article>
         {% endfor %}
       </div>
     </div>
   </section>
 
-  <section class="story-block mission-band">
+  <section class="story-block recursos-case-section" id="casos">
     <div class="r2030-grid reveal">
-      <span class="story-kicker">Casos</span>
-      <h2 class="story-title" style="font-size:clamp(1.7rem,4vw,2.6rem)">Implementaciones de alto impacto</h2>
-      <div class="case-grid">
+      <div class="recursos-section-head">
+        <span class="story-kicker">Casos</span>
+        <h2 class="story-title">Implementaciones de alto impacto</h2>
+        <p class="story-text">Mostramos aplicaciones, experiencias y líneas de trabajo que conectan tecnología, análisis y resultados concretos.</p>
+      </div>
+
+      <div class="recursos-case-grid">
         {% for case in cases %}
-        <article class="case-card">
+        <article class="recursos-case-card case-card">
           <div class="case-media" style="background-image:linear-gradient(150deg, rgba(11,31,50,0.35), {{ case.overlay }}), url('{{ case.media }}');"></div>
-          <div class="case-body"><h3>{{ case.title }}</h3><p>{{ case.description }}</p></div>
+          <div class="case-body">
+            <h3>{{ case.title }}</h3>
+            <p>{{ case.description }}</p>
+          </div>
+        </article>
+        {% else %}
+        <article class="recursos-empty contact-panel">
+          <span class="story-kicker">Sin casos registrados</span>
+          <h3>Aún no se han publicado casos.</h3>
+          <p>Cuando se registren casos, aparecerán en esta sección.</p>
         </article>
         {% endfor %}
       </div>
+    </div>
+  </section>
+
+  <section class="story-block recursos-cta-section">
+    <div class="r2030-grid reveal">
+      <article class="recursos-cta-card contact-panel">
+        <span class="story-kicker">De la información al impacto</span>
+        <h2>Diseñamos soluciones digitales alineadas a cada territorio, sector y organización.</h2>
+        <p class="story-text">Nuestro enfoque combina inteligencia artificial, analítica, gestión de proyectos y conocimiento aplicado para fortalecer decisiones públicas y privadas.</p>
+      </article>
     </div>
   </section>
 </main>

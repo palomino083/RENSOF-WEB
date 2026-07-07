@@ -1,39 +1,89 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="page-main" style="padding-top: 84px;">
-  <section class="story-block">
-    <div class="r2030-grid reveal">
-      <span class="story-kicker">Publicaciones</span>
-      <h1 class="story-title" style="font-size:clamp(1.9rem,4.8vw,3.4rem)">Centro de conocimiento estrategico</h1>
-      <p class="story-text">Investigacion aplicada, notas tecnicas y visualizaciones para directivos y equipos especializados.</p>
+<main class="r2030-main recursos-page">
+  <section class="hero-2030 story-block recursos-hero" id="publicaciones">
+    <div class="r2030-grid recursos-hero-grid reveal">
+      <article class="recursos-copy">
+        <span class="story-kicker">Recursos / Publicaciones</span>
+        <h1 class="story-title">Centro de conocimiento <span class="inicio-highlight">estratégico</span></h1>
+        <p class="story-text">Compartimos investigación aplicada, notas técnicas, modelos, visualizaciones y aprendizajes de campo para apoyar decisiones basadas en evidencia.</p>
+        <div class="hero-actions">
+          <a class="r-btn r-btn-primary" href="#publicaciones-lista">Explorar publicaciones</a>
+          <a class="r-btn r-btn-ghost" href="/proyectos">Ver casos y sectores</a>
+        </div>
+      </article>
 
-      <form method="get" action="/publicaciones" class="contact-panel" style="margin-top:18px; padding:16px;">
-        <label for="q">Buscar por titulo, resumen, categoria, autor o tag</label>
-        <input id="q" class="r-input" type="text" name="q" value="{{ search_query }}" placeholder="Ejemplo: prospectiva, IA, capital natural">
-        <button class="r-btn r-btn-primary" type="submit">Buscar</button>
-        <a href="/publicaciones" class="r-btn r-btn-ghost" style="margin-left:8px;">Limpiar</a>
-        <p style="margin-top:10px; color:var(--r-text-soft);">Resultados: {{ total_results }}</p>
+      <article class="recursos-visual contact-panel" aria-label="Panel de recursos RENSOF">
+        <div class="recursos-orbit">
+          <span class="recursos-core">R</span>
+          <i>IA</i>
+          <i>Datos</i>
+          <i>Modelos</i>
+          <i>Impacto</i>
+        </div>
+        <div class="recursos-mini-grid">
+          <article><strong>Investigación</strong><span>Publicaciones aplicadas</span></article>
+          <article><strong>Analítica</strong><span>Indicadores y tableros</span></article>
+          <article><strong>Decisión</strong><span>Evidencia para actuar</span></article>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="story-block recursos-search-section" id="publicaciones-lista">
+    <div class="r2030-grid reveal">
+      <div class="recursos-section-head">
+        <span class="story-kicker">Biblioteca técnica</span>
+        <h2 class="story-title">Publicaciones, notas y documentos de trabajo</h2>
+        <p class="story-text">Filtra por título, resumen, categoría, autor o etiqueta para ubicar rápidamente el contenido que necesitas.</p>
+      </div>
+
+      <form method="get" action="/publicaciones" class="recursos-search-card contact-panel">
+        <label for="q">Buscar recursos</label>
+        <div class="recursos-search-row">
+          <input id="q" class="r-input" type="text" name="q" value="{{ search_query }}" placeholder="Ejemplo: prospectiva, IA, capital natural">
+          <button class="r-btn r-btn-primary" type="submit">Buscar</button>
+          <a href="/publicaciones" class="r-btn r-btn-ghost">Limpiar</a>
+        </div>
+        <p>Resultados encontrados: <strong>{{ total_results }}</strong></p>
       </form>
 
-      <div class="intel-pillars" style="margin-top:20px; grid-template-columns:repeat(3,1fr);">
+      <div class="recursos-publication-grid">
         {% for publication in publications %}
-        <article class="pillar-card">
-          <strong>{{ publication.title }}</strong>
-          <span>{{ publication.summary }}</span>
-          <span style="margin-top:10px; display:block;">{{ publication.category }} | {{ publication.author_name }}</span>
-          <span style="margin-top:4px; display:block;">Estado: {{ publication.status }}</span>
-          <span style="margin-top:4px; display:block;">Fecha: {{ publication.published_at.strftime('%Y-%m-%d %H:%M') if publication.published_at else 'Sin fecha' }}</span>
-          <span style="margin-top:4px; display:block;">Tags: {{ publication.tags | join(', ') if publication.tags else 'Sin tags' }}</span>
-          <span style="margin-top:4px; display:block;">Contacto: {{ publication.contact_email }}</span>
+        <article class="recursos-card pillar-card">
+          <div class="recursos-card-top">
+            <span>{{ publication.category }}</span>
+            <small>{{ publication.status }}</small>
+          </div>
+          <h3>{{ publication.title }}</h3>
+          <p>{{ publication.summary }}</p>
+          <div class="recursos-meta">
+            <span>Autor: {{ publication.author_name }}</span>
+            <span>Fecha: {{ publication.published_at.strftime('%Y-%m-%d') if publication.published_at else 'Sin fecha' }}</span>
+            <span>Tags: {{ publication.tags | join(', ') if publication.tags else 'Sin tags' }}</span>
+            {% if publication.contact_email %}<span>Contacto: {{ publication.contact_email }}</span>{% endif %}
+          </div>
         </article>
         {% else %}
-        <article class="pillar-card" style="grid-column:1 / -1;">
-          <strong>Sin resultados</strong>
-          <span>No se encontraron publicaciones para la busqueda actual.</span>
+        <article class="recursos-empty contact-panel">
+          <span class="story-kicker">Sin resultados</span>
+          <h3>No se encontraron publicaciones</h3>
+          <p>Prueba con otra palabra clave o limpia el filtro para ver todos los recursos disponibles.</p>
+          <a href="/publicaciones" class="r-btn r-btn-primary">Ver todos los recursos</a>
         </article>
         {% endfor %}
       </div>
+    </div>
+  </section>
+
+  <section class="story-block recursos-cta-section">
+    <div class="r2030-grid reveal">
+      <article class="recursos-cta-card contact-panel">
+        <span class="story-kicker">Conocimiento que se transforma en acción</span>
+        <h2>Convertimos información técnica en decisiones estratégicas.</h2>
+        <p class="story-text">RENSOF integra ciencia, tecnología, analítica avanzada y experiencia sectorial para producir recursos útiles, aplicables y orientados a resultados.</p>
+      </article>
     </div>
   </section>
 </main>
