@@ -39,6 +39,13 @@
     gap: 16px;
   }
 
+  .dashboard-link-meta {
+    display: block;
+    margin-top: 10px;
+    color: rgba(187, 224, 255, 0.72);
+    font-size: 0.86rem;
+  }
+
   @media (max-width: 1080px) {
     .dashboard-grid,
     .dashboard-actions-grid,
@@ -60,86 +67,102 @@
     {% include "partials/admin_sidebar.html" %}
 
     <div class="admin-content">
-  <section class="story-block">
-    <div class="r2030-grid reveal">
-      <span class="story-kicker">Admin</span>
-      <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Centro de control</h1>
-      <p class="story-text">Opera el backoffice desde una consola viva: accesos criticos, vigilancia de plataforma, contenido y respuesta operativa.</p>
-      <div class="hero-actions" style="margin-top:16px;">
-        <a href="/admin/correos/bandeja" class="r-btn r-btn-primary">Abrir bandeja operativa</a>
-        <a href="/admin/publicaciones" class="r-btn r-btn-ghost">Publicaciones</a>
-        <a href="/app/alvent/login" class="r-btn r-btn-ghost">Abrir ALVENT</a>
-      </div>
-      <div class="dashboard-grid" style="margin-top:20px;">
-        {% for metric in ops_metrics %}
-        <article class="dashboard-card">
-          <span class="story-kicker">{{ metric.label }}</span>
-          <strong>{{ metric.value }}</strong>
-          <p>{{ metric.detail }}</p>
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
+      <section class="story-block">
+        <div class="r2030-grid reveal">
+          <span class="story-kicker">Admin Premium</span>
+          <h1 class="story-title" style="font-size:clamp(1.7rem,4.2vw,3rem)">Centro de control conectado</h1>
+          <p class="story-text">Opera el backoffice desde una consola viva: accesos criticos, vigilancia de plataforma, contenido y respuesta operativa.</p>
+          <div class="hero-actions" style="margin-top:16px;">
+            <a href="/admin/correos/bandeja" class="r-btn r-btn-primary">Abrir bandeja operativa</a>
+            <a href="/admin/correos" class="r-btn r-btn-ghost">Cuentas de correo</a>
+            <a href="/admin/publicaciones" class="r-btn r-btn-ghost">Publicaciones</a>
+            <a href="/app/alvent/login" class="r-btn r-btn-ghost">Abrir ALVENT</a>
+          </div>
+          <div class="dashboard-grid" style="margin-top:20px;">
+            {% for metric in ops_metrics %}
+            <article class="dashboard-card">
+              <span class="story-kicker">{{ metric.label }}</span>
+              <strong>{{ metric.value }}</strong>
+              <p>{{ metric.detail }}</p>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
 
-  <section class="story-block mission-band">
-    <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Opciones de control</h2>
-      <div class="dashboard-actions-grid">
-        <article class="dashboard-action">
-          <strong>Mensajes y leads</strong>
-          <p>Gestiona entrada comercial, clasificacion, prioridades y seguimiento operativo.</p>
-          <a href="/admin/correos/bandeja" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir bandeja</a>
-        </article>
-        <article class="dashboard-action">
-          <strong>Gobierno editorial</strong>
-          <p>Centraliza publicaciones, narrativas, recursos y ajustes de contenido institucional.</p>
-          <a href="/admin/publicaciones" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir publicaciones</a>
-        </article>
-        <article class="dashboard-action">
-          <strong>Acceso ALVENT</strong>
-          <p>Valida el ingreso principal del aplicativo y controla el recorrido de usuarios hacia dashboard.</p>
-          <a href="/app/alvent/login" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir acceso</a>
-        </article>
-        <article class="dashboard-action">
-          <strong>Vista publica</strong>
-          <p>Revisa home, navegacion y formularios desde la perspectiva del usuario final.</p>
-          <a href="/" class="r-btn r-btn-primary" style="margin-top:14px;">Ver sitio publico</a>
-        </article>
-      </div>
-    </div>
-  </section>
+      <section class="story-block mission-band">
+        <div class="r2030-grid reveal">
+          <h2 style="font-family:'Sora',sans-serif;">Modulos conectados</h2>
+          <div class="dashboard-actions-grid">
+            <article class="dashboard-action">
+              <strong>Mensajes y leads</strong>
+              <p>Gestiona entrada comercial, clasificacion, prioridades y seguimiento operativo.</p>
+              <span class="dashboard-link-meta">Ruta: /admin/correos/bandeja | Archivo: templates/admin_inbox.html</span>
+              <a href="/admin/correos/bandeja" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir bandeja</a>
+            </article>
+            <article class="dashboard-action">
+              <strong>Cuentas de correo</strong>
+              <p>Administra canales, areas, correo principal y filtros del formulario de contacto.</p>
+              <span class="dashboard-link-meta">Ruta: /admin/correos | Archivo: templates/admin_emails.html</span>
+              <a href="/admin/correos" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir correos</a>
+            </article>
+            <article class="dashboard-action">
+              <strong>Gobierno editorial</strong>
+              <p>Centraliza publicaciones, narrativas, recursos y ajustes de contenido institucional.</p>
+              <span class="dashboard-link-meta">Ruta: /admin/publicaciones | Archivo: templates/admin_publications.html</span>
+              <a href="/admin/publicaciones" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir publicaciones</a>
+            </article>
+            <article class="dashboard-action">
+              <strong>Acceso ALVENT</strong>
+              <p>Valida el ingreso principal del aplicativo y controla el recorrido de usuarios hacia dashboard.</p>
+              <span class="dashboard-link-meta">Ruta publica: /app/alvent/login</span>
+              <a href="/app/alvent/login" class="r-btn r-btn-primary" style="margin-top:14px;">Abrir acceso</a>
+            </article>
+            <article class="dashboard-action">
+              <strong>Vista publica</strong>
+              <p>Revisa home, navegacion y formularios desde la perspectiva del usuario final.</p>
+              <span class="dashboard-link-meta">Ruta: / | Archivo: templates/home.html</span>
+              <a href="/" class="r-btn r-btn-primary" style="margin-top:14px;">Ver sitio publico</a>
+            </article>
+            <article class="dashboard-action">
+              <strong>Contacto comercial</strong>
+              <p>Comprueba el formulario conectado a bandeja y cuentas de atencion.</p>
+              <span class="dashboard-link-meta">Ruta: /contacto | Archivo: templates/contacto.html</span>
+              <a href="/contacto#contactForm" class="r-btn r-btn-primary" style="margin-top:14px;">Ver formulario</a>
+            </article>
+          </div>
+        </div>
+      </section>
 
-  <section class="story-block">
-    <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Rutas criticas</h2>
-      <div class="dashboard-routes-grid">
-        {% for route in ops_watch_routes %}
-        <article class="dashboard-route">
-          <span class="story-kicker">Ruta</span>
-          <strong>{{ route.path }}</strong>
-          <p>{{ route.purpose }}</p>
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
+      <section class="story-block">
+        <div class="r2030-grid reveal">
+          <h2 style="font-family:'Sora',sans-serif;">Rutas criticas</h2>
+          <div class="dashboard-routes-grid">
+            {% for route in ops_watch_routes %}
+            <article class="dashboard-route">
+              <span class="story-kicker">Ruta</span>
+              <strong>{{ route.path }}</strong>
+              <p>{{ route.purpose }}</p>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
 
-  <section class="story-block mission-band">
-    <div class="r2030-grid reveal">
-      <h2 style="font-family:'Sora',sans-serif;">Alertas operativas</h2>
-      <div class="dashboard-actions-grid">
-        {% for alert in ops_alerts %}
-        <article class="dashboard-action">
-          <span class="story-kicker">{{ alert.level }}</span>
-          <strong>{{ alert.title }}</strong>
-          <p>{{ alert.detail }}</p>
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-
+      <section class="story-block mission-band">
+        <div class="r2030-grid reveal">
+          <h2 style="font-family:'Sora',sans-serif;">Alertas operativas</h2>
+          <div class="dashboard-actions-grid">
+            {% for alert in ops_alerts %}
+            <article class="dashboard-action">
+              <span class="story-kicker">{{ alert.level }}</span>
+              <strong>{{ alert.title }}</strong>
+              <p>{{ alert.detail }}</p>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 </main>

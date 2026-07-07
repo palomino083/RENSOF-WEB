@@ -6,21 +6,59 @@
     min-height: calc(100vh - 220px);
     display: grid;
     place-items: center;
-    padding: 32px 16px;
+    padding: 36px 16px;
   }
 
+  .admin-login-shell {
+    width: min(100%, 980px);
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+    gap: 18px;
+    align-items: stretch;
+  }
+
+  .admin-login-panel,
   .admin-login-card {
-    width: min(100%, 640px);
-    border-radius: 18px;
-    border: 1px solid rgba(58, 160, 255, 0.35);
-    background: linear-gradient(180deg, rgba(0, 22, 42, 0.96), rgba(0, 16, 31, 0.96));
-    box-shadow: 0 16px 40px rgba(0, 8, 22, 0.45);
-    padding: 22px 18px;
+    border-radius: 22px;
+    border: 1px solid rgba(126, 214, 255, 0.2);
+    background: linear-gradient(180deg, rgba(0, 24, 46, 0.96), rgba(0, 14, 28, 0.96));
+    box-shadow: 0 22px 54px rgba(0, 8, 22, 0.48);
+    padding: 24px;
+  }
+
+  .admin-login-panel {
+    background:
+      radial-gradient(circle at 12% 15%, rgba(57, 202, 127, 0.18), transparent 34%),
+      radial-gradient(circle at 88% 0%, rgba(0, 182, 200, 0.18), transparent 32%),
+      linear-gradient(180deg, rgba(3, 35, 62, 0.96), rgba(0, 17, 34, 0.96));
+  }
+
+  .admin-login-status {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .admin-login-status span {
+    border: 1px solid rgba(126, 214, 255, 0.16);
+    border-radius: 16px;
+    padding: 12px;
+    color: var(--r-text-soft);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .admin-login-status strong {
+    display: block;
+    color: #fff;
+    margin-bottom: 4px;
   }
 
   .admin-login-card label {
     display: block;
-    margin: 12px 0 6px;
+    margin: 14px 0 7px;
+    color: #fff;
+    font-weight: 700;
   }
 
   .admin-login-card .r-input {
@@ -28,16 +66,46 @@
   }
 
   .admin-login-card .r-btn-primary {
-    margin-top: 12px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  .admin-login-note {
+    margin-top: 14px;
+    color: var(--r-text-soft);
+    font-size: 0.92rem;
+  }
+
+  @media (max-width: 860px) {
+    .admin-login-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-login-status {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 <main class="page-main" style="padding-top: 84px;">
   <section class="admin-login-wrap">
-    <div class="r2030-grid" style="max-width: 680px;">
-      <article class="admin-login-card reveal is-visible">
-        <span class="story-kicker">Admin Access</span>
-        <h1 class="story-title" style="font-size:clamp(1.7rem,4vw,2.6rem)">Iniciar sesion</h1>
-        <p class="story-text">Accede al panel editorial y de configuracion de contenido.</p>
+    <div class="admin-login-shell reveal is-visible">
+      <article class="admin-login-panel">
+        <span class="story-kicker">Admin Premium</span>
+        <h1 class="story-title" style="font-size:clamp(1.9rem,4.4vw,3.2rem)">Centro operativo RENSOF</h1>
+        <p class="story-text">Ingreso seguro al backoffice para contenidos, correos, bandeja comercial, rutas criticas y seguimiento de ALVENT.</p>
+
+        <div class="admin-login-status" aria-label="Modulos conectados">
+          <span><strong>Contenido</strong>Publicaciones y narrativa institucional.</span>
+          <span><strong>Correos</strong>Cuentas, filtros y correo principal.</span>
+          <span><strong>Bandeja</strong>Mensajes de contacto y estados.</span>
+        </div>
+      </article>
+
+      <article class="admin-login-card">
+        <span class="story-kicker">Acceso autorizado</span>
+        <h2 style="font-family:'Sora',sans-serif; margin:8px 0 4px;">Iniciar sesion</h2>
+        <p class="story-text">Usa el usuario y clave configurados para la plataforma.</p>
 
         {% if error_message %}
         <p style="margin-top:14px; color:#ff9a8f;">{{ error_message }}</p>
@@ -46,13 +114,14 @@
         <form action="/admin/login" method="post" style="margin-top:16px;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <label for="username">Usuario</label>
-          <input id="username" class="r-input" type="text" name="username" required>
+          <input id="username" class="r-input" type="text" name="username" autocomplete="username" required>
 
-          <label for="password">Contraseña</label>
-          <input id="password" class="r-input" type="password" name="password" required>
+          <label for="password">Contrase&ntilde;a</label>
+          <input id="password" class="r-input" type="password" name="password" autocomplete="current-password" required>
 
-          <button class="r-btn r-btn-primary" type="submit">Entrar</button>
+          <button class="r-btn r-btn-primary" type="submit">Entrar al panel</button>
         </form>
+        <p class="admin-login-note">/admin abre este acceso si no hay sesion activa. Las credenciales se validan en backend con proteccion CSRF.</p>
       </article>
     </div>
   </section>
