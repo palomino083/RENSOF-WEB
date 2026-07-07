@@ -457,7 +457,7 @@ def verify_email(
 ):
     """
     Verificar email del usuario.
-    Requiere el código enviado por email.
+    Requiere el codigo enviado por email.
     """
     
     token_data = get_token_data(token.credentials)
@@ -485,19 +485,19 @@ def verify_email(
             detail="No hay verificación pendiente"
         )
     
-    # Verificar el código
+    # Verificar el codigo
     if not verification.verificar(data.codigo):
         db.commit()  # Guardar incremento de intentos
         
         if verification.intentos >= 5:
             raise HTTPException(
                 status_code=400,
-                detail="Demasiados intentos. Solicita un nuevo código."
+                detail="Demasiados intentos. Solicita un nuevo codigo."
             )
         
         raise HTTPException(
             status_code=400,
-            detail="Código incorrecto"
+            detail="codigo incorrecto"
         )
     
     # Marcar email como verificado
@@ -518,7 +518,7 @@ def send_verification_email(
     db: Session = Depends(get_db)
 ):
     """
-    Enviar código de verificación por email.
+    Enviar codigo de verificación por email.
     Limitar a 3 intentos por minuto.
     """
     
@@ -535,7 +535,7 @@ def send_verification_email(
     if not usuario:
         raise HTTPException(404, "Usuario no encontrado")
     
-    # Crear código de verificación
+    # Crear codigo de verificación
     codigo = EmailVerification.generar_codigo()
     verificacion = EmailVerification(
         usuario_id=usuario_id,
@@ -555,7 +555,7 @@ def send_verification_email(
     )
     
     return {
-        "mensaje": "Código de verificación enviado a tu email",
+        "mensaje": "codigo de verificación enviado a tu email",
         "email": usuario.email
     }
 

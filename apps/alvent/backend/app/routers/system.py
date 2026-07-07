@@ -110,11 +110,11 @@ def _sofia_developer_instructions(nivel: str, categoria_local: str) -> str:
     return "\n".join([
         "Eres SofIA, asistente tecnico y humano de soporte para ALVENT ERP PRO y RENSOF.",
         "Responde siempre en espa?ol claro, amable, preciso y con tono humano profesional.",
-        "No inventes datos, credenciales, estados de pago, diagnosticos definitivos ni acciones ya ejecutadas.",
+        "No inventes datos, credenciales, estados de pago, diagnósticos definitivos ni acciones ya ejecutadas.",
         "Si falta evidencia, pide exactamente los datos minimos: modulo, accion, hora, mensaje de error, usuario/rol y resultado esperado.",
         "No solicites contrase?as, tokens, claves API, datos completos de tarjetas ni documentos completos.",
         "Si hay riesgo fiscal, perdida de ventas, caida de servicio, errores 5xx repetidos o safe mode activo, recomienda escalar a RENSOF.",
-        "Entrega la respuesta con secciones breves: Diagnostico probable, Accion inmediata, Verificacion, Escalamiento.",
+        "Entrega la respuesta con secciones breves: diagnóstico probable, accion inmediata, Verificacion, Escalamiento.",
         f"Nivel de respuesta: {nivel}.",
         f"Categoria local preliminar: {categoria_local}.",
     ])
@@ -180,7 +180,7 @@ def _generar_respuesta_sofia_openai(
 
     return {
         "categoria": categoria,
-        "recomendacion": output_text,
+        "recomendación": output_text,
         "origen": "SOFIA_OPENAI",
         "nivel": nivel,
     }
@@ -228,7 +228,7 @@ def _resolver_nivel_sofia(current_user: dict | None, texto_contexto: str) -> str
     if "nivel de respuesta: ejecutivo" in text or "nivel ejecutivo" in text:
         return "EJECUTIVO"
     if "nivel de respuesta: tecnico" in text or "nivel tecnico" in text:
-        return "TÃ‰CNICO"
+        return "TÉCNICO"
     if "nivel de respuesta: usuario_final" in text or "usuario final" in text:
         return "USUARIO_FINAL"
 
@@ -238,12 +238,12 @@ def _resolver_nivel_sofia(current_user: dict | None, texto_contexto: str) -> str
 
         rol = str(current_user.get("rol") or "").upper().strip()
         if rol in {"ADMIN", "ADMINISTRADOR", "SUPERADMIN"}:
-            return "TÃ‰CNICO"
+            return "TÉCNICO"
 
     return "USUARIO_FINAL"
 
 
-def _envolver_respuesta_sofia(categoria: str, recomendacion_base: str, nivel: str = "USUARIO_FINAL") -> dict:
+def _envolver_respuesta_sofia(categoria: str, recomendación_base: str, nivel: str = "USUARIO_FINAL") -> dict:
     nivel_normalizado = str(nivel or "USUARIO_FINAL").upper().strip()
 
     intro = (
@@ -257,35 +257,35 @@ def _envolver_respuesta_sofia(categoria: str, recomendacion_base: str, nivel: st
     )
     cierre = (
         "Si compartes mas contexto (modulo, hora, mensaje exacto y resultado esperado), "
-        "podre darte un diagnostico mas preciso y, de ser necesario, escalarlo a RENSOF."
+        "podre darte un diagnóstico mas preciso y, de ser necesario, escalarlo a RENSOF."
     )
 
     if nivel_normalizado == "EJECUTIVO":
-        recomendacion_nivel = (
+        recomendación_nivel = (
             "Resumen ejecutivo: impacto operativo, riesgo actual y accion recomendada inmediata para continuidad. "
-            f"Accion sugerida: {recomendacion_base}"
+            f"accion sugerida: {recomendación_base}"
         )
-    elif nivel_normalizado == "TÃ‰CNICO":
-        recomendacion_nivel = (
+    elif nivel_normalizado == "TÉCNICO":
+        recomendación_nivel = (
             "Detalle tecnico: identifica modulo, endpoint/flujo, causa probable y verificacion esperada. "
-            f"Paso a paso tecnico: {recomendacion_base}"
+            f"Paso a paso tecnico: {recomendación_base}"
         )
     else:
-        recomendacion_nivel = (
+        recomendación_nivel = (
             "Guia para usuario final: te explico en pasos simples que revisar y que hacer ahora mismo. "
-            f"Siguiente accion: {recomendacion_base}"
+            f"Siguiente accion: {recomendación_base}"
         )
 
-    recomendacion = "\n\n".join([
+    recomendación = "\n\n".join([
         intro,
-        f"Diagnostico inicial ({categoria.upper()}): {recomendacion_nivel}",
+        f"diagnóstico inicial ({categoria.upper()}): {recomendación_nivel}",
         marco,
         cierre,
     ])
 
     return {
         "categoria": categoria,
-        "recomendacion": recomendacion,
+        "recomendación": recomendación,
         "origen": "SOFIA_LOCAL",
         "nivel": nivel_normalizado,
     }
@@ -299,7 +299,7 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str, current_user: Optio
         local_result = _envolver_respuesta_sofia(
             "fiscal",
             (
-                "Verifica en Configuracion/Fiscal: integracion SUNAT activa, RUC emisor valido, token API vigente y series B/F configuradas. "
+                "Verifica en configuracion/Fiscal: integracion SUNAT activa, RUC emisor valido, token API vigente y series B/F configuradas. "
                 "Luego prueba una boleta en POS y revisa el estado SUNAT devuelto por la venta."
             ),
             nivel,
@@ -405,7 +405,7 @@ def _ticket_to_dict(ticket: SoporteTicket, autor: Usuario | None, atendido_por: 
         "consulta": ticket.consulta,
         "prioridad": ticket.prioridad,
         "estado": ticket.estado,
-        "recomendacion_ia": ticket.recomendacion_ia,
+        "recomendación_ia": ticket.recomendacion_ia,
         "respuesta_superadmin": ticket.respuesta_superadmin,
         "atendido_por_usuario_id": ticket.atendido_por_usuario_id,
         "atendido_por_nombre": (getattr(atendido_por, "nombres", None) or getattr(atendido_por, "usuario", None)) if atendido_por else None,
@@ -636,7 +636,7 @@ def sugerir_soporte_ia(
     return {
         "ok": True,
         "categoria": result["categoria"],
-        "recomendacion": result["recomendacion"],
+        "recomendación": result["recomendación"],
         "origen": result.get("origen", "SOFIA_LOCAL"),
         "nivel": result.get("nivel", "USUARIO_FINAL"),
     }
@@ -740,7 +740,7 @@ def crear_ticket_soporte(
         consulta=consulta,
         prioridad=_normalizar_prioridad(data.prioridad),
         estado="ABIERTO",
-        recomendacion_ia=sugerencia["recomendacion"],
+        recomendación_ia=sugerencia["recomendación"],
     )
 
     db.add(ticket)
@@ -766,7 +766,7 @@ def crear_ticket_soporte(
         "ticket": _ticket_to_dict(ticket, autor, None),
         "sugerencia_ia": {
             "categoria": sugerencia["categoria"],
-            "recomendacion": sugerencia["recomendacion"],
+            "recomendación": sugerencia["recomendación"],
             "origen": sugerencia.get("origen", "SOFIA_LOCAL"),
             "nivel": sugerencia.get("nivel", "USUARIO_FINAL"),
         },

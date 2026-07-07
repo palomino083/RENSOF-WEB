@@ -3,8 +3,8 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, F
 from app.database.database import Base
 
 
-class ConfiguracionNegocio(Base):
-    """Modelo de configuración del negocio - Seteos específicos por empresa"""
+class configuracionNegocio(Base):
+    """Modelo de configuracion del negocio - Seteos específicos por empresa"""
     __tablename__ = "configuracion_negocio"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -28,7 +28,7 @@ class ConfiguracionNegocio(Base):
     numero_comprobantes = Column(Integer, default=1000)
     formato_documento = Column(String(20), default="A4")
 
-    # Configuración de producto
+    # configuracion de producto
     requiere_lote = Column(Boolean, default=False)
     requiere_vencimiento = Column(Boolean, default=False)
     stock_minimo_alerta = Column(Boolean, default=True)

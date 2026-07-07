@@ -369,7 +369,7 @@ export default function FinanzasPage() {
             modulo="Finanzas"
             estado={loading ? "Sincronizando" : "Operativo"}
             foco="Control contable mensual con lectura de utilidad y cierre de periodo."
-            accion={{ label: "Ir a Configuración", href: "configuracion" }}
+            accion={{ label: "Ir a configuracion", href: "configuracion" }}
             metricas={[
               { label: "Ingresos", value: `S/${totalIngresos.toFixed(2)}`, tone: "good" },
               { label: "Gastos", value: `S/${totalGastos.toFixed(2)}`, tone: "warn" },
@@ -418,9 +418,9 @@ export default function FinanzasPage() {
           </section>
 
           <section className={styles.card}>
-            <Toolbar title="Narrativa dinámica de planes" right={<StatusBadge text="Unificado con Configuración" variant="info" />} />
+            <Toolbar title="Narrativa dinámica de planes" right={<StatusBadge text="Unificado con configuracion" variant="info" />} />
             <p>
-              Alternativas comerciales conectadas al catálogo real y montos editables. El propietario del sistema ajusta capacidad y precio desde Configuración.
+              Alternativas comerciales conectadas al catálogo real y montos editables. El propietario del sistema ajusta capacidad y precio desde configuracion.
             </p>
 
             <div className={styles.periodRow}>
@@ -444,7 +444,7 @@ export default function FinanzasPage() {
                   window.location.href = appPath("configuracion");
                 }}
               >
-                Ir a Configuración de planes
+                Ir a configuracion de planes
               </button>
             </div>
 
@@ -454,7 +454,7 @@ export default function FinanzasPage() {
           <section className={styles.card}>
             <Toolbar title="Movimientos por plan y mes" right={<StatusBadge text={loading ? "Cargando" : `${ingresos.length} registros`} variant="neutral" />} />
             <p>
-              Se muestran solo activaciones con estado aplicado, agrupadas por mes y plan para leer rapido ingreso,
+              Se muestran solo activaciones con estado aplicado, agrupadas por mes y plan para leer rápido ingreso,
               cantidad de movimientos y negocios impactados.
             </p>
 
@@ -532,7 +532,7 @@ export default function FinanzasPage() {
                 <input type="date" value={form.fecha_gasto} onChange={(e) => setForm((prev) => ({ ...prev, fecha_gasto: e.target.value }))} className="focus-ring" />
               </label>
               <label className={styles.fullRow}>
-                Descripción
+                descripcion
                 <input type="text" value={form.descripcion} onChange={(e) => setForm((prev) => ({ ...prev, descripcion: e.target.value }))} className="focus-ring" placeholder="Ej. Servicio de hosting" />
               </label>
               <label>
@@ -562,11 +562,11 @@ export default function FinanzasPage() {
                   <tr>
                     <th>Fecha</th>
                     <th>Categoría</th>
-                    <th>Descripción</th>
+                    <th>descripcion</th>
                     <th>Proveedor</th>
                     <th>Monto</th>
                     <th>Comprobante</th>
-                    <th>Acciones</th>
+                    <th>acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -626,7 +626,7 @@ export default function FinanzasPage() {
                 <tbody>
                   {cierres.length === 0 ? (
                     <tr>
-                      <td colSpan={5}>Aun no hay cierres mensuales registrados.</td>
+                      <td colSpan={5}>Aún no hay cierres mensuales registrados.</td>
                     </tr>
                   ) : (
                     cierres.map((cierre) => (

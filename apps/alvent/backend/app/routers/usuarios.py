@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
 from app.database.database import get_db
-from app.models.configuracion_negocio import ConfiguracionNegocio
+from app.models.configuracion_negocio import configuracionNegocio
 from app.models.email_verification import EmailVerification, PasswordReset
 from app.models.negocio import Negocio
 from app.models.refresh_token import RefreshToken, TokenBlacklist
@@ -39,7 +39,7 @@ MODULOS_VALIDOS = [
     "Usuarios",
     "Empresa",
     "Soporte",
-    "Configuracion",
+    "configuracion",
     "Finanzas",
 ]
 PERMISOS_POR_ROL_DEFAULT: dict[str, list[str]] = {
@@ -56,12 +56,12 @@ PERMISOS_POR_ROL_DEFAULT: dict[str, list[str]] = {
         "Usuarios",
         "Empresa",
         "Soporte",
-        "Configuracion",
+        "configuracion",
         "Finanzas",
     ],
-    "CAJERO": ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "Configuracion"],
-    "VENDEDOR": ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "Configuracion"],
-    "ALMACEN": ["Dashboard", "Productos", "Inventario", "Empresa", "Soporte", "Configuracion"],
+    "CAJERO": ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "configuracion"],
+    "VENDEDOR": ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "configuracion"],
+    "ALMACEN": ["Dashboard", "Productos", "Inventario", "Empresa", "Soporte", "configuracion"],
 }
 
 
@@ -85,12 +85,12 @@ def _normalizar_matriz_permisos(matriz: dict[str, list[str]] | None) -> dict[str
     return output
 
 
-def _obtener_config_negocio(db: Session, negocio_id: int) -> ConfiguracionNegocio:
-    config = db.query(ConfiguracionNegocio).filter(ConfiguracionNegocio.negocio_id == negocio_id).first()
+def _obtener_config_negocio(db: Session, negocio_id: int) -> configuracionNegocio:
+    config = db.query(configuracionNegocio).filter(configuracionNegocio.negocio_id == negocio_id).first()
     if config:
         return config
 
-    config = ConfiguracionNegocio(negocio_id=negocio_id)
+    config = configuracionNegocio(negocio_id=negocio_id)
     db.add(config)
     db.flush()
     return config

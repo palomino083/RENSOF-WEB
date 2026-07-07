@@ -57,7 +57,7 @@ export type SoporteTicket = {
   consulta: string;
   prioridad: SoportePrioridad;
   estado: SoporteEstado;
-  recomendacion_ia?: string | null;
+  recomendación_ia?: string | null;
   respuesta_superadmin?: string | null;
   atendido_por_usuario_id?: number | null;
   atendido_por_nombre?: string | null;
@@ -133,7 +133,7 @@ export const systemService = {
       ticket: SoporteTicket;
       sugerencia_ia?: {
         categoria: string;
-        recomendacion: string;
+        recomendación: string;
         origen: string;
       };
     };
@@ -152,9 +152,9 @@ export const systemService = {
     return res.data as {
       ok: boolean;
       categoria: string;
-      recomendacion: string;
+      recomendación: string;
       origen: string;
-      nivel?: "EJECUTIVO" | "TÃ‰CNICO" | "USUARIO_FINAL";
+      nivel?: "EJECUTIVO" | "TÉCNICO" | "USUARIO_FINAL";
     };
   },
 

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { appPath } from "@/utils/appPath";
 
-export default function OnboardingConfiguracionRedirectPage() {
+export default function OnboardingconfiguracionRedirectPage() {
   const router = useRouter();
 
   useEffect(() => {

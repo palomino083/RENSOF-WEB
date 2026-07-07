@@ -176,7 +176,7 @@ $configBody = @{
 }
 
 $config = Invoke-Api -Method "PUT" -Path "/negocios/$negocioEf/configuracion" -Body $configBody -Headers $auth
-Write-Ok "Configuracion SUNAT actualizada. proveedor=$($config.sunat_proveedor) ruc=$($config.sunat_emisor_ruc)"
+Write-Ok "configuracion SUNAT actualizada. proveedor=$($config.sunat_proveedor) ruc=$($config.sunat_emisor_ruc)"
 
 Write-Step "Probar conexion SUNAT"
 $testSunat = Invoke-Api -Method "POST" -Path "/negocios/$negocioEf/configuracion/sunat/test" -Headers $auth
@@ -259,7 +259,7 @@ if (-not $SkipBoleta) {
     Serie = $ventaBoleta.sunat.serie
     Numero = $ventaBoleta.sunat.numero
     EstadoSUNAT = $ventaBoleta.sunat.estado
-    CodigoSUNAT = $ventaBoleta.sunat.codigo
+    codigoSUNAT = $ventaBoleta.sunat.codigo
     MensajeSUNAT = $ventaBoleta.sunat.mensaje
   }
   Write-Ok "Boleta emitida. venta_id=$($ventaBoleta.venta_id) estado_sunat=$($ventaBoleta.sunat.estado)"
@@ -294,7 +294,7 @@ if (-not $SkipFactura) {
     Serie = $ventaFactura.sunat.serie
     Numero = $ventaFactura.sunat.numero
     EstadoSUNAT = $ventaFactura.sunat.estado
-    CodigoSUNAT = $ventaFactura.sunat.codigo
+    codigoSUNAT = $ventaFactura.sunat.codigo
     MensajeSUNAT = $ventaFactura.sunat.mensaje
   }
   Write-Ok "Factura emitida. venta_id=$($ventaFactura.venta_id) estado_sunat=$($ventaFactura.sunat.estado)"

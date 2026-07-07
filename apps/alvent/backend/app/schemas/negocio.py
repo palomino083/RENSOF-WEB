@@ -188,8 +188,8 @@ class SucursalOut(SucursalBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ConfiguracionNegocioBase(BaseModel):
-    """Base para configuración"""
+class configuracionNegocioBase(BaseModel):
+    """Base para configuracion"""
     impuesto_predeterminado: float = 18.0
     margen_minimo: float = 10.0
     
@@ -211,8 +211,8 @@ class ConfiguracionNegocioBase(BaseModel):
     sunat_serie_factura: Optional[str] = None
 
 
-class ConfiguracionNegocioUpdate(BaseModel):
-    """Para actualizar configuración"""
+class configuracionNegocioUpdate(BaseModel):
+    """Para actualizar configuracion"""
     impuesto_predeterminado: Optional[float] = None
     margen_minimo: Optional[float] = None
     permitir_descuentos: Optional[bool] = None
@@ -229,8 +229,8 @@ class ConfiguracionNegocioUpdate(BaseModel):
     sunat_serie_factura: Optional[str] = None
 
 
-class ConfiguracionNegocioOut(ConfiguracionNegocioBase):
-    """Respuesta de configuración"""
+class configuracionNegocioOut(configuracionNegocioBase):
+    """Respuesta de configuracion"""
     id: int
     negocio_id: int
     sunat_has_api_token: bool = False

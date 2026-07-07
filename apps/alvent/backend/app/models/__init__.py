@@ -9,7 +9,7 @@ from .movimiento_caja import MovimientoCaja
 from .negocio import Negocio, TipoNegocio
 from .sucursal import Sucursal
 
-from .configuracion_negocio import ConfiguracionNegocio
+from .configuracion_negocio import configuracionNegocio
 from .plan_pago import PlanPago
 from .finanzas import GastoOperativo, CierreMensualFinanzas
 from .refresh_token import RefreshToken, TokenBlacklist

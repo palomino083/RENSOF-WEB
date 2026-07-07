@@ -212,7 +212,7 @@ def _ensure_multitenant_columns() -> None:
         _add_column_if_missing(conn, "usuarios", "dni", "VARCHAR(20)")
         _add_column_if_missing(conn, "usuarios", "roles", "VARCHAR(120)")
         
-        # ================ CONFIGURACIÓN ================
+        # ================ configuracion ================
         _add_column_if_missing(conn, "configuracion_negocio", "permisos_roles_json", "TEXT")
         _add_column_if_missing(conn, "configuracion_negocio", "productos_columnas_json", "TEXT")
         _add_column_if_missing(conn, "configuracion_negocio", "sunat_api_url", "VARCHAR(500)")
@@ -294,7 +294,7 @@ def _normalize_legacy_identifiers() -> None:
     db = SessionLocal()
     cambios = 0
     try:
-        # Normalizar negocios (RUC 11, teléfono/WhatsApp 9 dígitos)
+        # Normalizar negocios (RUC 11, telefono/WhatsApp 9 dígitos)
         negocios = db.query(Negocio).all()
         for negocio in negocios:
             cambios += _normalize_field(negocio, "ruc", 11)
@@ -304,7 +304,7 @@ def _normalize_legacy_identifiers() -> None:
         if negocios:
             logger.debug(f"Negocios verificados: {len(negocios)}")
 
-        # Normalizar clientes (teléfono 9 dígitos)
+        # Normalizar clientes (telefono 9 dígitos)
         clientes = db.query(Cliente).all()
         for cliente in clientes:
             cambios += _normalize_field(cliente, "telefono", 9)
@@ -406,7 +406,7 @@ Módulos disponibles
 • Caja
 • Reportes
 • Usuarios
-• Configuración
+• configuracion
 """,
     version="3.0.0",
     lifespan=lifespan,

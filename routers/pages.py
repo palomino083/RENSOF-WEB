@@ -398,7 +398,7 @@ def _alvent_producto_upload_fallback_payload() -> dict[str, object]:
 def _alvent_productos_tabla_config_fallback_payload(overrides: dict[str, object] | None = None) -> dict[str, object]:
     default_config: dict[str, object] = {
         "ok": True,
-        "mensaje": "Configuracion de tabla en modo contingencia",
+        "mensaje": "configuracion de tabla en modo contingencia",
         "negocio_id": 0,
         "tipo_negocio": "",
         "columnas_custom": [],
@@ -579,29 +579,29 @@ def _alvent_cuentas_cobro_fallback_payload(negocio_id: int) -> dict[str, object]
                 "detalle": [
                     "Banco: BCP",
                     "Titular: RENSOF S.A.C.",
-                    "Cuenta corriente: 191-2587456-0-21",
-                    "CCI: 00219100258745602137",
+                    "Cuenta corriente: xxxxxxxxxxxxxxxxxxxxx",
+                    "CCI: yyyyyyyyyyyyyyyyy",
                 ],
             },
             "tarjeta": {
                 "titulo": "Pago con tarjeta (alineado a cuenta bancaria)",
                 "detalle": [
                     "Deposita el abono en la misma cuenta bancaria oficial de ALVENT ERP PRO.",
-                    "Banco: BCP - Cuenta corriente 191-2587456-0-21",
-                    "CCI: 00219100258745602137",
+                    "Banco: BCP - Cuenta corriente xxxxxxxxxxxxxxxxxxxxx",
+                    "CCI: yyyyyyyyyyyyyyyyy",
                 ],
             },
             "yape": {
                 "titulo": "Yape",
                 "detalle": [
-                    "Numero de abono Yape: 987 654 321",
+                    "Numero de abono Yape: zzzzzzzzzzzz",
                     "Titular: RENSOF S.A.C.",
                 ],
             },
             "plin": {
                 "titulo": "Plin",
                 "detalle": [
-                    "Numero de abono Plin: 987 654 321",
+                    "Numero de abono Plin: zzzzzzzzzzzz",
                     "Titular: RENSOF S.A.C.",
                 ],
             },
@@ -755,7 +755,7 @@ def _alvent_usuarios_permisos_fallback_payload() -> dict[str, object]:
                 "Cajas",
                 "Reportes",
                 "Usuarios",
-                "Configuracion",
+                "configuracion",
             ],
             "CAJERO": ["Dashboard", "POS", "Ventas", "Clientes"],
             "VENDEDOR": ["Dashboard", "POS", "Ventas", "Clientes"],
@@ -1157,7 +1157,7 @@ async def alven_api_productos_tabla_config_proxy_or_fallback(request: Request) -
 
     fallback = _alvent_productos_tabla_config_fallback_payload(payload)
     fallback["ok"] = True
-    fallback["mensaje"] = "Configuracion guardada en modo contingencia"
+    fallback["mensaje"] = "configuracion guardada en modo contingencia"
     return JSONResponse(fallback, status_code=200)
 
 

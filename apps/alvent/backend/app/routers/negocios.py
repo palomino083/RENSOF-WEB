@@ -17,7 +17,7 @@ from app.database.database import get_db
 from app.models.auditoria import Auditoria
 from app.models.negocio import Negocio
 from app.models.sucursal import Sucursal
-from app.models.configuracion_negocio import ConfiguracionNegocio
+from app.models.configuracion_negocio import configuracionNegocio
 from app.models.plan_pago import PlanPago
 from app.models.producto import Producto
 from app.models.soporte_ticket import SoporteTicket
@@ -32,8 +32,8 @@ from app.schemas.negocio import (
     PlanSolicitudOut,
     SucursalCreate,
     SucursalOut,
-    ConfiguracionNegocioOut,
-    ConfiguracionNegocioUpdate,
+    configuracionNegocioOut,
+    configuracionNegocioUpdate,
     SunatConexionTestOut,
 )
 from app.services.sunat import probar_conexion_sunat, homologar_error_nubefact, NUBEFACT_DEFAULT_URL
@@ -178,7 +178,7 @@ class PlanCatalogoEditableUpdate(BaseModel):
 class SimuladorEscenarioItem(BaseModel):
     id: str = Field(min_length=3, max_length=80)
     nombre: str = Field(min_length=3, max_length=80)
-    planCodigo: str = Field(min_length=3, max_length=20)
+    plancodigo: str = Field(min_length=3, max_length=20)
     override: dict
     fecha: str = Field(min_length=8, max_length=40)
 
@@ -219,29 +219,29 @@ CUENTAS_COBRO_DEFAULT: dict[str, dict[str, object]] = {
         "detalle": [
             "Banco: BCP",
             "Titular: RENSOF S.A.C.",
-            "Cuenta corriente: 191-2587456-0-21",
-            "CCI: 00219100258745602137",
+            "Cuenta corriente: xxxxxxxxxxxxxxxxxxxxx",
+            "CCI: yyyyyyyyyyyyyyyyy",
         ],
     },
     "tarjeta": {
         "titulo": "Pago con tarjeta (alineado a cuenta bancaria)",
         "detalle": [
             "Deposita el abono en la misma cuenta bancaria oficial de ALVENT ERP PRO.",
-            "Banco: BCP - Cuenta corriente 191-2587456-0-21",
-            "CCI: 00219100258745602137",
+            "Banco: BCP - Cuenta corriente xxxxxxxxxxxxxxxxxxxxx",
+            "CCI: yyyyyyyyyyyyyyyyy",
         ],
     },
     "yape": {
         "titulo": "Yape",
         "detalle": [
-            "Numero de abono Yape: 987 654 321",
+            "Numero de abono Yape: zzzzzzzzzzzz",
             "Titular: RENSOF S.A.C.",
         ],
     },
     "plin": {
         "titulo": "Plin",
         "detalle": [
-            "Numero de abono Plin: 987 654 321",
+            "Numero de abono Plin: zzzzzzzzzzzz",
             "Titular: RENSOF S.A.C.",
         ],
     },
@@ -390,7 +390,7 @@ def _normalizar_plan(plan: str | None) -> str:
         raise HTTPException(status_code=400, detail="Plan no valido")
 
 
-def _configuracion_out_payload(config: ConfiguracionNegocio) -> dict:
+def _configuracion_out_payload(config: configuracionNegocio) -> dict:
     return {
         "id": config.id,
         "negocio_id": config.negocio_id,
@@ -457,8 +457,8 @@ def crear_negocio(
     db.add(negocio)
     db.flush()  # obtiene ID sin commit aún
 
-    # configuración por defecto
-    config = ConfiguracionNegocio(negocio_id=negocio.id)
+    # configuracion por defecto
+    config = configuracionNegocio(negocio_id=negocio.id)
     db.add(config)
 
     # sucursal principal
@@ -1307,7 +1307,7 @@ def validar_pago_plan(
 
     accion = str(data.accion or "").strip().upper()
     if accion not in {"APROBAR", "RECHAZAR"}:
-        raise HTTPException(status_code=400, detail="Accion invalida")
+        raise HTTPException(status_code=400, detail="accion invalida")
 
     if str(pago.estado or "").upper() != "PENDIENTE_VALIDACION":
         raise HTTPException(status_code=400, detail="El pago ya fue procesado")
@@ -1492,7 +1492,7 @@ def crear_sucursal(
     ).first()
 
     if existe:
-        raise HTTPException(status_code=400, detail="Código de sucursal ya existe")
+        raise HTTPException(status_code=400, detail="codigo de sucursal ya existe")
 
     sucursal = Sucursal(negocio_id=negocio_id, **data.model_dump())
     db.add(sucursal)
@@ -1503,9 +1503,9 @@ def crear_sucursal(
 
 
 # =====================================================
-# CONFIGURACIÓN
+# configuracion
 # =====================================================
-@router.get("/{negocio_id}/configuracion", response_model=ConfiguracionNegocioOut)
+@router.get("/{negocio_id}/configuracion", response_model=configuracionNegocioOut)
 def obtener_configuracion(
     negocio_id: int,
     current_user: dict = Depends(get_current_user),
@@ -1515,23 +1515,23 @@ def obtener_configuracion(
     if not is_superadmin and current_user.get("negocio_id") != negocio_id:
         raise HTTPException(status_code=403, detail="Sin acceso")
 
-    config = db.query(ConfiguracionNegocio).filter(
-        ConfiguracionNegocio.negocio_id == negocio_id
+    config = db.query(configuracionNegocio).filter(
+        configuracionNegocio.negocio_id == negocio_id
     ).first()
 
     if not config:
-        raise HTTPException(status_code=404, detail="Configuración no encontrada")
+        raise HTTPException(status_code=404, detail="configuracion no encontrada")
 
     return _configuracion_out_payload(config)
 
 
 # =====================================================
-# ACTUALIZAR CONFIGURACIÓN
+# ACTUALIZAR configuracion
 # =====================================================
-@router.put("/{negocio_id}/configuracion", response_model=ConfiguracionNegocioOut)
+@router.put("/{negocio_id}/configuracion", response_model=configuracionNegocioOut)
 def actualizar_configuracion(
     negocio_id: int,
-    data: ConfiguracionNegocioUpdate,
+    data: configuracionNegocioUpdate,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -1539,12 +1539,12 @@ def actualizar_configuracion(
     if not is_superadmin and current_user.get("negocio_id") != negocio_id:
         raise HTTPException(status_code=403, detail="Sin acceso")
 
-    config = db.query(ConfiguracionNegocio).filter(
-        ConfiguracionNegocio.negocio_id == negocio_id
+    config = db.query(configuracionNegocio).filter(
+        configuracionNegocio.negocio_id == negocio_id
     ).first()
 
     if not config:
-        raise HTTPException(status_code=404, detail="Configuración no encontrada")
+        raise HTTPException(status_code=404, detail="configuracion no encontrada")
 
     payload = data.model_dump(exclude_unset=True)
     for key, value in payload.items():
@@ -1577,12 +1577,12 @@ def probar_conexion_config_sunat(
     if not is_superadmin and current_user.get("negocio_id") != negocio_id:
         raise HTTPException(status_code=403, detail="Sin acceso")
 
-    config = db.query(ConfiguracionNegocio).filter(
-        ConfiguracionNegocio.negocio_id == negocio_id
+    config = db.query(configuracionNegocio).filter(
+        configuracionNegocio.negocio_id == negocio_id
     ).first()
 
     if not config:
-        raise HTTPException(status_code=404, detail="Configuración no encontrada")
+        raise HTTPException(status_code=404, detail="configuracion no encontrada")
 
     proveedor = str(getattr(config, "sunat_proveedor", "NUBEFACT") or "NUBEFACT").upper()
     if proveedor != "NUBEFACT":

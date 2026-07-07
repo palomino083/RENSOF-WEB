@@ -330,7 +330,7 @@ const INCIDENT_TEMPLATE_LABELS: Record<SoporteTemplateKey, string> = {
 
 const inferIncidentTemplateKey = (ticket?: SoporteTicket | null): SoporteTemplateKey => {
   if (!ticket) return "GENERAL";
-  const raw = `${ticket.asunto || ""} ${ticket.consulta || ""} ${ticket.recomendación_ia || ""}`.toLowerCase();
+  const raw = `${ticket.asunto || ""} ${ticket.consulta || ""} ${ticket.recomendacion_ia || ""}`.toLowerCase();
   if (/(login|ingresar|contrasena|contraseña|token|acceso|401|403)/.test(raw)) return "ACCESO";
   if (/(sunat|nubefact|factura|boleta|fiscal|comprobante)/.test(raw)) return "SUNAT_FACTURACION";
   if (/(lento|latencia|demora|500|error|caido|caído|timeout)/.test(raw)) return "RENDIMIENTO";
@@ -2094,8 +2094,8 @@ export default function SoportePage() {
         consulta: `${consulta}\n\n${buildSofiaOperatingContext(sofiaResponseLevel, isFirstUserMessage)}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
       });
       const respuestaBot = isFirstUserMessage
-        ? `${clasif.resumen}\n\n${resp.recomendación}\n\nFuente: ${resp.origen}`
-        : construirRespuestaTecnicaBreve(resp.recomendación, clasif);
+        ? `${clasif.resumen}\n\n${resp.recomendacion}\n\nFuente: ${resp.origen}`
+        : construirRespuestaTecnicaBreve(resp.recomendacion, clasif);
       setSoporteChatMessages((prev) => [
         ...prev,
         {
@@ -3593,8 +3593,8 @@ export default function SoportePage() {
                       <small className={styles.helperText}>
                         Prioridad: {ticket.prioridad} | Usuario: {ticket.usuario_nombre}
                       </small>
-                      {ticket.recomendación_ia ? (
-                        <small className={styles.helperText}>IA: {ticket.recomendación_ia}</small>
+                      {ticket.recomendacion_ia ? (
+                        <small className={styles.helperText}>IA: {ticket.recomendacion_ia}</small>
                       ) : null}
                       {ticket.respuesta_superadmin ? (
                         <small className={styles.helperText}>Respuesta RENSOF: {ticket.respuesta_superadmin}</small>

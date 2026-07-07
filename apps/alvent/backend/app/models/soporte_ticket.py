@@ -17,7 +17,7 @@ class SoporteTicket(Base):
     prioridad = Column(String(20), nullable=False, default="MEDIA")
     estado = Column(String(20), nullable=False, default="ABIERTO")
 
-    recomendacion_ia = Column(Text, nullable=True)
+    recomendación_ia = Column(Text, nullable=True)
     respuesta_superadmin = Column(Text, nullable=True)
 
     atendido_por_usuario_id = Column(Integer, nullable=True)

@@ -46,7 +46,7 @@ export default function Inventario() {
   const [filtroKardex, setFiltroKardex] = useState<"TODOS" | "ENTRADA" | "SALIDA">("TODOS");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [codigoSeleccionado, setCodigoSeleccionado] = useState("");
+  const [codigoSeleccionado, setcodigoSeleccionado] = useState("");
 
   const kardexFiltrado =
     filtroKardex === "TODOS" ? kardex : kardex.filter((mov) => mov.tipo === filtroKardex);
@@ -140,7 +140,7 @@ export default function Inventario() {
           value={codigoSeleccionado}
           onChange={(e) => {
             const codigo = e.target.value;
-            setCodigoSeleccionado(codigo);
+            setcodigoSeleccionado(codigo);
 
             if (!codigo) {
               setKardex([]);
@@ -235,7 +235,7 @@ export default function Inventario() {
           <Toolbar title="Inventario" />
 
           <DataTable
-            headers={["Codigo", "Nombre", "Categoria", "Marca", "Costo", "Precio", "Utilidad", "Margen", "Stock", "Estado"]}
+            headers={["codigo", "Nombre", "Categoria", "Marca", "Costo", "Precio", "Utilidad", "Margen", "Stock", "Estado"]}
             minWidth={980}
             density="executive"
           >

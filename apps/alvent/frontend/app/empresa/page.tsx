@@ -1775,7 +1775,7 @@ export default function EmpresaPage() {
         {
           id: `soporte-bot-${Date.now()}`,
           role: "bot",
-          text: `${resp.recomendación} (${resp.origen})`,
+          text: `${resp.recomendacion} (${resp.origen})`,
         },
       ]);
     } catch (err: unknown) {
@@ -2881,8 +2881,8 @@ export default function EmpresaPage() {
                       <small className={styles.helperText}>
                         Prioridad: {ticket.prioridad} | Usuario: {ticket.usuario_nombre}
                       </small>
-                      {ticket.recomendación_ia ? (
-                        <small className={styles.helperText}>IA: {ticket.recomendación_ia}</small>
+                      {ticket.recomendacion_ia ? (
+                        <small className={styles.helperText}>IA: {ticket.recomendacion_ia}</small>
                       ) : null}
                       {ticket.respuesta_superadmin ? (
                         <small className={styles.helperText}>Respuesta RENSOF: {ticket.respuesta_superadmin}</small>

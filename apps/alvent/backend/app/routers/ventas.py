@@ -16,7 +16,7 @@ from app.models.venta_detalle import VentaDetalle
 from app.models.producto import Producto
 from app.models.negocio import Negocio
 from app.models.usuario import Usuario
-from app.models.configuracion_negocio import ConfiguracionNegocio
+from app.models.configuracion_negocio import configuracionNegocio
 from app.schemas.venta import VentaCreate
 from app.services.auditoria import registrar_auditoria
 from app.services.sunat import construir_payload_sunat, emitir_en_sunat, homologar_error_nubefact, NUBEFACT_DEFAULT_URL
@@ -423,7 +423,7 @@ def crear_venta(
             if tipo_comprobante == "BOLETA" and len(documento) not in {8, 11}:
                 raise HTTPException(status_code=400, detail="Boleta requiere DNI de 8 dígitos o RUC de 11 dígitos")
 
-            config = db.query(ConfiguracionNegocio).filter(ConfiguracionNegocio.negocio_id == negocio_id).first()
+            config = db.query(configuracionNegocio).filter(configuracionNegocio.negocio_id == negocio_id).first()
             venta.serie_comprobante = (
                 str(getattr(config, "sunat_serie_factura", "F001") or "F001").strip().upper()
                 if tipo_comprobante == "FACTURA"
@@ -440,7 +440,7 @@ def crear_venta(
                 endpoint = str(getattr(config, "sunat_api_url", "") or "").strip() or NUBEFACT_DEFAULT_URL
                 emisor_ruc = "".join(ch for ch in str(getattr(config, "sunat_emisor_ruc", "") or "") if ch.isdigit())
                 if len(emisor_ruc) != 11:
-                    raise HTTPException(status_code=400, detail="Configura un RUC emisor SUNAT válido en Configuración")
+                    raise HTTPException(status_code=400, detail="Configura un RUC emisor SUNAT válido en configuracion")
 
                 token = str(getattr(config, "sunat_api_token", "") or "").strip()
                 if not token:
@@ -494,7 +494,7 @@ def crear_venta(
                         },
                     )
             else:
-                venta.sunat_estado = "PENDIENTE_CONFIGURACION"
+                venta.sunat_estado = "PENDIENTE_configuracion"
                 venta.sunat_mensaje = "Integración SUNAT no habilitada"
 
         # Registrar ingreso en caja

@@ -8,7 +8,7 @@ from app.database.database import Base
 class EmailVerification(Base):
     """
     Modelo para verificación de emails.
-    Almacena códigos de verificación con expiración.
+    Almacena codigos de verificación con expiración.
     """
     __tablename__ = "email_verifications"
 
@@ -18,7 +18,7 @@ class EmailVerification(Base):
     # Email a verificar
     email = Column(String(255), nullable=False, index=True)
     
-    # Código de verificación (6 dígitos)
+    # codigo de verificación (6 dígitos)
     codigo = Column(String(6), nullable=False, unique=True, index=True)
     
     # Fechas
@@ -34,7 +34,7 @@ class EmailVerification(Base):
     usuario = relationship("Usuario", backref="email_verifications")
     
     def es_valido(self) -> bool:
-        """Verificar si el código está vigente y no verificado"""
+        """Verificar si el codigo está vigente y no verificado"""
         return (
             not self.verificado and
             datetime.utcnow() < self.fecha_expiracion and
@@ -43,7 +43,7 @@ class EmailVerification(Base):
     
     @staticmethod
     def generar_codigo() -> str:
-        """Generar código de verificación de 6 dígitos"""
+        """Generar codigo de verificación de 6 dígitos"""
         import random
         return str(random.randint(100000, 999999))
     
@@ -53,7 +53,7 @@ class EmailVerification(Base):
         return datetime.utcnow() + timedelta(minutes=minutos)
     
     def verificar(self, codigo_ingresado: str) -> bool:
-        """Verificar si el código es correcto"""
+        """Verificar si el codigo es correcto"""
         if not self.es_valido():
             return False
         

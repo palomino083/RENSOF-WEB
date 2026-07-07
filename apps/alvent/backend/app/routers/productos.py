@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.models.configuracion_negocio import ConfiguracionNegocio
+from app.models.configuracion_negocio import configuracionNegocio
 from app.models.negocio import Negocio
 from app.models.producto import Producto
 from app.schemas.producto import ProductoCreate, ProductoOut
@@ -139,12 +139,12 @@ def _leer_config_tabla(raw: str) -> tuple[list[dict[str, str]], list[str], list[
     return [], [], []
 
 
-def _obtener_o_crear_config(db: Session, negocio_id: int) -> ConfiguracionNegocio:
-    config = db.query(ConfiguracionNegocio).filter(ConfiguracionNegocio.negocio_id == negocio_id).first()
+def _obtener_o_crear_config(db: Session, negocio_id: int) -> configuracionNegocio:
+    config = db.query(configuracionNegocio).filter(configuracionNegocio.negocio_id == negocio_id).first()
     if config:
         return config
 
-    config = ConfiguracionNegocio(negocio_id=negocio_id)
+    config = configuracionNegocio(negocio_id=negocio_id)
     db.add(config)
     db.flush()
     return config
@@ -251,7 +251,7 @@ def update_tabla_productos_config(
 
     return {
         "ok": True,
-        "mensaje": "Configuracion de tabla guardada",
+        "mensaje": "configuracion de tabla guardada",
         "negocio_id": negocio_id,
         "tipo_negocio": _normalizar_tipo_negocio(getattr(negocio, "tipo", "")),
         "columnas_custom": columnas_custom,

@@ -23,8 +23,8 @@ Validar restricciones reales de backend para estos atributos de plan:
 | S-02 | soporte_habilitado | Plan con soporte deshabilitado | POST `/system/soporte/ia/sugerencia` | `402` bloqueo por plan |
 | S-03 | soporte_habilitado | Plan con soporte habilitado | POST `/system/soporte/tickets` | `200` ticket creado |
 | U-01 | sunat_habilitado | Plan sin SUNAT habilitado y venta con BOLETA/FACTURA | POST `/ventas/` | `402` bloqueo por plan |
-| U-02 | sunat_habilitado | Plan con SUNAT habilitado, configuración incompleta | POST `/ventas/` | `400` por configuración (no por plan) |
-| U-03 | sunat_habilitado | Plan con SUNAT habilitado y configuración correcta | POST `/ventas/` | `200` venta registrada |
+| U-02 | sunat_habilitado | Plan con SUNAT habilitado, configuracion incompleta | POST `/ventas/` | `400` por configuracion (no por plan) |
+| U-03 | sunat_habilitado | Plan con SUNAT habilitado y configuracion correcta | POST `/ventas/` | `200` venta registrada |
 
 ## Script base (PowerShell)
 

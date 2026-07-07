@@ -127,7 +127,7 @@ async function run() {
     { name: "Dashboard", path: "/alven/app/dashboard" },
     { name: "POS", path: "/alven/app/pos" },
     { name: "Ventas", path: "/alven/app/ventas" },
-    { name: "Configuracion", path: "/alven/app/configuracion" },
+    { name: "configuracion", path: "/alven/app/configuracion" },
     { name: "Finanzas", path: "/alven/app/finanzas" },
   ];
 

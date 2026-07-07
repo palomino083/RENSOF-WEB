@@ -26,7 +26,7 @@ Operar una sola arquitectura en un mismo repositorio (RENSOF-WEB), con ALVENT in
 3. RENSOF reenvia trafico al frontend ALVENT.
 4. Llamadas API pasan por /alven/api hacia backend ALVENT.
 
-## Recomendacion de produccion
+## recomendación de produccion
 
 - Ajustar frontend ALVENT para consumir /alven/api como API base en produccion.
 - Publicar RENSOF como gateway unico (dominio rensof.pe).

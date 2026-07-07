@@ -19,7 +19,7 @@ class EmailService:
     @staticmethod
     def enviar_verificacion_email(email: str, codigo: str, usuario: str) -> bool:
         """Enviar email de verificación"""
-        asunto = "🔐 Código de Verificación - ALVENT"
+        asunto = "🔐 codigo de Verificación - ALVENT"
         
         html_content = f"""
         <html>
@@ -28,13 +28,13 @@ class EmailService:
                     <h2 style="color: #333; text-align: center;">Verificación de Email</h2>
                     <p style="color: #666; text-align: center; font-size: 16px;">Hola {usuario},</p>
                     
-                    <p style="color: #666; text-align: center;">Tu código de verificación es:</p>
+                    <p style="color: #666; text-align: center;">Tu codigo de verificación es:</p>
                     
                     <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
                         <span style="font-size: 36px; font-weight: bold; letter-spacing: 5px; color: #667eea;">{codigo}</span>
                     </div>
                     
-                    <p style="color: #999; font-size: 12px; text-align: center;">Este código válido por 30 minutos.</p>
+                    <p style="color: #999; font-size: 12px; text-align: center;">Este codigo válido por 30 minutos.</p>
                     <p style="color: #999; font-size: 12px; text-align: center;">Si no solicitaste este email, ignóralo.</p>
                     
                     <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
