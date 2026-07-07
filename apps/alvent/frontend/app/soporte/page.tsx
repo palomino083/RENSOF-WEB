@@ -330,7 +330,7 @@ const INCIDENT_TEMPLATE_LABELS: Record<SoporteTemplateKey, string> = {
 
 const inferIncidentTemplateKey = (ticket?: SoporteTicket | null): SoporteTemplateKey => {
   if (!ticket) return "GENERAL";
-  const raw = `${ticket.asunto || ""} ${ticket.consulta || ""} ${ticket.recomendacion_ia || ""}`.toLowerCase();
+  const raw = `${ticket.asunto || ""} ${ticket.consulta || ""} ${ticket.recomendación_ia || ""}`.toLowerCase();
   if (/(login|ingresar|contrasena|contraseña|token|acceso|401|403)/.test(raw)) return "ACCESO";
   if (/(sunat|nubefact|factura|boleta|fiscal|comprobante)/.test(raw)) return "SUNAT_FACTURACION";
   if (/(lento|latencia|demora|500|error|caido|caído|timeout)/.test(raw)) return "RENDIMIENTO";
@@ -3593,8 +3593,8 @@ export default function SoportePage() {
                       <small className={styles.helperText}>
                         Prioridad: {ticket.prioridad} | Usuario: {ticket.usuario_nombre}
                       </small>
-                      {ticket.recomendacion_ia ? (
-                        <small className={styles.helperText}>IA: {ticket.recomendacion_ia}</small>
+                      {ticket.recomendación_ia ? (
+                        <small className={styles.helperText}>IA: {ticket.recomendación_ia}</small>
                       ) : null}
                       {ticket.respuesta_superadmin ? (
                         <small className={styles.helperText}>Respuesta RENSOF: {ticket.respuesta_superadmin}</small>

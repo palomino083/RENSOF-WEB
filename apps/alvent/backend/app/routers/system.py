@@ -405,7 +405,7 @@ def _ticket_to_dict(ticket: SoporteTicket, autor: Usuario | None, atendido_por: 
         "consulta": ticket.consulta,
         "prioridad": ticket.prioridad,
         "estado": ticket.estado,
-        "recomendación_ia": ticket.recomendacion_ia,
+        "recomendación_ia": ticket.recomendación_ia,
         "respuesta_superadmin": ticket.respuesta_superadmin,
         "atendido_por_usuario_id": ticket.atendido_por_usuario_id,
         "atendido_por_nombre": (getattr(atendido_por, "nombres", None) or getattr(atendido_por, "usuario", None)) if atendido_por else None,

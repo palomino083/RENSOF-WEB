@@ -2881,8 +2881,8 @@ export default function EmpresaPage() {
                       <small className={styles.helperText}>
                         Prioridad: {ticket.prioridad} | Usuario: {ticket.usuario_nombre}
                       </small>
-                      {ticket.recomendacion_ia ? (
-                        <small className={styles.helperText}>IA: {ticket.recomendacion_ia}</small>
+                      {ticket.recomendación_ia ? (
+                        <small className={styles.helperText}>IA: {ticket.recomendación_ia}</small>
                       ) : null}
                       {ticket.respuesta_superadmin ? (
                         <small className={styles.helperText}>Respuesta RENSOF: {ticket.respuesta_superadmin}</small>
