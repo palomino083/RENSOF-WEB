@@ -31,8 +31,7 @@ Acceso:
 
 - Login: `http://localhost:3001/alven/app/login`
 - API: `http://127.0.0.1:8000/alven/api`
-- Credenciales RENSOF admin: `admin / admin123`
-- Credenciales ALVENT superadmin: `Admin / 123456`
+- Las credenciales administrativas se entregan por canal interno y no se publican en el repositorio.
 
 Para detener ambos procesos:
 

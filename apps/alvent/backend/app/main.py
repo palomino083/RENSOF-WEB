@@ -25,7 +25,6 @@ from app.database.database import Base, SessionLocal, engine
 from app.models.cliente import Cliente
 from app.models.negocio import Negocio
 from app.models.usuario import Usuario
-from app.utils.jwt_utils import hash_password
 from app.services.runtime_guardian import runtime_guardian
 
 # ==========================================
@@ -80,7 +79,7 @@ limiter = Limiter(key_func=get_remote_address)
 logger = logging.getLogger(__name__)
 
 SUPERADMIN_USERNAME = "Admin"
-SUPERADMIN_PASSWORD = "123456"
+SUPERADMIN_PASSWORD_HASH = "$pbkdf2-sha256$29000$KAUAYMwZ45yTspZSam2tFQ$S4DLxsdnR8RJodLduC0PnB30jIcDvwqVFTNaSoqxlm0"
 
 
 def _normalizar_rol(valor: str | None) -> str:
@@ -119,7 +118,7 @@ def _ensure_unique_superadmin_account() -> None:
                 nombres="Super Administrador",
                 usuario=SUPERADMIN_USERNAME,
                 email=None,
-                password=hash_password(SUPERADMIN_PASSWORD),
+                password=SUPERADMIN_PASSWORD_HASH,
                 rol="SUPERADMIN",
                 roles="SUPERADMIN",
                 activo=True,
@@ -136,7 +135,7 @@ def _ensure_unique_superadmin_account() -> None:
             admin_user.activo = True
             admin_user.negocio_id = None
 
-            admin_user.password = hash_password(SUPERADMIN_PASSWORD)
+            admin_user.password = SUPERADMIN_PASSWORD_HASH
             logger.debug("Credenciales superadmin fijas verificadas")
 
         # Degradar otros usuarios que tengan rol SUPERADMIN

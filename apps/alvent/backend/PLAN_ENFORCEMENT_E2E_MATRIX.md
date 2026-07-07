@@ -8,7 +8,7 @@ Validar restricciones reales de backend para estos atributos de plan:
 
 ## Convenciones
 - API base: `http://127.0.0.1:8000/alven/api`
-- Usuario de prueba: `Admin / 123456`
+- Usuario de prueba: usar credenciales internas no publicadas.
 - Todas las validaciones deben ejecutarse contra endpoints backend (no solo UI).
 - `402` indica bloqueo por plan.
 
@@ -30,7 +30,9 @@ Validar restricciones reales de backend para estos atributos de plan:
 
 ```powershell
 $base='http://127.0.0.1:8000/alven/api'
-$login=Invoke-RestMethod -Method Post -Uri "$base/auth/login" -ContentType 'application/json' -Body '{"usuario":"Admin","password":"123456"}'
+$usuario=$env:ALVENT_TEST_USER
+$password=$env:ALVENT_TEST_PASSWORD
+$login=Invoke-RestMethod -Method Post -Uri "$base/auth/login" -ContentType 'application/json' -Body (@{usuario=$usuario; password=$password} | ConvertTo-Json)
 $h=@{Authorization="Bearer $($login.access_token)"; 'Content-Type'='application/json'}
 ```
 

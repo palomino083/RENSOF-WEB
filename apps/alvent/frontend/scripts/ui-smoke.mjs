@@ -119,9 +119,13 @@ async function openModule(page, baseUrl, modPath, username, password) {
 async function run() {
   const args = parseArgs(process.argv.slice(2));
   const baseUrl = String(args.baseUrl || "http://127.0.0.1:3001").replace(/\/$/, "");
-  const username = String(args.username || "Admin");
-  const password = String(args.password || "123456");
+  const username = String(args.username || process.env.ALVENT_TEST_USER || "");
+  const password = String(args.password || process.env.ALVENT_TEST_PASSWORD || "");
   const strictConsole = toBool(args.strictConsole, false);
+
+  if (!username || !password) {
+    throw new Error("Define --username/--password o ALVENT_TEST_USER/ALVENT_TEST_PASSWORD para ejecutar el smoke test.");
+  }
 
   const modules = [
     { name: "Dashboard", path: "/alven/app/dashboard" },

@@ -20,10 +20,6 @@
         value: /app/alvent/login
       - key: ALVENT_APP_EXTERNAL_BASE_URL
         value: https://alvent-frontend.onrender.com/alven/app
-      - key: ALVENT_FALLBACK_USER
-        value: Admin
-      - key: ALVENT_FALLBACK_PASSWORD
-        value: 123456
 
   - type: web
     name: alvent-frontend

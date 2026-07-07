@@ -44,7 +44,4 @@ Para ingresar al login sin errores 404 en entorno local:
 3. Ejecuta `npm run dev` desde esta carpeta.
 4. Abre `http://localhost:3001/alven/app/login` (o el puerto disponible que muestre Next).
 
-Credenciales superadmin locales:
-
-- Usuario: `Admin`
-- Contrasena: `123456`
+Las credenciales administrativas se entregan por canal interno y no se publican en el repositorio.

@@ -23,8 +23,6 @@ from services.content_service import add_contact_message, get_email_accounts, ge
 router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
-ALVENT_FALLBACK_USER = os.getenv("ALVENT_FALLBACK_USER", "Admin")
-ALVENT_FALLBACK_PASSWORD = os.getenv("ALVENT_FALLBACK_PASSWORD", "123456")
 ALVENT_FRONTEND_FAVICON_PATH = BASE_DIR / "apps" / "alvent" / "frontend" / "app" / "favicon.ico"
 ALVENT_PLAN_PAYMENTS_FALLBACK: dict[int, list[dict[str, object]]] = {}
 
@@ -1070,17 +1068,7 @@ async def alven_api_login_proxy_or_fallback(request: Request) -> Response:
         if not is_local:
             return _upstream_unavailable_response()
 
-    payload = await request.json()
-    usuario = str(payload.get("usuario") or "").strip()
-    password = str(payload.get("password") or "")
-
-    if not secrets.compare_digest(usuario.lower(), ALVENT_FALLBACK_USER.lower()):
-        return JSONResponse({"detail": "Usuario incorrecto"}, status_code=401)
-
-    if not secrets.compare_digest(password, ALVENT_FALLBACK_PASSWORD):
-        return JSONResponse({"detail": "Contrasena incorrecta"}, status_code=401)
-
-    return JSONResponse(_alvent_fallback_auth_payload(usuario))
+    return _upstream_unavailable_response()
 
 
 @router.api_route(
@@ -1645,7 +1633,7 @@ def experiencias(request: Request):
         "proyectos.html",
         {
             "active_page": "experiencias",
-            "page_title": "Experiencias de exito | RENSOF",
+            "page_title": "Experiencias de éxito | RENSOF",
             "page_description": "Experiencias RENSOF aplicadas a negocios, gestion publica, inversion, territorio y decisiones reales.",
         },
     )
