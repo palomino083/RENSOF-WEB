@@ -41,7 +41,15 @@ from app.utils.jwt_utils import (
 logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
-limiter = Limiter(key_func=get_remote_address)
+
+
+def _rate_limit_key(request: Request) -> str:
+    forwarded_for = str(request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+    real_ip = str(request.headers.get("x-real-ip") or "").strip()
+    return forwarded_for or real_ip or get_remote_address(request)
+
+
+limiter = Limiter(key_func=_rate_limit_key)
 
 router = APIRouter(
     prefix="/auth",
@@ -49,7 +57,7 @@ router = APIRouter(
 )
 
 SUPERADMIN_USERNAME = "admin"
-LOGIN_RATE_LIMIT = (os.getenv("ALVENT_LOGIN_RATE_LIMIT") or "30/minute").strip()
+LOGIN_RATE_LIMIT = (os.getenv("ALVENT_LOGIN_RATE_LIMIT") or "180/minute").strip()
 
 
 def _normalizar_rol(rol: str | None) -> str:

@@ -956,6 +956,8 @@ async def proxy_alven_api(request: Request, path: str):
     }
     forwarded_headers["x-forwarded-host"] = request.headers.get("host", "")
     forwarded_headers["x-forwarded-proto"] = request.url.scheme
+    if "x-forwarded-for" not in {key.lower() for key in forwarded_headers}:
+        forwarded_headers["x-forwarded-for"] = request.client.host if request.client else ""
 
     try:
         body = await request.body()

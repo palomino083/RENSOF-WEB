@@ -57,4 +57,4 @@
       - key: ALVENT_CORS_ORIGINS
         value: https://www.rensof.pe,https://rensof.pe,https://rensof-web.onrender.com
       - key: ALVENT_LOGIN_RATE_LIMIT
-        value: 30/minute
+        value: 180/minute
