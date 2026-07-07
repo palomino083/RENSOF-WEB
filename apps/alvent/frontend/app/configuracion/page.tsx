@@ -779,7 +779,7 @@ export default function ConfiguracionPage() {
 
       let configSunatGuardada = true;
       try {
-        await negocioService.updateconfiguracion(negocioId, {
+        await negocioService.updateConfiguracion(negocioId, {
           integracion_sunat: vincularComprobantesSunat,
         });
       } catch {
