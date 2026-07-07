@@ -866,11 +866,19 @@ def redirect_alven_login(request: Request):
 
 @app.get("/app/alvent/login")
 async def redirect_public_alvent_login(request: Request):
-    """Canonical public ALVENT login entrypoint."""
     try:
         return await _proxy_alvent_frontend_request(request, "login")
-    except httpx.RequestError:
-        return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
+    except Exception:
+        return templates.TemplateResponse(
+            request=request,
+            name="alvent_login_fallback.html",
+            context={
+                "active_page": "servicios",
+                "page_title": "Login ALVENT ERP PRO | RENSOF",
+                "page_description": "Acceso alternativo a ALVENT ERP PRO.",
+            },
+            status_code=200,
+        )
 
 
 @app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
@@ -983,6 +991,8 @@ async def proxy_alven_api(request: Request, path: str):
 
 @app.get("/admin")
 def admin_root(request: Request):
+    if not is_admin_authenticated(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
     return _render_admin_dashboard(request)
 
 
