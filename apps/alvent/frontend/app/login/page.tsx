@@ -20,6 +20,7 @@ function normalizarRol(rol: string) {
 
 export default function LoginPage() {
   const usuarioInputRef = useRef<HTMLInputElement>(null);
+  const loginInFlightRef = useRef(false);
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,7 +66,7 @@ export default function LoginPage() {
   ========================= */
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
+    if (loading || loginInFlightRef.current) return;
     setError("");
 
     const usuarioLimpio = usuario.trim();
@@ -78,6 +79,7 @@ export default function LoginPage() {
     }
 
     setLoading(true);
+    loginInFlightRef.current = true;
     try {
       const res = await api.post("/auth/login", {
         usuario: usuarioLimpio,
@@ -131,6 +133,7 @@ export default function LoginPage() {
       }
       setError(mapLoginError(err));
     } finally {
+      loginInFlightRef.current = false;
       setLoading(false);
     }
   };

@@ -14,8 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
 
@@ -31,6 +29,7 @@ from app.services.runtime_guardian import runtime_guardian
 # ROUTERS
 # ==========================================
 
+from app.routers.auth import limiter as auth_limiter
 from app.routers.auth import router as auth_router
 from app.routers.cajas import router as cajas_router
 from app.routers.clientes import router as clientes_router
@@ -69,12 +68,6 @@ for carpeta in [
     STATIC_DIR,
 ]:
     carpeta.mkdir(parents=True, exist_ok=True)
-
-# ==========================================
-# RATE LIMITER
-# ==========================================
-
-limiter = Limiter(key_func=get_remote_address)
 
 logger = logging.getLogger(__name__)
 
@@ -440,7 +433,7 @@ async def runtime_guardian_middleware(request: Request, call_next):
     return response
 
 # Agregar limiter a la app
-app.state.limiter = limiter
+app.state.limiter = auth_limiter
 app.add_exception_handler(
     RateLimitExceeded,
     lambda request, exc: JSONResponse(
