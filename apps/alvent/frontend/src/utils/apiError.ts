@@ -29,6 +29,11 @@ function isNegocioIdPathValidationMessage(message: string): boolean {
 export function getApiErrorMessage(error: any, fallback: string): string {
   const detail = error?.response?.data?.detail;
   const data = error?.response?.data;
+  const status = Number(error?.response?.status || 0);
+
+  if (status >= 500) {
+    return fallback;
+  }
 
   if (typeof data === "string") {
     const preview = data.trim().slice(0, 32).toLowerCase();

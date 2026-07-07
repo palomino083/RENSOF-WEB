@@ -76,6 +76,9 @@ const nombreTipoNegocio = (tipo?: string | null) => {
   return TIPO_NEGOCIO_LABELS[key] || (tipo ? String(tipo) : "No definido");
 };
 
+const esMensajeTecnico500 = (message?: string | null) =>
+  /request failed with status code 500|status code 500|error 500/i.test(String(message || ""));
+
 const etiquetaTipoPersonalizado = (tipo: string) =>
   String(tipo || "")
     .replace(/_/g, " ")
@@ -695,6 +698,7 @@ export default function SoportePage() {
   const [loadingReset, setLoadingReset] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const errorVisible = esMensajeTecnico500(error) ? "" : error;
   const [negocio, setNegocio] = useState<Negocio | null>(null);
   const [loadingBranding, setLoadingBranding] = useState(true);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
@@ -2878,7 +2882,7 @@ export default function SoportePage() {
         <main className={`app-content ${styles.shell}`}>
           {SHOW_SOPORTE_SLIM_VIEW ? (
             <>
-              {error ? <p className={styles.errorBox}>{error}</p> : null}
+              {errorVisible ? <p className={styles.errorBox}>{errorVisible}</p> : null}
               {success ? <p className={styles.successBox}>{success}</p> : null}
 
               <section className={`${styles.supportPremiumShell} uiEnter`} data-stagger="5">
@@ -3233,7 +3237,7 @@ export default function SoportePage() {
             ]}
           />
 
-          {error ? <p className={styles.errorBox}>{error}</p> : null}
+          {errorVisible ? <p className={styles.errorBox}>{errorVisible}</p> : null}
           {success ? <p className={styles.successBox}>{success}</p> : null}
           {planApprovalAlertText ? (
             <section className={`${styles.planApprovalAlert} ${planApprovalAlertPulse ? styles.planApprovalAlertPulse : ""}`}>
