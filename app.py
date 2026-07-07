@@ -25,7 +25,8 @@ from core.security import (
     set_admin_session,
     verify_csrf_token,
 )
-from db.database import SessionLocal
+from db.database import Base, SessionLocal, engine
+from db.seed import seed_database
 from services.content_service import (
     add_contact_message,
     add_email_account,
@@ -61,6 +62,48 @@ LEGACY_ALVENT_APP_BASE_PATH = "/alven/app"
 LEGACY_ALVENT_APP_BASE_PATH_ALT = "/alvent/app"
 RENSOF_SESSION_SECRET = os.getenv("RENSOF_SESSION_SECRET", "rensof-dev-session-secret")
 
+
+def _add_column_if_missing(conn, table: str, column: str, definition: str) -> None:
+    existing_columns = {
+        row[1]
+        for row in conn.exec_driver_sql(f"PRAGMA table_info({table})").fetchall()
+    }
+    if column not in existing_columns:
+        conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
+def _ensure_rensof_content_db() -> None:
+    """Create and upgrade the RENSOF content DB used by admin modules."""
+    Base.metadata.create_all(bind=engine)
+
+    with engine.begin() as conn:
+        _add_column_if_missing(conn, "publications", "status", "VARCHAR(20) NOT NULL DEFAULT 'draft'")
+        _add_column_if_missing(conn, "publications", "published_at", "DATETIME")
+        _add_column_if_missing(conn, "publications", "tags", "VARCHAR(240) NOT NULL DEFAULT ''")
+        _add_column_if_missing(conn, "email_accounts", "is_primary", "BOOLEAN NOT NULL DEFAULT 0")
+        _add_column_if_missing(conn, "contact_messages", "organization", "VARCHAR(140) NOT NULL DEFAULT ''")
+        _add_column_if_missing(conn, "contact_messages", "topic", "VARCHAR(180) NOT NULL DEFAULT ''")
+        _add_column_if_missing(conn, "contact_messages", "area", "VARCHAR(80) NOT NULL DEFAULT ''")
+        _add_column_if_missing(conn, "contact_messages", "assigned_email", "VARCHAR(180) NOT NULL DEFAULT 'contacto@rensof.pe'")
+        _add_column_if_missing(conn, "contact_messages", "source_page", "VARCHAR(40) NOT NULL DEFAULT 'contacto'")
+        _add_column_if_missing(conn, "contact_messages", "status", "VARCHAR(20) NOT NULL DEFAULT 'new'")
+        _add_column_if_missing(conn, "contact_messages", "created_at", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP")
+        conn.exec_driver_sql(
+            """
+            UPDATE email_accounts
+            SET is_primary = 1
+            WHERE id = (
+                SELECT id FROM email_accounts ORDER BY id LIMIT 1
+            )
+            AND NOT EXISTS (
+                SELECT 1 FROM email_accounts WHERE is_primary = 1
+            )
+            """
+        )
+
+    with SessionLocal() as session:
+        seed_database(session)
+
 # FastAPI app
 app = FastAPI(
     title="RENSOF Gateway",
@@ -79,6 +122,15 @@ app.add_middleware(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(SessionMiddleware, secret_key=RENSOF_SESSION_SECRET, same_site="lax", https_only=False)
 app.middleware("http")(security_headers_middleware)
+
+
+@app.on_event("startup")
+def startup_event() -> None:
+    try:
+        _ensure_rensof_content_db()
+    except Exception:
+        logger.exception("No se pudo inicializar la base de contenido RENSOF")
+        raise
 
 # Mount assets
 try:
