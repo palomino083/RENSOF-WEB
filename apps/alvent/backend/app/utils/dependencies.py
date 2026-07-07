@@ -1,5 +1,6 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import os
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -10,7 +11,7 @@ from app.utils.planes import normalizar_plan, resolver_plan_vigente
 
 security = HTTPBearer()
 
-SUPERADMIN_USERNAME = "admin"
+SUPERADMIN_USERNAME = (os.getenv("ALVENT_SUPERADMIN_USERNAME") or "Admin").strip().lower()
 
 
 def _normalizar_rol(rol: str | None) -> str:

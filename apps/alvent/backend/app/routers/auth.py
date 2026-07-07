@@ -49,6 +49,7 @@ router = APIRouter(
 )
 
 SUPERADMIN_USERNAME = (os.getenv("ALVENT_SUPERADMIN_USERNAME") or "admin").strip().lower()
+LOGIN_RATE_LIMIT = (os.getenv("ALVENT_LOGIN_RATE_LIMIT") or "30/minute").strip()
 
 
 def _normalizar_rol(rol: str | None) -> str:
@@ -139,7 +140,7 @@ def register(
 
   
 @router.post("/login", response_model=LoginResponse)
-@limiter.limit("5/minute")
+@limiter.limit(LOGIN_RATE_LIMIT)
 def login(
     request: Request,
     data: LoginRequest,

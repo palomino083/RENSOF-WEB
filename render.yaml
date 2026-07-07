@@ -64,4 +64,5 @@
         value: Admin
       - key: ALVENT_SUPERADMIN_PASSWORD
         value: 123456
-
+      - key: ALVENT_LOGIN_RATE_LIMIT
+        value: 30/minute
