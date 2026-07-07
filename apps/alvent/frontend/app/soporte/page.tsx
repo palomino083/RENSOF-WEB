@@ -2094,8 +2094,8 @@ export default function SoportePage() {
         consulta: `${consulta}\n\n${buildSofiaOperatingContext(sofiaResponseLevel, isFirstUserMessage)}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
       });
       const respuestaBot = isFirstUserMessage
-        ? `${clasif.resumen}\n\n${resp.recomendacion}\n\nFuente: ${resp.origen}`
-        : construirRespuestaTecnicaBreve(resp.recomendacion, clasif);
+        ? `${clasif.resumen}\n\n${resp.recomendación}\n\nFuente: ${resp.origen}`
+        : construirRespuestaTecnicaBreve(resp.recomendación, clasif);
       setSoporteChatMessages((prev) => [
         ...prev,
         {
