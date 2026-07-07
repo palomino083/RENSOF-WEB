@@ -344,3 +344,43 @@ body[data-theme="executive-dark"] .glass-panel {
   outline: none;
   box-shadow: var(--ring);
 }
+
+/* =====================================================
+   CONTRASTE GLOBAL DE FORMULARIOS
+===================================================== */
+
+body:not([data-theme="executive-dark"]) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+body:not([data-theme="executive-dark"]) select,
+body:not([data-theme="executive-dark"]) textarea,
+body:not([data-theme="executive-dark"]) .input,
+body:not([data-theme="executive-dark"]) .select,
+body:not([data-theme="executive-dark"]) .textarea {
+  color-scheme: light;
+  color: #0f172a;
+  background-color: #ffffff;
+  caret-color: #0f172a;
+  -webkit-text-fill-color: #0f172a;
+}
+
+body:not([data-theme="executive-dark"]) input::placeholder,
+body:not([data-theme="executive-dark"]) textarea::placeholder,
+body:not([data-theme="executive-dark"]) .input::placeholder,
+body:not([data-theme="executive-dark"]) .textarea::placeholder {
+  color: #64748b;
+  opacity: 1;
+  -webkit-text-fill-color: #64748b;
+}
+
+body:not([data-theme="executive-dark"]) select option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+body:not([data-theme="executive-dark"]) input:disabled,
+body:not([data-theme="executive-dark"]) select:disabled,
+body:not([data-theme="executive-dark"]) textarea:disabled {
+  color: #475569;
+  background-color: #f1f5f9;
+  -webkit-text-fill-color: #475569;
+  opacity: 1;
+}

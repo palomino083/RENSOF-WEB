@@ -38,6 +38,28 @@
   background: var(--r-gradient-dark);
 }
 
+.r2030-page input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.r-input),
+.r2030-page select:not(.r-select),
+.r2030-page textarea:not(.r-textarea) {
+  color-scheme: light;
+  color: #0f172a;
+  background-color: #ffffff;
+  caret-color: #0f172a;
+  -webkit-text-fill-color: #0f172a;
+}
+
+.r2030-page input:not(.r-input)::placeholder,
+.r2030-page textarea:not(.r-textarea)::placeholder {
+  color: #64748b;
+  opacity: 1;
+  -webkit-text-fill-color: #64748b;
+}
+
+.r2030-page select option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
 .r2030-page .site-header {
   background: rgba(6, 15, 26, 0.9);
   border-bottom: 1px solid rgba(126, 214, 255, 0.18);

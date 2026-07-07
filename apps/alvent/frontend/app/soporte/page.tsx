@@ -833,6 +833,8 @@ export default function SoportePage() {
   const [atencionTemplateKey, setAtencionTemplateKey] = useState<SoporteTemplateKey>("GENERAL");
   const [loadingdiagnósticoSuperagente, setLoadingdiagnósticoSuperagente] = useState(false);
   const [chatPersistReady, setChatPersistReady] = useState(false);
+  const soporteChatMessagesRef = useRef<HTMLDivElement | null>(null);
+  const soporteChatBottomRef = useRef<HTMLDivElement | null>(null);
   const [planAmounts, setPlanAmounts] = useState({
     gratuito: 0,
     prueba: 15,
@@ -2141,6 +2143,17 @@ export default function SoportePage() {
     };
     window.localStorage.setItem(storageKey, JSON.stringify(payload));
   }, [chatPersistReady, isSuperadmin, negocioSeleccionadoId, getNegocioIdActivo, soporteChatMessages, soporteChatPrioridad, soporteClasificacion]);
+
+  useEffect(() => {
+    if (!showSoporteChatModal) return;
+    const messagesEl = soporteChatMessagesRef.current;
+    if (!messagesEl) return;
+
+    const distanceFromBottom = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight;
+    if (distanceFromBottom > 80) return;
+
+    soporteChatBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [showSoporteChatModal, soporteChatMessages, loadingSugerenciaIa, loadingdiagnósticoSuperagente]);
 
   useEffect(() => {
     setSoportePage(1);
@@ -4822,7 +4835,7 @@ export default function SoportePage() {
                 </div>
               ) : null}
 
-              <div className={styles.supportChatMessages}>
+              <div ref={soporteChatMessagesRef} className={styles.supportChatMessages}>
                 {soporteChatMessages.slice(-12).map((message) => (
                   <div
                     key={message.id}
@@ -4842,11 +4855,12 @@ export default function SoportePage() {
                     <small>{loadingdiagnósticoSuperagente ? "SofIA diagnosticando operación..." : "SofIA analizando incidencia..."}</small>
                   </div>
                 ) : null}
+                <div ref={soporteChatBottomRef} className={styles.chatScrollAnchor} aria-hidden="true" />
               </div>
 
               <div className={styles.supportChatComposer}>
                 <p className={styles.chatLevelHint}>
-                  Nivel activo: <strong>{sofiaResponseLevel}</strong>. Enter envia, Shift + Enter crea una nueva linea.
+                  Nivel activo: <strong>{sofiaResponseLevel}</strong>. Enter envía, Shift + Enter crea una nueva línea.
                 </p>
 
                 <label className={styles.formRow}>
