@@ -873,7 +873,26 @@ def home(request: Request, sent: int = Query(default=0)):
 
 @router.get("/servicios", response_class=HTMLResponse)
 def servicios(request: Request):
-    return RedirectResponse(url="/alven", status_code=307)
+    _ = request
+    return RedirectResponse(url="/app", status_code=307)
+
+
+@router.get("/app", response_class=HTMLResponse)
+def app_publica(request: Request):
+    base_url = str(request.base_url).rstrip("/")
+    return templates.TemplateResponse(
+        request,
+        "servicios.html",
+        {
+            "active_page": "servicios",
+            "page_title": "Aplicaciones | RENSOF",
+            "page_description": "Aplicaciones RENSOF para comercio, gestion publica, inversion, agricultura digital, prospectiva y valoracion economica.",
+            "page_og_title": "Aplicaciones | RENSOF",
+            "page_og_description": "Aplicativos premium para operar, medir y decidir dentro del ecosistema RENSOF.",
+            "page_og_url": f"{base_url}/app",
+            "page_og_image": f"{base_url}/assets/img/og-rensof-social.svg?v=20260702b",
+        },
+    )
 
 
 @router.get("/alven", response_class=HTMLResponse)
@@ -921,8 +940,8 @@ async def alven_app_login(request: Request) -> Response:
 
 
 @router.get("/app/alvent/login", response_model=None)
-def public_alvent_login_alias() -> Response:
-    return RedirectResponse("/alven/app/login", status_code=307)
+async def public_alvent_login_alias(request: Request) -> Response:
+    return await alven_app_login(request)
 
 
 @router.get("/alvent", response_model=None)
@@ -1619,19 +1638,15 @@ async def alven_api_proxy(full_path: str, request: Request) -> Response:
     return await _proxy_request(request, backend_origin, full_path)
 
 
-@router.get("/proyectos", response_class=HTMLResponse)
-def proyectos(request: Request):
-    with SessionLocal() as session:
-        content = get_home_content(session)
+@router.get("/experiencias", response_class=HTMLResponse)
+def experiencias(request: Request):
     return templates.TemplateResponse(
         request,
         "proyectos.html",
         {
-            "sectors": content.sectors,
-            "cases": content.case_studies,
-            "active_page": "proyectos",
-            "page_title": "Sectores | RENSOF",
-            "page_description": "Implementaciones de inteligencia estrategica por sector.",
+            "active_page": "experiencias",
+            "page_title": "Experiencias de exito | RENSOF",
+            "page_description": "Experiencias RENSOF aplicadas a negocios, gestion publica, inversion, territorio y decisiones reales.",
         },
     )
 
@@ -1728,5 +1743,3 @@ def clean_page(page_name: str) -> Response:
         clean_path = "/" if clean_name == "index" else f"/{clean_name}"
         return RedirectResponse(clean_path, status_code=308)
     raise HTTPException(status_code=404)
-
-

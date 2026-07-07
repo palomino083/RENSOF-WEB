@@ -169,6 +169,7 @@ class PlanCatalogoEditableItem(BaseModel):
     reinicio_habilitado: bool = True
     productos_limite: int | None = Field(default=None, ge=0)
     sunat_habilitado: bool = False
+    puntos_recuperacion_habilitado: bool = False
 
 
 class PlanCatalogoEditableUpdate(BaseModel):
@@ -380,6 +381,7 @@ def _resolver_config_plan_para_negocio(negocio: Negocio, plan: str):
         "reinicio_habilitado": cfg.reinicio_habilitado,
         "productos_limite": cfg.productos_limite,
         "sunat_habilitado": cfg.sunat_habilitado,
+        "puntos_recuperacion_habilitado": cfg.puntos_recuperacion_habilitado,
     }
 
 
@@ -655,6 +657,7 @@ def actualizar_catalogo_planes_editable(
         reinicio_habilitado = bool(item.reinicio_habilitado)
         productos_limite = item.productos_limite
         sunat_habilitado = bool(item.sunat_habilitado)
+        puntos_recuperacion_habilitado = bool(item.puntos_recuperacion_habilitado)
 
         if codigo == "GRATUITO":
             negocio.plan_gratuito_usuarios_limite = usuarios_limite
@@ -669,6 +672,7 @@ def actualizar_catalogo_planes_editable(
                 "reinicio_habilitado": reinicio_habilitado,
                 "productos_limite": productos_limite,
                 "sunat_habilitado": sunat_habilitado,
+                "puntos_recuperacion_habilitado": puntos_recuperacion_habilitado,
             })
             custom_map[codigo] = current
             continue
@@ -685,6 +689,7 @@ def actualizar_catalogo_planes_editable(
             "reinicio_habilitado": reinicio_habilitado,
             "productos_limite": productos_limite,
             "sunat_habilitado": sunat_habilitado,
+            "puntos_recuperacion_habilitado": puntos_recuperacion_habilitado,
         })
         custom_map[codigo] = current
 
@@ -1057,6 +1062,12 @@ def obtener_resumen_plan(
             "limite": sunat_limite,
             "disponibles": _disponibles(sunat_limite, 0),
             "habilitado": config["sunat_habilitado"],
+        },
+        "puntos_recuperacion": {
+            "consumidos": backups_consumidos,
+            "limite": backups_limite,
+            "disponibles": _disponibles(backups_limite, backups_consumidos),
+            "habilitado": config["puntos_recuperacion_habilitado"],
         },
     }
 

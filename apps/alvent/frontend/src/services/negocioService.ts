@@ -114,6 +114,7 @@ export const negocioService = {
       soporte: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
       reinicio: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
       sunat: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
+      puntos_recuperacion: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
     };
   },
 
@@ -132,6 +133,7 @@ export const negocioService = {
         reinicio_habilitado: boolean;
         productos_limite: number | null;
         sunat_habilitado: boolean;
+        puntos_recuperacion_habilitado: boolean;
       }>;
     };
   },
@@ -152,6 +154,7 @@ export const negocioService = {
         reinicio_habilitado: boolean;
         productos_limite: number | null;
         sunat_habilitado: boolean;
+        puntos_recuperacion_habilitado: boolean;
       }>;
     };
   },
@@ -169,6 +172,7 @@ export const negocioService = {
       reinicio_habilitado: boolean;
       productos_limite: number | null;
       sunat_habilitado: boolean;
+      puntos_recuperacion_habilitado: boolean;
     }>
   ) => {
     const res = await api.put(`/negocios/${negocioId}/planes/catalogo-editable`, { planes });
@@ -187,6 +191,7 @@ export const negocioService = {
         reinicio_habilitado: boolean;
         productos_limite: number | null;
         sunat_habilitado: boolean;
+        puntos_recuperacion_habilitado: boolean;
       }>;
     };
   },

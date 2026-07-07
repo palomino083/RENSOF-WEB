@@ -52,7 +52,6 @@ export default function ExportacionPage() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
-  const [autoPrintOnOpen, setAutoPrintOnOpen] = useState(false);
 
   const formatDateTime = (value: string) => {
     const parsed = new Date(value);
@@ -350,8 +349,8 @@ export default function ExportacionPage() {
             <p>${rangeLabel}</p>
             ${sectionsHtml}
             ${
-              previewWindow && autoPrintOnOpen
-                ? `<script>window.addEventListener("load", function(){ setTimeout(function(){ window.print(); }, 700); });</script>`
+              previewWindow
+                ? `<script>window.addEventListener("load", function(){ setTimeout(function(){ window.focus(); }, 300); });</script>`
                 : ""
             }
           </body>
@@ -438,7 +437,6 @@ export default function ExportacionPage() {
             metricas={[
               { label: "Modulos", value: String(selectedExportCount) },
               { label: "Rango", value: rangeLabel },
-              { label: "Auto print", value: autoPrintOnOpen ? "Activo" : "Inactivo" },
             ]}
           />
 
@@ -513,29 +511,12 @@ export default function ExportacionPage() {
               <button
                 type="button"
                 className={`${styles.exportBtn} focus-ring`}
-                onClick={() => void exportarConsolidadoPdf(false)}
+                onClick={() => void exportarConsolidadoPdf(false, true)}
                 disabled={exportingExcel || exportingPdf || !hasExportSelection}
               >
                 {exportingPdf ? "Generando PDF..." : "Exportar PDF"}
               </button>
-              <button
-                type="button"
-                className={`${styles.exportPrimaryBtn} focus-ring`}
-                onClick={() => void exportarConsolidadoPdf(false, true)}
-                disabled={exportingExcel || exportingPdf || !hasExportSelection}
-              >
-                {exportingPdf ? "Generando vista..." : "Abrir en nueva página"}
-              </button>
             </div>
-
-            <label className={styles.openOptionRow}>
-              <input
-                type="checkbox"
-                checked={autoPrintOnOpen}
-                onChange={(event) => setAutoPrintOnOpen(event.target.checked)}
-              />
-              <span>Imprimir automáticamente al abrir en nueva página</span>
-            </label>
 
             {!hasExportSelection ? (
               <p className={styles.exportHint}>Selecciona al menos un módulo para exportar.</p>

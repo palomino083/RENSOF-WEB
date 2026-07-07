@@ -105,7 +105,7 @@
       <article class="admin-login-card">
         <span class="story-kicker">Acceso autorizado</span>
         <h2 style="font-family:'Sora',sans-serif; margin:8px 0 4px;">Iniciar sesion</h2>
-        <p class="story-text">Usa el usuario y clave configurados para la plataforma.</p>
+        <p class="story-text">Ingresa con el usuario <strong>admin</strong> y la clave <strong>admin123</strong>.</p>
 
         {% if error_message %}
         <p style="margin-top:14px; color:#ff9a8f;">{{ error_message }}</p>
@@ -114,10 +114,10 @@
         <form action="/admin/login" method="post" style="margin-top:16px;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <label for="username">Usuario</label>
-          <input id="username" class="r-input" type="text" name="username" autocomplete="username" required>
+          <input id="username" class="r-input" type="text" name="username" autocomplete="username" placeholder="admin" required>
 
           <label for="password">Contrase&ntilde;a</label>
-          <input id="password" class="r-input" type="password" name="password" autocomplete="current-password" required>
+          <input id="password" class="r-input" type="password" name="password" autocomplete="current-password" placeholder="admin123" required>
 
           <button class="r-btn r-btn-primary" type="submit">Entrar al panel</button>
         </form>

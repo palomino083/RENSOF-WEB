@@ -1386,10 +1386,87 @@
   padding-top: 0;
 }
 
+.premium-home {
+  padding-top: clamp(132px, 14vw, 178px);
+}
+
+.premium-home .premium-badges {
+  align-items: stretch;
+  margin-top: clamp(28px, 4vw, 52px);
+}
+
+.premium-home .premium-badges span {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 46px;
+  white-space: normal;
+}
+
 .hero-2030 {
   padding-top: clamp(72px, 8vw, 110px);
 }
 
 .inicio-badges {
   margin-top: 28px;
+}
+
+.premium-alvent-live-showcase {
+  display: grid;
+  gap: 16px;
+  min-height: 360px;
+}
+
+.premium-alvent-live-showcase .panel-head {
+  align-items: center;
+  color: #9ec9df;
+  display: flex;
+  font-size: 0.82rem;
+  font-weight: 900;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.premium-alvent-live-showcase .signal-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.premium-alvent-live-showcase .signal-grid div {
+  background: rgba(4, 13, 22, 0.52);
+  border: 1px solid rgba(126, 214, 255, 0.16);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.premium-alvent-live-showcase .signal-grid span {
+  color: #93b9d2;
+  display: block;
+  font-size: 0.76rem;
+}
+
+.premium-alvent-live-showcase .signal-grid strong {
+  color: #fff;
+  display: block;
+  font-size: 1rem;
+  margin-top: 6px;
+}
+
+.premium-alvent-live-showcase .alvent-mini-board {
+  margin-top: 0;
+}
+
+.premium-alvent-live-showcase .alvent-bars {
+  min-height: 120px;
+}
+
+@media (max-width: 640px) {
+  .premium-alvent-live-showcase {
+    min-height: auto;
+  }
+
+  .premium-alvent-live-showcase .signal-grid {
+    grid-template-columns: 1fr;
+  }
 }

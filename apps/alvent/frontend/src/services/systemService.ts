@@ -73,14 +73,26 @@ export type SoporteTicketsQuery = {
   pageSize?: number;
 };
 
+export type RestorePoint = {
+  id: string;
+  archivo: string;
+  fecha: string;
+  size_bytes: number;
+};
+
 export const systemService = {
 
-  reset: async (modo: ResetMode, password: string) => {
+  reset: async (modo: ResetMode, confirmacion: string) => {
     const res = await api.delete("/system/reset", {
-      data: { modo, password },
+      data: { modo, confirmacion },
     });
 
-    return res.data;
+    return res.data as {
+      ok: boolean;
+      modo: ResetMode;
+      backup?: string;
+      mensaje: string;
+    };
   },
 
   health: async () => {
@@ -93,6 +105,47 @@ export const systemService = {
       responseType: "blob",
     });
     return res;
+  },
+
+  restore: async (archivo: File) => {
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    const res = await api.post("/system/restore", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return res.data as {
+      ok: boolean;
+      mensaje: string;
+      archivo: string;
+    };
+  },
+
+  listRestorePoints: async () => {
+    const res = await api.get("/system/restore-points");
+    return res.data as {
+      ok: boolean;
+      items: RestorePoint[];
+    };
+  },
+
+  createRestorePoint: async (etiqueta?: string) => {
+    const res = await api.post("/system/restore-points", { etiqueta });
+    return res.data as {
+      ok: boolean;
+      mensaje: string;
+      item: RestorePoint;
+    };
+  },
+
+  restorePoint: async (archivo: string, confirmacion: string) => {
+    const res = await api.post(`/system/restore-points/${encodeURIComponent(archivo)}/restore`, { confirmacion });
+    return res.data as {
+      ok: boolean;
+      mensaje: string;
+      archivo: string;
+    };
   },
 
   listarTicketsSoporte: async (query?: SoporteTicketsQuery) => {

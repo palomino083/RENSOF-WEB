@@ -33,7 +33,23 @@ export const ventasService = {
 
   create: async (data: VentaCreate) => {
     const res = await api.post("/ventas/", data);
-    return res.data;
+    return res.data as {
+      mensaje: string;
+      venta_id: number;
+      total: number;
+      comprobante_pdf_url?: string | null;
+      sunat?: {
+        tipo_comprobante?: string;
+        serie?: string;
+        numero?: string;
+        estado?: string;
+        mensaje?: string;
+        codigo?: string;
+        hash?: string;
+        ticket?: string;
+        cdr_url?: string;
+      };
+    };
   },
 
   reporteGanancias: async () => {

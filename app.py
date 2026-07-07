@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 import httpx
 from fastapi import FastAPI, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -47,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
-ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", "/alven/")
+ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", "/app/alvent/login")
 ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/app/alvent").rstrip("/")
 ALVENT_BACKEND_ORIGIN = os.getenv("ALVENT_BACKEND_ORIGIN", "").rstrip("/")
 ALVENT_APP_EXTERNAL_BASE_URL = os.getenv(
@@ -75,6 +76,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(SessionMiddleware, secret_key=RENSOF_SESSION_SECRET, same_site="lax", https_only=False)
 app.middleware("http")(security_headers_middleware)
 
@@ -798,15 +800,15 @@ def enviar_contacto(
     return RedirectResponse(final_redirect, status_code=303)
 
 
-@app.get("/proyectos")
-async def proyectos(request: Request):
+@app.get("/experiencias")
+async def experiencias(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="proyectos.html",
         context={
-            "active_page": "proyectos",
-            "page_title": "Casos y sectores | RENSOF",
-            "page_description": "Sectores y casos de uso donde RENSOF aplica tecnología, analítica y decisión estratégica.",
+            "active_page": "experiencias",
+            "page_title": "Experiencias de exito | RENSOF",
+            "page_description": "Experiencias RENSOF aplicadas a negocios, gestion publica, inversion, territorio y decisiones reales.",
         },
     )
 
@@ -820,6 +822,19 @@ async def servicios(request: Request):
             "active_page": "servicios",
             "page_title": "Aplicaciones | RENSOF",
             "page_description": "Aplicaciones RENSOF para comercio, gestión pública, inversión, agricultura digital, prospectiva y valoración económica.",
+        },
+    )
+
+
+@app.get("/app")
+async def app_publica(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="servicios.html",
+        context={
+            "active_page": "servicios",
+            "page_title": "Aplicaciones | RENSOF",
+            "page_description": "Aplicaciones RENSOF para comercio, gestion publica, inversion, agricultura digital, prospectiva y valoracion economica.",
         },
     )
 
@@ -882,6 +897,18 @@ async def proxy_alvent_app_public(request: Request):
         return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
 
 
+@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alven/app", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alven/app/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def redirect_alven_double_prefix(request: Request, path: str = ""):
+    """Canonicalize duplicated ALVENT basePath emitted by stale frontend chunks."""
+    canonical = PUBLIC_ALVENT_APP_BASE_PATH
+    if path:
+        canonical = f"{canonical}/{path.lstrip('/')}"
+    if request.url.query:
+        canonical = f"{canonical}?{request.url.query}"
+    return RedirectResponse(url=canonical, status_code=308)
+
+
 @app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def proxy_alvent_app_public_path(request: Request, path: str):
     """Canonical ALVENT app paths for public access."""
@@ -904,17 +931,6 @@ async def redirect_legacy_alvent_app_base(request: Request, path: str = ""):
         target = f"{target}?{request.url.query}"
     return RedirectResponse(url=target, status_code=308)
 
-
-@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alven/app", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
-@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alven/app/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
-async def redirect_alven_double_prefix(request: Request, path: str = ""):
-    """Canonicalize duplicated ALVENT basePath emitted by stale frontend chunks."""
-    canonical = PUBLIC_ALVENT_APP_BASE_PATH
-    if path:
-        canonical = f"{canonical}/{path.lstrip('/')}"
-    if request.url.query:
-        canonical = f"{canonical}?{request.url.query}"
-    return RedirectResponse(url=canonical, status_code=308)
 
 @app.api_route("/uploads/{path:path}", methods=["GET", "HEAD", "OPTIONS"])
 async def proxy_alvent_uploads_public(request: Request, path: str):
@@ -983,6 +999,8 @@ async def proxy_alven_api(request: Request, path: str):
 
 @app.get("/admin")
 def admin_root(request: Request):
+    if not is_admin_authenticated(request):
+        return _render_admin_login(request)
     return _render_admin_dashboard(request)
 
 

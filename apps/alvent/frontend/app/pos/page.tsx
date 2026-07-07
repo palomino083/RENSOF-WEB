@@ -360,6 +360,8 @@ export default function PosPage() {
 
   const limpiarNumero = (value: string) => value.replace(/\D/g, "");
 
+  const emailValido = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+
   const nombreEmpresaComprobante = () => {
     const razonSocial = String(negocioBranding?.razon_social || "").trim();
     const nombreNegocio = String(negocioBranding?.nombre || "").trim();
@@ -428,7 +430,7 @@ export default function PosPage() {
       doc ? `Documento: ${doc}` : "",
       `Metodo: ${metodo_pago}`,
       `Total: ${formatMoney(totalVenta)}`,
-      comprobanteUrl ? `Comprobante digital: ${comprobanteUrl}` : "",
+      comprobanteUrl ? `Comprobante PDF: ${comprobanteUrl}` : "",
       `Gracias por tu compra en ${empresa}`,
     ]
       .filter(Boolean)
@@ -502,12 +504,17 @@ export default function PosPage() {
     }
 
     if (tipoComprobante !== "NINGUNO" && enviarEmail && !clienteEmail.trim()) {
-      alert("Activas envío por email, pero falta correo del cliente");
+      alert("Activas envio por correo al cobrar, pero falta correo del cliente");
+      return;
+    }
+
+    if (tipoComprobante !== "NINGUNO" && enviarEmail && !emailValido(clienteEmail)) {
+      alert("Ingresa un correo valido para enviar el comprobante");
       return;
     }
 
     if (tipoComprobante !== "NINGUNO" && enviarWhatsapp && !limpiarNumero(clienteWhatsapp)) {
-      alert("Activas envío por WhatsApp, pero falta número válido");
+      alert("Activas envio por WhatsApp al cobrar, pero falta numero valido");
       return;
     }
 
@@ -577,8 +584,11 @@ export default function PosPage() {
         }
         | undefined;
 
-      let comprobantePdfUrl: string | undefined;
-      if (requiereComprobante) {
+      let comprobantePdfUrl = ventaCreada?.comprobante_pdf_url
+        ? toAbsoluteUrl(String(ventaCreada.comprobante_pdf_url))
+        : undefined;
+
+      if (requiereComprobante && !comprobantePdfUrl) {
         const empresa = nombreEmpresaComprobante();
         const comprobanteHtml = generarComprobanteHtml({
           tipoComprobante,
@@ -929,7 +939,7 @@ export default function PosPage() {
                 </div>
 
                 <div className={styles.formRow}>
-                  <label htmlFor="cliente-email">Correo para envío</label>
+                  <label htmlFor="cliente-email">Correo del cliente</label>
                   <input
                     id="cliente-email"
                     type="email"
@@ -941,7 +951,7 @@ export default function PosPage() {
                 </div>
 
                 <div className={styles.formRow}>
-                  <label htmlFor="cliente-wa">WhatsApp para envío</label>
+                  <label htmlFor="cliente-wa">WhatsApp del cliente</label>
                   <input
                     id="cliente-wa"
                     value={clienteWhatsapp}
@@ -957,23 +967,29 @@ export default function PosPage() {
                   ) : null}
                 </div>
 
-                <div className={styles.channelRow}>
-                  <label className={styles.channelItem}>
-                    <input
-                      type="checkbox"
-                      checked={enviarEmail}
-                      onChange={(e) => setEnviarEmail(e.target.checked)}
-                    />
-                    Enviar por correo
-                  </label>
-                  <label className={styles.channelItem}>
-                    <input
-                      type="checkbox"
-                      checked={enviarWhatsapp}
-                      onChange={(e) => setEnviarWhatsapp(e.target.checked)}
-                    />
-                    Enviar por WhatsApp
-                  </label>
+                <div className={styles.deliveryMethodBox}>
+                  <strong>Entrega del comprobante al cobrar</strong>
+                  <div className={styles.channelRow}>
+                    <label className={styles.channelItem}>
+                      <input
+                        type="checkbox"
+                        checked={enviarEmail}
+                        onChange={(e) => setEnviarEmail(e.target.checked)}
+                      />
+                      Enviar comprobante por correo al cobrar
+                    </label>
+                    <label className={styles.channelItem}>
+                      <input
+                        type="checkbox"
+                        checked={enviarWhatsapp}
+                        onChange={(e) => setEnviarWhatsapp(e.target.checked)}
+                      />
+                      Enviar comprobante por WhatsApp al cobrar
+                    </label>
+                  </div>
+                  <small>
+                    Se abrira el canal elegido despues de registrar la venta. Si el navegador lo bloquea, usa los botones de entrega.
+                  </small>
                 </div>
 
                 <small>

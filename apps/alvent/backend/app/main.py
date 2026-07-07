@@ -11,6 +11,7 @@ from time import perf_counter
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func
 from slowapi import Limiter
@@ -78,8 +79,8 @@ limiter = Limiter(key_func=get_remote_address)
 
 logger = logging.getLogger(__name__)
 
-SUPERADMIN_USERNAME = (os.getenv("ALVENT_SUPERADMIN_USERNAME") or "admin").strip()
-SUPERADMIN_PASSWORD = os.getenv("ALVENT_SUPERADMIN_PASSWORD")
+SUPERADMIN_USERNAME = (os.getenv("ALVENT_SUPERADMIN_USERNAME") or "Admin").strip()
+SUPERADMIN_PASSWORD = os.getenv("ALVENT_SUPERADMIN_PASSWORD", "123456")
 
 
 def _normalizar_rol(valor: str | None) -> str:
@@ -414,6 +415,8 @@ Módulos disponibles
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @app.middleware("http")

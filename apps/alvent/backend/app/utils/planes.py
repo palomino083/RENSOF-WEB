@@ -16,6 +16,7 @@ class PlanConfig:
     reinicio_habilitado: bool
     productos_limite: int | None
     sunat_habilitado: bool
+    puntos_recuperacion_habilitado: bool
 
 
 PLANES: dict[str, PlanConfig] = {
@@ -29,6 +30,7 @@ PLANES: dict[str, PlanConfig] = {
         reinicio_habilitado=True,
         productos_limite=100,
         sunat_habilitado=False,
+        puntos_recuperacion_habilitado=False,
     ),
     "PRUEBA": PlanConfig(
         usuarios_limite=1,
@@ -40,6 +42,7 @@ PLANES: dict[str, PlanConfig] = {
         reinicio_habilitado=True,
         productos_limite=300,
         sunat_habilitado=False,
+        puntos_recuperacion_habilitado=False,
     ),
     "BASICO": PlanConfig(
         usuarios_limite=2,
@@ -51,6 +54,7 @@ PLANES: dict[str, PlanConfig] = {
         reinicio_habilitado=True,
         productos_limite=500,
         sunat_habilitado=False,
+        puntos_recuperacion_habilitado=True,
     ),
     "LITE": PlanConfig(
         usuarios_limite=4,
@@ -62,6 +66,7 @@ PLANES: dict[str, PlanConfig] = {
         reinicio_habilitado=True,
         productos_limite=1500,
         sunat_habilitado=True,
+        puntos_recuperacion_habilitado=True,
     ),
     "PRO": PlanConfig(
         usuarios_limite=10,
@@ -73,6 +78,7 @@ PLANES: dict[str, PlanConfig] = {
         reinicio_habilitado=True,
         productos_limite=5000,
         sunat_habilitado=True,
+        puntos_recuperacion_habilitado=True,
     ),
     "PREMIUM": PlanConfig(
         usuarios_limite=None,
@@ -84,6 +90,7 @@ PLANES: dict[str, PlanConfig] = {
         reinicio_habilitado=True,
         productos_limite=None,
         sunat_habilitado=True,
+        puntos_recuperacion_habilitado=True,
     ),
 }
 
@@ -155,6 +162,7 @@ def obtener_catalogo_planes() -> list[dict]:
                 "reinicio_habilitado": cfg.reinicio_habilitado,
                 "productos_limite": cfg.productos_limite,
                 "sunat_habilitado": cfg.sunat_habilitado,
+                "puntos_recuperacion_habilitado": cfg.puntos_recuperacion_habilitado,
             }
         )
     return catalogo
@@ -223,6 +231,9 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
         reinicio_habilitado = bool(override.get("reinicio_habilitado", base.reinicio_habilitado))
         productos_limite = override.get("productos_limite", base.productos_limite)
         sunat_habilitado = bool(override.get("sunat_habilitado", base.sunat_habilitado))
+        puntos_recuperacion_habilitado = bool(
+            override.get("puntos_recuperacion_habilitado", base.puntos_recuperacion_habilitado)
+        )
 
         return PlanConfig(
             usuarios_limite=usuarios_limite,
@@ -234,6 +245,7 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
             reinicio_habilitado=reinicio_habilitado,
             productos_limite=productos_limite,
             sunat_habilitado=sunat_habilitado,
+            puntos_recuperacion_habilitado=puntos_recuperacion_habilitado,
         )
 
     custom_map = _parse_catalogo_custom(getattr(negocio, "plan_catalogo_custom", ""))
@@ -248,6 +260,9 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
     reinicio_habilitado = bool(override.get("reinicio_habilitado", base.reinicio_habilitado))
     productos_limite = override.get("productos_limite", base.productos_limite)
     sunat_habilitado = bool(override.get("sunat_habilitado", base.sunat_habilitado))
+    puntos_recuperacion_habilitado = bool(
+        override.get("puntos_recuperacion_habilitado", base.puntos_recuperacion_habilitado)
+    )
 
     if not reportes_habilitado:
         reportes_limite = 0
@@ -264,6 +279,7 @@ def resolver_config_plan_negocio(negocio: object | None, plan: str | None = None
         reinicio_habilitado=reinicio_habilitado,
         productos_limite=productos_limite,
         sunat_habilitado=sunat_habilitado,
+        puntos_recuperacion_habilitado=puntos_recuperacion_habilitado,
     )
 
 
@@ -306,6 +322,7 @@ def obtener_catalogo_planes_para_negocio(negocio: object | None) -> list[dict]:
                 "reinicio_habilitado": cfg.reinicio_habilitado,
                 "productos_limite": cfg.productos_limite,
                 "sunat_habilitado": cfg.sunat_habilitado,
+                "puntos_recuperacion_habilitado": cfg.puntos_recuperacion_habilitado,
             }
         )
     return salida

@@ -18,12 +18,20 @@
   color: #ffedd5;
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
 .heroContent {
+  flex: 1 1 520px;
   min-width: 0;
   max-width: 760px;
+}
+
+.hero > :last-child {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .eyebrow {
@@ -48,13 +56,14 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
   border-radius: 999px;
   padding: 6px 11px;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.01em;
   border: 1px solid transparent;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .modeChipIcon {
@@ -73,6 +82,7 @@
   display: inline-flex;
   flex-direction: column;
   gap: 1px;
+  min-width: 0;
   white-space: normal;
 }
 
@@ -120,57 +130,6 @@
   background: #dcfce7;
   color: #14532d;
   padding: 10px 12px;
-}
-
-.planApprovalAlert {
-  border: 1px solid rgba(245, 158, 11, 0.42);
-  border-radius: 12px;
-  background: linear-gradient(135deg, #fffbeb, #fff7ed);
-  color: #78350f;
-  padding: 10px 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.planApprovalAlert strong {
-  display: block;
-  font-size: 0.86rem;
-  color: #9a3412;
-}
-
-.planApprovalAlert p {
-  margin: 2px 0 0;
-  font-size: 0.84rem;
-  color: #92400e;
-}
-
-.planApprovalAlertBtn {
-  border: 1px solid rgba(180, 83, 9, 0.34);
-  border-radius: 10px;
-  background: #fef3c7;
-  color: #78350f;
-  font-weight: 700;
-  padding: 8px 11px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.planApprovalAlertPulse {
-  animation: planApprovalPulse 0.9s ease-in-out 2;
-}
-
-@keyframes planApprovalPulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.32);
-  }
-  70% {
-    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
-  }
 }
 
 .overviewGrid {
@@ -705,6 +664,27 @@
 .helperText {
   color: #64748b;
   font-size: 0.78rem;
+}
+
+.sunatPanel {
+  border: 1px dashed rgba(15, 118, 110, 0.35);
+  border-radius: 12px;
+  background: linear-gradient(160deg, rgba(240, 253, 250, 0.86), rgba(248, 250, 252, 0.95));
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.sunatPanel h4 {
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+.sunatActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 
 .errorHint {
@@ -2204,6 +2184,10 @@
     max-width: 100%;
   }
 
+  .hero > :last-child {
+    margin-left: 0;
+  }
+
   .modeChip {
     font-size: 0.74rem;
     padding: 4px 9px;
@@ -2213,27 +2197,6 @@
     font-size: 0.66rem;
   }
 
-
-@media (max-width: 640px) {
-  .modeChip {
-    gap: 6px;
-    padding: 5px 9px;
-  }
-
-  .modeChipIcon {
-    width: 22px;
-    height: 22px;
-    font-size: 0.82rem;
-  }
-
-  .modeChipDesktop {
-    display: none;
-  }
-
-  .modeChipMobile {
-    display: inline;
-  }
-}
   .overviewGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2374,6 +2337,25 @@
 }
 
 @media (max-width: 640px) {
+  .modeChip {
+    gap: 6px;
+    padding: 5px 9px;
+  }
+
+  .modeChipIcon {
+    width: 22px;
+    height: 22px;
+    font-size: 0.82rem;
+  }
+
+  .modeChipDesktop {
+    display: none;
+  }
+
+  .modeChipMobile {
+    display: inline;
+  }
+
   .overviewGrid {
     grid-template-columns: 1fr;
   }

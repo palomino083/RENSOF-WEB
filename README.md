@@ -31,7 +31,8 @@ Acceso:
 
 - Login: `http://localhost:3001/alven/app/login`
 - API: `http://127.0.0.1:8000/alven/api`
-- Credenciales superadmin: `Admin / 123456`
+- Credenciales RENSOF admin: `admin / admin123`
+- Credenciales ALVENT superadmin: `Admin / 123456`
 
 Para detener ambos procesos:
 
@@ -81,7 +82,7 @@ El acceso a /admin usa login por formulario + sesion segura por cookie (sin popu
 - Variable de entorno de entrada ALVENT en RENSOF: ALVENT_APP_URL
 - Referencia de ejemplo: .env.example
 
-Si no defines credenciales personalizadas para el panel raíz, el acceso también acepta el alias legacy `Admin / 123456`.
+Si no defines credenciales personalizadas para el panel raíz, RENSOF admin usa `admin / admin123`.
 
 La clave admin puede dejarse en texto plano para desarrollo o definirse como hash PBKDF2 con este formato:
 

@@ -475,20 +475,92 @@
   width: min(920px, 96vw);
   max-width: 96vw;
   height: min(78vh, 760px);
+  max-height: calc(100vh - 32px);
   min-width: 360px;
   min-height: 520px;
   resize: both;
+  overflow: auto;
+  border: 1px solid rgba(14, 165, 233, 0.34);
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(135deg, rgba(14, 165, 233, 0.85), rgba(20, 184, 166, 0.72), rgba(99, 102, 241, 0.68)) border-box;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
 }
 
 .sofiaModalBody {
   min-height: 0;
+  overflow: hidden;
 }
 
 .supportChatWindow {
   display: grid;
   gap: 10px;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto auto auto 1fr auto;
+  height: 100%;
   min-height: 0;
+}
+
+.sofiaPremiumHero {
+  border: 1px solid rgba(14, 165, 233, 0.28);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(236, 254, 255, 0.98), rgba(239, 246, 255, 0.96)),
+    radial-gradient(circle at 12% 0%, rgba(45, 212, 191, 0.26), transparent 32%);
+  padding: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.sofiaPremiumOrb {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #0f766e, #0284c7);
+  color: #ecfeff;
+  font-weight: 900;
+  box-shadow: 0 10px 22px rgba(14, 165, 233, 0.28);
+}
+
+.sofiaPremiumHero strong {
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.sofiaPremiumHero p {
+  margin: 2px 0 0;
+  color: #475569;
+  font-size: 0.82rem;
+}
+
+.sofiaPremiumHero span {
+  border: 1px solid rgba(20, 184, 166, 0.35);
+  border-radius: 999px;
+  background: #ccfbf1;
+  color: #115e59;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+
+.sofiaCapabilityStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.sofiaCapabilityStrip small {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 5px 8px;
 }
 
 .supportChatQuickActions {
@@ -498,9 +570,9 @@
 }
 
 .supportQuickBtn {
-  border: 1px solid rgba(2, 132, 199, 0.35);
+  border: 1px solid rgba(14, 165, 233, 0.38);
   border-radius: 999px;
-  background: linear-gradient(145deg, #eff6ff, #ffffff);
+  background: linear-gradient(145deg, #ecfeff, #ffffff);
   color: #0f172a;
   font-weight: 700;
   font-size: 0.76rem;
@@ -515,14 +587,14 @@
 }
 
 .supportChatMessages {
-  border: 1px solid #dbeafe;
-  border-radius: 12px;
-  background: #ffffff;
+  border: 1px solid rgba(186, 230, 253, 0.95);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
   padding: 10px;
   display: grid;
   gap: 8px;
   min-height: 220px;
-  max-height: 50vh;
+  max-height: none;
   overflow: auto;
   resize: vertical;
 }
@@ -530,13 +602,18 @@
 .supportChatComposer {
   display: grid;
   gap: 8px;
+  border: 1px solid rgba(203, 213, 225, 0.82);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px;
 }
 
 .sofiaInputTextarea {
-  min-height: 112px;
+  min-height: 96px;
   max-height: 42vh;
   resize: vertical;
   line-height: 1.4;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
 }
 
 .chatLevelHint {
@@ -558,13 +635,14 @@
 }
 
 .chatBubbleUser {
-  border: 1px solid rgba(148, 163, 184, 0.65);
-  background: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  background: #ffffff;
 }
 
 .chatBubbleIa {
-  border: 1px dashed rgba(2, 132, 199, 0.45);
-  background: #eff6ff;
+  border: 1px solid rgba(14, 165, 233, 0.32);
+  background: linear-gradient(135deg, #ecfeff, #eff6ff);
+  box-shadow: 0 8px 18px rgba(14, 165, 233, 0.08);
 }
 
 .chatBubbleUser strong,
@@ -602,6 +680,27 @@
   font-size: 0.74rem;
 }
 
+.resetWarningBox {
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff1f2, #fff7ed);
+  color: #7f1d1d;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.resetWarningBox strong {
+  color: #991b1b;
+  font-size: 0.9rem;
+}
+
+.resetWarningBox p {
+  margin: 0;
+  color: #7c2d12;
+  font-size: 0.84rem;
+}
+
 .chatTypingDot {
   width: 6px;
   height: 6px;
@@ -626,6 +725,15 @@
     min-height: 0;
     height: auto;
     resize: none;
+  }
+
+  .sofiaPremiumHero {
+    grid-template-columns: auto 1fr;
+  }
+
+  .sofiaPremiumHero span {
+    grid-column: 1 / -1;
+    width: fit-content;
   }
 
   .supportChatMessages {
@@ -978,6 +1086,207 @@
   background: #cbd5e1;
   color: #64748b;
   cursor: not-allowed;
+}
+
+.backupActionStack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.backupUploadBtn {
+  width: fit-content;
+  border: 1px solid rgba(67, 56, 202, 0.28);
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #312e81;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 10px 14px;
+}
+
+.backupUploadBtn input {
+  display: none;
+}
+
+.backupUploadBtn:has(input:disabled) {
+  background: #e2e8f0;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.restorePointBox {
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.82), rgba(240, 253, 250, 0.72));
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+}
+
+.restorePointHead {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.restorePointHead strong {
+  color: #0f172a;
+  display: block;
+  font-size: 0.9rem;
+}
+
+.restorePointHead small,
+.restorePointMuted {
+  color: #64748b;
+  display: block;
+  font-size: 0.74rem;
+}
+
+.restorePointPlanBadge,
+.restorePointPlanBadgeLocked {
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  padding: 6px 9px;
+  text-transform: uppercase;
+}
+
+.restorePointPlanBadge {
+  background: #dcfce7;
+  border: 1px solid rgba(22, 163, 74, 0.28);
+  color: #166534;
+}
+
+.restorePointPlanBadgeLocked {
+  background: #fff7ed;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  color: #9a3412;
+}
+
+.restorePointPremiumStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.restorePointPremiumStrip span {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  border-radius: 999px;
+  color: #312e81;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 5px 8px;
+}
+
+.restorePointCreateRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.restorePointCreateRow input {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #0f172a;
+  flex: 1;
+  min-width: 180px;
+  padding: 9px 10px;
+}
+
+.restorePointMiniBtn {
+  border: 1px solid rgba(67, 56, 202, 0.26);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #312e81;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+.restorePointMiniBtn:disabled {
+  background: #e2e8f0;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.restorePointRestoreBtn {
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #0f766e, #14b8a6);
+  box-shadow: 0 10px 20px rgba(20, 184, 166, 0.18);
+  color: #ecfeff;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.restorePointRestoreBtn:disabled {
+  background: #cbd5e1;
+  box-shadow: none;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.restorePointUpgradeNote {
+  border: 1px solid rgba(249, 115, 22, 0.24);
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #9a3412;
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 8px 10px;
+}
+
+.restorePointList {
+  display: grid;
+  gap: 7px;
+}
+
+.restorePointItem {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(203, 213, 225, 0.75);
+  border-radius: 10px;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 8px;
+}
+
+.restorePointItem strong {
+  color: #0f172a;
+  display: block;
+  font-size: 0.78rem;
+  word-break: break-word;
+}
+
+.restorePointItem small {
+  color: #64748b;
+  display: block;
+  font-size: 0.72rem;
+  margin-top: 2px;
+}
+
+.restorePointLocked {
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 6px 8px;
+  white-space: nowrap;
 }
 
 .planGrid {
@@ -1488,6 +1797,54 @@
   margin-top: 4px;
 }
 
+.planPremiumAdminBanner {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 64, 175, 0.92)),
+    radial-gradient(circle at 100% 0%, rgba(20, 184, 166, 0.28), transparent 34%);
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  border-radius: 14px;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+  color: #e0f2fe;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 14px;
+}
+
+.planPremiumAdminBanner h4 {
+  color: #ffffff;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.planPremiumAdminBanner p {
+  color: #bae6fd;
+  font-size: 0.84rem;
+  margin: 3px 0 0;
+}
+
+.planPremiumAdminStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.planPremiumAdminStats span {
+  background: rgba(15, 23, 42, 0.42);
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  border-radius: 999px;
+  color: #dbeafe;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 7px 9px;
+}
+
+.planPremiumAdminStats strong {
+  color: #5eead4;
+}
+
 .planAmountsBox {
   border: 1px solid rgba(14, 165, 233, 0.28);
   border-radius: 12px;
@@ -1511,6 +1868,70 @@
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.planAmountsGrid > .formRow {
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+  padding: 10px;
+}
+
+.planAmountsGrid > .formRow > span:first-child {
+  align-items: center;
+  color: #0f172a;
+  display: flex;
+  font-size: 0.9rem;
+  font-weight: 900;
+  justify-content: space-between;
+  text-transform: uppercase;
+}
+
+.planAmountsGrid > .formRow > span:first-child::after {
+  background: #e0f2fe;
+  border: 1px solid rgba(14, 165, 233, 0.18);
+  border-radius: 999px;
+  color: #0369a1;
+  content: "Editable";
+  font-size: 0.66rem;
+  font-weight: 900;
+  padding: 4px 7px;
+  text-transform: uppercase;
+}
+
+.planAmountsGrid > .formRow input[type="number"] {
+  min-width: 0;
+  width: 100%;
+}
+
+.planAmountsGrid > .formRow > input[type="number"] {
+  margin-top: -2px;
+}
+
+.planAmountsGrid .inlineCheck {
+  background: #ffffff;
+  border: 1px solid rgba(203, 213, 225, 0.78);
+  border-radius: 10px;
+  justify-content: flex-start;
+  padding: 8px;
+}
+
+.planAmountsGrid .inlineCheck:has(input:checked) {
+  background: #ecfeff;
+  border-color: rgba(20, 184, 166, 0.38);
+  color: #115e59;
+}
+
+.planAmountsGrid .inlineCheck span {
+  flex: 1;
+}
+
+.planAmountsBox .freePlanBoostQuickActions {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(14, 165, 233, 0.16);
+  border-radius: 12px;
+  padding: 9px;
 }
 
 .simulatorBox {

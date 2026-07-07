@@ -292,6 +292,14 @@
   margin-bottom: 10px;
 }
 
+.planHistoryFilters {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .planHistoryFilter {
   display: inline-flex;
   align-items: center;

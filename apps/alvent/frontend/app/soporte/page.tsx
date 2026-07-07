@@ -15,6 +15,7 @@ import {
   type GuardianIncident,
   type GuardianSeverity,
   type GuardianStatus,
+  type RestorePoint,
   type SoporteEstado,
   type SoportePrioridad,
   type SoporteTicket,
@@ -256,7 +257,7 @@ const SOPORTE_QUICK_PROMPTS: Array<{ label: string; text: string; prioridad: Sop
 const buildWelcomeMessage = (): { id: string; role: "bot"; text: string } => ({
   id: "soporte-bot-welcome",
   role: "bot",
-  text: "Hola, soy SofIA, tu asistente de soporte ALVENT. Te ayudo con diagnósticos tecnicos, estadísticas operativas y escalamiento a RENSOF, siempre con respeto, confidencialidad y cumplimiento normativo en Perú.",
+  text: "Hola, soy SofIA, tu asistente de soporte ALVENT. Cuéntame qué necesitas y te responderé con pasos claros.",
 });
 
 type SofiaResponseLevel = "EJECUTIVO" | "TÉCNICO" | "USUARIO_FINAL";
@@ -283,32 +284,35 @@ const buildSofiaOperatingContext = (level: SofiaResponseLevel, isFirstInteractio
     return [
       ...contextoBase,
       "Marco normativo: actuar bajo normativa aplicable del Peru (Ley 29733 y buenas practicas de seguridad).",
-      "Primer mensaje: incluir de forma breve marcos normativos y consideraciones de confidencialidad.",
+      "El saludo ya fue mostrado por la interfaz. No repitas saludo.",
     ].join("\n");
   }
 
   return [
     ...contextoBase,
-    "Desde el segundo mensaje: responder tecnico y muy breve (maximo 3 lineas).",
-    "No repetir marco normativo salvo que el usuario lo solicite explicitamente.",
+    "Responder muy breve: maximo 3 lineas, sin saludo ni marco normativo salvo que el usuario lo solicite.",
   ].join("\n");
 };
 
-const construirRespuestaTecnicaBreve = (recomendación: string, clasif: SoporteClasificacion) => {
-  const limpio = String(recomendación || "").replace(/\s+/g, " ").trim();
-  const frases = limpio
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+const compactarLineaSofia = (value: string, max = 155) => {
+  const limpio = String(value || "").replace(/\s+/g, " ").trim();
+  return limpio.length > max ? `${limpio.slice(0, max - 1).trim()}…` : limpio;
+};
 
-  const diagnóstico = frases.slice(0, 1).join(" ") || clasif.resumen;
-  const accion = clasif.checklist[0] || "Valida evento con hora exacta y usuario.";
-  const validacion = clasif.checklist[1] || "Confirma resultado tras la acción.";
+const construirRespuestaTecnicaBreve = (recomendación: string, clasif: SoporteClasificacion) => {
+  const lineasModelo = String(recomendación || "")
+    .split(/\n+/)
+    .map((linea) => linea.replace(/^[-*\d.\s]+/, "").trim())
+    .filter((linea) => linea && !/^hola\b/i.test(linea) && !/^fuente\b/i.test(linea))
+    .slice(0, 3)
+    .map((linea) => compactarLineaSofia(linea));
+
+  if (lineasModelo.length >= 2) return lineasModelo.join("\n");
 
   return [
-    `diagnóstico: ${diagnóstico}`,
-    `accion: ${accion}`,
-    `Validacion: ${validacion}`,
+    `Diagnostico: ${compactarLineaSofia(clasif.resumen)}`,
+    `Accion: ${compactarLineaSofia(clasif.checklist[0] || "Valida modulo, hora exacta y usuario.")}`,
+    `Verificacion: ${compactarLineaSofia(clasif.checklist[1] || "Confirma si el resultado cambio.")}`,
   ].join("\n");
 };
 
@@ -369,6 +373,73 @@ const buildTemplateReply = (template: SoporteTemplateKey, level: SofiaResponseLe
 
 const buildChatStorageKey = (isSuperadmin: boolean, negocioId: number) =>
   `alvent_support_chat_v2:${isSuperadmin ? "superadmin" : "usuario"}:${negocioId || "global"}`;
+
+type SofiaPatternProfile = {
+  modulos: Record<string, number>;
+  intenciones: Record<string, number>;
+  updatedAt?: string;
+};
+
+const buildSofiaPatternStorageKey = (isSuperadmin: boolean, negocioId: number) =>
+  `alvent_sofia_patterns_v1:${isSuperadmin ? "superadmin" : "usuario"}:${negocioId || "global"}`;
+
+const SOFIA_PATTERN_RULES = [
+  { tipo: "modulo", key: "POS", regex: /\b(pos|venta|cobrar|carrito|comprobante)\b/i },
+  { tipo: "modulo", key: "Caja", regex: /\b(caja|abrir caja|cerrar caja|arqueo)\b/i },
+  { tipo: "modulo", key: "SUNAT", regex: /\b(sunat|nubefact|boleta|factura|ruc|serie)\b/i },
+  { tipo: "modulo", key: "Inventario", regex: /\b(stock|inventario|producto|kardex|almacen|almacén)\b/i },
+  { tipo: "modulo", key: "Finanzas", regex: /\b(finanzas|pago|plan|validacion|validación|facturacion|facturación)\b/i },
+  { tipo: "modulo", key: "Exportacion", regex: /\b(exportar|excel|pdf|reporte)\b/i },
+  { tipo: "intencion", key: "Abrir caja", regex: /\b(abrir caja|caja cerrada|habilitar caja)\b/i },
+  { tipo: "intencion", key: "Habilitar SUNAT", regex: /\b(habilitar sunat|conectar sunat|conexion sunat|conexión sunat)\b/i },
+  { tipo: "intencion", key: "Corregir stock", regex: /\b(stock descuadrado|ajustar stock|stock distinto)\b/i },
+  { tipo: "intencion", key: "Revisar plan", regex: /\b(plan|pago de plan|validar pago|aprobar plan)\b/i },
+] as const;
+
+const leerSofiaPatternProfile = (key: string): SofiaPatternProfile => {
+  if (typeof window === "undefined") return { modulos: {}, intenciones: {} };
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) || "{}") as Partial<SofiaPatternProfile>;
+    return {
+      modulos: parsed.modulos || {},
+      intenciones: parsed.intenciones || {},
+      updatedAt: parsed.updatedAt,
+    };
+  } catch {
+    return { modulos: {}, intenciones: {} };
+  }
+};
+
+const guardarSofiaPatternProfile = (key: string, profile: SofiaPatternProfile) => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(key, JSON.stringify(profile));
+};
+
+const actualizarSofiaPatternProfile = (key: string, consulta: string) => {
+  const next = leerSofiaPatternProfile(key);
+  SOFIA_PATTERN_RULES.forEach((rule) => {
+    if (!rule.regex.test(consulta)) return;
+    const bucket = rule.tipo === "modulo" ? next.modulos : next.intenciones;
+    bucket[rule.key] = (bucket[rule.key] || 0) + 1;
+  });
+  next.updatedAt = new Date().toISOString();
+  guardarSofiaPatternProfile(key, next);
+  return next;
+};
+
+const buildSofiaPatternSummary = (profile: SofiaPatternProfile) => {
+  const top = (items: Record<string, number>) =>
+    Object.entries(items)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([key, count]) => `${key}(${count})`)
+      .join(", ");
+
+  return [
+    top(profile.modulos) ? `Modulos frecuentes: ${top(profile.modulos)}` : "",
+    top(profile.intenciones) ? `Intenciones frecuentes: ${top(profile.intenciones)}` : "",
+  ].filter(Boolean).join(" | ") || "Sin patrones previos.";
+};
 
 const normalizarCanalPago = (value?: string | null): CanalPago => {
   const raw = String(value || "").trim().toLowerCase();
@@ -619,7 +690,7 @@ export default function SoportePage() {
   // STATE CENTRALIZADO
   // ==========================
   const [showResetModal, setShowResetModal] = useState(false);
-  const [password, setPassword] = useState("");
+  const [resetConfirmacion, setResetConfirmacion] = useState("");
   const [modo, setModo] = useState<"parcial" | "completo">("parcial");
   const [loadingReset, setLoadingReset] = useState(false);
   const [error, setError] = useState("");
@@ -627,6 +698,7 @@ export default function SoportePage() {
   const [negocio, setNegocio] = useState<Negocio | null>(null);
   const [loadingBranding, setLoadingBranding] = useState(true);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [isBusinessAdmin, setIsBusinessAdmin] = useState(false);
   const [negocioSeleccionadoId, setNegocioSeleccionadoId] = useState<number>(0);
   const [negociosDisponibles, setNegociosDisponibles] = useState<Negocio[]>([]);
   const [negocioTipoFiltro, setNegocioTipoFiltro] = useState<string>("todos");
@@ -638,6 +710,12 @@ export default function SoportePage() {
   const [savingTipoNegocioEmpresa, setSavingTipoNegocioEmpresa] = useState(false);
   const [changingPlan, setChangingPlan] = useState(false);
   const [loadingBackup, setLoadingBackup] = useState(false);
+  const [restoringBackup, setRestoringBackup] = useState(false);
+  const [restorePoints, setRestorePoints] = useState<RestorePoint[]>([]);
+  const [loadingRestorePoints, setLoadingRestorePoints] = useState(false);
+  const [creatingRestorePoint, setCreatingRestorePoint] = useState(false);
+  const [restoringPointId, setRestoringPointId] = useState("");
+  const [restorePointLabel, setRestorePointLabel] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
   const [planStats, setPlanStats] = useState<{
@@ -649,6 +727,7 @@ export default function SoportePage() {
     soporte: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
     reinicio: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
     sunat: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
+    puntos_recuperacion?: { consumidos: number; limite: number | null; disponibles: number | null; habilitado: boolean };
   } | null>(null);
   const [empresaTab, setEmpresaTab] = useState<"general" | "fiscal" | "ubicacion" | "branding">("general");
   const [planCatalogo, setPlanCatalogo] = useState<Array<{
@@ -663,6 +742,7 @@ export default function SoportePage() {
     reinicio_habilitado: boolean;
     productos_limite: number | null;
     sunat_habilitado: boolean;
+    puntos_recuperacion_habilitado: boolean;
   }>>([]);
   const [planControlSeleccionado, setPlanControlSeleccionado] = useState<string>("GRATUITO");
   const [planControlaccion, setPlanControlaccion] = useState<"simular" | "aplicar" | "guardar_monto" | "guardar_limites" | "bondades">("simular");
@@ -1323,7 +1403,7 @@ export default function SoportePage() {
 
   const actualizarCampoPlanCatalogo = (
     codigo: string,
-    campo: "usuarios_limite" | "reportes_habilitado" | "reportes_limite" | "backups_habilitado" | "backups_limite" | "soporte_habilitado" | "reinicio_habilitado" | "productos_limite" | "sunat_habilitado",
+    campo: "usuarios_limite" | "reportes_habilitado" | "reportes_limite" | "backups_habilitado" | "backups_limite" | "soporte_habilitado" | "reinicio_habilitado" | "productos_limite" | "sunat_habilitado" | "puntos_recuperacion_habilitado",
     valor: number | boolean | null,
   ) => {
     setPlanCatalogo((prev) => prev.map((plan) => {
@@ -1362,6 +1442,7 @@ export default function SoportePage() {
         reinicio_habilitado: Boolean(plan.reinicio_habilitado),
         productos_limite: plan.productos_limite,
         sunat_habilitado: Boolean(plan.sunat_habilitado),
+        puntos_recuperacion_habilitado: Boolean(plan.puntos_recuperacion_habilitado),
       }));
       const data = await negocioService.updateEditablePlanCatalog(negocioId, payload);
       setPlanCatalogo(Array.isArray(data.planes) ? data.planes : []);
@@ -1453,6 +1534,7 @@ export default function SoportePage() {
     soporte_habilitado: Boolean(datosPlanBaseGratuito?.soporte_habilitado ?? true),
     productos_limite: datosPlanBaseGratuito?.productos_limite ?? 100,
     sunat_habilitado: Boolean(datosPlanBaseGratuito?.sunat_habilitado ?? false),
+    puntos_recuperacion_habilitado: Boolean(datosPlanBaseGratuito?.puntos_recuperacion_habilitado ?? false),
   };
 
   const datosPlanSimuladoBase = normalizarPlan(planSimulado) === "GRATUITO"
@@ -1532,6 +1614,7 @@ export default function SoportePage() {
     soporte_habilitado: boolean;
     productos_limite: number | null;
     sunat_habilitado: boolean;
+    puntos_recuperacion_habilitado: boolean;
   }) => {
     // Superadmin debe ver exactamente el catalogo editable guardado en esta pantalla.
     if (plan.codigo === "GRATUITO" && !isSuperadmin) return datosPlanGratuitoPromocional;
@@ -1576,6 +1659,7 @@ export default function SoportePage() {
     soporte_habilitado: boolean;
     productos_limite: number | null;
     sunat_habilitado: boolean;
+    puntos_recuperacion_habilitado: boolean;
   }) => {
     const objetivo = obtenerPlanEfectivo(plan);
     const actual = datosPlanActualEfectivo;
@@ -1810,7 +1894,9 @@ export default function SoportePage() {
         ? parsed.roles.map((r: string) => normalizarRol(String(r || "")))
         : [];
       const esSuper = rol === "SUPERADMIN" || roles.includes("SUPERADMIN") || parseNumero(getStorageItem("usuario_id")) === 1;
+      const esAdminNegocio = !esSuper && (rol === "ADMINISTRADOR" || roles.includes("ADMINISTRADOR"));
       setIsSuperadmin(esSuper);
+      setIsBusinessAdmin(esAdminNegocio);
       setSofiaResponseLevel(resolveSofiaLevelByRole(rol, roles, esSuper));
 
       if (!esSuper) {
@@ -1819,6 +1905,7 @@ export default function SoportePage() {
       }
     } catch {
       setIsSuperadmin(false);
+      setIsBusinessAdmin(false);
       setSofiaResponseLevel("USUARIO_FINAL");
       setNegocioSeleccionadoId(getNegocioIdFromSession());
     }
@@ -2085,17 +2172,19 @@ export default function SoportePage() {
     const clasif = clasificarConsultaSoporte(consulta);
     setSoporteClasificacion(clasif);
     setSoporteChatPrioridad((prev) => elevarPrioridad(prev, clasif.prioridadSugerida));
+    const negocioId = getNegocioIdActivo();
+    const patternKey = buildSofiaPatternStorageKey(isSuperadmin, negocioId);
+    const patternProfile = actualizarSofiaPatternProfile(patternKey, consulta);
+    const patternSummary = buildSofiaPatternSummary(patternProfile);
 
     try {
       setLoadingSugerenciaIa(true);
       setError("");
       const resp = await systemService.sugerenciaIaSoporte({
         asunto: clasif.asunto,
-        consulta: `${consulta}\n\n${buildSofiaOperatingContext(sofiaResponseLevel, isFirstUserMessage)}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
+        consulta: `${consulta}\n\n${buildSofiaOperatingContext(sofiaResponseLevel, isFirstUserMessage)}\n\n[Patrones locales del usuario]\n${patternSummary}\n\n[Clasificación local]\nCategoría: ${clasif.categoria}\nPrioridad sugerida: ${clasif.prioridadSugerida}\nChecklist:\n- ${clasif.checklist.join("\n- ")}`,
       });
-      const respuestaBot = isFirstUserMessage
-        ? `${clasif.resumen}\n\n${resp.recomendación}\n\nFuente: ${resp.origen}`
-        : construirRespuestaTecnicaBreve(resp.recomendación, clasif);
+      const respuestaBot = construirRespuestaTecnicaBreve(resp.recomendación, clasif);
       setSoporteChatMessages((prev) => [
         ...prev,
         {
@@ -2398,19 +2487,30 @@ export default function SoportePage() {
   // RESET SISTEMA
   // ==========================
   const resetSistema = async () => {
+    if (modo === "completo" && !isSuperadmin) {
+      setError("El reinicio completo solo esta disponible para superadministrador");
+      return;
+    }
+
+    const confirmacionEsperada = modo === "completo" ? "REINICIAR COMPLETO" : "REINICIAR PARCIAL";
+    if (resetConfirmacion.trim().toUpperCase() !== confirmacionEsperada) {
+      setError(`Escribe ${confirmacionEsperada} para confirmar`);
+      return;
+    }
+
     try {
       setLoadingReset(true);
       setError("");
       setSuccess("");
-      await systemService.reset(modo, password);
+      const resp = await systemService.reset(modo, confirmacionEsperada);
 
-      setSuccess("Sistema reiniciado correctamente");
+      setSuccess(resp.backup ? `${resp.mensaje} Backup: ${resp.backup}` : resp.mensaje);
 
       setShowResetModal(false);
-      setPassword("");
-    } catch (err: any) {
-      console.error(err?.response?.data || err);
-      setError("Error al reiniciar sistema");
+      setResetConfirmacion("");
+      setModo("parcial");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Error al reiniciar sistema"));
     } finally {
       setLoadingReset(false);
     }
@@ -2445,6 +2545,117 @@ export default function SoportePage() {
       setError("No se pudo generar el backup. Verifica los permisos y límites de tu plan.");
     } finally {
       setLoadingBackup(false);
+    }
+  };
+
+  const cargarBackup = async (file: File | null) => {
+    if (!file) return;
+    if (!isSuperadmin) {
+      setError("Solo superadministrador puede restaurar backups desde esta pantalla.");
+      return;
+    }
+
+    const extension = file.name.toLowerCase().split(".").pop();
+    if (!["db", "sqlite", "sqlite3"].includes(extension || "")) {
+      setError("Selecciona un backup SQLite valido (.db, .sqlite o .sqlite3).");
+      return;
+    }
+
+    try {
+      setRestoringBackup(true);
+      setError("");
+      setSuccess("");
+      const resp = await systemService.restore(file);
+      setSuccess(resp.mensaje || `Backup ${resp.archivo} restaurado correctamente`);
+      await cargarPlanStats();
+      if (isSuperadmin) {
+        await cargarGuardianRuntime();
+      }
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo restaurar el backup"));
+    } finally {
+      setRestoringBackup(false);
+    }
+  };
+
+  const formatRestorePointSize = (bytes: number) => {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+    if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const cargarPuntosRecuperacion = useCallback(async () => {
+    if (!isSuperadmin && !isBusinessAdmin) {
+      setRestorePoints([]);
+      return;
+    }
+
+    try {
+      setLoadingRestorePoints(true);
+      const resp = await systemService.listRestorePoints();
+      setRestorePoints(Array.isArray(resp.items) ? resp.items : []);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudieron cargar los puntos de recuperacion"));
+    } finally {
+      setLoadingRestorePoints(false);
+    }
+  }, [isBusinessAdmin, isSuperadmin]);
+
+  useEffect(() => {
+    if (isSuperadmin || isBusinessAdmin) {
+      void cargarPuntosRecuperacion();
+    } else {
+      setRestorePoints([]);
+    }
+  }, [cargarPuntosRecuperacion, isBusinessAdmin, isSuperadmin]);
+
+  const crearPuntoRecuperacion = async () => {
+    if (!isSuperadmin && !isBusinessAdmin) {
+      setError("Solo administrador puede crear puntos de recuperacion.");
+      return;
+    }
+
+    try {
+      setCreatingRestorePoint(true);
+      setError("");
+      setSuccess("");
+      const resp = await systemService.createRestorePoint(restorePointLabel.trim() || undefined);
+      setSuccess(resp.mensaje);
+      setRestorePointLabel("");
+      await cargarPuntosRecuperacion();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo crear el punto de recuperacion"));
+    } finally {
+      setCreatingRestorePoint(false);
+    }
+  };
+
+  const restaurarPuntoRecuperacion = async (archivo: string) => {
+    if (!isSuperadmin && !isBusinessAdmin) {
+      setError("Solo administrador puede restaurar puntos de recuperacion.");
+      return;
+    }
+
+    const confirmado = window.confirm(
+      isSuperadmin
+        ? "Se restaurara la base al punto seleccionado. Se generara un respaldo previo automatico. Continuar?"
+        : "Se restauraran solo los datos de tu negocio al punto seleccionado. Se generara un respaldo previo automatico. Continuar?"
+    );
+    if (!confirmado) return;
+
+    try {
+      setRestoringPointId(archivo);
+      setError("");
+      setSuccess("");
+      const resp = await systemService.restorePoint(archivo, "RESTAURAR PUNTO");
+      setSuccess(resp.mensaje || `Punto ${resp.archivo} restaurado correctamente`);
+      await cargarPuntosRecuperacion();
+      await cargarPlanStats();
+      await cargarGuardianRuntime();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "No se pudo restaurar el punto de recuperacion"));
+    } finally {
+      setRestoringPointId("");
     }
   };
 
@@ -2540,6 +2751,8 @@ export default function SoportePage() {
   const estadoBackups = planStats?.backups.habilitado ? "Habilitado" : "Bloqueado";
   const estadoReportes = planStats?.reportes.habilitado ? "Habilitado" : "Bloqueado";
   const reinicioHabilitadoPorPlan = isSuperadmin || Boolean(planStats?.reinicio?.habilitado ?? false);
+  const restorePointsPlanEnabled = isSuperadmin || Boolean(planStats?.puntos_recuperacion?.habilitado ?? true);
+  const canManageRestorePoints = isSuperadmin || isBusinessAdmin;
   const guardianIncidentesPendientes = guardianIncidents.filter((incident) => !incident.acked);
   const guardianOldestPendingMinutes = guardianIncidentesPendientes.length > 0
     ? Math.max(
@@ -2633,6 +2846,12 @@ export default function SoportePage() {
         text: `Productos: ${formatLimite(planEfectivo.productos_limite)}`,
       },
       {
+        icon: "shield",
+        text: planEfectivo.puntos_recuperacion_habilitado
+          ? "Recuperacion: negocio aislado"
+          : "Recuperacion: no incluida",
+      },
+      {
         icon: esSugerido ? "rocket" : "crown",
         text: esSugerido ? "Recomendado por consumo actual" : "Escalable por negocio",
       },
@@ -2687,28 +2906,129 @@ export default function SoportePage() {
                 </header>
 
                 <section id="cfg-operaciones" className={styles.supportPremiumGrid}>
-                {isSuperadmin ? (
+                {canManageRestorePoints ? (
                   <article className={`${styles.supportPremiumCard} ${styles.supportPremiumCardBackup}`}>
                     <div className={styles.supportPremiumCardHead}>
                       <div>
                         <p className={styles.supportPremiumKicker}>Respaldo</p>
-                        <h2>Backup del sistema</h2>
+                        <h2>{isSuperadmin ? "Backup del sistema" : "Puntos de recuperacion"}</h2>
                       </div>
                       <StatusBadge text="Según plan" variant="warning" />
                     </div>
 
                     <p className={styles.supportPremiumBody}>
-                      Genera una copia de seguridad de la base de datos y descargala en tu equipo.
+                      {isSuperadmin
+                        ? "Genera una copia de seguridad, restaura un archivo SQLite validado o crea snapshots internos tipo commit."
+                        : "Crea snapshots internos de tu empresa para dejar un estado guardado antes de cambios importantes."}
                     </p>
 
-                    <button
-                      type="button"
-                      onClick={descargarBackup}
-                      disabled={loadingBackup}
-                      className={`${styles.backupBtn} ${styles.supportPremiumAction} focus-ring`}
-                    >
-                      {loadingBackup ? "Generando backup..." : "Descargar backup"}
-                    </button>
+                    {isSuperadmin ? (
+                    <div className={styles.backupActionStack}>
+                      <button
+                        type="button"
+                        onClick={descargarBackup}
+                        disabled={loadingBackup || restoringBackup}
+                        className={`${styles.backupBtn} ${styles.supportPremiumAction} focus-ring`}
+                      >
+                        {loadingBackup ? "Generando backup..." : "Descargar backup"}
+                      </button>
+                      <label className={`${styles.backupUploadBtn} focus-ring`}>
+                        {restoringBackup ? "Restaurando backup..." : "Cargar backup"}
+                        <input
+                          type="file"
+                          accept=".db,.sqlite,.sqlite3"
+                          disabled={loadingBackup || restoringBackup}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            void cargarBackup(file);
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+                    ) : null}
+
+                    <div className={styles.restorePointBox}>
+                      <div className={styles.restorePointHead}>
+                        <div>
+                          <strong>{isSuperadmin ? "Puntos de recuperacion globales" : "Puntos de mi empresa"}</strong>
+                          <small>
+                            {isSuperadmin
+                              ? "Snapshots internos para volver a un estado anterior sin descargar backup."
+                              : "Puedes crear y restaurar puntos aislados de tu negocio sin afectar a otras empresas."}
+                          </small>
+                        </div>
+                        <span className={restorePointsPlanEnabled ? styles.restorePointPlanBadge : styles.restorePointPlanBadgeLocked}>
+                          {restorePointsPlanEnabled ? "Incluido en plan" : "Requiere upgrade"}
+                        </span>
+                        <button
+                          type="button"
+                          className={`${styles.restorePointMiniBtn} focus-ring`}
+                          onClick={() => void cargarPuntosRecuperacion()}
+                          disabled={!restorePointsPlanEnabled || loadingRestorePoints || creatingRestorePoint || Boolean(restoringPointId)}
+                        >
+                          Actualizar
+                        </button>
+                      </div>
+
+                      <div className={styles.restorePointPremiumStrip}>
+                        <span>Rollback aislado por negocio</span>
+                        <span>Backup previo automatico</span>
+                        <span>Auditoria RENSOF</span>
+                      </div>
+
+                      <div className={styles.restorePointCreateRow}>
+                        <input
+                          className="focus-ring"
+                          value={restorePointLabel}
+                          onChange={(e) => setRestorePointLabel(e.target.value)}
+                          placeholder="Etiqueta opcional: antes-sunat"
+                          maxLength={40}
+                          disabled={!restorePointsPlanEnabled || creatingRestorePoint || Boolean(restoringPointId)}
+                        />
+                        <button
+                          type="button"
+                          className={`${styles.restorePointMiniBtn} focus-ring`}
+                          onClick={() => void crearPuntoRecuperacion()}
+                          disabled={!restorePointsPlanEnabled || creatingRestorePoint || restoringBackup || Boolean(restoringPointId)}
+                        >
+                          {creatingRestorePoint ? "Creando..." : "Crear punto"}
+                        </button>
+                      </div>
+
+                      {!restorePointsPlanEnabled ? (
+                        <small className={styles.restorePointUpgradeNote}>
+                          Esta capacidad es un atributo configurable del plan de pago. Activalo desde Limites editables por plan.
+                        </small>
+                      ) : null}
+
+                      {loadingRestorePoints ? (
+                        <small className={styles.restorePointMuted}>Cargando puntos...</small>
+                      ) : restorePoints.length === 0 ? (
+                        <small className={styles.restorePointMuted}>Aun no hay puntos de recuperacion.</small>
+                      ) : (
+                        <div className={styles.restorePointList}>
+                          {restorePoints.slice(0, 5).map((point) => (
+                            <article key={point.id} className={styles.restorePointItem}>
+                              <div>
+                                <strong>{point.archivo}</strong>
+                                <small>
+                                  {new Date(point.fecha).toLocaleString()} | {formatRestorePointSize(point.size_bytes)}
+                                </small>
+                              </div>
+                              <button
+                                type="button"
+                                className={`${styles.restorePointRestoreBtn} focus-ring`}
+                                onClick={() => void restaurarPuntoRecuperacion(point.archivo)}
+                                disabled={!restorePointsPlanEnabled || Boolean(restoringPointId) || creatingRestorePoint}
+                              >
+                                {restoringPointId === point.archivo ? "Restaurando..." : (isSuperadmin ? "Restaurar" : "Restaurar negocio")}
+                              </button>
+                            </article>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </article>
                 ) : null}
 
@@ -2742,7 +3062,13 @@ export default function SoportePage() {
                     <button
                       type="button"
                       className={`${styles.supportInteligenteBtn} ${styles.supportPremiumSecondaryAction} focus-ring`}
-                      onClick={() => setShowSoporteInteligente((prev) => !prev)}
+                      onClick={() => {
+                        setShowSoporteInteligente((prev) => {
+                          const next = !prev;
+                          if (next) void cargarGuardianRuntime();
+                          return next;
+                        });
+                      }}
                     >
                       Soporte Sistema {showSoporteInteligente ? "▲" : "▼"}
                     </button>
@@ -2759,7 +3085,7 @@ export default function SoportePage() {
                   </div>
 
                   <p className={styles.supportPremiumBody}>
-                    Usa esta opción solo cuando sea necesario. Requiere confirmación con credenciales de administrador.
+                    Usa esta opción solo cuando sea necesario. Requiere confirmación escrita y genera backup automatico.
                   </p>
 
                   <button
@@ -3455,7 +3781,13 @@ export default function SoportePage() {
                 <button
                   type="button"
                   className={`${styles.supportInteligenteBtn} focus-ring`}
-                  onClick={() => setShowSoporteInteligente((prev) => !prev)}
+                  onClick={() => {
+                    setShowSoporteInteligente((prev) => {
+                      const next = !prev;
+                      if (next) void cargarGuardianRuntime();
+                      return next;
+                    });
+                  }}
                 >
                   Soporte Sistema {showSoporteInteligente ? "▲" : "▼"}
                 </button>
@@ -3713,6 +4045,21 @@ export default function SoportePage() {
 
             {isSuperadmin ? (
               <>
+                <section className={styles.planPremiumAdminBanner}>
+                  <div>
+                    <p className={styles.supportPremiumKicker}>Pricing cockpit</p>
+                    <h4>Atributos comerciales de planes</h4>
+                    <p>
+                      Controla precios, limites y modulos incluidos. Los cambios guardados actualizan la vitrina de planes, validaciones por plan y capacidades premium.
+                    </p>
+                  </div>
+                  <div className={styles.planPremiumAdminStats}>
+                    <span><strong>{planCatalogoVisible.length}</strong> planes visibles</span>
+                    <span><strong>{planCatalogoVisible.filter((plan) => plan.backups_habilitado).length}</strong> con backup</span>
+                    <span><strong>{planCatalogoVisible.filter((plan) => plan.puntos_recuperacion_habilitado).length}</strong> con recuperacion</span>
+                  </div>
+                </section>
+
                 <section className={styles.planAmountsBox}>
                   <div>
                     <h4>Montos editables por plan</h4>
@@ -3809,6 +4156,24 @@ export default function SoportePage() {
                         <label className={styles.inlineCheck}>
                           <input
                             type="checkbox"
+                            checked={Boolean(plan.backups_habilitado)}
+                            onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "backups_habilitado", e.target.checked)}
+                          />
+                          Backups
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          step="1"
+                          className="focus-ring"
+                          value={plan.backups_limite ?? 0}
+                          onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "backups_limite", Number(e.target.value || 0))}
+                          disabled={!plan.backups_habilitado}
+                        />
+
+                        <label className={styles.inlineCheck}>
+                          <input
+                            type="checkbox"
                             checked={Boolean(plan.soporte_habilitado)}
                             onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "soporte_habilitado", e.target.checked)}
                           />
@@ -3818,10 +4183,28 @@ export default function SoportePage() {
                         <label className={styles.inlineCheck}>
                           <input
                             type="checkbox"
+                            checked={Boolean(plan.reinicio_habilitado)}
+                            onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "reinicio_habilitado", e.target.checked)}
+                          />
+                          Reinicio
+                        </label>
+
+                        <label className={styles.inlineCheck}>
+                          <input
+                            type="checkbox"
                             checked={Boolean(plan.sunat_habilitado)}
                             onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "sunat_habilitado", e.target.checked)}
                           />
                           SUNAT
+                        </label>
+
+                        <label className={styles.inlineCheck}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(plan.puntos_recuperacion_habilitado)}
+                            onChange={(e) => actualizarCampoPlanCatalogo(plan.codigo, "puntos_recuperacion_habilitado", e.target.checked)}
+                          />
+                          Puntos de recuperacion
                         </label>
 
                         <label className={styles.inlineCheck}>
@@ -4386,6 +4769,22 @@ export default function SoportePage() {
             )}
           >
             <div className={styles.supportChatWindow}>
+              <div className={styles.sofiaPremiumHero}>
+                <div className={styles.sofiaPremiumOrb}>S</div>
+                <div>
+                  <strong>SofIA Premium</strong>
+                  <p>Razonamiento avanzado para ALVENT, patrones del usuario y acciones guiadas.</p>
+                </div>
+                <span>OpenAI Ready</span>
+              </div>
+
+              <div className={styles.sofiaCapabilityStrip}>
+                <small>Detecta caja cerrada</small>
+                <small>Guia SUNAT</small>
+                <small>Aprende patrones</small>
+                <small>Escala a RENSOF</small>
+              </div>
+
               <div className={styles.supportChatQuickActions}>
                 {SOPORTE_QUICK_PROMPTS.map((prompt) => (
                   <button
@@ -4443,7 +4842,7 @@ export default function SoportePage() {
 
               <div className={styles.supportChatComposer}>
                 <p className={styles.chatLevelHint}>
-                  Nivel activo: <strong>{sofiaResponseLevel}</strong>. SofIA adapta profundidad y lenguaje automaticamente según el rol.
+                  Nivel activo: <strong>{sofiaResponseLevel}</strong>. Enter envia, Shift + Enter crea una nueva linea.
                 </p>
 
                 <label className={styles.formRow}>
@@ -4472,7 +4871,7 @@ export default function SoportePage() {
                         void enviarMensajeSoporteChat();
                       }
                     }}
-                    placeholder="Describe incidencia, mensaje de error y resultado esperado"
+                    placeholder="Escribe tu consulta y presiona Enter para enviar"
                   />
                 </label>
               </div>
@@ -4482,7 +4881,7 @@ export default function SoportePage() {
           <ModalCard
             open={showResetModal}
             title="Reinicio del sistema"
-            subtitle="Selecciona el tipo de reinicio"
+            subtitle="Se genera backup automatico antes de ejecutar. Confirma escribiendo la frase indicada."
             actions={(
               <>
                 <button
@@ -4504,6 +4903,12 @@ export default function SoportePage() {
               </>
             )}
           >
+            <div className={styles.resetWarningBox}>
+              <strong>Operacion irreversible desde la interfaz</strong>
+              <p>
+                Parcial elimina ventas, detalles de ventas y cajas. Completo elimina tambien clientes y productos, y solo esta disponible para superadministrador.
+              </p>
+            </div>
             <select
               className="focus-ring"
               value={modo}
@@ -4514,17 +4919,21 @@ export default function SoportePage() {
               <option value="parcial">
                 Parcial (recomendado)
               </option>
-              <option value="completo">
-                Completo (borra todo)
-              </option>
+              {isSuperadmin ? (
+                <option value="completo">
+                  Completo (solo superadmin)
+                </option>
+              ) : null}
             </select>
             <input
               className="focus-ring"
-              type="password"
-              placeholder="Contraseña administrador"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              placeholder={`Escribe ${modo === "completo" ? "REINICIAR COMPLETO" : "REINICIAR PARCIAL"}`}
+              value={resetConfirmacion}
+              onChange={(e) => setResetConfirmacion(e.target.value)}
             />
+            <small className={styles.helperText}>
+              No se solicita contraseña. La autorizacion se controla por rol, plan, confirmacion escrita, backup automatico y auditoria.
+            </small>
           </ModalCard>
         </main>
       </div>

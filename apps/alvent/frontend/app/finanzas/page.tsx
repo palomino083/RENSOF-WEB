@@ -80,6 +80,18 @@ const formatMonthLabel = (key: string) => {
   });
 };
 
+const FINANCE_INCOME_ARCHIVE_KEY = "alvent_finance_incomes_archived";
+
+const getLocalStorageItem = (key: string) => {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(key);
+};
+
+const setLocalStorageItem = (key: string, value: string) => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(key, value);
+};
+
 export default function FinanzasPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -96,6 +108,8 @@ export default function FinanzasPage() {
   const [pagosPendientes, setPagosPendientes] = useState(0);
   const [loadingPlanFinanciero, setLoadingPlanFinanciero] = useState(false);
   const [planAmounts, setPlanAmounts] = useState({ ...DEFAULT_PLAN_AMOUNTS });
+  const [filtroArchivoIngresos, setFiltroArchivoIngresos] = useState<"ACTIVOS" | "ARCHIVADOS" | "TODOS">("ACTIVOS");
+  const [ingresosArchivados, setIngresosArchivados] = useState<Set<number>>(() => new Set());
 
   const [form, setForm] = useState({
     categoria: "Operaciones",
@@ -158,6 +172,18 @@ export default function FinanzasPage() {
       setLoadingPlanFinanciero(false);
     }
   }, [negocios]);
+
+  useEffect(() => {
+    try {
+      const raw = getLocalStorageItem(FINANCE_INCOME_ARCHIVE_KEY);
+      const ids = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(ids)) {
+        setIngresosArchivados(new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0)));
+      }
+    } catch {
+      setIngresosArchivados(new Set());
+    }
+  }, []);
 
   useEffect(() => {
     void cargarTodo(periodo);
@@ -289,6 +315,29 @@ export default function FinanzasPage() {
     }
   };
 
+  const persistirIngresosArchivados = (next: Set<number>) => {
+    setIngresosArchivados(next);
+    setLocalStorageItem(FINANCE_INCOME_ARCHIVE_KEY, JSON.stringify(Array.from(next)));
+  };
+
+  const alternarArchivoIngreso = (ingresoId: number) => {
+    const next = new Set(ingresosArchivados);
+    if (next.has(ingresoId)) {
+      next.delete(ingresoId);
+    } else {
+      next.add(ingresoId);
+    }
+    persistirIngresosArchivados(next);
+  };
+
+  const ingresosVisibles = useMemo(() => {
+    return ingresos.filter((row) => {
+      const archivado = ingresosArchivados.has(Number(row.id));
+      if (filtroArchivoIngresos === "TODOS") return true;
+      return filtroArchivoIngresos === "ARCHIVADOS" ? archivado : !archivado;
+    });
+  }, [filtroArchivoIngresos, ingresos, ingresosArchivados]);
+
   const totalIngresos = useMemo(() => ingresos.reduce((acc, row) => acc + Number(row.monto || 0), 0), [ingresos]);
   const totalGastos = useMemo(() => gastos.reduce((acc, row) => acc + Number(row.monto || 0), 0), [gastos]);
   const utilidad = totalIngresos - totalGastos;
@@ -296,7 +345,7 @@ export default function FinanzasPage() {
   const ingresosAgrupados = useMemo(() => {
     const months = new Map<string, Map<string, { rows: IngresoPlan[]; total: number }>>();
 
-    ingresos.forEach((row) => {
+    ingresosVisibles.forEach((row) => {
       const monthKey = getIngresoMonthKey(row.fecha);
       const planKey = String(row.plan_solicitado || "SIN_PLAN").toUpperCase();
       if (!months.has(monthKey)) months.set(monthKey, new Map());
@@ -321,11 +370,11 @@ export default function FinanzasPage() {
           count: plans.reduce((acc, plan) => acc + plan.rows.length, 0),
         };
       });
-  }, [ingresos]);
+  }, [ingresosVisibles]);
 
   const resumenPorPlan = useMemo(() => {
     const map = new Map<string, { total: number; count: number; negocios: Set<number> }>();
-    ingresos.forEach((row) => {
+    ingresosVisibles.forEach((row) => {
       const plan = String(row.plan_solicitado || "SIN_PLAN").toUpperCase();
       const current = map.get(plan) || { total: 0, count: 0, negocios: new Set<number>() };
       current.total += Number(row.monto || 0);
@@ -337,7 +386,7 @@ export default function FinanzasPage() {
     return Array.from(map.entries())
       .map(([plan, data]) => ({ plan, ...data, negociosCount: data.negocios.size }))
       .sort((a, b) => b.total - a.total);
-  }, [ingresos]);
+  }, [ingresosVisibles]);
 
   const getPlanAmount = useCallback((plan: string) => {
     const amountKey = PLAN_AMOUNT_BY_CODE[normalizarcodigoPlan(plan)];
@@ -364,7 +413,7 @@ export default function FinanzasPage() {
   const ingresosPorPlanFinanciero = useMemo(() => {
     const map = new Map<string, { plan: string; ingresos: number; movimientos: number }>();
 
-    ingresos.forEach((row) => {
+    ingresosVisibles.forEach((row) => {
       const plan = normalizarcodigoPlan(row.plan_solicitado || "SIN_PLAN");
       const current = map.get(plan) || { plan, ingresos: 0, movimientos: 0 };
       current.ingresos += Number(row.monto || 0);
@@ -373,7 +422,7 @@ export default function FinanzasPage() {
     });
 
     return map;
-  }, [ingresos]);
+  }, [ingresosVisibles]);
 
   const resumenFinancieroPlanes = useMemo(() => {
     const planes = new Set<string>();
@@ -531,7 +580,7 @@ export default function FinanzasPage() {
               <article className={styles.financialPlanCard}>
                 <span>Ingresos del periodo</span>
                 <strong>{formatCurrency(totalIngresos)}</strong>
-                <small>{ingresos.length} movimientos aplicados</small>
+                <small>{ingresos.length} movimientos aplicados | {ingresosVisibles.length} visibles</small>
               </article>
               <article className={styles.financialPlanCard}>
                 <span>Pagos pendientes</span>
@@ -577,7 +626,26 @@ export default function FinanzasPage() {
             </div>
           </section>
           <section className={styles.card}>
-            <Toolbar title="Movimientos por plan y mes" right={<StatusBadge text={loading ? "Cargando" : `${ingresos.length} registros`} variant="neutral" />} />
+            <Toolbar
+              title="Movimientos por plan y mes"
+              right={
+                <div className={styles.tableToolbarActions}>
+                  <label className={styles.inlineFilter}>
+                    Vista
+                    <select
+                      value={filtroArchivoIngresos}
+                      onChange={(e) => setFiltroArchivoIngresos(e.target.value as "ACTIVOS" | "ARCHIVADOS" | "TODOS")}
+                      className="focus-ring"
+                    >
+                      <option value="ACTIVOS">Activos</option>
+                      <option value="ARCHIVADOS">Archivados</option>
+                      <option value="TODOS">Todos</option>
+                    </select>
+                  </label>
+                  <StatusBadge text={loading ? "Cargando" : `${ingresosVisibles.length} visibles`} variant="neutral" />
+                </div>
+              }
+            />
             <p>
               Se muestran solo activaciones con estado aplicado, agrupadas por mes y plan para leer rápido ingreso,
               cantidad de movimientos y negocios impactados.
@@ -605,34 +673,49 @@ export default function FinanzasPage() {
                     <th>Canal</th>
                     <th>Referencia</th>
                     <th>Ingreso</th>
+                    <th>Accion</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {ingresos.length === 0 && !loading ? (
+                  {ingresosVisibles.length === 0 && !loading ? (
                     <tr>
-                      <td colSpan={6}>No hay movimientos aplicados para mostrar.</td>
+                      <td colSpan={7}>No hay movimientos aplicados para mostrar.</td>
                     </tr>
                   ) : (
                     ingresosAgrupados.flatMap((month) => [
                       <tr key={`month-${month.monthKey}`} className={styles.groupMonthRow}>
                         <td colSpan={5}>{month.monthLabel} | {month.count} movimientos</td>
                         <td>{formatCurrency(month.total)}</td>
+                        <td />
                       </tr>,
                       ...month.plans.flatMap((plan) => [
                         <tr key={`plan-${month.monthKey}-${plan.plan}`} className={styles.groupPlanRow}>
                           <td colSpan={5}>Plan {plan.plan} | {plan.rows.length} movimientos</td>
                           <td>{formatCurrency(plan.total)}</td>
+                          <td />
                         </tr>,
-                        ...plan.rows.map((row, idx) => (
-                          <tr key={`${month.monthKey}-${plan.plan}-${row.negocio_id}-${row.fecha}-${idx}`}>
-                            <td>{new Date(row.fecha).toLocaleDateString("es-PE")}</td>
-                            <td>{row.negocio_id} - {row.negocio_nombre}</td>
-                            <td>{row.plan_solicitado}</td>
-                            <td>{row.canal_pago}</td>
-                            <td>{row.referencia_pago}</td>
-                            <td>{formatCurrency(Number(row.monto || 0))}</td>
-                          </tr>
-                        )),
+                        ...plan.rows.map((row, idx) => {
+                          const archivado = ingresosArchivados.has(Number(row.id));
+                          return (
+                            <tr key={`${month.monthKey}-${plan.plan}-${row.id}-${idx}`}>
+                              <td>{new Date(row.fecha).toLocaleDateString("es-PE")}</td>
+                              <td>{row.negocio_id} - {row.negocio_nombre}</td>
+                              <td>{row.plan_solicitado}</td>
+                              <td>{row.canal_pago}</td>
+                              <td>{row.referencia_pago}</td>
+                              <td>{formatCurrency(Number(row.monto || 0))}</td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className={styles.tableActionBtn}
+                                  onClick={() => alternarArchivoIngreso(Number(row.id))}
+                                >
+                                  {archivado ? "Restaurar" : "Archivar"}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        }),
                       ]),
                     ])
                   )}

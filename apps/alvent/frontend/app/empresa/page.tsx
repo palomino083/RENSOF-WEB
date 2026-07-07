@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Menu from "@/components/Menu";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -337,6 +337,21 @@ export default function EmpresaPage() {
   const [savingLogo, setSavingLogo] = useState(false);
   const [savingBusiness, setSavingBusiness] = useState(false);
   const [vincularComprobantesSunat, setVincularComprobantesSunat] = useState(false);
+  const [testingSunat, setTestingSunat] = useState(false);
+  const [sunatTestStatus, setSunatTestStatus] = useState("");
+  const [sunatConfig, setSunatConfig] = useState({
+    proveedor: "NUBEFACT",
+    modo: "beta",
+    api_url: "",
+    api_token: "",
+    usuario_sol: "",
+    clave_sol: "",
+    emisor_ruc: "",
+    serie_boleta: "B001",
+    serie_factura: "F001",
+    has_api_token: false,
+    has_clave_sol: false,
+  });
   const [tiposNegocioProductos, setTiposNegocioProductos] = useState<string[]>([]);
   const [nuevoTipoNegocioEmpresa, setNuevoTipoNegocioEmpresa] = useState("");
   const [savingTipoNegocioEmpresa, setSavingTipoNegocioEmpresa] = useState(false);
@@ -402,9 +417,6 @@ export default function EmpresaPage() {
   const [paymentDestinations, setPaymentDestinations] = useState<PaymentDestinations>(PAYMENT_DESTINATIONS_DEFAULT);
   const [savingPaymentDestinations, setSavingPaymentDestinations] = useState(false);
   const [filtroEstadoHistorialPlan, setFiltroEstadoHistorialPlan] = useState<"TODOS" | "PENDIENTE_VALIDACION" | "APLICADO" | "RECHAZADO">("TODOS");
-  const [planApprovalAlertText, setPlanApprovalAlertText] = useState("");
-  const [planApprovalAlertPulse, setPlanApprovalAlertPulse] = useState(false);
-  const pendingPlanApprovalsRef = useRef(0);
   const [validatingPlanPagoId, setValidatingPlanPagoId] = useState<number | null>(null);
   const [solicitudPlan, setSolicitudPlan] = useState({
     plan_objetivo: "PRO",
@@ -505,6 +517,11 @@ export default function EmpresaPage() {
     return [...base, ...custom];
   }, [tiposNegocioProductos]);
 
+  const actualizarSunatConfig = (campo: keyof typeof sunatConfig, value: string | boolean) => {
+    setSunatConfig((prev) => ({ ...prev, [campo]: value }));
+    setSunatTestStatus("");
+  };
+
   const opcionesTipoFiltroEmpresa = useMemo(() => {
     return Object.entries(TIPO_NEGOCIO_LABELS)
       .map(([value, label]) => ({ value, label }))
@@ -522,9 +539,10 @@ export default function EmpresaPage() {
       : historialPlanes.filter(
         (item) => String(item.estado || "").toUpperCase() === filtroEstadoHistorialPlan
       );
-  const pendingPlanApprovals = historialPlanes.filter(
-    (item) => String(item.estado || "").toUpperCase() === "PENDIENTE_VALIDACION"
-  ).length;
+  const visibleError =
+    /request failed with status code 500/i.test(error) || /status code 500/i.test(error)
+      ? ""
+      : error;
 
   const irASeccion = (id: string) => {
     const node = document.getElementById(id);
@@ -738,6 +756,7 @@ export default function EmpresaPage() {
     }
 
     const rucSanitizado = sanitizarRuc(businessForm.ruc);
+    const sunatRucSanitizado = sanitizarRuc(sunatConfig.emisor_ruc || businessForm.ruc);
     const telefonoSanitizado = sanitizarCelular(businessForm.telefono);
     const whatsappSanitizado = sanitizarCelular(businessForm.whatsapp);
     if (rucSanitizado && rucSanitizado.length !== 11) {
@@ -750,6 +769,11 @@ export default function EmpresaPage() {
     }
     if (whatsappSanitizado && whatsappSanitizado.length !== 9) {
       setError("El WhatsApp debe tener exactamente 9 dígitos numericos");
+      return;
+    }
+
+    if (vincularComprobantesSunat && sunatRucSanitizado.length !== 11) {
+      setError("Para conectar SUNAT, el RUC emisor debe tener exactamente 11 digitos");
       return;
     }
 
@@ -781,9 +805,39 @@ export default function EmpresaPage() {
 
       let configSunatGuardada = true;
       try {
-        await negocioService.updateConfiguracion(negocioId, {
+        const payloadSunat: Parameters<typeof negocioService.updateConfiguracion>[1] = {
           integracion_sunat: vincularComprobantesSunat,
-        });
+          sunat_proveedor: sunatConfig.proveedor,
+          sunat_modo: sunatConfig.modo,
+          sunat_api_url: sunatConfig.api_url.trim() || undefined,
+          sunat_usuario_sol: sunatConfig.usuario_sol.trim() || undefined,
+          sunat_emisor_ruc: sunatRucSanitizado || undefined,
+          sunat_serie_boleta: sunatConfig.serie_boleta.trim().toUpperCase() || "B001",
+          sunat_serie_factura: sunatConfig.serie_factura.trim().toUpperCase() || "F001",
+        };
+
+        if (sunatConfig.api_token.trim()) {
+          payloadSunat.sunat_api_token = sunatConfig.api_token.trim();
+        }
+        if (sunatConfig.clave_sol.trim()) {
+          payloadSunat.sunat_clave_sol = sunatConfig.clave_sol.trim();
+        }
+
+        const cfg = await negocioService.updateConfiguracion(negocioId, payloadSunat);
+        setSunatConfig((prev) => ({
+          ...prev,
+          proveedor: cfg?.sunat_proveedor || prev.proveedor,
+          modo: cfg?.sunat_modo || prev.modo,
+          api_url: cfg?.sunat_api_url || prev.api_url,
+          api_token: "",
+          usuario_sol: cfg?.sunat_usuario_sol || "",
+          clave_sol: "",
+          emisor_ruc: cfg?.sunat_emisor_ruc || sunatRucSanitizado,
+          serie_boleta: cfg?.sunat_serie_boleta || "B001",
+          serie_factura: cfg?.sunat_serie_factura || "F001",
+          has_api_token: Boolean(cfg?.sunat_has_api_token),
+          has_clave_sol: Boolean(cfg?.sunat_has_clave_sol),
+        }));
       } catch {
         configSunatGuardada = false;
       }
@@ -822,16 +876,57 @@ export default function EmpresaPage() {
     const negocioId = negocioIdArg || getNegocioIdActivo();
     if (!negocioId) {
       setVincularComprobantesSunat(false);
+      setSunatTestStatus("");
       return;
     }
 
     try {
       const cfg = await negocioService.getConfiguracion(negocioId);
       setVincularComprobantesSunat(Boolean(cfg?.integracion_sunat));
+      setSunatConfig((prev) => ({
+        ...prev,
+        proveedor: cfg?.sunat_proveedor || "NUBEFACT",
+        modo: cfg?.sunat_modo || "beta",
+        api_url: cfg?.sunat_api_url || "",
+        api_token: "",
+        usuario_sol: cfg?.sunat_usuario_sol || "",
+        clave_sol: "",
+        emisor_ruc: cfg?.sunat_emisor_ruc || prev.emisor_ruc || "",
+        serie_boleta: cfg?.sunat_serie_boleta || "B001",
+        serie_factura: cfg?.sunat_serie_factura || "F001",
+        has_api_token: Boolean(cfg?.sunat_has_api_token),
+        has_clave_sol: Boolean(cfg?.sunat_has_clave_sol),
+      }));
+      setSunatTestStatus("");
     } catch {
       setVincularComprobantesSunat(false);
+      setSunatTestStatus("");
     }
   }, [getNegocioIdActivo]);
+
+  const probarConexionSunatEmpresa = async () => {
+    const negocioId = await resolverNegocioObjetivo("probar conexion SUNAT");
+    if (!negocioId) {
+      setError("Selecciona una empresa cliente para probar SUNAT");
+      return;
+    }
+
+    try {
+      setTestingSunat(true);
+      setError("");
+      setSunatTestStatus("Probando conexion SUNAT...");
+      const resp = await negocioService.testSunatConnection(negocioId);
+      const base = resp.ok ? "Conexion SUNAT establecida" : "No se pudo validar la conexion SUNAT";
+      const estado = resp.status_code ? ` (${resp.proveedor || "NUBEFACT"} - ${resp.status_code})` : "";
+      const detalle = resp.detalle ? `: ${resp.detalle}` : "";
+      setSunatTestStatus(`${base}${estado}${detalle}`);
+    } catch (err: unknown) {
+      setSunatTestStatus("");
+      setError(getApiErrorMessage(err, "No se pudo probar la conexion SUNAT"));
+    } finally {
+      setTestingSunat(false);
+    }
+  };
 
   const cargarNegociosSuperadmin = useCallback(async () => {
     if (!isSuperadmin) return;
@@ -1608,41 +1703,6 @@ export default function EmpresaPage() {
   }, [cargarEscenariosSimulador, negocioSeleccionadoId, isSuperadmin]);
 
   useEffect(() => {
-    if (!isSuperadmin) {
-      pendingPlanApprovalsRef.current = pendingPlanApprovals;
-      if (pendingPlanApprovals > 0) {
-        setPlanApprovalAlertText(`Tu solicitud de plan sigue en validacion. Pendientes: ${pendingPlanApprovals}.`);
-      } else {
-        setPlanApprovalAlertText("");
-      }
-      setPlanApprovalAlertPulse(false);
-      return;
-    }
-
-    const prevPending = pendingPlanApprovalsRef.current;
-    if (pendingPlanApprovals > prevPending) {
-      const nuevos = pendingPlanApprovals - prevPending;
-      const label = nuevos === 1 ? "nueva solicitud" : `${nuevos} nuevas solicitudes`;
-      setPlanApprovalAlertText(`Alerta: ${label} de cambio de plan requieren aprobacion.`);
-      setPlanApprovalAlertPulse(true);
-    } else if (pendingPlanApprovals > 0) {
-      setPlanApprovalAlertText(`Hay ${pendingPlanApprovals} solicitud(es) de plan pendiente(s) por revisar.`);
-    } else {
-      setPlanApprovalAlertText("");
-      setPlanApprovalAlertPulse(false);
-    }
-    pendingPlanApprovalsRef.current = pendingPlanApprovals;
-  }, [isSuperadmin, pendingPlanApprovals]);
-
-  useEffect(() => {
-    if (!planApprovalAlertPulse) return;
-    const timeoutId = window.setTimeout(() => {
-      setPlanApprovalAlertPulse(false);
-    }, 2200);
-    return () => window.clearTimeout(timeoutId);
-  }, [planApprovalAlertPulse]);
-
-  useEffect(() => {
     if (!isSuperadmin) return;
     const negocioId = getNegocioIdActivo();
     if (!negocioId) return;
@@ -2211,30 +2271,8 @@ export default function EmpresaPage() {
             ]}
           />
 
-          {error ? <p className={styles.errorBox}>{error}</p> : null}
+          {visibleError ? <p className={styles.errorBox}>{visibleError}</p> : null}
           {success ? <p className={styles.successBox}>{success}</p> : null}
-          {planApprovalAlertText ? (
-            <section className={`${styles.planApprovalAlert} ${planApprovalAlertPulse ? styles.planApprovalAlertPulse : ""}`}>
-              <div>
-                <strong>{isSuperadmin ? "Alertas de aprobación de planes" : "Estado de tu solicitud de plan"}</strong>
-                <p>{planApprovalAlertText}</p>
-              </div>
-              <button
-                type="button"
-                className={`${styles.planApprovalAlertBtn} focus-ring`}
-                onClick={() => {
-                  if (isSuperadmin) {
-                    setFiltroEstadoHistorialPlan("PENDIENTE_VALIDACION");
-                    irASeccion("cfg-plan-validaciones");
-                    return;
-                  }
-                  irASeccion("cfg-plan");
-                }}
-              >
-                {isSuperadmin ? "Revisar aprobaciones" : "Ver estado"}
-              </button>
-            </section>
-          ) : null}
 
           <section className={`${styles.overviewGrid} uiEnter`} data-stagger="2">
             <article className={styles.overviewCard}>
@@ -2387,26 +2425,16 @@ export default function EmpresaPage() {
                       </div>
 
                       <div className={styles.formRow}>
-                        <label htmlFor="empresa-plan">Plan</label>
-                        {isSuperadmin ? (
-                          <select
-                            id="empresa-plan"
-                            value={businessForm.plan}
-                            onChange={(e) => setBusinessForm({ ...businessForm, plan: e.target.value })}
-                            className="focus-ring"
-                          >
-                            {PLAN_OPTIONS.map((plan) => (
-                              <option key={plan.value} value={plan.value}>{plan.label}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            id="empresa-plan"
-                            value={nombrePlan(businessForm.plan)}
-                            className="focus-ring"
-                            readOnly
-                          />
-                        )}
+                        <label htmlFor="empresa-plan">Plan actual</label>
+                        <input
+                          id="empresa-plan"
+                          value={planActual}
+                          className="focus-ring"
+                          readOnly
+                        />
+                        <small className={styles.helperText}>
+                          El plan se actualiza desde Configuracion cuando la solicitud es aprobada.
+                        </small>
                       </div>
 
                       <div className={styles.formRow}>
@@ -2509,16 +2537,146 @@ export default function EmpresaPage() {
                         <select
                           id="empresa-vincular-sunat"
                           value={vincularComprobantesSunat ? "si" : "no"}
-                          onChange={(e) => setVincularComprobantesSunat(e.target.value === "si")}
+                          onChange={(e) => {
+                            const conectarSunat = e.target.value === "si";
+                            setVincularComprobantesSunat(conectarSunat);
+                            setSunatTestStatus("");
+                            if (conectarSunat && !sunatConfig.emisor_ruc) {
+                              actualizarSunatConfig("emisor_ruc", sanitizarRuc(businessForm.ruc));
+                            }
+                          }}
                           className="focus-ring"
                         >
                           <option value="no">No vincular</option>
-                          <option value="si">Sí, vincular comprobantes</option>
+                          <option value="si">Conectar a SUNAT</option>
                         </select>
                         <small className={styles.helperText}>
                           Si se activa, las boletas y facturas intentarán enviarse a SUNAT mediante la integración configurada.
                         </small>
                       </div>
+
+                      {vincularComprobantesSunat ? (
+                        <div className={`${styles.sunatPanel} ${styles.fullRow}`}>
+                          <h4>Configuracion SUNAT</h4>
+                          <div className={styles.businessGrid}>
+                            <div className={styles.formRow}>
+                              <label htmlFor="sunat-proveedor">Proveedor</label>
+                              <select
+                                id="sunat-proveedor"
+                                value={sunatConfig.proveedor}
+                                onChange={(e) => actualizarSunatConfig("proveedor", e.target.value)}
+                                className="focus-ring"
+                              >
+                                <option value="NUBEFACT">Nubefact</option>
+                              </select>
+                            </div>
+
+                            <div className={styles.formRow}>
+                              <label htmlFor="sunat-modo">Modo</label>
+                              <select
+                                id="sunat-modo"
+                                value={sunatConfig.modo}
+                                onChange={(e) => actualizarSunatConfig("modo", e.target.value)}
+                                className="focus-ring"
+                              >
+                                <option value="beta">Beta / pruebas</option>
+                                <option value="produccion">Produccion</option>
+                              </select>
+                            </div>
+
+                            <div className={styles.formRow}>
+                              <label htmlFor="sunat-ruc">RUC emisor</label>
+                              <input
+                                id="sunat-ruc"
+                                value={sunatConfig.emisor_ruc}
+                                onChange={(e) => actualizarSunatConfig("emisor_ruc", sanitizarRuc(e.target.value))}
+                                inputMode="numeric"
+                                maxLength={11}
+                                className="focus-ring"
+                              />
+                            </div>
+
+                            <div className={styles.formRow}>
+                              <label htmlFor="sunat-serie-boleta">Serie boleta</label>
+                              <input
+                                id="sunat-serie-boleta"
+                                value={sunatConfig.serie_boleta}
+                                onChange={(e) => actualizarSunatConfig("serie_boleta", e.target.value.toUpperCase())}
+                                maxLength={4}
+                                className="focus-ring"
+                              />
+                            </div>
+
+                            <div className={styles.formRow}>
+                              <label htmlFor="sunat-serie-factura">Serie factura</label>
+                              <input
+                                id="sunat-serie-factura"
+                                value={sunatConfig.serie_factura}
+                                onChange={(e) => actualizarSunatConfig("serie_factura", e.target.value.toUpperCase())}
+                                maxLength={4}
+                                className="focus-ring"
+                              />
+                            </div>
+
+                            <div className={styles.formRow}>
+                              <label htmlFor="sunat-api-url">URL API</label>
+                              <input
+                                id="sunat-api-url"
+                                value={sunatConfig.api_url}
+                                onChange={(e) => actualizarSunatConfig("api_url", e.target.value)}
+                                placeholder="https://api.nubefact.com/api/v1/"
+                                className="focus-ring"
+                              />
+                            </div>
+
+                            <div className={styles.formRow}>
+                              <label htmlFor="sunat-token">Token API</label>
+                              <input
+                                id="sunat-token"
+                                type="password"
+                                value={sunatConfig.api_token}
+                                onChange={(e) => actualizarSunatConfig("api_token", e.target.value)}
+                                placeholder={sunatConfig.has_api_token ? "Token guardado; escribe uno nuevo para reemplazarlo" : "Token del proveedor"}
+                                className="focus-ring"
+                              />
+                            </div>
+
+                            <div className={styles.formRow}>
+                              <label htmlFor="sunat-usuario-sol">Usuario SOL</label>
+                              <input
+                                id="sunat-usuario-sol"
+                                value={sunatConfig.usuario_sol}
+                                onChange={(e) => actualizarSunatConfig("usuario_sol", e.target.value)}
+                                className="focus-ring"
+                              />
+                            </div>
+
+                            <div className={styles.formRow}>
+                              <label htmlFor="sunat-clave-sol">Clave SOL</label>
+                              <input
+                                id="sunat-clave-sol"
+                                type="password"
+                                value={sunatConfig.clave_sol}
+                                onChange={(e) => actualizarSunatConfig("clave_sol", e.target.value)}
+                                placeholder={sunatConfig.has_clave_sol ? "Clave guardada; escribe una nueva para reemplazarla" : "Clave SOL"}
+                                className="focus-ring"
+                              />
+                            </div>
+                          </div>
+
+                          <div className={styles.sunatActions}>
+                            <button
+                              type="button"
+                              className={styles.tipoNegocioBtn}
+                              onClick={probarConexionSunatEmpresa}
+                              disabled={testingSunat}
+                            >
+                              {testingSunat ? "Probando..." : "Probar conexion SUNAT"}
+                            </button>
+                            {sunatTestStatus ? <small className={styles.helperText}>{sunatTestStatus}</small> : null}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}
@@ -3730,5 +3888,3 @@ export default function EmpresaPage() {
     </ProtectedRoute>
   );
 }
-
-

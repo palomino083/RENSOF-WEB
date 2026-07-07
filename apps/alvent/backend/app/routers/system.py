@@ -31,13 +31,21 @@ router = APIRouter()
 
 class ResetRequest(BaseModel):
     modo: str  # "parcial" | "completo"
-    password: str
+    confirmacion: str
 
 
 class RestoreResponse(BaseModel):
     ok: bool
     mensaje: str
     archivo: str
+
+
+class RestorePointCreate(BaseModel):
+    etiqueta: Optional[str] = None
+
+
+class RestorePointRestoreRequest(BaseModel):
+    confirmacion: str
 
 
 class SoporteTicketCreate(BaseModel):
@@ -69,8 +77,273 @@ class GuardianSafeModeRequest(BaseModel):
 SOFIA_OPENAI_MODEL = os.getenv("SOFIA_OPENAI_MODEL", "gpt-5.5")
 SOFIA_OPENAI_TIMEOUT = float(os.getenv("SOFIA_OPENAI_TIMEOUT", "12"))
 SOFIA_MAX_INPUT_CHARS = int(os.getenv("SOFIA_MAX_INPUT_CHARS", "3500"))
-SOFIA_MAX_OUTPUT_TOKENS = int(os.getenv("SOFIA_MAX_OUTPUT_TOKENS", "900"))
+SOFIA_MAX_OUTPUT_TOKENS = int(os.getenv("SOFIA_MAX_OUTPUT_TOKENS", "260"))
 SOFIA_ENABLE_OPENAI = str(os.getenv("SOFIA_ENABLE_OPENAI", "true")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _restore_points_dir() -> Path:
+    path = Path(__file__).resolve().parent.parent / "uploads" / "restore_points"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _sanitize_restore_label(value: str | None) -> str:
+    cleaned = re.sub(r"[^A-Za-z0-9_-]+", "_", str(value or "").strip())[:40].strip("_")
+    return cleaned or "manual"
+
+
+def _is_business_admin(db: Session, current_user: dict) -> bool:
+    actor_id = int(current_user.get("usuario_id") or 0)
+    actor = db.query(Usuario).filter(Usuario.id == actor_id).first()
+    actor_rol = str(getattr(actor, "rol", "") or current_user.get("rol") or "").upper().strip()
+    return actor_rol in {"ADMIN", "ADMINISTRADOR"}
+
+
+def _require_restore_point_create_access(db: Session, current_user: dict) -> None:
+    if current_user.get("is_superadmin"):
+        return
+    if _is_business_admin(db, current_user) and int(current_user.get("negocio_id") or 0) > 0:
+        return
+    raise HTTPException(status_code=403, detail="Solo administrador puede crear puntos de recuperacion")
+
+
+def _validar_plan_puntos_recuperacion(db: Session, current_user: dict) -> None:
+    if current_user.get("is_superadmin"):
+        return
+    negocio_id = int(current_user.get("negocio_id") or 0)
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+    try:
+        plan = normalizar_plan(getattr(negocio, "plan", "BASICO"))
+    except ValueError:
+        plan = "BASICO"
+    config = resolver_config_plan_negocio(negocio, plan)
+    if not getattr(config, "puntos_recuperacion_habilitado", False):
+        raise HTTPException(status_code=402, detail=f"Puntos de recuperacion no disponible en plan {plan}")
+
+
+def _require_superadmin_restore_points(current_user: dict) -> None:
+    if not current_user.get("is_superadmin"):
+        raise HTTPException(status_code=403, detail="Solo superadministrador puede restaurar puntos de recuperacion")
+
+
+def _restore_point_scope(current_user: dict) -> str:
+    if current_user.get("is_superadmin"):
+        return "global"
+    return f"negocio_{int(current_user.get('negocio_id') or 0)}"
+
+
+def _sqlite_db_path(operation: str) -> Path:
+    if not DATABASE_URL.startswith("sqlite:///"):
+        raise HTTPException(status_code=400, detail=f"{operation} soportado solo para SQLite")
+    return Path(DATABASE_URL.replace("sqlite:///", ""))
+
+
+def _validate_sqlite_file(path: Path) -> None:
+    try:
+        with sqlite3.connect(str(path)) as conexion:
+            result = conexion.execute("PRAGMA integrity_check;").fetchone()
+    except sqlite3.DatabaseError as exc:
+        raise HTTPException(status_code=400, detail=f"El archivo no es una base SQLite valida: {exc}")
+
+    if not result or str(result[0]).lower() != "ok":
+        raise HTTPException(status_code=400, detail="El archivo SQLite no paso la validacion de integridad")
+
+
+def _quote_identifier(value: str) -> str:
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", value):
+        raise HTTPException(status_code=400, detail=f"Identificador invalido: {value}")
+    return f'"{value}"'
+
+
+def _table_exists_sqlite(conn: sqlite3.Connection, schema: str, table: str) -> bool:
+    schema_q = _quote_identifier(schema)
+    row = conn.execute(
+        f"SELECT name FROM {schema_q}.sqlite_master WHERE type='table' AND name=?",
+        (table,),
+    ).fetchone()
+    return bool(row)
+
+
+def _table_columns_sqlite(conn: sqlite3.Connection, schema: str, table: str) -> list[str]:
+    schema_q = _quote_identifier(schema)
+    table_q = _quote_identifier(table)
+    return [str(row[1]) for row in conn.execute(f"PRAGMA {schema_q}.table_info({table_q})").fetchall()]
+
+
+def _scoped_clause_sqlite(conn: sqlite3.Connection, schema: str, table: str, alias: str) -> str | None:
+    schema_q = _quote_identifier(schema)
+    columns = set(_table_columns_sqlite(conn, schema, table))
+    if "negocio_id" in columns:
+        return f"{alias}.negocio_id = ?"
+    if table in {"ventas", "cajas"} and "usuario_id" in columns and _table_exists_sqlite(conn, schema, "usuarios"):
+        return f"{alias}.usuario_id IN (SELECT id FROM {schema_q}.usuarios WHERE negocio_id = ?)"
+    if table == "venta_detalles" and "venta_id" in columns and _table_exists_sqlite(conn, schema, "ventas"):
+        ventas_columns = set(_table_columns_sqlite(conn, schema, "ventas"))
+        if "negocio_id" in ventas_columns:
+            return f"{alias}.venta_id IN (SELECT id FROM {schema_q}.ventas WHERE negocio_id = ?)"
+        if "usuario_id" in ventas_columns and _table_exists_sqlite(conn, schema, "usuarios"):
+            return f"{alias}.venta_id IN (SELECT id FROM {schema_q}.ventas WHERE usuario_id IN (SELECT id FROM {schema_q}.usuarios WHERE negocio_id = ?))"
+    if table == "movimientos_caja":
+        clauses = []
+        if "caja_id" in columns and _table_exists_sqlite(conn, schema, "cajas"):
+            cajas_columns = set(_table_columns_sqlite(conn, schema, "cajas"))
+            if "negocio_id" in cajas_columns:
+                clauses.append(f"{alias}.caja_id IN (SELECT id FROM {schema_q}.cajas WHERE negocio_id = ?)")
+            elif "usuario_id" in cajas_columns and _table_exists_sqlite(conn, schema, "usuarios"):
+                clauses.append(f"{alias}.caja_id IN (SELECT id FROM {schema_q}.cajas WHERE usuario_id IN (SELECT id FROM {schema_q}.usuarios WHERE negocio_id = ?))")
+        if "venta_id" in columns and _table_exists_sqlite(conn, schema, "ventas"):
+            ventas_columns = set(_table_columns_sqlite(conn, schema, "ventas"))
+            if "negocio_id" in ventas_columns:
+                clauses.append(f"{alias}.venta_id IN (SELECT id FROM {schema_q}.ventas WHERE negocio_id = ?)")
+            elif "usuario_id" in ventas_columns and _table_exists_sqlite(conn, schema, "usuarios"):
+                clauses.append(f"{alias}.venta_id IN (SELECT id FROM {schema_q}.ventas WHERE usuario_id IN (SELECT id FROM {schema_q}.usuarios WHERE negocio_id = ?))")
+        if clauses:
+            return "(" + " OR ".join(clauses) + ")"
+    if table == "inventario_movimientos" and "producto_id" in columns and _table_exists_sqlite(conn, schema, "productos"):
+        return f"{alias}.producto_id IN (SELECT id FROM {schema_q}.productos WHERE negocio_id = ?)"
+    if table in {"email_verifications", "password_resets", "refresh_tokens", "token_blacklist"} and "usuario_id" in columns and _table_exists_sqlite(conn, schema, "usuarios"):
+        return f"{alias}.usuario_id IN (SELECT id FROM {schema_q}.usuarios WHERE negocio_id = ?)"
+    return None
+
+
+def _count_params(sql: str) -> int:
+    return sql.count("?")
+
+
+def _delete_scoped_table_sqlite(conn: sqlite3.Connection, table: str, negocio_id: int) -> int:
+    if not _table_exists_sqlite(conn, "main", table):
+        return 0
+    clause = _scoped_clause_sqlite(conn, "main", table, "t")
+    if not clause:
+        return 0
+    table_q = _quote_identifier(table)
+    columns = set(_table_columns_sqlite(conn, "main", table))
+    id_col = "id" if "id" in columns else "rowid"
+    params = tuple([negocio_id] * _count_params(clause))
+    cursor = conn.execute(
+        f"DELETE FROM {table_q} WHERE {id_col} IN (SELECT t.{id_col} FROM {table_q} AS t WHERE {clause})",
+        params,
+    )
+    return int(cursor.rowcount or 0)
+
+
+def _insert_scoped_table_sqlite(conn: sqlite3.Connection, table: str, negocio_id: int) -> int:
+    if not _table_exists_sqlite(conn, "main", table) or not _table_exists_sqlite(conn, "restore_src", table):
+        return 0
+    clause = _scoped_clause_sqlite(conn, "restore_src", table, "t")
+    if not clause:
+        return 0
+    main_columns = _table_columns_sqlite(conn, "main", table)
+    source_columns = set(_table_columns_sqlite(conn, "restore_src", table))
+    columns = [col for col in main_columns if col in source_columns]
+    if not columns:
+        return 0
+    table_q = _quote_identifier(table)
+    columns_q = ", ".join(_quote_identifier(col) for col in columns)
+    source_columns_q = ", ".join(f"t.{_quote_identifier(col)}" for col in columns)
+    params = tuple([negocio_id] * _count_params(clause))
+    cursor = conn.execute(
+        f"INSERT INTO {table_q} ({columns_q}) SELECT {source_columns_q} FROM restore_src.{table_q} AS t WHERE {clause}",
+        params,
+    )
+    return int(cursor.rowcount or 0)
+
+
+def _restore_business_scope_from_point(point_path: Path, negocio_id: int, current_user: dict, db: Session) -> dict:
+    if negocio_id <= 0:
+        raise HTTPException(status_code=400, detail="Negocio invalido para restauracion aislada")
+
+    db_path = _sqlite_db_path("Restauracion aislada de negocio")
+    backup_path = db_path.with_suffix(f"{db_path.suffix}.pre_restore_negocio_{negocio_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}")
+
+    delete_order = [
+        "venta_detalles",
+        "movimientos_caja",
+        "inventario_movimientos",
+        "email_verifications",
+        "password_resets",
+        "refresh_tokens",
+        "token_blacklist",
+        "ventas",
+        "cajas",
+        "soporte_tickets",
+        "clientes",
+        "productos",
+        "configuracion_negocio",
+        "sucursales",
+        "usuarios",
+    ]
+    insert_order = [
+        "usuarios",
+        "clientes",
+        "productos",
+        "configuracion_negocio",
+        "sucursales",
+        "soporte_tickets",
+        "cajas",
+        "ventas",
+        "venta_detalles",
+        "movimientos_caja",
+        "inventario_movimientos",
+    ]
+
+    if db_path.exists():
+        shutil.copy2(db_path, backup_path)
+
+    db.close()
+    engine.dispose()
+
+    deleted: dict[str, int] = {}
+    inserted: dict[str, int] = {}
+    conn = sqlite3.connect(str(db_path))
+    try:
+        conn.execute("PRAGMA foreign_keys=OFF")
+        conn.execute("ATTACH DATABASE ? AS restore_src", (str(point_path),))
+        conn.execute("BEGIN IMMEDIATE")
+
+        for table in delete_order:
+            deleted_count = _delete_scoped_table_sqlite(conn, table, negocio_id)
+            if deleted_count:
+                deleted[table] = deleted_count
+
+        for table in insert_order:
+            inserted_count = _insert_scoped_table_sqlite(conn, table, negocio_id)
+            if inserted_count:
+                inserted[table] = inserted_count
+
+        conn.commit()
+        conn.execute("DETACH DATABASE restore_src")
+    except sqlite3.IntegrityError as exc:
+        conn.rollback()
+        raise HTTPException(status_code=409, detail=f"No se pudo restaurar por conflicto de datos unicos: {exc}")
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as exc:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(exc))
+    finally:
+        conn.close()
+
+    try:
+        with SessionLocal() as audit_db:
+            registrar_auditoria(
+                db=audit_db,
+                modulo="Backups",
+                accion="Restaurar punto de negocio",
+                descripcion=f"Negocio={negocio_id}; punto={point_path.name}; backup_previo={backup_path.name}",
+                usuario=str(current_user.get("usuario_id") or "Sistema"),
+            )
+    except Exception:
+        pass
+
+    return {
+        "backup": backup_path.name,
+        "deleted": deleted,
+        "inserted": inserted,
+    }
 
 
 def _clip_text(value: str, limit: int = SOFIA_MAX_INPUT_CHARS) -> str:
@@ -109,12 +382,16 @@ def _guardian_snapshot_for_sofia() -> str:
 def _sofia_developer_instructions(nivel: str, categoria_local: str) -> str:
     return "\n".join([
         "Eres SofIA, asistente tecnico y humano de soporte para ALVENT ERP PRO y RENSOF.",
-        "Responde siempre en espa?ol claro, amable, preciso y con tono humano profesional.",
+        "Usa razonamiento avanzado, pero responde en espanol claro, amable, preciso y con tono humano profesional.",
+        "Conoces ALVENT: Dashboard, POS, Ventas, Productos, Inventario, Clientes, Cajas, Reportes, Exportacion, Usuarios, Empresa, Configuracion, Finanzas, Soporte, SUNAT/Nubefact, planes y validacion de pagos.",
+        "Ayuda a detectar configuraciones faltantes: caja cerrada para cobrar, SUNAT sin conectar para boletas/facturas, RUC/series/token faltantes, stock insuficiente, plan sin modulo habilitado, pagos pendientes de validacion.",
+        "Si recibes patrones locales del usuario, usalos como contexto de habitos frecuentes; no afirmes que el usuario hizo algo si solo es un patron.",
         "No inventes datos, credenciales, estados de pago, diagnósticos definitivos ni acciones ya ejecutadas.",
         "Si falta evidencia, pide exactamente los datos minimos: modulo, accion, hora, mensaje de error, usuario/rol y resultado esperado.",
         "No solicites contrase?as, tokens, claves API, datos completos de tarjetas ni documentos completos.",
         "Si hay riesgo fiscal, perdida de ventas, caida de servicio, errores 5xx repetidos o safe mode activo, recomienda escalar a RENSOF.",
-        "Entrega la respuesta con secciones breves: diagnóstico probable, accion inmediata, Verificacion, Escalamiento.",
+        "El saludo inicial ya lo muestra la interfaz. No saludes.",
+        "Entrega maximo 3 lineas: Diagnostico, Accion, Verificacion. Agrega Escalar a RENSOF solo si el riesgo lo amerita.",
         f"Nivel de respuesta: {nivel}.",
         f"Categoria local preliminar: {categoria_local}.",
     ])
@@ -245,51 +522,23 @@ def _resolver_nivel_sofia(current_user: dict | None, texto_contexto: str) -> str
 
 def _envolver_respuesta_sofia(categoria: str, recomendación_base: str, nivel: str = "USUARIO_FINAL") -> dict:
     nivel_normalizado = str(nivel or "USUARIO_FINAL").upper().strip()
-
-    intro = (
-        "Hola, soy SofIA, asistente de soporte de ALVENT. "
-        "Con gusto te ayudo con un analisis tecnico claro y respetuoso."
-    )
-    marco = (
-        "Actuo bajo confidencialidad y reserva de datos personales, "
-        "siguiendo la Ley N. 29733 (Proteccion de Datos Personales) y buenas practicas "
-        "de seguridad y trazabilidad aplicables en el Peru."
-    )
-    cierre = (
-        "Si compartes mas contexto (modulo, hora, mensaje exacto y resultado esperado), "
-        "podre darte un diagnóstico mas preciso y, de ser necesario, escalarlo a RENSOF."
-    )
-
     if nivel_normalizado == "EJECUTIVO":
-        recomendación_nivel = (
-            "Resumen ejecutivo: impacto operativo, riesgo actual y accion recomendada inmediata para continuidad. "
-            f"accion sugerida: {recomendación_base}"
-        )
+        recomendacion_nivel = f"impacto/riesgo operativo identificado. Accion inmediata: {recomendación_base}"
     elif nivel_normalizado == "TÉCNICO":
-        recomendación_nivel = (
-            "Detalle tecnico: identifica modulo, endpoint/flujo, causa probable y verificacion esperada. "
-            f"Paso a paso tecnico: {recomendación_base}"
-        )
+        recomendacion_nivel = f"causa probable por modulo/flujo. Accion tecnica: {recomendación_base}"
     else:
-        recomendación_nivel = (
-            "Guia para usuario final: te explico en pasos simples que revisar y que hacer ahora mismo. "
-            f"Siguiente accion: {recomendación_base}"
-        )
-
-    recomendación = "\n\n".join([
-        intro,
-        f"diagnóstico inicial ({categoria.upper()}): {recomendación_nivel}",
-        marco,
-        cierre,
-    ])
+        recomendacion_nivel = f"requiere validacion simple del flujo. Siguiente accion: {recomendación_base}"
 
     return {
         "categoria": categoria,
-        "recomendación": recomendación,
+        "recomendación": "\n".join([
+            f"Diagnostico: {categoria.upper()} probable; {recomendacion_nivel}",
+            "Accion: valida configuracion, permisos y ultimo evento relacionado.",
+            "Verificacion: confirma resultado, hora exacta y mensaje mostrado.",
+        ]),
         "origen": "SOFIA_LOCAL",
         "nivel": nivel_normalizado,
     }
-
 
 def _sugerir_respuesta_ia(asunto: str | None, consulta: str, current_user: Optional[dict] = None) -> dict:
     texto = f"{asunto or ''} {consulta or ''}".lower()
@@ -301,6 +550,17 @@ def _sugerir_respuesta_ia(asunto: str | None, consulta: str, current_user: Optio
             (
                 "Verifica en configuracion/Fiscal: integracion SUNAT activa, RUC emisor valido, token API vigente y series B/F configuradas. "
                 "Luego prueba una boleta en POS y revisa el estado SUNAT devuelto por la venta."
+            ),
+            nivel,
+        )
+        return _generar_respuesta_sofia_openai(asunto, consulta, current_user, local_result) or local_result
+
+    if any(word in texto for word in ["abrir caja", "caja cerrada", "habilitar caja", "apertura de caja"]):
+        local_result = _envolver_respuesta_sofia(
+            "operacion",
+            (
+                "Ve a Cajas, verifica que no exista una caja abierta para el usuario y registra monto inicial. "
+                "Luego vuelve a POS y confirma que el boton Cobrar quede habilitado."
             ),
             nivel,
         )
@@ -424,30 +684,59 @@ def reset_system(
     actor_id = int(current_user.get("usuario_id") or 0)
     actor = db.query(Usuario).filter(Usuario.id == actor_id).first()
     actor_rol = str(getattr(actor, "rol", "") or "").upper()
-    if not current_user.get("is_superadmin") and actor_rol != "ADMINISTRADOR":
+    is_superadmin = bool(current_user.get("is_superadmin"))
+    if not is_superadmin and actor_rol != "ADMINISTRADOR":
         raise HTTPException(status_code=403, detail="Solo administrador puede reiniciar")
 
     _validar_plan_reinicio(db, current_user)
 
     # 🔐 SEGURIDAD
-    if data.password != "ADMIN123":
-        raise HTTPException(status_code=403, detail="No autorizado")
+    modo = str(data.modo or "").strip().lower()
+    if modo not in {"parcial", "completo"}:
+        raise HTTPException(status_code=400, detail="Modo invalido")
+
+    if modo == "completo" and not is_superadmin:
+        raise HTTPException(status_code=403, detail="El reinicio completo solo esta disponible para superadministrador")
+
+    confirmacion_esperada = "REINICIAR COMPLETO" if modo == "completo" else "REINICIAR PARCIAL"
+    if str(data.confirmacion or "").strip().upper() != confirmacion_esperada:
+        raise HTTPException(status_code=400, detail=f"Escribe {confirmacion_esperada} para confirmar")
+
+    if not DATABASE_URL.startswith("sqlite:///"):
+        raise HTTPException(status_code=400, detail="Reinicio requiere backup automatico SQLite antes de continuar")
+
+    db_path = Path(DATABASE_URL.replace("sqlite:///", ""))
+    if not db_path.exists():
+        raise HTTPException(status_code=404, detail="No se encontro base de datos para respaldar")
+
+    negocio_id = int(current_user.get("negocio_id") or 0)
+    backup_dir = Path(__file__).resolve().parent.parent / "uploads" / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    scope = "global" if is_superadmin else f"negocio_{negocio_id}"
+    backup_name = f"pre_reset_{scope}_{modo}_{timestamp}.db"
+    shutil.copy2(db_path, backup_dir / backup_name)
 
     try:
 
         # =========================
         # 🟡 RESET PARCIAL
         # =========================
-        if data.modo == "parcial":
-
-            db.query(VentaDetalle).delete(synchronize_session=False)
-            db.query(Venta).delete(synchronize_session=False)
-            db.query(Caja).delete(synchronize_session=False)
+        if modo == "parcial":
+            if is_superadmin:
+                db.query(VentaDetalle).delete(synchronize_session=False)
+                db.query(Venta).delete(synchronize_session=False)
+                db.query(Caja).delete(synchronize_session=False)
+            else:
+                ventas_ids = db.query(Venta.id).filter(Venta.negocio_id == negocio_id).subquery()
+                db.query(VentaDetalle).filter(VentaDetalle.venta_id.in_(ventas_ids)).delete(synchronize_session=False)
+                db.query(Venta).filter(Venta.negocio_id == negocio_id).delete(synchronize_session=False)
+                db.query(Caja).filter(Caja.negocio_id == negocio_id).delete(synchronize_session=False)
 
         # =========================
         # 🔴 RESET COMPLETO
         # =========================
-        elif data.modo == "completo":
+        elif modo == "completo":
 
             db.query(VentaDetalle).delete(synchronize_session=False)
             db.query(Venta).delete(synchronize_session=False)
@@ -455,18 +744,23 @@ def reset_system(
             db.query(Cliente).delete(synchronize_session=False)
             db.query(Producto).delete(synchronize_session=False)
 
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Modo inválido"
-            )
-
         db.commit()
+        try:
+            registrar_auditoria(
+                db=db,
+                modulo="Sistema",
+                accion="Reinicio de sistema",
+                descripcion=f"Modo={modo}; backup={backup_name}; alcance={'global' if is_superadmin else f'negocio_{negocio_id}'}",
+                usuario=str(current_user.get("usuario_id") or "Sistema"),
+            )
+        except Exception:
+            pass
 
         return {
             "ok": True,
-            "modo": data.modo,
-            "mensaje": "Sistema reiniciado correctamente"
+            "modo": modo,
+            "backup": backup_name,
+            "mensaje": "Sistema reiniciado correctamente. Backup automatico generado antes del reinicio."
         }
 
     except Exception as e:
@@ -475,6 +769,147 @@ def reset_system(
             status_code=500,
             detail=str(e)
         )
+
+
+@router.get("/system/restore-points")
+def listar_puntos_recuperacion(
+    current_user: dict = Depends(get_current_user_with_negocio),
+    db: Session = Depends(get_db),
+):
+    _require_restore_point_create_access(db, current_user)
+    _validar_plan_puntos_recuperacion(db, current_user)
+
+    items = []
+    scope = _restore_point_scope(current_user)
+    pattern = "restore_point_*.db" if current_user.get("is_superadmin") else f"restore_point_{scope}_*.db"
+    for path in sorted(_restore_points_dir().glob(pattern), key=lambda item: item.stat().st_mtime, reverse=True):
+        stat = path.stat()
+        items.append({
+            "id": path.name,
+            "archivo": path.name,
+            "fecha": datetime.utcfromtimestamp(stat.st_mtime).isoformat() + "Z",
+            "size_bytes": stat.st_size,
+        })
+
+    return {
+        "ok": True,
+        "items": items[:30],
+    }
+
+
+@router.post("/system/restore-points")
+def crear_punto_recuperacion(
+    data: RestorePointCreate,
+    current_user: dict = Depends(get_current_user_with_negocio),
+    db: Session = Depends(get_db),
+):
+    _require_restore_point_create_access(db, current_user)
+    _validar_plan_puntos_recuperacion(db, current_user)
+
+    db_path = _sqlite_db_path("Punto de recuperacion")
+    if not db_path.exists():
+        raise HTTPException(status_code=404, detail="No se encontro base de datos para crear el punto")
+
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    scope = _restore_point_scope(current_user)
+    label = _sanitize_restore_label(data.etiqueta)
+    filename = f"restore_point_{scope}_{timestamp}_{label}.db"
+    destination = _restore_points_dir() / filename
+
+    shutil.copy2(db_path, destination)
+
+    try:
+        registrar_auditoria(
+            db=db,
+            modulo="Backups",
+            accion="Crear punto de recuperacion",
+            descripcion=f"Punto {filename}",
+            usuario=str(current_user.get("usuario_id") or "Sistema"),
+        )
+    except Exception:
+        pass
+
+    return {
+        "ok": True,
+        "mensaje": "Punto de recuperacion creado correctamente",
+        "item": {
+            "id": filename,
+            "archivo": filename,
+            "fecha": datetime.utcfromtimestamp(destination.stat().st_mtime).isoformat() + "Z",
+            "size_bytes": destination.stat().st_size,
+        },
+    }
+
+
+@router.post("/system/restore-points/{filename}/restore", response_model=RestoreResponse)
+def restaurar_punto_recuperacion(
+    filename: str,
+    data: RestorePointRestoreRequest,
+    current_user: dict = Depends(get_current_user_with_negocio),
+    db: Session = Depends(get_db),
+):
+    if str(data.confirmacion or "").strip().upper() != "RESTAURAR PUNTO":
+        raise HTTPException(status_code=400, detail="Escribe RESTAURAR PUNTO para confirmar")
+
+    restore_dir = _restore_points_dir().resolve()
+    safe_name = Path(filename).name
+    point_path = (restore_dir / safe_name).resolve()
+    if restore_dir not in point_path.parents or not safe_name.startswith("restore_point_") or point_path.suffix != ".db":
+        raise HTTPException(status_code=400, detail="Punto de recuperacion invalido")
+    if not point_path.exists():
+        raise HTTPException(status_code=404, detail="Punto de recuperacion no encontrado")
+
+    _validate_sqlite_file(point_path)
+
+    if not current_user.get("is_superadmin"):
+        _require_restore_point_create_access(db, current_user)
+        _validar_plan_puntos_recuperacion(db, current_user)
+        negocio_id = int(current_user.get("negocio_id") or 0)
+        expected_prefix = f"restore_point_negocio_{negocio_id}_"
+        if not safe_name.startswith(expected_prefix):
+            raise HTTPException(status_code=403, detail="Solo puedes restaurar puntos de recuperacion de tu negocio")
+
+        result = _restore_business_scope_from_point(point_path, negocio_id, current_user, db)
+        return RestoreResponse(
+            ok=True,
+            mensaje=f"Punto de negocio restaurado correctamente. Backup previo: {result['backup']}",
+            archivo=safe_name,
+        )
+
+    _require_superadmin_restore_points(current_user)
+
+    db_path = _sqlite_db_path("Restauracion de punto de recuperacion")
+    backup_path = db_path.with_suffix(f"{db_path.suffix}.pre_restore_point_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}")
+
+    try:
+        if db_path.exists():
+            shutil.copy2(db_path, backup_path)
+
+        db.close()
+        engine.dispose()
+        shutil.copy2(point_path, db_path)
+
+        try:
+            with SessionLocal() as audit_db:
+                registrar_auditoria(
+                    db=audit_db,
+                    modulo="Backups",
+                    accion="Restaurar punto de recuperacion",
+                    descripcion=f"Punto {safe_name}; backup_previo={backup_path.name}",
+                    usuario=str(current_user.get("usuario_id") or "Sistema"),
+                )
+        except Exception:
+            pass
+
+        return RestoreResponse(
+            ok=True,
+            mensaje="Punto de recuperacion restaurado correctamente",
+            archivo=safe_name,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @router.post("/system/restore", response_model=RestoreResponse)
@@ -486,14 +921,15 @@ def restore_system(
     if not DATABASE_URL.startswith("sqlite:///"):
         raise HTTPException(status_code=400, detail="Restauración automática soportada solo para SQLite")
 
-    actor_id = int(current_user.get("usuario_id") or 0)
-    actor = db.query(Usuario).filter(Usuario.id == actor_id).first()
-    actor_rol = str(getattr(actor, "rol", "") or "").upper()
-    if not current_user.get("is_superadmin") and actor_rol != "ADMINISTRADOR":
-        raise HTTPException(status_code=403, detail="Solo administrador puede restaurar")
+    if not current_user.get("is_superadmin"):
+        raise HTTPException(status_code=403, detail="Solo superadministrador puede restaurar backups")
 
     if not archivo.filename:
         raise HTTPException(status_code=400, detail="Archivo inválido")
+
+    extension = Path(archivo.filename).suffix.lower()
+    if extension not in {".db", ".sqlite", ".sqlite3"}:
+        raise HTTPException(status_code=400, detail="Solo se permiten backups SQLite (.db, .sqlite, .sqlite3)")
 
     db_path = Path(DATABASE_URL.replace("sqlite:///", ""))
     if not db_path.parent.exists():

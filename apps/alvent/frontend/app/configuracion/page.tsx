@@ -106,6 +106,13 @@ const getStorageItem = (key: string) => {
   return window.localStorage.getItem(key);
 };
 
+const setStorageItem = (key: string, value: string) => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(key, value);
+};
+
+const PLAN_PAYMENTS_ARCHIVE_KEY = "alvent_plan_payments_archived";
+
 const getNegocioIdFromSession = () => {
   const fromStorage = parseNumero(getStorageItem("negocio_id"));
   if (fromStorage) return fromStorage;
@@ -401,6 +408,8 @@ export default function ConfiguracionPage() {
   const [paymentDestinations, setPaymentDestinations] = useState<PaymentDestinations>(PAYMENT_DESTINATIONS_DEFAULT);
   const [savingPaymentDestinations, setSavingPaymentDestinations] = useState(false);
   const [filtroEstadoHistorialPlan, setFiltroEstadoHistorialPlan] = useState<"TODOS" | "PENDIENTE_VALIDACION" | "APLICADO" | "RECHAZADO">("TODOS");
+  const [filtroArchivoHistorialPlan, setFiltroArchivoHistorialPlan] = useState<"ACTIVOS" | "ARCHIVADOS" | "TODOS">("ACTIVOS");
+  const [pagosPlanArchivados, setPagosPlanArchivados] = useState<Set<number>>(() => new Set());
   const [planApprovalAlertText, setPlanApprovalAlertText] = useState("");
   const [planApprovalAlertPulse, setPlanApprovalAlertPulse] = useState(false);
   const pendingPlanApprovalsRef = useRef(0);
@@ -514,12 +523,16 @@ export default function ConfiguracionPage() {
       );
   }, [tiposNegocioProductos]);
 
-  const historialPlanesFiltrado =
-    filtroEstadoHistorialPlan === "TODOS"
-      ? historialPlanes
-      : historialPlanes.filter(
-        (item) => String(item.estado || "").toUpperCase() === filtroEstadoHistorialPlan
-      );
+  const historialPlanesFiltrado = historialPlanes.filter((item) => {
+    const estadoOk =
+      filtroEstadoHistorialPlan === "TODOS" ||
+      String(item.estado || "").toUpperCase() === filtroEstadoHistorialPlan;
+    const archivado = pagosPlanArchivados.has(Number(item.id));
+    const archivoOk =
+      filtroArchivoHistorialPlan === "TODOS" ||
+      (filtroArchivoHistorialPlan === "ARCHIVADOS" ? archivado : !archivado);
+    return estadoOk && archivoOk;
+  });
   const pendingPlanApprovals = historialPlanes.filter(
     (item) => String(item.estado || "").toUpperCase() === "PENDIENTE_VALIDACION"
   ).length;
@@ -527,6 +540,21 @@ export default function ConfiguracionPage() {
   const irASeccion = (id: string) => {
     const node = document.getElementById(id);
     if (node) node.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const persistirPagosPlanArchivados = (next: Set<number>) => {
+    setPagosPlanArchivados(next);
+    setStorageItem(PLAN_PAYMENTS_ARCHIVE_KEY, JSON.stringify(Array.from(next)));
+  };
+
+  const alternarArchivoPagoPlan = (pagoId: number) => {
+    const next = new Set(pagosPlanArchivados);
+    if (next.has(pagoId)) {
+      next.delete(pagoId);
+    } else {
+      next.add(pagoId);
+    }
+    persistirPagosPlanArchivados(next);
   };
 
   const isNegocioDisponible = useCallback((negocioId: number) => {
@@ -1501,6 +1529,18 @@ export default function ConfiguracionPage() {
       backups_limite: 0,
     });
   };
+
+  useEffect(() => {
+    try {
+      const raw = getStorageItem(PLAN_PAYMENTS_ARCHIVE_KEY);
+      const ids = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(ids)) {
+        setPagosPlanArchivados(new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0)));
+      }
+    } catch {
+      setPagosPlanArchivados(new Set());
+    }
+  }, []);
 
   useEffect(() => {
     const rawUsuario = getStorageItem("usuario");
@@ -3269,19 +3309,33 @@ export default function ConfiguracionPage() {
                 <section id="cfg-plan-validaciones" className={styles.planHistoryBox}>
                   <div className={styles.planHistoryHead}>
                     <h4>Validación de pagos de planes</h4>
-                    <label className={styles.planHistoryFilter}>
-                      Estado
-                      <select
-                        value={filtroEstadoHistorialPlan}
-                        onChange={(e) => setFiltroEstadoHistorialPlan(e.target.value as "TODOS" | "PENDIENTE_VALIDACION" | "APLICADO" | "RECHAZADO")}
-                        className="focus-ring"
-                      >
-                        <option value="TODOS">Todos</option>
-                        <option value="PENDIENTE_VALIDACION">Pendientes</option>
-                        <option value="APLICADO">Aprobados</option>
-                        <option value="RECHAZADO">Rechazados</option>
-                      </select>
-                    </label>
+                    <div className={styles.planHistoryFilters}>
+                      <label className={styles.planHistoryFilter}>
+                        Estado
+                        <select
+                          value={filtroEstadoHistorialPlan}
+                          onChange={(e) => setFiltroEstadoHistorialPlan(e.target.value as "TODOS" | "PENDIENTE_VALIDACION" | "APLICADO" | "RECHAZADO")}
+                          className="focus-ring"
+                        >
+                          <option value="TODOS">Todos</option>
+                          <option value="PENDIENTE_VALIDACION">Pendientes</option>
+                          <option value="APLICADO">Aprobados</option>
+                          <option value="RECHAZADO">Rechazados</option>
+                        </select>
+                      </label>
+                      <label className={styles.planHistoryFilter}>
+                        Vista
+                        <select
+                          value={filtroArchivoHistorialPlan}
+                          onChange={(e) => setFiltroArchivoHistorialPlan(e.target.value as "ACTIVOS" | "ARCHIVADOS" | "TODOS")}
+                          className="focus-ring"
+                        >
+                          <option value="ACTIVOS">Activos</option>
+                          <option value="ARCHIVADOS">Archivados</option>
+                          <option value="TODOS">Todos</option>
+                        </select>
+                      </label>
+                    </div>
                   </div>
                   {!negocioActivoId ? (
                     <p>Selecciona una empresa cliente para revisar pagos pendientes.</p>
@@ -3307,6 +3361,7 @@ export default function ConfiguracionPage() {
                         <tbody>
                           {historialPlanesFiltrado.map((item) => {
                             const pendiente = String(item.estado || "").toUpperCase() === "PENDIENTE_VALIDACION";
+                            const archivado = pagosPlanArchivados.has(Number(item.id));
                             return (
                               <tr key={`sa-plan-${item.id}`}>
                                 <td>{new Date(item.fecha).toLocaleString()}</td>
@@ -3325,8 +3380,9 @@ export default function ConfiguracionPage() {
                                   )}
                                 </td>
                                 <td>
-                                  {pendiente ? (
-                                    <div className={styles.rowActions}>
+                                  <div className={styles.rowActions}>
+                                    {pendiente ? (
+                                      <>
                                       <button
                                         type="button"
                                         className={styles.rowBtn}
@@ -3343,10 +3399,16 @@ export default function ConfiguracionPage() {
                                       >
                                         {validatingPlanPagoId === item.id ? "Procesando..." : "Rechazar"}
                                       </button>
-                                    </div>
-                                  ) : (
-                                    "-"
-                                  )}
+                                      </>
+                                    ) : null}
+                                    <button
+                                      type="button"
+                                      className={styles.rowBtn}
+                                      onClick={() => alternarArchivoPagoPlan(Number(item.id))}
+                                    >
+                                      {archivado ? "Restaurar" : "Archivar"}
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             );
@@ -3735,4 +3797,3 @@ export default function ConfiguracionPage() {
     </ProtectedRoute>
   );
 }
-

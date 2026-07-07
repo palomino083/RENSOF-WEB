@@ -18,19 +18,13 @@ CSRF_SESSION_KEY: Final = "rensof_csrf_token"
 PBKDF2_PREFIX: Final = "pbkdf2_sha256$"
 DEFAULT_ADMIN_USERNAME: Final = "admin"
 DEFAULT_ADMIN_PASSWORD: Final = "admin123"
-LEGACY_ADMIN_USERNAME: Final = "Admin"
-LEGACY_ADMIN_PASSWORD: Final = "123456"
 
 
 def _admin_credentials() -> tuple[tuple[str, str], ...]:
     expected_username = os.getenv("RENSOF_ADMIN_USER", DEFAULT_ADMIN_USERNAME)
     expected_password = os.getenv("RENSOF_ADMIN_PASSWORD", DEFAULT_ADMIN_PASSWORD)
 
-    credentials: list[tuple[str, str]] = [(expected_username, expected_password)]
-    if expected_username == DEFAULT_ADMIN_USERNAME and expected_password == DEFAULT_ADMIN_PASSWORD:
-        credentials.append((LEGACY_ADMIN_USERNAME, LEGACY_ADMIN_PASSWORD))
-
-    return tuple(credentials)
+    return ((expected_username, expected_password),)
 
 
 def _verify_password_hash(expected_password: str, provided_password: str) -> bool:

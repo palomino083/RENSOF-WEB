@@ -48,3 +48,20 @@ apps/alvent/backend/app/database/*.db
 # Reports / generated files
 # =========================
 scripts/reports/
+
+# Additional local artifacts
+.venv-*/
+apps/alvent/backend/.venv/
+.env.*
+!.env.example
+apps/alvent/frontend/.env.local
+apps/alvent/frontend/.env.production
+node_modules/
+.next/
+dist/
+build/
+coverage/
+.turbo/
+.codex-checkpoints/
+apps/alvent/frontend/estructura.txt
+apps/alvent/frontend/div
