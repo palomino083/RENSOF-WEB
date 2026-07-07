@@ -1,44 +1,55 @@
-<aside class="admin-sidebar">
-  <div>
-    <span class="story-kicker">Admin RENSOF</span>
-    <h2 class="admin-sidebar-title">Backoffice Premium</h2>
-    <p class="admin-sidebar-text">Navegacion conectada a plantillas reales, rutas protegidas y acciones operativas.</p>
+<aside class="admin-sidebar admin-pro-sidebar">
+  <div class="admin-pro-brand">
+    <span class="admin-pro-brand-mark">R</span>
+    <div>
+      <span class="story-kicker">Admin RENSOF</span>
+      <h2 class="admin-sidebar-title">Command Center</h2>
+      <p class="admin-sidebar-text">Gobierno operativo, contenido, contactos y aplicaciones.</p>
+    </div>
   </div>
 
-  <nav class="admin-sidebar-nav" aria-label="Modulos admin">
+  <nav class="admin-sidebar-nav admin-pro-nav" aria-label="Modulos admin">
     <a href="/admin" class="admin-sidebar-link {% if admin_section == 'dashboard' %}is-active{% endif %}">
-      <strong>Centro de control</strong>
-      <span>templates/admin.html</span>
-    </a>
-    <a href="/admin/publicaciones" class="admin-sidebar-link {% if admin_section == 'publications' %}is-active{% endif %}">
-      <strong>Publicaciones</strong>
-      <span>templates/admin_publications.html</span>
-    </a>
-    <a href="/admin/correos" class="admin-sidebar-link {% if admin_section == 'emails' %}is-active{% endif %}">
-      <strong>Correos</strong>
-      <span>templates/admin_emails.html</span>
+      <span class="admin-pro-icon">⌂</span>
+      <strong>Dashboard</strong>
+      <small>Centro ejecutivo</small>
     </a>
     <a href="/admin/correos/bandeja" class="admin-sidebar-link {% if admin_section == 'inbox' %}is-active{% endif %}">
-      <strong>Bandeja</strong>
-      <span>templates/admin_inbox.html</span>
+      <span class="admin-pro-icon">✉</span>
+      <strong>Contactos</strong>
+      <small>Bandeja y leads</small>
+    </a>
+    <a href="/admin/correos" class="admin-sidebar-link {% if admin_section == 'emails' %}is-active{% endif %}">
+      <span class="admin-pro-icon">@</span>
+      <strong>Canales</strong>
+      <small>Correos y áreas</small>
+    </a>
+    <a href="/admin/publicaciones" class="admin-sidebar-link {% if admin_section == 'publications' %}is-active{% endif %}">
+      <span class="admin-pro-icon">◆</span>
+      <strong>Publicaciones</strong>
+      <small>Contenido y SEO</small>
+    </a>
+    <a href="/app/alvent/login" class="admin-sidebar-link">
+      <span class="admin-pro-icon">↗</span>
+      <strong>ALVENT</strong>
+      <small>Aplicación operativa</small>
     </a>
   </nav>
 
   {% if superagent_name %}
-  <div class="admin-sidebar-agent">
-    <span class="story-kicker">Superagente activo</span>
+  <div class="admin-sidebar-agent admin-pro-agent">
+    <span class="story-kicker">IA activa</span>
     <h3 class="admin-sidebar-agent-title">{{ superagent_name }}</h3>
     <p class="admin-sidebar-agent-text">{{ superagent_scope }}</p>
-    <a href="/admin/correos/bandeja" class="r-btn r-btn-ghost">Abrir radar operativo</a>
+    <a href="/admin/correos/bandeja" class="r-btn r-btn-ghost">Abrir radar</a>
   </div>
   {% endif %}
 
-  <div class="admin-sidebar-actions">
-    <a href="/" class="r-btn r-btn-ghost">Ver sitio publico</a>
-    <a href="/app/alvent/login" class="r-btn r-btn-ghost">Abrir ALVENT</a>
+  <div class="admin-sidebar-actions admin-pro-actions">
+    <a href="/" class="r-btn r-btn-ghost">Ver sitio público</a>
     <form action="/admin/logout" method="post">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button class="r-btn" style="background:rgba(236,106,95,0.2);color:#fff; width:100%;" type="submit">Cerrar sesion</button>
+      <button class="r-btn admin-pro-danger" type="submit">Cerrar sesión</button>
     </form>
   </div>
 </aside>

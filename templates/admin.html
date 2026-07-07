@@ -1,405 +1,119 @@
 {% extends "base.html" %}
 
 {% block content %}
-<style>
-  .command-hero {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(126, 214, 255, 0.22);
-    border-radius: 24px;
-    padding: clamp(24px, 4vw, 38px);
-    background:
-      radial-gradient(circle at 85% 12%, rgba(52, 210, 127, 0.18), transparent 34%),
-      radial-gradient(circle at 8% 90%, rgba(0, 182, 200, 0.16), transparent 30%),
-      linear-gradient(145deg, rgba(3, 20, 36, 0.98), rgba(5, 14, 26, 0.96));
-    box-shadow: 0 30px 90px rgba(0, 8, 18, 0.42);
-  }
-
-  .command-hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(126, 214, 255, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(126, 214, 255, 0.05) 1px, transparent 1px);
-    background-size: 44px 44px;
-    mask-image: linear-gradient(120deg, rgba(0, 0, 0, 0.9), transparent 72%);
-    pointer-events: none;
-  }
-
-  .command-hero-inner {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-    gap: 26px;
-    align-items: stretch;
-  }
-
-  .command-title {
-    margin: 10px 0 12px;
-    color: #fff;
-    font-family: 'Sora', 'Segoe UI', sans-serif;
-    font-size: clamp(2rem, 5vw, 4rem);
-    line-height: 1.02;
-  }
-
-  .command-lead {
-    max-width: 760px;
-    color: var(--r-text-soft);
-    font-size: clamp(1rem, 1.6vw, 1.16rem);
-    line-height: 1.7;
-  }
-
-  .command-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 22px;
-  }
-
-  .command-board {
-    display: grid;
-    gap: 12px;
-    padding: 18px;
-    border: 1px solid rgba(126, 214, 255, 0.18);
-    border-radius: 20px;
-    background: rgba(2, 10, 18, 0.58);
-    backdrop-filter: blur(12px);
-  }
-
-  .command-board-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    color: #bfeeff;
-    font-size: 0.82rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .command-live-dot {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #8df6be;
-  }
-
-  .command-live-dot::before {
-    content: "";
-    width: 9px;
-    height: 9px;
-    border-radius: 999px;
-    background: #39ca7f;
-    box-shadow: 0 0 0 6px rgba(57, 202, 127, 0.13);
-  }
-
-  .command-metric-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .command-metric {
-    min-height: 108px;
-    padding: 14px;
-    border: 1px solid rgba(126, 214, 255, 0.15);
-    border-radius: 16px;
-    background: linear-gradient(160deg, rgba(10, 31, 52, 0.84), rgba(4, 14, 25, 0.9));
-  }
-
-  .command-metric span {
-    display: block;
-    color: #82b9d8;
-    font-size: 0.76rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .command-metric strong {
-    display: block;
-    margin-top: 8px;
-    color: #fff;
-    font-family: 'Sora', sans-serif;
-    font-size: clamp(1.45rem, 3vw, 2.2rem);
-  }
-
-  .command-metric p {
-    margin: 8px 0 0;
-    color: var(--r-text-soft);
-    font-size: 0.9rem;
-    line-height: 1.45;
-  }
-
-  .command-section {
-    padding: clamp(26px, 4vw, 42px);
-    border: 1px solid rgba(126, 214, 255, 0.14);
-    border-radius: 24px;
-    background: linear-gradient(180deg, rgba(7, 19, 31, 0.78), rgba(3, 11, 20, 0.86));
-    box-shadow: 0 22px 70px rgba(0, 8, 18, 0.26);
-  }
-
-  .command-section + .command-section {
-    margin-top: 18px;
-  }
-
-  .command-section-head {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 18px;
-    margin-bottom: 18px;
-  }
-
-  .command-section h2 {
-    margin: 6px 0 0;
-    color: #fff;
-    font-family: 'Sora', sans-serif;
-    font-size: clamp(1.4rem, 2.8vw, 2.15rem);
-  }
-
-  .command-section p {
-    color: var(--r-text-soft);
-  }
-
-  .command-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-  }
-
-  .command-card {
-    min-height: 100%;
-    display: grid;
-    gap: 12px;
-    align-content: start;
-    padding: 20px;
-    border: 1px solid rgba(126, 214, 255, 0.16);
-    border-radius: 18px;
-    background:
-      linear-gradient(180deg, rgba(13, 39, 64, 0.72), rgba(5, 16, 29, 0.9));
-    box-shadow: 0 18px 44px rgba(0, 8, 18, 0.22);
-  }
-
-  .command-card strong {
-    color: #fff;
-    font-family: 'Sora', sans-serif;
-    font-size: 1.08rem;
-  }
-
-  .command-card p {
-    margin: 0;
-    line-height: 1.58;
-  }
-
-  .command-meta {
-    color: rgba(191, 238, 255, 0.76);
-    font-size: 0.82rem;
-    line-height: 1.45;
-  }
-
-  .command-route-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .command-route {
-    padding: 16px;
-    border: 1px solid rgba(126, 214, 255, 0.14);
-    border-radius: 16px;
-    background: rgba(4, 13, 22, 0.72);
-  }
-
-  .command-route code {
-    display: block;
-    margin: 8px 0;
-    color: #8df6be;
-    font-size: 1rem;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-
-  .command-alert {
-    border-color: rgba(251, 191, 36, 0.24);
-    background:
-      linear-gradient(180deg, rgba(48, 32, 8, 0.62), rgba(7, 19, 31, 0.88));
-  }
-
-  .command-inline-form {
-    margin: 0;
-  }
-
-  .command-inline-form .r-btn {
-    width: 100%;
-  }
-
-  @media (max-width: 1100px) {
-    .command-hero-inner,
-    .command-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .command-route-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 720px) {
-    .command-hero,
-    .command-section {
-      border-radius: 18px;
-      padding: 20px;
-    }
-
-    .command-metric-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .command-section-head {
-      display: grid;
-      align-items: start;
-    }
-
-    .command-actions .r-btn,
-    .command-card .r-btn {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-</style>
-
-<main class="page-main" style="padding-top: 84px;">
-  <div class="admin-shell">
+<main class="page-main admin-pro-page">
+  <div class="admin-shell admin-pro-shell">
     {% include "partials/admin_sidebar.html" %}
 
-    <div class="admin-content">
-      <section class="command-hero reveal is-visible">
-        <div class="command-hero-inner">
-          <article>
-            <span class="story-kicker">Centro de operación y mando</span>
-            <h1 class="command-title">RENSOF Executive Command</h1>
-            <p class="command-lead">
-              Consola premium para gobernar contenido, comunicaciones, bandeja comercial,
-              vigilancia de rutas críticas y acceso operativo a ALVENT desde una sola superficie ejecutiva.
-            </p>
-            <div class="command-actions">
-              <a href="/admin/correos/bandeja" class="r-btn r-btn-primary">Abrir radar operativo</a>
-              <a href="/admin/correos" class="r-btn r-btn-ghost">Gestionar canales</a>
-              <a href="/admin/publicaciones" class="r-btn r-btn-ghost">Gobierno editorial</a>
-              <a href="/app/alvent/login" class="r-btn r-btn-ghost">Entrar a ALVENT</a>
-            </div>
-          </article>
-
-          <aside class="command-board" aria-label="Panel ejecutivo RENSOF">
-            <div class="command-board-head">
-              <span>Command Live Board</span>
-              <span class="command-live-dot">Activo</span>
-            </div>
-            <div class="command-metric-grid">
-              {% for metric in ops_metrics %}
-              <article class="command-metric">
-                <span>{{ metric.label }}</span>
-                <strong>{{ metric.value }}</strong>
-                <p>{{ metric.detail }}</p>
-              </article>
-              {% endfor %}
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      <section class="command-section reveal">
-        <div class="command-section-head">
-          <div>
-            <span class="story-kicker">Módulos de mando</span>
-            <h2>Acciones críticas del backoffice</h2>
-          </div>
-          <a href="/admin/correos/bandeja" class="r-btn r-btn-ghost">Ir a bandeja</a>
-        </div>
-        <div class="command-grid">
-          <article class="command-card">
-            <span class="story-kicker">01 | Radar</span>
-            <strong>Mensajes y leads</strong>
-            <p>Gestiona entrada comercial, clasificación, prioridades y seguimiento operativo.</p>
-            <span class="command-meta">Ruta: /admin/correos/bandeja</span>
+    <div class="admin-content admin-pro-content">
+      <section class="admin-pro-hero reveal is-visible">
+        <div class="admin-pro-hero-copy">
+          <span class="story-kicker">Centro de operación y mando</span>
+          <h1>RENSOF Command Center</h1>
+          <p>Una sola consola para gobernar contactos, contenido, canales, rutas críticas y acceso a las aplicaciones RENSOF.</p>
+          <div class="admin-pro-actions-row">
             <a href="/admin/correos/bandeja" class="r-btn r-btn-primary">Abrir bandeja</a>
-          </article>
-          <article class="command-card">
-            <span class="story-kicker">02 | Canales</span>
-            <strong>Cuentas de correo</strong>
-            <p>Administra canales, áreas, correo principal y filtros del formulario de contacto.</p>
-            <span class="command-meta">Ruta: /admin/correos</span>
-            <a href="/admin/correos" class="r-btn r-btn-primary">Abrir correos</a>
-          </article>
-          <article class="command-card">
-            <span class="story-kicker">03 | Editorial</span>
-            <strong>Gobierno de publicaciones</strong>
-            <p>Centraliza publicaciones, narrativa institucional, recursos y contenido estratégico.</p>
-            <span class="command-meta">Ruta: /admin/publicaciones</span>
-            <a href="/admin/publicaciones" class="r-btn r-btn-primary">Abrir publicaciones</a>
-          </article>
-          <article class="command-card">
-            <span class="story-kicker">04 | Plataforma</span>
-            <strong>Acceso ALVENT</strong>
-            <p>Valida el ingreso principal al aplicativo y controla el recorrido hacia el dashboard.</p>
-            <span class="command-meta">Ruta pública: /app/alvent/login</span>
-            <a href="/app/alvent/login" class="r-btn r-btn-primary">Abrir acceso</a>
-          </article>
-          <article class="command-card">
-            <span class="story-kicker">05 | Web pública</span>
-            <strong>Vista institucional</strong>
-            <p>Revisa home, navegación, experiencias, formularios y rutas visibles al usuario final.</p>
-            <span class="command-meta">Ruta: /</span>
-            <a href="/" class="r-btn r-btn-primary">Ver sitio público</a>
-          </article>
-          <article class="command-card">
-            <span class="story-kicker">06 | Conversión</span>
-            <strong>Contacto comercial</strong>
-            <p>Comprueba el formulario conectado a bandeja y cuentas de atención.</p>
-            <span class="command-meta">Ruta: /contacto#contactForm</span>
-            <a href="/contacto#contactForm" class="r-btn r-btn-primary">Ver formulario</a>
-          </article>
+            <a href="/admin/publicaciones" class="r-btn r-btn-ghost">Gestionar contenido</a>
+            <a href="/app/alvent/login" class="r-btn r-btn-ghost">Entrar a ALVENT</a>
+          </div>
         </div>
+        <aside class="admin-pro-live-card">
+          <div class="admin-pro-live-head">
+            <span>Command Live Board</span>
+            <strong class="admin-pro-online">Online</strong>
+          </div>
+          <div class="admin-pro-live-grid">
+            <article><span>Mensajes nuevos</span><strong>{{ ops_status_counts.new }}</strong></article>
+            <article><span>Leídos</span><strong>{{ ops_status_counts.read }}</strong></article>
+            <article><span>Archivados</span><strong>{{ ops_status_counts.archived }}</strong></article>
+            <article><span>Actualizado</span><strong>{{ ops_refreshed_at }}</strong></article>
+          </div>
+        </aside>
       </section>
 
-      <section class="command-section reveal">
-        <div class="command-section-head">
+      <section class="admin-pro-section reveal">
+        <div class="admin-pro-section-head">
           <div>
-            <span class="story-kicker">Mapa de vigilancia</span>
-            <h2>Rutas críticas bajo control</h2>
+            <span class="story-kicker">Indicadores ejecutivos</span>
+            <h2>Estado total de la plataforma</h2>
           </div>
-          <a href="/" class="r-btn r-btn-ghost">Revisar sitio</a>
+          <a href="/admin/correos/bandeja" class="r-btn r-btn-ghost">Ver operación</a>
         </div>
-        <div class="command-route-grid">
-          {% for route in ops_watch_routes %}
-          <article class="command-route">
-            <span class="story-kicker">Ruta crítica</span>
-            <code>{{ route.path }}</code>
-            <p>{{ route.purpose }}</p>
+        <div class="admin-pro-kpi-grid">
+          {% for metric in ops_metrics %}
+          <article class="admin-pro-kpi admin-pro-tone-{{ metric.tone }}">
+            <span>{{ metric.label }}</span>
+            <strong>{{ metric.value }}</strong>
+            <p>{{ metric.detail }}</p>
           </article>
           {% endfor %}
         </div>
       </section>
 
-      <section class="command-section reveal">
-        <div class="command-section-head">
+      <section class="admin-pro-section reveal">
+        <div class="admin-pro-section-head">
+          <div>
+            <span class="story-kicker">Acciones rápidas</span>
+            <h2>Módulos críticos del backoffice</h2>
+          </div>
+        </div>
+        <div class="admin-pro-module-grid">
+          <a href="/admin/correos/bandeja" class="admin-pro-module"><span>✉</span><strong>Contactos</strong><p>Bandeja, leads y seguimiento.</p></a>
+          <a href="/admin/correos" class="admin-pro-module"><span>@</span><strong>Canales</strong><p>Cuentas, áreas y correo principal.</p></a>
+          <a href="/admin/publicaciones" class="admin-pro-module"><span>◆</span><strong>Publicaciones</strong><p>Contenido, recursos y narrativa.</p></a>
+          <a href="/app/alvent/login" class="admin-pro-module"><span>↗</span><strong>ALVENT</strong><p>Acceso al aplicativo operativo.</p></a>
+          <a href="/contacto#contactForm" class="admin-pro-module"><span>☑</span><strong>Formulario</strong><p>Validación del flujo comercial.</p></a>
+          <a href="/" class="admin-pro-module"><span>◉</span><strong>Sitio público</strong><p>Vista institucional publicada.</p></a>
+        </div>
+      </section>
+
+      <section class="admin-pro-split reveal">
+        <article class="admin-pro-section">
+          <div class="admin-pro-section-head compact">
+            <div>
+              <span class="story-kicker">Rutas críticas</span>
+              <h2>Vigilancia operativa</h2>
+            </div>
+          </div>
+          <div class="admin-pro-route-list">
+            {% for route in ops_watch_routes %}
+            <div class="admin-pro-route">
+              <code>{{ route.path }}</code>
+              <p>{{ route.purpose }}</p>
+            </div>
+            {% endfor %}
+          </div>
+        </article>
+
+        <article class="admin-pro-section admin-pro-ai-card">
+          <span class="story-kicker">Superagente IA</span>
+          <h2>{% if superagent_name %}{{ superagent_name }}{% else %}REN AI{% endif %}</h2>
+          <p>{% if superagent_scope %}{{ superagent_scope }}{% else %}Asistente para priorizar correos, redactar publicaciones, revisar rutas, detectar errores y acelerar decisiones del backoffice.{% endif %}</p>
+          <div class="admin-pro-bars" aria-label="Capacidades IA">
+            <span style="--w:92%">Correos</span>
+            <span style="--w:84%">Contenido</span>
+            <span style="--w:78%">SEO</span>
+            <span style="--w:88%">Operación</span>
+          </div>
+          <a href="/admin/correos/bandeja" class="r-btn r-btn-primary">Activar radar</a>
+        </article>
+      </section>
+
+      <section class="admin-pro-section reveal">
+        <div class="admin-pro-section-head">
           <div>
             <span class="story-kicker">Alertas ejecutivas</span>
-            <h2>Lectura rápida de continuidad</h2>
+            <h2>Prioridades de continuidad</h2>
           </div>
-          <form class="command-inline-form" action="/admin/logout" method="post">
+          <form action="/admin/logout" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <button class="r-btn r-btn-ghost" type="submit">Cerrar sesión segura</button>
           </form>
         </div>
-        <div class="command-grid">
+        <div class="admin-pro-alert-grid">
           {% for alert in ops_alerts %}
-          <article class="command-card command-alert">
-            <span class="story-kicker">{{ alert.level }}</span>
+          <article class="admin-pro-alert">
+            <span>{{ alert.level }}</span>
             <strong>{{ alert.title }}</strong>
             <p>{{ alert.detail }}</p>
           </article>

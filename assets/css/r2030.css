@@ -1492,3 +1492,22 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+
+/* =======================================================
+   RENSOF ADMIN PRO v2
+   Dashboard Ejecutivo
+   ======================================================= */
+
+.command-header{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:24px;border-radius:24px;background:linear-gradient(160deg,rgba(9,28,45,.88),rgba(4,13,22,.92));border:1px solid rgba(126,214,255,.18);box-shadow:var(--r-shadow-md)}
+.command-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:24px 0}
+.command-card{padding:20px;border-radius:18px;background:rgba(7,19,31,.82);border:1px solid rgba(126,214,255,.18);transition:.25s}
+.command-card:hover{transform:translateY(-4px);border-color:rgba(57,202,127,.35)}
+.command-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.command-timeline{display:grid;gap:12px}
+.command-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.command-ai{padding:24px;border-radius:22px;background:linear-gradient(160deg,rgba(0,182,200,.10),rgba(57,202,127,.12));border:1px solid rgba(57,202,127,.25)}
+@media(max-width:768px){
+.command-header,.command-actions,.command-status,.command-kpis{grid-template-columns:1fr}
+}
