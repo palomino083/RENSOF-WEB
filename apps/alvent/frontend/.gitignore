@@ -53,3 +53,4 @@ venv/
 *.db-journal
 *.db.pre_restore_*
 tmp*.db
+.vercel
