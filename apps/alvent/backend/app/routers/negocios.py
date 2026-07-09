@@ -1287,13 +1287,14 @@ def obtener_historial_planes(
     if not is_superadmin and current_user.get("negocio_id") != negocio_id:
         raise HTTPException(status_code=403, detail="Sin permiso")
 
-    return (
-        db.query(PlanPago)
-        .filter(PlanPago.negocio_id == negocio_id)
-        .order_by(PlanPago.id.desc())
-        .limit(30)
-        .all()
-    )
+    query = db.query(PlanPago).filter(PlanPago.negocio_id == negocio_id)
+    if not is_superadmin:
+        usuario_id = int(current_user.get("usuario_id") or 0)
+        if not usuario_id:
+            raise HTTPException(status_code=403, detail="Usuario no identificado")
+        query = query.filter(PlanPago.usuario_id == usuario_id)
+
+    return query.order_by(PlanPago.id.desc()).limit(30).all()
 
 
 @router.patch("/{negocio_id}/planes/historial/{plan_pago_id}/validar")

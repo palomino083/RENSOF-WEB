@@ -11,7 +11,11 @@ sys.path.insert(0, str(BACKEND_DIR))
 
 from fastapi.testclient import TestClient
 from app.main import app
+from app.database.database import SessionLocal
+from app.models.plan_pago import PlanPago
+from app.models.usuario import Usuario
 from app.routers.auth import limiter as auth_limiter
+from app.utils.jwt_utils import hash_password
 
 
 def rnd(prefix: str) -> str:
@@ -230,14 +234,16 @@ class TestPlanFlows(unittest.TestCase):
             headers={"Authorization": f"Bearer {token}"},
             json={
                 "plan_objetivo": "PRO",
-                "referencia_pago": "OP-778899",
+                "referencia_pago": f"OP-{rnd('REF').upper()}",
                 "canal_pago": "transferencia",
                 "observaciones": "pago realizado",
+                "comprobante_url": "/uploads/planes/comprobante-test.pdf",
+                "declaracion_anti_fraude": True,
             },
         )
         self.assertEqual(r.status_code, 200, r.text)
         payload = r.json()
-        self.assertEqual(payload.get("plan_actual"), "BASICO")
+        self.assertEqual(payload.get("plan_actual"), "GRATUITO")
         self.assertEqual(payload.get("plan_solicitado"), "PRO")
 
         r = self.client.get(
@@ -246,6 +252,81 @@ class TestPlanFlows(unittest.TestCase):
         )
         self.assertEqual(r.status_code, 200, r.text)
         self.assertEqual(r.json().get("plan"), "PRO")
+
+    def test_historial_planes_usuario_solo_muestra_sus_pagos(self):
+        admin_usuario, _, admin_token, negocio_id = self._crear_admin_y_negocio("PREMIUM")
+
+        usuario = rnd("caj")
+        password = "Clave1234"
+        db = SessionLocal()
+        try:
+            admin = db.query(Usuario).filter(Usuario.usuario == admin_usuario).first()
+            self.assertIsNotNone(admin)
+            cajero = Usuario(
+                nombres="Cajero Historial",
+                usuario=usuario,
+                dni="".join(random.choices(string.digits, k=8)),
+                email=f"{usuario}@mail.com",
+                password=hash_password(password),
+                rol="CAJERO",
+                roles="CAJERO",
+                negocio_id=negocio_id,
+                activo=True,
+                email_verificado=True,
+            )
+            db.add(cajero)
+            db.flush()
+            user_id = cajero.id
+
+            db.add_all([
+                PlanPago(
+                    negocio_id=negocio_id,
+                    usuario_id=admin.id,
+                    plan_actual="GRATUITO",
+                    plan_solicitado="PRO",
+                    canal_pago="transferencia",
+                    referencia_pago=f"ADM-{rnd('REF').upper()}",
+                    comprobante_url="/uploads/planes/comprobante-admin.pdf",
+                    estado="APLICADO",
+                ),
+                PlanPago(
+                    negocio_id=negocio_id,
+                    usuario_id=user_id,
+                    plan_actual="PRO",
+                    plan_solicitado="BASICO",
+                    canal_pago="transferencia",
+                    referencia_pago=f"USR-{rnd('REF').upper()}",
+                    comprobante_url="/uploads/planes/comprobante-usuario.pdf",
+                    estado="APLICADO",
+                ),
+            ])
+            db.commit()
+        finally:
+            db.close()
+
+        r = self.client.get(
+            f"/negocios/{negocio_id}/planes/historial",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertGreaterEqual(len(r.json()), 1)
+
+        r = self.client.post(
+            "/auth/login",
+            json={"usuario": usuario, "password": password},
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        user_token = r.json().get("access_token")
+        self.assertTrue(user_token)
+
+        r = self.client.get(
+            f"/negocios/{negocio_id}/planes/historial",
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        historial = r.json()
+        self.assertEqual(len(historial), 1)
+        self.assertEqual(historial[0].get("usuario_id"), user_id)
 
 
 if __name__ == "__main__":
