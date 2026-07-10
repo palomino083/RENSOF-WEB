@@ -74,10 +74,12 @@
 
 .modeChipIcon {
   display: inline-flex;
+  flex: 0 0 24px;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
+  overflow: hidden;
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.2);
   font-size: 0.86rem;
@@ -85,7 +87,8 @@
 }
 
 .modeChipDesktop {
-  display: inline-flex;
+  display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 1px;
   min-width: 0;
