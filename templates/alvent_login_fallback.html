@@ -11,7 +11,7 @@
         <div class="data-tiles" style="margin-top:22px;">
           <article class="data-tile"><span>Canal</span><strong>API directa</strong></article>
           <article class="data-tile"><span>Estado</span><strong>Contingencia</strong></article>
-          <article class="data-tile"><span>Ruta</span><strong>/alven/api/auth/login</strong></article>
+          <article class="data-tile"><span>Ruta</span><strong>/alvent/api/auth/login</strong></article>
         </div>
       </article>
 
@@ -30,7 +30,7 @@
         </form>
         <p id="loginStatus" class="story-text" style="margin-top:14px; min-height:24px;"></p>
         <div class="hero-actions" style="margin-top:18px;">
-          <a href="/alven/app/pos" class="r-btn r-btn-ghost">Abrir ALVENT (POS)</a>
+          <a href="/alvent/app/pos" class="r-btn r-btn-ghost">Abrir ALVENT (POS)</a>
           <a href="/contacto" class="r-btn r-btn-ghost">Soporte</a>
         </div>
       </article>
@@ -61,7 +61,7 @@
       const password = document.getElementById("password").value;
 
       try {
-        const response = await fetch("/alven/api/auth/login", {
+        const response = await fetch("/alvent/api/auth/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -95,7 +95,7 @@
 
         status.textContent = "Sesion iniciada. Te redirigimos al aplicativo ALVENT.";
         window.setTimeout(function () {
-          window.location.href = "/alven/app/pos";
+          window.location.href = "/alvent/app/pos";
         }, 900);
       } catch (error) {
         status.textContent = error && error.message ? error.message : "Error inesperado al iniciar sesion";

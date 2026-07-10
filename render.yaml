@@ -19,7 +19,7 @@
       - key: ALVENT_APP_URL
         value: /app/alvent/login
       - key: ALVENT_APP_EXTERNAL_BASE_URL
-        value: https://alvent-frontend.onrender.com/alven/app
+        value: https://alvent-frontend.onrender.com/alvent/app
 
   - type: web
     name: alvent-frontend
@@ -29,9 +29,9 @@
     startCommand: npx next start -H 0.0.0.0 -p $PORT
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://rensof-web.onrender.com/alven/api
+        value: https://rensof-web.onrender.com/alvent/api
       - key: NEXT_PUBLIC_APP_BASE_PATH
-        value: /alven/app
+        value: /alvent/app
       - key: NODE_VERSION
         value: 20.18.0
 

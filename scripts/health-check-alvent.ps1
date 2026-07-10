@@ -25,8 +25,8 @@ $isLocalMode = Test-UrlAvailable -Url "$localBackendBase/health"
 if ($isLocalMode) {
   Write-Host "[INFO] Health check en modo LOCAL (gateway/backend en 127.0.0.1)." -ForegroundColor Cyan
   $backendBase = $localBackendBase
-  $frontendLoginUrl = "$localGatewayBase/alven/app"
-  $frontendDashboardUrl = "$localGatewayBase/alven/app/dashboard"
+  $frontendLoginUrl = "$localGatewayBase/alvent/app"
+  $frontendDashboardUrl = "$localGatewayBase/alvent/app/dashboard"
 } else {
   Write-Host "[INFO] Health check en modo REMOTO (Render/produccion)." -ForegroundColor Cyan
   $backendBase = $remoteBackendBase
@@ -169,7 +169,7 @@ Assert-StatusCode -Actual ([int]$loginPage.StatusCode) -Expected 200 -Message "F
 
 Assert-ContainsAny -Content $loginPage.Content -Patterns @("Iniciar sesi[oó]n", "ALVENT ERP", "Dashboard", "Premium POS") -Message "Frontend shell no contiene el contenido esperado."
 
-$assetPattern = '/app/alvent/_next/static/[^"<> ]+|/alven/app/_next/static/[^"<> ]+|/alvent/app/_next/static/[^"<> ]+'
+$assetPattern = '/app/alvent/_next/static/[^"<> ]+|/alvent/app/_next/static/[^"<> ]+|/alvent/app/_next/static/[^"<> ]+'
 $assetMatches = [regex]::Matches($loginPage.Content, $assetPattern)
 if ($assetMatches.Count -eq 0) {
   if ($loginPage.Content -match "Acceso de contingencia") {
@@ -192,8 +192,8 @@ if ($assetMatches.Count -eq 0) {
 
 if ($assetMatches.Count -gt 0) {
   $firstAssetPath = $assetMatches[0].Value
-  if ($firstAssetPath.StartsWith('/alven/app/')) {
-    $firstAssetPath = $firstAssetPath -replace '^/alven/app/', '/app/alvent/'
+  if ($firstAssetPath.StartsWith('/alvent/app/')) {
+    $firstAssetPath = $firstAssetPath -replace '^/alvent/app/', '/app/alvent/'
   }
   if ($firstAssetPath.StartsWith('/alvent/app/')) {
     $firstAssetPath = $firstAssetPath -replace '^/alvent/app/', '/app/alvent/'

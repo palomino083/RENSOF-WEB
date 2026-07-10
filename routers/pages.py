@@ -30,7 +30,7 @@ ALVENT_PLAN_PAYMENTS_FALLBACK: dict[int, list[dict[str, object]]] = {}
 def _alvent_frontend_url(path: str = "") -> str:
     # Mantener navegacion dentro del mismo host (rensof.pe) para evitar saltos a Render.
     normalized_path = f"/{path.lstrip('/')}" if path else ""
-    return normalized_path or "/alven/app/login"
+    return normalized_path or "/alvent/app/login"
 
 
 def _alvent_direct_frontend_url(request: Request, full_path: str = "") -> str:
@@ -144,10 +144,10 @@ def _proxy_response_headers(
             location = value
             for frontend_origin in frontend_origins:
                 if location.startswith(frontend_origin):
-                    location = location.replace(frontend_origin, "/alven/app", 1)
+                    location = location.replace(frontend_origin, "/alvent/app", 1)
                     break
             if location.startswith(backend_origin):
-                location = location.replace(backend_origin, "/alven/api", 1)
+                location = location.replace(backend_origin, "/alvent/api", 1)
             headers[key] = location
             continue
         headers[key] = value
@@ -836,8 +836,8 @@ def _render_alvent_dashboard_fallback(request: Request, reason: str = "unknown")
             "active_page": "servicios",
             "page_title": "Dashboard ALVENT ERP PRO | RENSOF",
             "page_description": "Panel de contingencia de ALVENT ERP PRO cuando el frontend dedicado no esta disponible.",
-            "alvent_login_url": _alvent_frontend_url("alven/app/login"),
-            "alvent_dashboard_url": _alvent_frontend_url("alven/app/dashboard"),
+            "alvent_login_url": _alvent_frontend_url("alvent/app/login"),
+            "alvent_dashboard_url": _alvent_frontend_url("alvent/app/dashboard"),
         },
         headers=_fallback_headers(reason),
     )
@@ -912,7 +912,7 @@ def alven(request: Request):
     )
 
 
-@router.get("/alven/app/login", response_class=HTMLResponse, response_model=None)
+@router.get("/alvent/app/login", response_class=HTMLResponse, response_model=None)
 async def alven_app_login(request: Request) -> Response:
     redirect = _local_frontend_redirect(request, "login")
     if redirect is not None:
@@ -949,10 +949,10 @@ def alvent_legacy_redirect() -> Response:
 
 @router.get("/favicon.ico", response_model=None)
 def root_favicon_redirect() -> Response:
-    return RedirectResponse("/alven/app/favicon.ico", status_code=308)
+    return RedirectResponse("/alvent/app/favicon.ico", status_code=308)
 
 
-@router.get("/alven/app/favicon.ico", response_model=None)
+@router.get("/alvent/app/favicon.ico", response_model=None)
 def alven_app_favicon() -> Response:
     if ALVENT_FRONTEND_FAVICON_PATH.is_file():
         return FileResponse(
@@ -964,7 +964,7 @@ def alven_app_favicon() -> Response:
 
 
 @router.api_route(
-    "/alven/app",
+    "/alvent/app",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     response_model=None,
 )
@@ -997,17 +997,17 @@ async def alven_app_root_proxy(request: Request) -> Response:
 
 
 @router.api_route(
-    "/alven/app/alven/app",
+    "/alvent/app/alvent/app",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     response_model=None,
 )
 @router.api_route(
-    "/alven/app/alven/app/{full_path:path}",
+    "/alvent/app/alvent/app/{full_path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     response_model=None,
 )
 async def alven_app_double_prefix_redirect(request: Request, full_path: str = "") -> Response:
-    canonical = "/alven/app"
+    canonical = "/alvent/app"
     if full_path:
         canonical = f"{canonical}/{full_path.lstrip('/')}"
     if request.url.query:
@@ -1016,7 +1016,7 @@ async def alven_app_double_prefix_redirect(request: Request, full_path: str = ""
 
 
 @router.api_route(
-    "/alven/app/{full_path:path}",
+    "/alvent/app/{full_path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     response_model=None,
 )
@@ -1051,7 +1051,7 @@ async def alven_app_proxy(full_path: str, request: Request) -> Response:
 
 
 @router.api_route(
-    "/alven/api/auth/login",
+    "/alvent/api/auth/login",
     methods=["POST"],
     response_model=None,
 )
@@ -1072,7 +1072,7 @@ async def alven_api_login_proxy_or_fallback(request: Request) -> Response:
 
 
 @router.api_route(
-    "/alven/api/dashboard/overview",
+    "/alvent/api/dashboard/overview",
     methods=["GET"],
     response_model=None,
 )
@@ -1089,7 +1089,7 @@ async def alven_api_dashboard_overview_proxy_or_fallback(request: Request) -> Re
 
 
 @router.api_route(
-    "/alven/api/productos/",
+    "/alvent/api/productos/",
     methods=["GET", "POST", "OPTIONS"],
     response_model=None,
 )
@@ -1117,7 +1117,7 @@ async def alven_api_productos_proxy_or_fallback(request: Request) -> Response:
 
 
 @router.api_route(
-    "/alven/api/productos/upload",
+    "/alvent/api/productos/upload",
     methods=["POST", "OPTIONS"],
     response_model=None,
 )
@@ -1137,7 +1137,7 @@ async def alven_api_productos_upload_proxy_or_fallback(request: Request) -> Resp
 
 
 @router.api_route(
-    "/alven/api/productos/tabla-config",
+    "/alvent/api/productos/tabla-config",
     methods=["GET", "PUT", "OPTIONS"],
     response_model=None,
 )
@@ -1169,7 +1169,7 @@ async def alven_api_productos_tabla_config_proxy_or_fallback(request: Request) -
 
 
 @router.api_route(
-    "/alven/api/ventas/",
+    "/alvent/api/ventas/",
     methods=["GET"],
     response_model=None,
 )
@@ -1186,7 +1186,7 @@ async def alven_api_ventas_proxy_or_fallback(request: Request) -> Response:
 
 
 @router.api_route(
-    "/alven/api/clientes/",
+    "/alvent/api/clientes/",
     methods=["GET", "POST", "OPTIONS"],
     response_model=None,
 )
@@ -1195,7 +1195,7 @@ async def alven_api_clientes_proxy_or_fallback(request: Request) -> Response:
 
 
 @router.api_route(
-    "/alven/api/clientes",
+    "/alvent/api/clientes",
     methods=["GET", "POST", "OPTIONS"],
     response_model=None,
 )
@@ -1231,7 +1231,7 @@ async def _alven_api_clientes_collection_fallback_only(request: Request) -> Resp
 
 
 @router.api_route(
-    "/alven/api/clientes/{cliente_id}",
+    "/alvent/api/clientes/{cliente_id}",
     methods=["PUT", "DELETE", "OPTIONS"],
     response_model=None,
 )
@@ -1254,7 +1254,7 @@ async def alven_api_cliente_item_proxy_or_fallback(cliente_id: int, request: Req
 
 
 @router.api_route(
-    "/alven/api/negocios/",
+    "/alvent/api/negocios/",
     methods=["GET"],
     response_model=None,
 )
@@ -1271,7 +1271,7 @@ async def alven_api_negocios_proxy_or_fallback(request: Request) -> Response:
 
 
 @router.api_route(
-    "/alven/api/negocios/{negocio_id}",
+    "/alvent/api/negocios/{negocio_id}",
     methods=["GET", "PUT", "OPTIONS"],
     response_model=None,
 )
@@ -1302,7 +1302,7 @@ async def alven_api_negocio_detail_proxy_or_fallback(negocio_id: int, request: R
 
 
 @router.api_route(
-    "/alven/api/negocios/{negocio_id}/{subpath:path}",
+    "/alvent/api/negocios/{negocio_id}/{subpath:path}",
     methods=["GET", "POST", "PUT", "PATCH", "OPTIONS"],
     response_model=None,
 )
@@ -1432,7 +1432,7 @@ async def alven_api_negocios_subpath_proxy_or_fallback(
 
 
 @router.api_route(
-    "/alven/api/negocios/planes/catalogo",
+    "/alvent/api/negocios/planes/catalogo",
     methods=["GET"],
     response_model=None,
 )
@@ -1449,7 +1449,7 @@ async def alven_api_negocios_planes_catalogo_proxy_or_fallback(request: Request)
 
 
 @router.api_route(
-    "/alven/api/usuarios/",
+    "/alvent/api/usuarios/",
     methods=["GET", "POST", "OPTIONS"],
     response_model=None,
 )
@@ -1481,7 +1481,7 @@ async def alven_api_usuarios_proxy_or_fallback(request: Request) -> Response:
 
 
 @router.api_route(
-    "/alven/api/usuarios/permisos-matriz",
+    "/alvent/api/usuarios/permisos-matriz",
     methods=["GET", "PUT", "OPTIONS"],
     response_model=None,
 )
@@ -1526,7 +1526,7 @@ async def alven_api_usuarios_permisos_proxy_or_fallback(request: Request) -> Res
 
 
 @router.api_route(
-    "/alven/api/usuarios/{usuario_id}",
+    "/alvent/api/usuarios/{usuario_id}",
     methods=["PATCH", "DELETE", "OPTIONS"],
     response_model=None,
 )
@@ -1559,7 +1559,7 @@ async def alven_api_usuario_patch_proxy_or_fallback(usuario_id: int, request: Re
 
 
 @router.api_route(
-    "/alven/api/usuarios/{usuario_id}/estado",
+    "/alvent/api/usuarios/{usuario_id}/estado",
     methods=["PATCH", "OPTIONS"],
     response_model=None,
 )
@@ -1583,7 +1583,7 @@ async def alven_api_usuario_estado_patch_proxy_or_fallback(usuario_id: int, requ
 
 
 @router.api_route(
-    "/alven/api/ventas/resumen",
+    "/alvent/api/ventas/resumen",
     methods=["GET"],
     response_model=None,
 )
@@ -1600,7 +1600,7 @@ async def alven_api_ventas_resumen_proxy_or_fallback(request: Request) -> Respon
 
 
 @router.api_route(
-    "/alven/api/ventas/reporte/ganancias",
+    "/alvent/api/ventas/reporte/ganancias",
     methods=["GET"],
     response_model=None,
 )
@@ -1617,7 +1617,7 @@ async def alven_api_ventas_reporte_proxy_or_fallback(request: Request) -> Respon
 
 
 @router.api_route(
-    "/alven/api/{full_path:path}",
+    "/alvent/api/{full_path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     response_model=None,
 )

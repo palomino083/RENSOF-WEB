@@ -40,8 +40,8 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 Para ingresar al login sin errores 404 en entorno local:
 
 1. Levanta el backend en `http://127.0.0.1:8000`.
-2. Verifica que `.env.local` del frontend tenga `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/alven/api`.
+2. Verifica que `.env.local` del frontend tenga `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/alvent/api`.
 3. Ejecuta `npm run dev` desde esta carpeta.
-4. Abre `http://localhost:3001/alven/app/login` (o el puerto disponible que muestre Next).
+4. Abre `http://localhost:3001/alvent/app/login` (o el puerto disponible que muestre Next).
 
 Las credenciales administrativas se entregan por canal interno y no se publican en el repositorio.

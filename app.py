@@ -53,12 +53,12 @@ ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", "/app/alvent/login")
 ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/app/alvent").rstrip("/")
 ALVENT_BACKEND_ORIGIN = os.getenv("ALVENT_BACKEND_ORIGIN", "").rstrip("/")
 ALVENT_APP_EXTERNAL_BASE_URL = os.getenv(
-    "ALVENT_APP_EXTERNAL_BASE_URL", "https://alvent-frontend.onrender.com/alven/app"
+    "ALVENT_APP_EXTERNAL_BASE_URL", "https://alvent-frontend.onrender.com/alvent/app"
 ).rstrip("/")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 PUBLIC_ALVENT_LOGIN_PATH = "/app/alvent/login"
 PUBLIC_ALVENT_APP_BASE_PATH = "/app/alvent"
-LEGACY_ALVENT_APP_BASE_PATH = "/alven/app"
+LEGACY_ALVENT_APP_BASE_PATH = "/alvent/app"
 LEGACY_ALVENT_APP_BASE_PATH_ALT = "/alvent/app"
 RENSOF_SESSION_SECRET = os.getenv("RENSOF_SESSION_SECRET", "rensof-dev-session-secret")
 
@@ -923,7 +923,7 @@ def redirect_alven(request: Request):
         return landing
     return RedirectResponse(url=_internalize_url(ALVENT_APP_URL, f"{PUBLIC_ALVENT_APP_BASE_PATH}/login"))
 
-@app.get("/alven/login")
+@app.get("/alvent/login")
 def redirect_alven_login(request: Request):
     """Legacy ALVENT login alias preserved for compatibility."""
     _ = request
@@ -949,8 +949,8 @@ async def proxy_alvent_app_public(request: Request):
         return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
 
 
-@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alven/app", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
-@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alven/app/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alvent/app", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alvent/app/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def redirect_alven_double_prefix(request: Request, path: str = ""):
     """Canonicalize duplicated ALVENT basePath emitted by stale frontend chunks."""
     canonical = PUBLIC_ALVENT_APP_BASE_PATH
@@ -975,7 +975,7 @@ async def proxy_alvent_app_public_path(request: Request, path: str):
 @app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH_ALT}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 @app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH_ALT}/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def redirect_legacy_alvent_app_base(request: Request, path: str = ""):
-    """Redirect legacy /alven/app or /alvent/app paths to canonical /app/alvent."""
+    """Redirect legacy /alvent/app or /alvent/app paths to canonical /app/alvent."""
     target = PUBLIC_ALVENT_APP_BASE_PATH
     if path:
         target = f"{target}/{path.lstrip('/')}"
@@ -990,7 +990,7 @@ async def proxy_alvent_uploads_public(request: Request, path: str):
     return await proxy_alven_api(request, f"uploads/{path.lstrip('/')}")
 
 
-@app.api_route("/alven/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route("/alvent/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def proxy_alven_api(request: Request, path: str):
     """Proxy ALVENT backend API preserving auth headers and method/body."""
     if not ALVENT_BACKEND_ORIGIN:
@@ -1042,7 +1042,7 @@ async def proxy_alven_api(request: Request, path: str):
 
     location = response_headers.get("location")
     if location and location.startswith(ALVENT_BACKEND_ORIGIN.rstrip("/")):
-        response_headers["location"] = location.replace(ALVENT_BACKEND_ORIGIN.rstrip("/"), "/alven/api", 1)
+        response_headers["location"] = location.replace(ALVENT_BACKEND_ORIGIN.rstrip("/"), "/alvent/api", 1)
 
     return Response(
         content=upstream.content,

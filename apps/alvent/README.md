@@ -43,5 +43,5 @@ Set-Location .
 Acceso integrado:
 
 - Landing: /alven
-- App proxificada: /alven/app/login
-- API proxificada: /alven/api/health
+- App proxificada: /alvent/app/login
+- API proxificada: /alvent/api/health

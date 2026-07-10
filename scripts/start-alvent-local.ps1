@@ -63,8 +63,8 @@ $pids = [ordered]@{
 $pids | ConvertTo-Json | Set-Content -Path $pidsFile -Encoding UTF8
 
 Write-Host "Listo." -ForegroundColor Green
-Write-Host "Gateway:  http://127.0.0.1:8000/alven/api (proxy)" -ForegroundColor Yellow
+Write-Host "Gateway:  http://127.0.0.1:8000/alvent/api (proxy)" -ForegroundColor Yellow
 Write-Host "API real: http://127.0.0.1:8001" -ForegroundColor Yellow
-Write-Host "Frontend: http://localhost:3001/alven/app/login" -ForegroundColor Yellow
+Write-Host "Frontend: http://localhost:3001/alvent/app/login" -ForegroundColor Yellow
 Write-Host "Credenciales: Admin / 123456" -ForegroundColor Yellow
 Write-Host "Para detener todo: .\scripts\stop-alvent-local.ps1" -ForegroundColor Yellow

@@ -19,16 +19,16 @@ function resolveApiUrl(): string {
   if (envValue) {
     // Blindaje: en produccion no permitir un API apuntando a localhost.
     if (!isLocalHost && isLocalApiUrl(envValue)) {
-      return "/alven/api";
+      return "/alvent/api";
     }
     return envValue;
   }
 
   if (isLocalHost) {
-    return "http://127.0.0.1:8000/alven/api";
+    return "http://127.0.0.1:8000/alvent/api";
   }
 
-  return "/alven/api";
+  return "/alvent/api";
 }
 
 export const API_URL = resolveApiUrl();
@@ -60,11 +60,11 @@ function getLocalFallbackBaseUrls(currentBaseURL?: string): string[] {
 
   const candidates = isLocalHost
     ? [
-        "/alven/api",
-        "http://127.0.0.1:8000/alven/api",
-        "http://localhost:8000/alven/api",
+        "/alvent/api",
+        "http://127.0.0.1:8000/alvent/api",
+        "http://localhost:8000/alvent/api",
       ]
-    : ["/alven/api"];
+    : ["/alvent/api"];
 
   const current = (currentBaseURL || "").replace(/\/$/, "");
   return candidates.filter((url) => url !== current);

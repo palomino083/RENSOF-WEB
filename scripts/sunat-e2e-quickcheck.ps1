@@ -1,5 +1,5 @@
 param(
-  [string]$ApiBaseUrl = "http://127.0.0.1:8000/alven/api",
+  [string]$ApiBaseUrl = "http://127.0.0.1:8000/alvent/api",
   [string]$Usuario = "Admin",
   [System.Security.SecureString]$Password,
   [int]$NegocioId = 0,

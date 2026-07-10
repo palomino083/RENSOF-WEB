@@ -32,7 +32,7 @@ Your mission is to keep the institutional site, admin surfaces, and ALVENT acces
 ## Watchlist
 - Public home and core navigation.
 - Contact capture and inbox visibility.
-- ALVENT public access under /app/alven/login and downstream dashboard entry.
+- ALVENT public access under /app/alvent/login and downstream dashboard entry.
 - Admin login, backoffice modules, and content-management surfaces.
 - Render or hosting drift that leaves production behind main.
 

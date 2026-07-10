@@ -31,7 +31,7 @@ function Test-UrlAvailable {
 
 if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
   $localBaseUrl = "http://127.0.0.1:3001"
-  $localProbe = "$localBaseUrl/alven/app/login"
+  $localProbe = "$localBaseUrl/alvent/app/login"
   $remoteBaseUrl = if ($env:RENSOF_PUBLIC_ORIGIN) { $env:RENSOF_PUBLIC_ORIGIN.TrimEnd('/') } else { "https://www.rensof.pe" }
 
   if (Test-UrlAvailable -Url $localProbe) {

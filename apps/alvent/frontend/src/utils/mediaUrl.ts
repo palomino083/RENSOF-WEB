@@ -87,7 +87,7 @@ export const applyFallbackImage = (event: SyntheticEvent<HTMLImageElement>) => {
     }
 
     if (/\/uploads\//i.test(src) && !/\/alven\/api\/uploads\//i.test(src)) {
-      candidates.push(src.replace(/\/uploads\//i, "/alven/api/uploads/"));
+      candidates.push(src.replace(/\/uploads\//i, "/alvent/api/uploads/"));
     }
 
     if (/\/alven\/api\/uploads\//i.test(src)) {
