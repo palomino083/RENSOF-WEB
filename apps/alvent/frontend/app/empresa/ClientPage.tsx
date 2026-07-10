@@ -2242,7 +2242,7 @@ export default function EmpresaPage() {
               <div className={styles.modeChipRow}>
                 <span className={`${styles.modeChip} ${configAccessMode === "soporte" ? styles.modeChipSupport : styles.modeChipConfig}`}>
                   <span className={styles.modeChipIcon} aria-hidden="true">
-                    {configAccessMode === "soporte" ? "ðŸ¤–" : "âš™ï¸"}
+                    {configAccessMode === "soporte" ? "🤖" : "⚙️"}
                   </span>
 
                   <span className={styles.modeChipDesktop}>
