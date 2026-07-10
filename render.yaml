@@ -19,7 +19,7 @@
       - key: ALVENT_APP_URL
         value: /app/alvent/login
       - key: ALVENT_APP_EXTERNAL_BASE_URL
-        value: https://alvent-frontend.onrender.com/alvent/app
+        value: https://alvent-frontend.onrender.com
 
   - type: web
     name: alvent-frontend

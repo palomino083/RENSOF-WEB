@@ -53,7 +53,7 @@ ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", "/app/alvent/login")
 ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/app/alvent").rstrip("/")
 ALVENT_BACKEND_ORIGIN = os.getenv("ALVENT_BACKEND_ORIGIN", "").rstrip("/")
 ALVENT_APP_EXTERNAL_BASE_URL = os.getenv(
-    "ALVENT_APP_EXTERNAL_BASE_URL", "https://alvent-frontend.onrender.com/alvent/app"
+    "ALVENT_APP_EXTERNAL_BASE_URL", "https://alvent-frontend.onrender.com"
 ).rstrip("/")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 PUBLIC_ALVENT_LOGIN_PATH = "/app/alvent/login"
@@ -238,6 +238,10 @@ def _alvent_frontend_proxy_url(path: str = "", query: str = "") -> str:
     """Build upstream URL for ALVENT frontend while keeping public host as rensof.pe."""
     base = ALVENT_APP_EXTERNAL_BASE_URL.rstrip("/")
     normalized = path.lstrip("/")
+    if normalized.startswith("_next/"):
+        parsed = urlsplit(base)
+        if parsed.scheme and parsed.netloc:
+            base = f"{parsed.scheme}://{parsed.netloc}"
     target = f"{base}/{normalized}" if normalized else base
     if query:
         target = f"{target}?{query}"
@@ -936,6 +940,15 @@ async def redirect_public_alvent_login(request: Request):
     """Canonical public ALVENT login entrypoint."""
     try:
         return await _proxy_alvent_frontend_request(request, "login")
+    except httpx.RequestError:
+        return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
+
+
+@app.api_route("/_next/{path:path}", methods=["GET", "HEAD", "OPTIONS"])
+async def proxy_alvent_next_assets(request: Request, path: str):
+    """Serve Next.js static assets emitted by the proxied ALVENT frontend."""
+    try:
+        return await _proxy_alvent_frontend_request(request, f"_next/{path.lstrip('/')}")
     except httpx.RequestError:
         return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
 
