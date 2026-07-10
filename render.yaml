@@ -29,7 +29,7 @@ services:
     startCommand: npx next start -H 0.0.0.0 -p $PORT
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://www.rensof.pe/alvent/api
+        value: https://alvent-backend.onrender.com
       - key: NEXT_PUBLIC_APP_BASE_PATH
         value: ""
       - key: NODE_VERSION

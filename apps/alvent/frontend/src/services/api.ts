@@ -2,8 +2,15 @@ import axios from "axios";
 
 import { appPath } from "@/utils/appPath";
 
+const RENDER_API_URL = "https://alvent-backend.onrender.com";
+
 function isLocalApiUrl(url: string): boolean {
   return /127\.0\.0\.1|localhost/i.test(url);
+}
+
+function isLegacyProxyApiUrl(url: string): boolean {
+  const normalized = url.trim().replace(/\/$/, "").toLowerCase();
+  return normalized === "/alven/api" || normalized === "/alvent/api";
 }
 
 function resolveApiUrl(): string {
@@ -18,17 +25,17 @@ function resolveApiUrl(): string {
   // en ese caso forzamos un fallback seguro para desarrollo local.
   if (envValue) {
     // Blindaje: en produccion no permitir un API apuntando a localhost.
-    if (!isLocalHost && isLocalApiUrl(envValue)) {
-      return "/alvent/api";
+    if (!isLocalHost && (isLocalApiUrl(envValue) || isLegacyProxyApiUrl(envValue))) {
+      return RENDER_API_URL;
     }
     return envValue;
   }
 
   if (isLocalHost) {
-    return "http://127.0.0.1:8000/alvent/api";
+    return "http://127.0.0.1:8000";
   }
 
-  return "/alvent/api";
+  return RENDER_API_URL;
 }
 
 export const API_URL = resolveApiUrl();
@@ -60,11 +67,12 @@ function getLocalFallbackBaseUrls(currentBaseURL?: string): string[] {
 
   const candidates = isLocalHost
     ? [
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
         "/alvent/api",
         "http://127.0.0.1:8000/alvent/api",
-        "http://localhost:8000/alvent/api",
       ]
-    : ["/alvent/api"];
+    : [RENDER_API_URL];
 
   const current = (currentBaseURL || "").replace(/\/$/, "");
   return candidates.filter((url) => url !== current);
