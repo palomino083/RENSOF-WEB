@@ -30,7 +30,7 @@
         </form>
         <p id="loginStatus" class="story-text" style="margin-top:14px; min-height:24px;"></p>
         <div class="hero-actions" style="margin-top:18px;">
-          <a href="/alvent/app/pos" class="r-btn r-btn-ghost">Abrir ALVENT (POS)</a>
+          <a href="https://alvent.rensof.pe/pos" class="r-btn r-btn-ghost">Abrir ALVENT (POS)</a>
           <a href="/contacto" class="r-btn r-btn-ghost">Soporte</a>
         </div>
       </article>
@@ -95,7 +95,7 @@
 
         status.textContent = "Sesion iniciada. Te redirigimos al aplicativo ALVENT.";
         window.setTimeout(function () {
-          window.location.href = "/alvent/app/pos";
+          window.location.href = "https://alvent.rensof.pe/pos";
         }, 900);
       } catch (error) {
         status.textContent = error && error.message ? error.message : "Error inesperado al iniciar sesion";

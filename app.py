@@ -49,15 +49,17 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
-ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", "/app/alvent/login")
+ALVENT_PUBLIC_ORIGIN = os.getenv("ALVENT_PUBLIC_ORIGIN", "https://alvent.rensof.pe").rstrip("/")
+ALVENT_APP_URL = os.getenv("ALVENT_APP_URL", f"{ALVENT_PUBLIC_ORIGIN}/login")
 ALVENT_APP_BASE_PATH = os.getenv("ALVENT_APP_BASE_PATH", "/app/alvent").rstrip("/")
 ALVENT_BACKEND_ORIGIN = os.getenv("ALVENT_BACKEND_ORIGIN", "").rstrip("/")
 ALVENT_APP_EXTERNAL_BASE_URL = os.getenv(
     "ALVENT_APP_EXTERNAL_BASE_URL", "https://alvent-frontend.onrender.com"
 ).rstrip("/")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-PUBLIC_ALVENT_LOGIN_PATH = "/app/alvent/login"
+PUBLIC_ALVENT_LOGIN_PATH = f"{ALVENT_PUBLIC_ORIGIN}/login"
 PUBLIC_ALVENT_APP_BASE_PATH = "/app/alvent"
+LEGACY_ALVEN_APP_BASE_PATH = "/app/alven"
 LEGACY_ALVENT_APP_BASE_PATH = "/alvent/app"
 LEGACY_ALVENT_APP_BASE_PATH_ALT = "/alvent/app"
 RENSOF_SESSION_SECRET = os.getenv("RENSOF_SESSION_SECRET", "rensof-dev-session-secret")
@@ -232,6 +234,20 @@ def _external_alvent_app_url(path: str = "") -> str:
         return f"{ALVENT_APP_EXTERNAL_BASE_URL}/{path.lstrip('/')}"
 
     return f"{ALVENT_APP_EXTERNAL_BASE_URL}/login"
+
+
+def _public_alvent_url(path: str = "") -> str:
+    normalized = path.strip("/")
+    if not normalized:
+        return ALVENT_PUBLIC_ORIGIN
+    return f"{ALVENT_PUBLIC_ORIGIN}/{normalized}"
+
+
+def _redirect_to_public_alvent(request: Request, path: str = "") -> RedirectResponse:
+    target = _public_alvent_url(path)
+    if request.url.query:
+        target = f"{target}?{request.url.query}"
+    return RedirectResponse(url=target, status_code=308)
 
 
 def _alvent_frontend_proxy_url(path: str = "", query: str = "") -> str:
@@ -618,7 +634,7 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
         {
             "name": "Acceso ALVENT",
             "status": "Vigilado",
-            "detail": "Ingreso publico bajo /app/alvent/login y acceso al dashboard.",
+            "detail": "Ingreso publico bajo https://alvent.rensof.pe/login y acceso al dashboard.",
             "href": PUBLIC_ALVENT_LOGIN_PATH,
         },
         {
@@ -637,7 +653,7 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
             "name": "SofIA y Guardian",
             "status": "Vigilado",
             "detail": "Soporte inteligente, fallback local, safe mode e incidentes adversos.",
-            "href": "/app/alvent/login",
+            "href": PUBLIC_ALVENT_LOGIN_PATH,
         },
     ]
 
@@ -645,7 +661,7 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
         {
             "level": "Alta prioridad",
             "title": "Convergencia de accesos ALVENT",
-            "detail": "Toda la navegacion publica ya apunta a /app/alvent/login; revisar produccion tras cada deploy para evitar 404 transitorios.",
+            "detail": "Toda la navegacion publica ya apunta a https://alvent.rensof.pe/login; revisar produccion tras cada deploy para evitar 404 transitorios.",
         },
         {
             "level": "Monitoreo",
@@ -662,7 +678,7 @@ def _build_admin_ops_context(request: Request, messages: list[dict] | list) -> d
     playbooks = [
         {
             "title": "Validar acceso principal",
-            "detail": "Comprobar home, /app/alvent/login, /admin/login, SofIA y Guardian despues de cada publicacion.",
+            "detail": "Comprobar home, https://alvent.rensof.pe/login, /admin/login, SofIA y Guardian despues de cada publicacion.",
             "href": PUBLIC_ALVENT_LOGIN_PATH,
             "cta": "Abrir acceso ALVENT",
         },
@@ -925,7 +941,7 @@ def redirect_alven(request: Request):
     landing = _serve_alven_landing(request)
     if landing is not None:
         return landing
-    return RedirectResponse(url=_internalize_url(ALVENT_APP_URL, f"{PUBLIC_ALVENT_APP_BASE_PATH}/login"))
+    return RedirectResponse(url=PUBLIC_ALVENT_LOGIN_PATH)
 
 @app.get("/alvent/login")
 def redirect_alven_login(request: Request):
@@ -936,12 +952,10 @@ def redirect_alven_login(request: Request):
 
 
 @app.get("/app/alvent/login")
-async def redirect_public_alvent_login(request: Request):
-    """Canonical public ALVENT login entrypoint."""
-    try:
-        return await _proxy_alvent_frontend_request(request, "login")
-    except httpx.RequestError:
-        return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
+@app.get("/app/alven/login")
+def redirect_public_alvent_login(request: Request):
+    """Redirect former public ALVENT login paths to the dedicated subdomain."""
+    return _redirect_to_public_alvent(request, "login")
 
 
 @app.api_route("/_next/{path:path}", methods=["GET", "HEAD", "OPTIONS"])
@@ -954,33 +968,24 @@ async def proxy_alvent_next_assets(request: Request, path: str):
 
 
 @app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
-async def proxy_alvent_app_public(request: Request):
-    """Canonical ALVENT app root for public access."""
-    try:
-        return await _proxy_alvent_frontend_request(request)
-    except httpx.RequestError:
-        return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
+@app.api_route(f"{LEGACY_ALVEN_APP_BASE_PATH}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+def redirect_alvent_app_public(request: Request):
+    """Redirect former ALVENT app roots to the dedicated subdomain."""
+    return _redirect_to_public_alvent(request)
 
 
 @app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alvent/app", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 @app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/alvent/app/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def redirect_alven_double_prefix(request: Request, path: str = ""):
-    """Canonicalize duplicated ALVENT basePath emitted by stale frontend chunks."""
-    canonical = PUBLIC_ALVENT_APP_BASE_PATH
-    if path:
-        canonical = f"{canonical}/{path.lstrip('/')}"
-    if request.url.query:
-        canonical = f"{canonical}?{request.url.query}"
-    return RedirectResponse(url=canonical, status_code=308)
+    """Redirect duplicated historical ALVENT paths to the dedicated subdomain."""
+    return _redirect_to_public_alvent(request, path)
 
 
 @app.api_route(f"{PUBLIC_ALVENT_APP_BASE_PATH}/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
-async def proxy_alvent_app_public_path(request: Request, path: str):
-    """Canonical ALVENT app paths for public access."""
-    try:
-        return await _proxy_alvent_frontend_request(request, path)
-    except httpx.RequestError:
-        return JSONResponse(status_code=503, content={"detail": "ALVENT frontend unavailable"})
+@app.api_route(f"{LEGACY_ALVEN_APP_BASE_PATH}/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+def redirect_alvent_app_public_path(request: Request, path: str):
+    """Redirect former ALVENT app paths to the dedicated subdomain."""
+    return _redirect_to_public_alvent(request, path)
 
 
 @app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
@@ -988,13 +993,8 @@ async def proxy_alvent_app_public_path(request: Request, path: str):
 @app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH_ALT}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 @app.api_route(f"{LEGACY_ALVENT_APP_BASE_PATH_ALT}/{{path:path}}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def redirect_legacy_alvent_app_base(request: Request, path: str = ""):
-    """Redirect legacy /alvent/app or /alvent/app paths to canonical /app/alvent."""
-    target = PUBLIC_ALVENT_APP_BASE_PATH
-    if path:
-        target = f"{target}/{path.lstrip('/')}"
-    if request.url.query:
-        target = f"{target}?{request.url.query}"
-    return RedirectResponse(url=target, status_code=308)
+    """Redirect legacy /alvent/app paths to the dedicated subdomain."""
+    return _redirect_to_public_alvent(request, path)
 
 
 @app.api_route("/uploads/{path:path}", methods=["GET", "HEAD", "OPTIONS"])

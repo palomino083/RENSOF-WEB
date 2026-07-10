@@ -3,8 +3,10 @@ $ErrorActionPreference = "Stop"
 
 $localBackendBase = "http://127.0.0.1:8001"
 $localGatewayBase = "http://127.0.0.1:8000"
+$localFrontendBase = "http://127.0.0.1:3001"
 $remoteBackendBase = if ($env:ALVENT_BACKEND_ORIGIN) { $env:ALVENT_BACKEND_ORIGIN.TrimEnd('/') } else { "https://alvent-backend.onrender.com" }
 $remoteSiteBase = if ($env:RENSOF_PUBLIC_ORIGIN) { $env:RENSOF_PUBLIC_ORIGIN.TrimEnd('/') } else { "https://www.rensof.pe" }
+$remoteAlventBase = if ($env:ALVENT_PUBLIC_ORIGIN) { $env:ALVENT_PUBLIC_ORIGIN.TrimEnd('/') } else { "https://alvent.rensof.pe" }
 
 function Test-UrlAvailable {
   param(
@@ -25,13 +27,13 @@ $isLocalMode = Test-UrlAvailable -Url "$localBackendBase/health"
 if ($isLocalMode) {
   Write-Host "[INFO] Health check en modo LOCAL (gateway/backend en 127.0.0.1)." -ForegroundColor Cyan
   $backendBase = $localBackendBase
-  $frontendLoginUrl = "$localGatewayBase/alvent/app"
-  $frontendDashboardUrl = "$localGatewayBase/alvent/app/dashboard"
+  $frontendLoginUrl = "$localFrontendBase/login"
+  $frontendDashboardUrl = "$localFrontendBase/dashboard"
 } else {
   Write-Host "[INFO] Health check en modo REMOTO (Render/produccion)." -ForegroundColor Cyan
   $backendBase = $remoteBackendBase
-  $frontendLoginUrl = "$remoteSiteBase/app/alvent/login"
-  $frontendDashboardUrl = "$remoteSiteBase/app/alvent/dashboard"
+  $frontendLoginUrl = "$remoteAlventBase/login"
+  $frontendDashboardUrl = "$remoteAlventBase/dashboard"
 }
 
 # Direct backend API endpoints
@@ -169,7 +171,7 @@ Assert-StatusCode -Actual ([int]$loginPage.StatusCode) -Expected 200 -Message "F
 
 Assert-ContainsAny -Content $loginPage.Content -Patterns @("Iniciar sesi[oó]n", "ALVENT ERP", "Dashboard", "Premium POS") -Message "Frontend shell no contiene el contenido esperado."
 
-$assetPattern = '/app/alvent/_next/static/[^"<> ]+|/alvent/app/_next/static/[^"<> ]+|/alvent/app/_next/static/[^"<> ]+'
+$assetPattern = '/_next/static/[^"<> ]+|/app/alvent/_next/static/[^"<> ]+|/alvent/app/_next/static/[^"<> ]+'
 $assetMatches = [regex]::Matches($loginPage.Content, $assetPattern)
 if ($assetMatches.Count -eq 0) {
   if ($loginPage.Content -match "Acceso de contingencia") {
@@ -192,11 +194,14 @@ if ($assetMatches.Count -eq 0) {
 
 if ($assetMatches.Count -gt 0) {
   $firstAssetPath = $assetMatches[0].Value
-  if ($firstAssetPath.StartsWith('/alvent/app/')) {
-    $firstAssetPath = $firstAssetPath -replace '^/alvent/app/', '/app/alvent/'
+  if ($firstAssetPath.StartsWith('/app/alvent/')) {
+    $firstAssetPath = $firstAssetPath -replace '^/app/alvent/', '/'
   }
   if ($firstAssetPath.StartsWith('/alvent/app/')) {
-    $firstAssetPath = $firstAssetPath -replace '^/alvent/app/', '/app/alvent/'
+    $firstAssetPath = $firstAssetPath -replace '^/alvent/app/', '/'
+  }
+  if ($firstAssetPath.StartsWith('/alvent/app/')) {
+    $firstAssetPath = $firstAssetPath -replace '^/alvent/app/', '/'
   }
   $frontendBaseUri = [System.Uri]$frontendLoginUrl
   $firstAssetUrl = "$($frontendBaseUri.Scheme)://$($frontendBaseUri.Authority)$firstAssetPath"

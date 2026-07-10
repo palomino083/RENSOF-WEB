@@ -8,7 +8,7 @@ Operar una sola arquitectura en un mismo repositorio (RENSOF-WEB), con ALVENT in
 
 - Se incorporo ALVENT en apps/alvent (backend y frontend).
 - Se habilito proxy FastAPI en RENSOF:
-  - /alvent/app -> frontend ALVENT
+  - https://alvent.rensof.pe -> frontend ALVENT
   - /alvent/api -> backend ALVENT
 - /alven es la ruta canonica de experiencia comercial.
 - /alvent mantiene compatibilidad legacy con redireccion 308 a /alven.
@@ -17,12 +17,12 @@ Operar una sola arquitectura en un mismo repositorio (RENSOF-WEB), con ALVENT in
 
 - ALVENT_FRONTEND_ORIGIN (ejemplo local: http://127.0.0.1:3100)
 - ALVENT_BACKEND_ORIGIN (ejemplo local: http://127.0.0.1:8100)
-- ALVENT_APP_URL (recomendado: /alvent/app/login)
+- ALVENT_APP_URL (recomendado: https://alvent.rensof.pe/login)
 
 ## Flujo de navegacion
 
 1. Usuario entra a /alven.
-2. CTA principal abre /alvent/app/login.
+2. CTA principal abre https://alvent.rensof.pe/login.
 3. RENSOF reenvia trafico al frontend ALVENT.
 4. Llamadas API pasan por /alvent/api hacia backend ALVENT.
 

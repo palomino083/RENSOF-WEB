@@ -29,7 +29,7 @@ Para levantar backend + frontend de ALVENT con un solo comando en PowerShell:
 
 Acceso:
 
-- Login: `http://localhost:3001/alvent/app/login`
+- Login: `http://localhost:3001/login`
 - API: `http://127.0.0.1:8000/alvent/api`
 - Las credenciales administrativas se entregan por canal interno y no se publican en el repositorio.
 
@@ -52,14 +52,14 @@ El archivo [render.yaml](render.yaml) deja preparada una blueprint base para pub
 Notas importantes:
 
 - Si ALVENT_FRONTEND_ORIGIN apunta a localhost o a una URL caída, RENSOF mostrará el modo de contingencia.
-- El frontend ALVENT debe estar desplegado y responder para que /alvent/app/login y /alvent/app/dashboard abran el aplicativo completo.
+- El frontend ALVENT debe estar desplegado y responder para que https://alvent.rensof.pe/login y https://alvent.rensof.pe/dashboard abran el aplicativo completo.
 - El backend ALVENT debe estar desplegado para que el login y los módulos operen sin fallback.
 
 ## Endpoints clave
 
 - Home dinamico: /
 - Paginas dinamicas: /servicios, /alven, /proyectos, /nosotros, /publicaciones, /contacto
-- App ALVENT proxificada: /alvent/app/login
+- App ALVENT proxificada: https://alvent.rensof.pe/login
 - API ALVENT proxificada: /alvent/api
 - Panel admin minimo: /admin
 - API de contenido: /api/v1/home-content
