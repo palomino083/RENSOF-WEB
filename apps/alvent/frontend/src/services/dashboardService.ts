@@ -1,14 +1,13 @@
 import { api } from "@/services/api";
 
 class DashboardService {
-
-  private async request(endpoint: string) {
+  private async request<T = any>(endpoint: string): Promise<T> {
     const response = await api.get(endpoint);
     return response.data;
   }
 
   // ==========================================
-  // NUEVO ENDPOINT ÚNICO (ERP 3.0)
+  // DASHBOARD PRINCIPAL (ERP 3.0)
   // ==========================================
 
   async getOverview() {
@@ -16,34 +15,33 @@ class DashboardService {
   }
 
   // ==========================================
-  // COMPATIBILIDAD (opcional)
-  // Eliminar cuando todo el frontend use overview
+  // Alias temporal para mantener compatibilidad
+  // Todos apuntan al endpoint único
   // ==========================================
 
   async getKPIs() {
-    return this.request("/dashboard/resumen");
+    return this.getOverview();
   }
 
   async getVentas() {
-    return this.request("/dashboard/ventas");
+    return this.getOverview();
   }
 
   async getCaja() {
-    return this.request("/dashboard/caja");
+    return this.getOverview();
   }
 
   async getTopProductos() {
-    return this.request("/dashboard/top-productos");
+    return this.getOverview();
   }
 
   async getAlertas() {
-    return this.request("/dashboard/alertas");
+    return this.getOverview();
   }
 
   async getInventario() {
-    return this.request("/dashboard/inventario");
+    return this.getOverview();
   }
-
 }
 
 export const dashboardService = new DashboardService();
