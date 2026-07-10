@@ -1,8 +1,58 @@
 import { api } from "@/services/api";
 
+export type DashboardOverview = {
+  contexto?: {
+    modo_global: boolean;
+    negocio_id: number | null;
+  };
+
+  kpis: {
+    productos: number;
+    clientes: number;
+    usuarios: number;
+    ventas: number;
+    monto_vendido: number;
+    caja_abierta: boolean;
+  };
+
+  ventas: {
+    fecha: string;
+    ventas: number;
+  }[];
+
+  caja: {
+    estado: string;
+    saldo_inicial: number;
+    ingresos: number;
+    egresos: number;
+    saldo_actual: number;
+  };
+
+  inventario: {
+    total_productos: number;
+    stock_critico: number;
+    valor_inventario: number;
+  };
+
+  top_productos: {
+    id: number;
+    codigo: string;
+    nombre: string;
+    cantidad: number;
+  }[];
+
+  alertas: Array<
+    | string
+    | {
+        tipo?: string;
+        mensaje?: string;
+      }
+  >;
+};
+
 class DashboardService {
-  private async request<T = any>(endpoint: string): Promise<T> {
-    const response = await api.get(endpoint);
+  private async request<T>(endpoint: string): Promise<T> {
+    const response = await api.get<T>(endpoint);
     return response.data;
   }
 
@@ -10,36 +60,35 @@ class DashboardService {
   // DASHBOARD PRINCIPAL (ERP 3.0)
   // ==========================================
 
-  async getOverview() {
-    return this.request("/dashboard/overview");
+  async getOverview(): Promise<DashboardOverview> {
+    return this.request<DashboardOverview>("/dashboard/overview");
   }
 
   // ==========================================
-  // Alias temporal para mantener compatibilidad
-  // Todos apuntan al endpoint único
+  // ALIAS TEMPORALES DE COMPATIBILIDAD
   // ==========================================
 
-  async getKPIs() {
+  async getKPIs(): Promise<DashboardOverview> {
     return this.getOverview();
   }
 
-  async getVentas() {
+  async getVentas(): Promise<DashboardOverview> {
     return this.getOverview();
   }
 
-  async getCaja() {
+  async getCaja(): Promise<DashboardOverview> {
     return this.getOverview();
   }
 
-  async getTopProductos() {
+  async getTopProductos(): Promise<DashboardOverview> {
     return this.getOverview();
   }
 
-  async getAlertas() {
+  async getAlertas(): Promise<DashboardOverview> {
     return this.getOverview();
   }
 
-  async getInventario() {
+  async getInventario(): Promise<DashboardOverview> {
     return this.getOverview();
   }
 }
