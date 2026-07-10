@@ -1,18 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath: "/alven/app",
   reactStrictMode: true,
   swcMinify: true,
+
   async redirects() {
     return [
       {
         source: "/",
-        destination: "/alven/app/login",
-        basePath: false,
-        permanent: false
-      }
+        destination: "/login",
+        permanent: false,
+      },
     ];
-  }
+  },
 };
 
 module.exports = nextConfig;
