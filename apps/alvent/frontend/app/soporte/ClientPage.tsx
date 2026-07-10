@@ -29,7 +29,7 @@ import {
   PLAN_VISUAL_META,
   normalizarPlan,
 } from "@/features/planes/visualNarrative";
-import { getApiErrorMessage } from "@/utils/apiError";
+import { getApiErrorMessage, isTransientNetworkErrorMessage } from "@/utils/apiError";
 import styles from "./page.module.css";
 
 const PLAN_OPTIONS = [
@@ -698,7 +698,10 @@ export default function SoportePage() {
   const [loadingReset, setLoadingReset] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const errorVisible = esMensajeTecnico500(error) ? "" : error;
+  const errorVisible =
+    esMensajeTecnico500(error) || isTransientNetworkErrorMessage(error)
+      ? ""
+      : error;
   const [negocio, setNegocio] = useState<Negocio | null>(null);
   const [loadingBranding, setLoadingBranding] = useState(true);
   const [isSuperadmin, setIsSuperadmin] = useState(false);

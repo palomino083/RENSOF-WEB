@@ -28,7 +28,7 @@ import {
   PLAN_VISUAL_META,
   normalizarPlan,
 } from "@/features/planes/visualNarrative";
-import { getApiErrorMessage } from "@/utils/apiError";
+import { getApiErrorMessage, isTransientNetworkErrorMessage } from "@/utils/apiError";
 import styles from "./page.module.css";
 
 const PLAN_OPTIONS = [
@@ -541,7 +541,9 @@ export default function EmpresaPage() {
         (item) => String(item.estado || "").toUpperCase() === filtroEstadoHistorialPlan
       );
   const visibleError =
-    /request failed with status code 500/i.test(error) || /status code 500/i.test(error)
+    /request failed with status code 500/i.test(error) ||
+    /status code 500/i.test(error) ||
+    isTransientNetworkErrorMessage(error)
       ? ""
       : error;
 
