@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   description: "Sistema ERP POS Profesional",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: {
