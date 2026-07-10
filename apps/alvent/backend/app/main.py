@@ -447,11 +447,26 @@ app.add_exception_handler(
 # ==========================================
 
 def _cors_origins() -> list[str]:
+    default_origins = [
+        "https://alvent.rensof.pe",
+        "https://alvent-frontend.onrender.com",
+        "https://www.rensof.pe",
+        "https://rensof.pe",
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3001",
+        "http://localhost:3001",
+    ]
     raw = os.getenv(
         "ALVENT_CORS_ORIGINS",
-        "https://www.rensof.pe,https://rensof.pe,http://127.0.0.1:3001,http://localhost:3001",
+        "",
     )
-    return [origin.strip().rstrip("/") for origin in raw.split(",") if origin.strip()]
+    configured_origins = [
+        origin.strip().rstrip("/")
+        for origin in raw.split(",")
+        if origin.strip()
+    ]
+    return list(dict.fromkeys([*default_origins, *configured_origins]))
 
 
 app.add_middleware(
