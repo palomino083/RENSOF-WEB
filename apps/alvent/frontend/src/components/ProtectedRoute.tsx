@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { tieneAcceso } from "@/utils/permisos";
 import { APP_BASE_PATH, appPath } from "@/utils/appPath";
@@ -12,14 +12,19 @@ export default function ProtectedRoute({
 }) {
 
   const pathname = usePathname();
-  const APP_PREFIXES = Array.from(
-    new Set([
-      APP_BASE_PATH,
-      `/${["app", "alvent"].join("/")}`,
-      `/${["alvent", "app"].join("/")}`,
-      `/${["alven", "app"].join("/")}`,
-    ])
-  ).map((prefix) => prefix.replace(/\/$/, ""));
+  const [checking, setChecking] = useState(true);
+  const APP_PREFIXES = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          APP_BASE_PATH,
+          `/${["app", "alvent"].join("/")}`,
+          `/${["alvent", "app"].join("/")}`,
+          `/${["alven", "app"].join("/")}`,
+        ])
+      ).map((prefix) => prefix.replace(/\/$/, "")),
+    []
+  );
 
   const normalizeRoute = useCallback((value: string) => {
     const raw = String(value || "").trim();
@@ -45,7 +50,9 @@ export default function ProtectedRoute({
   }, [APP_PREFIXES]);
 
   useEffect(() => {
+    setChecking(true);
     const rawUsuario = localStorage.getItem("usuario");
+    const token = localStorage.getItem("token");
     let usuario: Record<string, any> = {};
 
     if (rawUsuario) {
@@ -59,7 +66,12 @@ export default function ProtectedRoute({
       }
     }
 
-    if (!usuario.rol) {
+    if (!token || !usuario.rol) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("usuario_id");
+      localStorage.removeItem("negocio_id");
+      localStorage.removeItem("usuario");
 
       window.location.href =
         appPath("login");
@@ -87,9 +99,20 @@ export default function ProtectedRoute({
 
       window.location.href =
         appPath("dashboard");
+      return;
     }
 
+    setChecking(false);
+
   }, [normalizeRoute, pathname]);
+
+  if (checking) {
+    return (
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
+        <p style={{ color: "#334155", fontWeight: 700 }}>Validando sesion...</p>
+      </main>
+    );
+  }
 
   return <>{children}</>;
 }

@@ -21,6 +21,7 @@ import ExecutivePulseBar from "@/components/ExecutivePulseBar";
 import DataTable from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
 import Toolbar from "@/components/ui/Toolbar";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { appPath } from "@/utils/appPath";
 import styles from "./page.module.css";
 
@@ -98,8 +99,9 @@ export default function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errorDetail, setErrorDetail] = useState("");
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
-  const REQUEST_TIMEOUT_MS = 15000;
+  const REQUEST_TIMEOUT_MS = 8000;
 
   const withTimeout = async <T,>(promise: Promise<T>, fallbackMessage: string): Promise<T> => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -161,19 +163,44 @@ export default function Dashboard() {
 
   const cargarDashboard = async () => {
     try {
+      if (typeof window !== "undefined" && !localStorage.getItem("token")) {
+        window.location.href = appPath("login");
+        return;
+      }
+
       setLoading(true);
       setError("");
+      setErrorDetail("");
       const overview = await withTimeout(
         dashboardService.getOverview(),
         "Tiempo de espera agotado al cargar dashboard"
       );
       setData(overview);
       setLastUpdatedAt(new Date());
-    } catch (err) {
+    } catch (err: any) {
       if (process.env.NODE_ENV !== "production") {
         console.error(err);
       }
-      setError("No fue posible cargar el dashboard.");
+      const status = Number(err?.response?.status || 0);
+      const message = getApiErrorMessage(err, "No fue posible cargar el dashboard.");
+
+      if (status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("usuario_id");
+        localStorage.removeItem("negocio_id");
+        localStorage.removeItem("usuario");
+        setError("Sesion vencida o token invalido.");
+        setErrorDetail("Vuelve a iniciar sesion para obtener un token nuevo.");
+        return;
+      }
+
+      setError(message);
+      setErrorDetail(
+        err?.message === "Tiempo de espera agotado al cargar dashboard"
+          ? "El servidor no respondio a /dashboard/overview dentro de 8 segundos."
+          : `Estado API: ${status || "sin respuesta"}`
+      );
     } finally {
       setLoading(false);
     }
@@ -266,8 +293,22 @@ export default function Dashboard() {
             <div className={styles.errorCard}>
               <h2>Error</h2>
               <p>{error}</p>
+              {errorDetail ? <p>{errorDetail}</p> : null}
               <button className="btn btn-primary" onClick={cargarDashboard}>
                 Reintentar
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("refreshToken");
+                  localStorage.removeItem("usuario_id");
+                  localStorage.removeItem("negocio_id");
+                  localStorage.removeItem("usuario");
+                  window.location.href = appPath("login");
+                }}
+              >
+                Limpiar sesion e ir al login
               </button>
             </div>
           </main>
