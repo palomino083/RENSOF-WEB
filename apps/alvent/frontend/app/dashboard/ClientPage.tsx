@@ -1,19 +1,6 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  Bar,
-  BarChart,
-} from "recharts";
-
 import Menu from "../../src/components/Menu";
 import ProtectedRoute from "../../src/components/ProtectedRoute";
 import ExecutiveThemeSwitch from "@/components/ExecutiveThemeSwitch";
@@ -317,16 +304,26 @@ export default function Dashboard() {
     );
   }
 
-  const ventasChartData = (data?.ventas || []).map((item) => ({
-    fecha: item.fecha,
-    ventas: item.ventas,
-  }));
+  const ventasChartData = (Array.isArray(data?.ventas) ? data.ventas : [])
+    .slice(-30)
+    .map((item) => ({
+      fecha: String(item?.fecha || "Sin fecha").slice(0, 24),
+      ventas: Math.max(0, Number.isFinite(Number(item?.ventas)) ? Number(item.ventas) : 0),
+    }));
 
-  const topProductosData = (data?.top_productos || []).slice(0, 6).map((item, index) => ({
-    rowKey: `${item.id || item.codigo || "prod"}-${index}`,
-    nombre: item.nombre,
-    cantidad: item.cantidad,
-  }));
+  const topProductosData = (Array.isArray(data?.top_productos) ? data.top_productos : [])
+    .slice(0, 6)
+    .map((item, index) => ({
+      rowKey: `${item?.id || item?.codigo || "prod"}-${index}`,
+      nombre: String(item?.nombre || "Producto sin nombre").slice(0, 80),
+      cantidad: Math.max(
+        0,
+        Number.isFinite(Number(item?.cantidad)) ? Number(item.cantidad) : 0
+      ),
+    }));
+
+  const maxVentas = Math.max(1, ...ventasChartData.map((item) => item.ventas));
+  const maxProductos = Math.max(1, ...topProductosData.map((item) => item.cantidad));
 
   /* =====================================================
      UI
@@ -438,30 +435,23 @@ export default function Dashboard() {
                 <span>Último periodo</span>
               </header>
               <div className={styles.chartWrap}>
-                <ResponsiveContainer width="100%" height={260}>
-                  <AreaChart data={ventasChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="ventasGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.55} />
-                        <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.06} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="4 4" stroke="#cbd5e1" />
-                    <XAxis dataKey="fecha" stroke="#475569" />
-                    <YAxis stroke="#475569" />
-                    <Tooltip
-                      formatter={(value) => [Number(value ?? 0), "Ventas"]}
-                      contentStyle={{ borderRadius: 12, border: "1px solid #cbd5e1" }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="ventas"
-                      stroke="#0284c7"
-                      strokeWidth={3}
-                      fill="url(#ventasGrad)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {ventasChartData.length === 0 ? (
+                  <p className={styles.empty}>Sin ventas para mostrar.</p>
+                ) : (
+                  <div className={styles.simpleChart} aria-label="Ventas por periodo">
+                    {ventasChartData.map((item, index) => (
+                      <div className={styles.simpleColumn} key={`${item.fecha}-${index}`}>
+                        <span className={styles.simpleValue}>{item.ventas}</span>
+                        <div
+                          className={styles.salesBar}
+                          style={{ height: `${Math.max(4, (item.ventas / maxVentas) * 100)}%` }}
+                          title={`${item.fecha}: ${item.ventas} ventas`}
+                        />
+                        <span className={styles.simpleLabel}>{item.fecha}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </article>
 
@@ -504,19 +494,24 @@ export default function Dashboard() {
                 <span>Más vendidos</span>
               </header>
               <div className={styles.chartWrap}>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={topProductosData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke="#cbd5e1" />
-                    <XAxis dataKey="nombre" stroke="#475569" />
-                    <YAxis stroke="#475569" />
-                    <Tooltip
-                      formatter={(value) => [Number(value ?? 0), "Cantidad"]}
-                      contentStyle={{ borderRadius: 12, border: "1px solid #cbd5e1" }}
-                    />
-                    <Legend />
-                    <Bar dataKey="cantidad" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {topProductosData.length === 0 ? (
+                  <p className={styles.empty}>Sin productos para mostrar.</p>
+                ) : (
+                  <div className={styles.productChart} aria-label="Productos más vendidos">
+                    {topProductosData.map((item) => (
+                      <div className={styles.productRow} key={item.rowKey}>
+                        <span title={item.nombre}>{item.nombre}</span>
+                        <div className={styles.productTrack}>
+                          <div
+                            className={styles.productBar}
+                            style={{ width: `${(item.cantidad / maxProductos) * 100}%` }}
+                          />
+                        </div>
+                        <strong>{item.cantidad}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </article>
 

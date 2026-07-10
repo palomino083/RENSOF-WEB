@@ -367,6 +367,7 @@ const menuFiltrado = useMemo(() => {
                 <Link
                   key={`${item.key}-${item.href}`}
                   href={toAppHref(item.href)}
+                  prefetch={false}
                   title={desktopCollapsed ? item.label : undefined}
                   onClick={() => {
                     if (typeof window === "undefined") return;
@@ -405,6 +406,7 @@ const menuFiltrado = useMemo(() => {
           ) : (
             <Link
               href={toAppHref(block.href)}
+              prefetch={false}
               title={desktopCollapsed ? block.label : undefined}
               onClick={() => setMobileOpen(false)}
               className={`${styles.item} ${isItemActive(block) ? styles.itemActive : ""}`}
