@@ -176,6 +176,89 @@
   border-radius: 12px;
   background: #fff;
   padding: 8px;
+  overflow: hidden;
+}
+
+.simpleChart {
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 24px 4px 30px;
+  overflow-x: auto;
+}
+
+.simpleColumn {
+  position: relative;
+  flex: 1 0 34px;
+  height: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-direction: column;
+}
+
+.salesBar {
+  width: min(28px, 80%);
+  min-height: 4px;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, #38bdf8, #0284c7);
+}
+
+.simpleValue {
+  margin-bottom: 4px;
+  color: #334155;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.simpleLabel {
+  position: absolute;
+  top: calc(100% + 6px);
+  width: 62px;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 0.65rem;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.productChart {
+  height: 100%;
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  padding: 8px;
+}
+
+.productRow {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(100px, 2fr) 40px;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+  font-size: 0.78rem;
+}
+
+.productRow > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.productTrack {
+  height: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e0f2fe;
+}
+
+.productBar {
+  height: 100%;
+  min-width: 4px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
 }
 
 .sideCard ul {
