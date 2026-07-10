@@ -37,7 +37,7 @@ function resolveActionHref(href: string) {
   pathPart = pathPart.startsWith("/") ? pathPart : `/${pathPart}`;
 
   const prefixedBase = `${APP_BASE_PATH}/`;
-  while (pathPart.startsWith(prefixedBase)) {
+  while (APP_BASE_PATH && pathPart.startsWith(prefixedBase)) {
     pathPart = pathPart.slice(APP_BASE_PATH.length);
   }
 
