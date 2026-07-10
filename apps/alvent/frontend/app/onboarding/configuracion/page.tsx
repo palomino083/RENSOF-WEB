@@ -1,21 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { appPath } from "@/utils/appPath";
+import dynamic from "next/dynamic";
 
-export default function OnboardingconfiguracionRedirectPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace(appPath("/configuracion#cfg-empresa"));
-  }, [router]);
-
-  return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "24px" }}>
-      <p style={{ color: "#334155", fontWeight: 600 }}>
-        Redirigiendo a Informacion de la empresa...
-      </p>
+const ClientPage = dynamic(() => import("./ClientPage"), {
+  ssr: false,
+  loading: () => (
+    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
+      <p style={{ color: "#334155", fontWeight: 700 }}>Cargando ALVENT...</p>
     </main>
-  );
+  ),
+});
+
+export default function Page() {
+  return <ClientPage />;
 }

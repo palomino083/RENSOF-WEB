@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import dynamic from "next/dynamic";
 
-export default function Home() {
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+const ClientPage = dynamic(() => import("./ClientPage"), {
+  ssr: false,
+  loading: () => (
+    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
+      <p style={{ color: "#334155", fontWeight: 700 }}>Cargando ALVENT...</p>
+    </main>
+  ),
+});
 
-    if (token) {
-      window.location.href = "/dashboard";
-    } else {
-      window.location.href = "/login";
-    }
-  }, []);
-
-  return <p>Cargando ALVENT ERP...</p>;
+export default function Page() {
+  return <ClientPage />;
 }
