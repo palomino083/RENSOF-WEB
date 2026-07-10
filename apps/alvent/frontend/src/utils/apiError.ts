@@ -26,6 +26,12 @@ function isNegocioIdPathValidationMessage(message: string): boolean {
     (normalized.includes("negocio_id") && normalized.includes("valid integer"));
 }
 
+export function isTransientNetworkErrorMessage(message?: string | null): boolean {
+  return /no hay conexi[oó]n con el servidor|network error/i.test(
+    String(message || "")
+  );
+}
+
 export function getApiErrorMessage(error: any, fallback: string): string {
   const detail = error?.response?.data?.detail;
   const data = error?.response?.data;
@@ -64,7 +70,7 @@ export function getApiErrorMessage(error: any, fallback: string): string {
 
   if (typeof error?.message === "string" && error.message.trim()) {
     if (error.message.toLowerCase().includes("network error")) {
-      return "No hay conexion con el servidor. Verifica backend y proxy local.";
+      return "No se pudo conectar temporalmente con el servidor.";
     }
     return error.message;
   }
