@@ -2,16 +2,14 @@
 
 import { useEffect } from "react";
 
-import { appPath } from "@/utils/appPath";
-
 export default function Home() {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
     if (token) {
-      window.location.href = appPath("dashboard");
+      window.location.href = "/dashboard";
     } else {
-      window.location.href = appPath("login");
+      window.location.href = "/login";
     }
   }, []);
 

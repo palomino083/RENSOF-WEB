@@ -128,11 +128,11 @@ async function run() {
   }
 
   const modules = [
-    { name: "Dashboard", path: "/alven/app/dashboard" },
-    { name: "POS", path: "/alven/app/pos" },
-    { name: "Ventas", path: "/alven/app/ventas" },
-    { name: "configuracion", path: "/alven/app/configuracion" },
-    { name: "Finanzas", path: "/alven/app/finanzas" },
+    { name: "Dashboard", path: "/dashboard" },
+    { name: "POS", path: "/pos" },
+    { name: "Ventas", path: "/ventas" },
+    { name: "configuracion", path: "/configuracion" },
+    { name: "Finanzas", path: "/finanzas" },
   ];
 
   const defaultOutput = path.resolve(process.cwd(), "..", "..", "..", "..", "scripts", "reports", `alvent-ui-smoke-${nowStamp()}.json`);
@@ -226,7 +226,7 @@ async function run() {
 
   currentModule = "AUTH";
   ensureBucket(currentModule);
-  await gotoStable(page, `${baseUrl}/alven/app/dashboard`, 2);
+  await gotoStable(page, `${baseUrl}/dashboard`, 2);
   await maybeLogin(page, username, password);
 
   for (const mod of modules) {

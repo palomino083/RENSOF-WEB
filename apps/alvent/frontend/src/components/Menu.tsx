@@ -29,7 +29,11 @@ type MenuSection = {
 
 type MenuBlock = MenuItem | MenuSection;
 
-const APP_PREFIX = "/alven/app";
+const APP_PREFIXES = [
+  `/${["app", "alvent"].join("/")}`,
+  `/${["alvent", "app"].join("/")}`,
+  `/${["alven", "app"].join("/")}`,
+];
 
 function cleanRoute(value: string) {
   const raw = String(value || "").trim();
@@ -37,11 +41,18 @@ function cleanRoute(value: string) {
   const [pathOnly] = noOrigin.split(/[?#]/);
   let path = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
   path = path.replace(/\/+/g, "/").replace(/\/$/, "") || "/";
-  // Evita prefijos duplicados como /alven/app/alven/app/... en builds desfasados.
-  while (path.startsWith(APP_PREFIX)) {
-    path = path.slice(APP_PREFIX.length) || "/";
+  // Limpia prefijos heredados de builds desfasados.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const prefix of APP_PREFIXES) {
+      if (path === prefix || path.startsWith(`${prefix}/`)) {
+        path = path.slice(prefix.length) || "/";
+        changed = true;
+        break;
+      }
+    }
   }
-  path = path.replace(new RegExp(`^(?:${APP_PREFIX})+`), "") || path;
   return path || "/";
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { appPath } from "@/utils/appPath";
 
 export default function Home() {
 
@@ -15,12 +14,12 @@ export default function Home() {
     if (usuario) {
 
       window.location.href =
-        appPath("dashboard");
+        "/dashboard";
 
     } else {
 
       window.location.href =
-        appPath("login");
+        "/login";
 
     }
 

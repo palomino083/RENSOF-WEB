@@ -1,7 +1,4 @@
-const DEFAULT_APP_BASE_PATH = "/alven/app";
-
-export const APP_BASE_PATH =
-  (process.env.NEXT_PUBLIC_APP_BASE_PATH || DEFAULT_APP_BASE_PATH).replace(/\/$/, "");
+export const APP_BASE_PATH = "";
 
 export function appPath(path: string = "") {
   const raw = String(path || "").trim();
@@ -9,15 +6,31 @@ export function appPath(path: string = "") {
   const [pathOnly] = noOrigin.split(/[?#]/);
   let normalizedPath = pathOnly ? `/${pathOnly.replace(/^\/+/, "")}` : "";
 
-  // Evita duplicados como /alven/app/alven/app/reportes cuando la ruta
-  // de entrada ya viene con basePath por arrastre de estado o builds previos.
-  while (normalizedPath.startsWith(`${APP_BASE_PATH}/`)) {
-    normalizedPath = normalizedPath.slice(APP_BASE_PATH.length);
+  const legacyPrefixes = [
+    APP_BASE_PATH,
+    `/${["app", "alvent"].join("/")}`,
+    `/${["alvent", "app"].join("/")}`,
+    `/${["alven", "app"].join("/")}`,
+  ]
+    .filter(Boolean)
+    .map((prefix) => prefix.replace(/\/$/, ""));
+
+  // Limpia base paths heredados de builds o variables antiguas.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const prefix of legacyPrefixes) {
+      if (normalizedPath === prefix || normalizedPath.startsWith(`${prefix}/`)) {
+        normalizedPath = normalizedPath.slice(prefix.length) || "";
+        changed = true;
+        break;
+      }
+    }
   }
 
   if (normalizedPath === APP_BASE_PATH) {
     normalizedPath = "";
   }
 
-  return `${APP_BASE_PATH}${normalizedPath}`;
+  return `${APP_BASE_PATH}${normalizedPath}` || "/";
 }

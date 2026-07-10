@@ -13,7 +13,12 @@ export default function ProtectedRoute({
 
   const pathname = usePathname();
   const APP_PREFIXES = Array.from(
-    new Set([APP_BASE_PATH, "/app/alvent", "/alven/app", "/alvent/app"])
+    new Set([
+      APP_BASE_PATH,
+      `/${["app", "alvent"].join("/")}`,
+      `/${["alvent", "app"].join("/")}`,
+      `/${["alven", "app"].join("/")}`,
+    ])
   ).map((prefix) => prefix.replace(/\/$/, ""));
 
   const normalizeRoute = useCallback((value: string) => {

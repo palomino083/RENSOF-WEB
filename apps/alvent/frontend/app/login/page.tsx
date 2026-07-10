@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/services/api";
 import { forgotPassword } from "@/services/authService";
 import { getApiErrorMessage } from "@/utils/apiError";
-import { appPath } from "@/utils/appPath";
 import ModalCard from "@/components/ui/ModalCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import styles from "./page.module.css";
@@ -123,9 +122,9 @@ export default function LoginPage() {
       const tieneNegocio = !!res.data.negocio_id;
 
       if (tieneNegocio || esSuperAdmin) {
-        window.location.href = appPath("dashboard");
+        window.location.href = "/dashboard";
       } else {
-        window.location.href = appPath("registro");
+        window.location.href = "/registro";
       }
     } catch (err: any) {
       if (process.env.NODE_ENV !== "production") {
