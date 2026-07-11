@@ -4081,50 +4081,61 @@ export default function SoportePage() {
                 </section>
 
                 <section className={styles.planAmountsBox}>
-                  <div>
-                    <h4>Montos editables por plan</h4>
-                    <p>Centraliza la edicion de precios antes de guardar los cambios en todos los planes.</p>
+                  <div className={styles.planEditorHead}>
+                    <div>
+                      <span className={styles.planEditorEyebrow}>Configuración comercial</span>
+                      <h4>Precios del catálogo</h4>
+                      <p>Edita la tarifa mensual de cada plan. Los cambios se publican juntos al guardar.</p>
+                    </div>
+                    <span className={styles.planEditorStatus}>● Edición habilitada</span>
                   </div>
 
                   <div className={styles.planAmountsGrid}>
                     {planCatalogoVisible.map((plan) => {
                       const planAmountKey = PLAN_PRICE_MAP[plan.codigo] as keyof typeof planAmounts;
                       return (
-                        <label key={`amount-${plan.codigo}`} className={styles.formRow}>
+                        <label key={`amount-${plan.codigo}`} className={`${styles.formRow} ${styles.planPriceCard}`}>
                           <span>{nombrePlan(plan.codigo)}</span>
-                          <input
-                            type="number"
-                            min={0}
-                            step="1"
-                            className="focus-ring"
-                            value={planAmounts[planAmountKey]}
-                            onChange={(e) =>
-                              setPlanAmounts((prev) => ({
-                                ...prev,
-                                [planAmountKey]: Number(e.target.value || 0),
-                              }))
-                            }
-                          />
+                          <small>Tarifa mensual</small>
+                          <div className={styles.planMoneyInput}>
+                            <span>S/</span>
+                            <input
+                              type="number"
+                              min={0}
+                              step="1"
+                              className="focus-ring"
+                              value={planAmounts[planAmountKey]}
+                              onChange={(e) =>
+                                setPlanAmounts((prev) => ({
+                                  ...prev,
+                                  [planAmountKey]: Number(e.target.value || 0),
+                                }))
+                              }
+                              aria-label={`Precio mensual del plan ${nombrePlan(plan.codigo)}`}
+                            />
+                            <span>/ mes</span>
+                          </div>
                         </label>
                       );
                     })}
                   </div>
 
                   <div className={styles.freePlanBoostQuickActions}>
-                    <span>Guardar todo el catálogo de montos:</span>
+                    <span><strong>¿Precios listos?</strong><small> Se actualizarán todos los planes del catálogo.</small></span>
                     <button
                       type="button"
                       className={`${styles.saveBusinessBtn} focus-ring`}
                       onClick={() => void guardarMontosPlanes()}
                       disabled={savingPlanAmounts}
                     >
-                      {savingPlanAmounts ? "Guardando..." : "Guardar montos"}
+                      {savingPlanAmounts ? "Guardando..." : "Guardar precios"}
                     </button>
                   </div>
                 </section>
 
-                <section className={styles.planAmountsBox}>
-                  <div>
+                <section className={`${styles.planAmountsBox} ${styles.planLimitsSection}`}>
+                  <div className={styles.planEditorHead}>
+                    <div>
                     <h4>Límites editables por plan</h4>
                     <p>Define usuarios, reportes, soporte y cantidad de productos por plan. Estos límites se aplican al negocio seleccionado.</p>
                     {!negocioActivoId ? (
@@ -4132,12 +4143,15 @@ export default function SoportePage() {
                         Sin negocio objetivo seleccionado: puedes seleccionar plan para análisis, pero aplicar requiere elegir una empresa.
                       </small>
                     ) : null}
+                    </div>
+                    <span className={styles.planEditorHint}>Vacío = ilimitado</span>
                   </div>
 
                   <div className={styles.planAmountsGrid}>
                     {planCatalogoVisible.map((plan) => (
-                      <div key={`limits-${plan.codigo}`} className={styles.formRow}>
+                      <div key={`limits-${plan.codigo}`} className={`${styles.formRow} ${styles.planLimitCard}`}>
                         <span>{nombrePlan(plan.codigo)}</span>
+                        <small className={styles.planCardCaption}>Capacidad y servicios incluidos</small>
 
                         <label className={styles.inlineCheck}>
                           <span>Usuarios</span>
@@ -4767,15 +4781,7 @@ export default function SoportePage() {
                   className={styles.confirmBtn}
                   disabled={loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente}
                 >
-                  {loadingSugerenciaIa ? "Consultando IA..." : "Consultar IA"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void escalarChatSoporte()}
-                  className={styles.actionBtn}
-                  disabled={loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente}
-                >
-                  {creatingSoporte ? "Escalando..." : "Escalar a RENSOF"}
+                  {loadingSugerenciaIa ? "SofIA está respondiendo..." : "Enviar mensaje"}
                 </button>
                 <button
                   type="button"
@@ -4789,55 +4795,6 @@ export default function SoportePage() {
             )}
           >
             <div className={styles.supportChatWindow}>
-              <div className={styles.sofiaPremiumHero}>
-                <div className={styles.sofiaPremiumOrb}>S</div>
-                <div>
-                  <strong>SofIA Premium</strong>
-                  <p>Razonamiento avanzado para ALVENT, patrones del usuario y acciones guiadas.</p>
-                </div>
-                <span>OpenAI Ready</span>
-              </div>
-
-              <div className={styles.sofiaCapabilityStrip}>
-                <small>Detecta caja cerrada</small>
-                <small>Guia SUNAT</small>
-                <small>Aprende patrones</small>
-                <small>Escala a RENSOF</small>
-              </div>
-
-              <div className={styles.supportChatQuickActions}>
-                {SOPORTE_QUICK_PROMPTS.map((prompt) => (
-                  <button
-                    key={`quick-${prompt.label}`}
-                    type="button"
-                    className={`${styles.supportQuickBtn} focus-ring`}
-                    onClick={() => aplicarPromptRapido(prompt)}
-                    disabled={loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente}
-                  >
-                    {prompt.label}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className={`${styles.supportQuickBtn} ${styles.supportQuickBtnGhost} focus-ring`}
-                  onClick={limpiarConversacionChat}
-                  disabled={loadingSugerenciaIa || creatingSoporte || loadingdiagnósticoSuperagente}
-                >
-                  Limpiar chat
-                </button>
-              </div>
-
-              {soporteClasificacion ? (
-                <div className={styles.chatBubbleIa}>
-                  <strong>Clasificación automática</strong>
-                  <p>
-                    {soporteClasificacion.categoria.toUpperCase()} | prioridad sugerida {soporteClasificacion.prioridadSugerida} | confianza {Math.round(soporteClasificacion.confianza * 100)}%
-                  </p>
-                  <p>{soporteClasificacion.resumen}</p>
-                  <p>Checklist: {soporteClasificacion.checklist.join(" | ")}</p>
-                </div>
-              ) : null}
-
               <div ref={soporteChatMessagesRef} className={styles.supportChatMessages}>
                 {soporteChatMessages.slice(-12).map((message) => (
                   <div
@@ -4862,25 +4819,8 @@ export default function SoportePage() {
               </div>
 
               <div className={styles.supportChatComposer}>
-                <p className={styles.chatLevelHint}>
-                  Nivel activo: <strong>{sofiaResponseLevel}</strong>. Enter envía, Shift + Enter crea una nueva línea.
-                </p>
-
-                <label className={styles.formRow}>
-                  Prioridad para escalar ticket
-                  <select
-                    className="focus-ring"
-                    value={soporteChatPrioridad}
-                    onChange={(e) => setSoporteChatPrioridad(e.target.value as SoportePrioridad)}
-                  >
-                    <option value="BAJA">Baja</option>
-                    <option value="MEDIA">Media</option>
-                    <option value="ALTA">Alta</option>
-                  </select>
-                </label>
-
-                <label className={styles.formRow}>
-                  Tu consulta
+                <label className={styles.sofiaComposerLabel}>
+                  <span>Escribe tu mensaje</span>
                   <textarea
                     className={`${styles.sofiaInputTextarea} focus-ring`}
                     rows={3}
@@ -4892,9 +4832,12 @@ export default function SoportePage() {
                         void enviarMensajeSoporteChat();
                       }
                     }}
-                    placeholder="Escribe tu consulta y presiona Enter para enviar"
+                    placeholder="Cuéntale a SofIA qué necesitas…"
                   />
                 </label>
+                <small className={styles.sofiaComposerHint}>
+                  Enter para enviar · Shift + Enter para una nueva línea
+                </small>
               </div>
             </div>
           </ModalCard>

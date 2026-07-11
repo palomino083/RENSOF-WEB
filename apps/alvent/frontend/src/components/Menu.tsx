@@ -77,7 +77,6 @@ const PERMISOS: Record<string, string[]> = {
     "usuarios",
     "configuracion",
     "empresa",
-    "soporte",
   ],
 
   ADMIN: [
@@ -93,7 +92,6 @@ const PERMISOS: Record<string, string[]> = {
     "usuarios",
     "configuracion",
     "empresa",
-    "soporte",
   ],
 
   SUPERADMIN: [
@@ -113,11 +111,11 @@ const PERMISOS: Record<string, string[]> = {
     "soporte",
   ],
 
-  CAJERO: ["pos", "ventas", "clientes", "empresa", "soporte", "configuracion"],
-  VENDEDOR: ["pos", "ventas", "clientes", "empresa", "soporte", "configuracion"],
-  ALMACEN: ["dashboard", "productos", "inventario", "empresa", "soporte", "configuracion"],
+  CAJERO: ["pos", "ventas", "clientes", "empresa", "configuracion"],
+  VENDEDOR: ["pos", "ventas", "clientes", "empresa", "configuracion"],
+  ALMACEN: ["dashboard", "productos", "inventario", "empresa", "configuracion"],
 
-  CONTADOR: ["reportes", "exportacion", "cajas", "dashboard", "empresa", "soporte", "configuracion"],
+  CONTADOR: ["reportes", "exportacion", "cajas", "dashboard", "empresa", "configuracion"],
 };
 
 function permisosPorRoles(rol: string, roles: string[] = []) {

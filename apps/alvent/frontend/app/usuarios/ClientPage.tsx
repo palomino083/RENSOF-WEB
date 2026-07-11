@@ -43,13 +43,12 @@ const PERMISOS_POR_ROL: Record<string, string[]> = {
     "Exportacion",
     "Usuarios",
     "Empresa",
-    "Soporte",
     "configuracion",
     "Finanzas",
   ],
-  CAJERO: ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "configuracion"],
-  VENDEDOR: ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "Soporte", "configuracion"],
-  ALMACEN: ["Dashboard", "Productos", "Inventario", "Empresa", "Soporte", "configuracion"],
+  CAJERO: ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "configuracion"],
+  VENDEDOR: ["Dashboard", "POS", "Ventas", "Clientes", "Empresa", "configuracion"],
+  ALMACEN: ["Dashboard", "Productos", "Inventario", "Empresa", "configuracion"],
 };
 
 const MODULOS_PERMISOS = [
@@ -64,7 +63,6 @@ const MODULOS_PERMISOS = [
   "Exportacion",
   "Usuarios",
   "Empresa",
-  "Soporte",
   "configuracion",
   "Finanzas",
 ];

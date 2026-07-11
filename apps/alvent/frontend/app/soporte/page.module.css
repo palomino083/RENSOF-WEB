@@ -475,9 +475,9 @@
 }
 
 .sofiaModalCard {
-  width: min(920px, 96vw);
+  width: min(760px, 96vw);
   max-width: 96vw;
-  height: min(78vh, 760px);
+  height: min(88dvh, 780px);
   max-height: calc(100vh - 32px);
   min-width: 360px;
   min-height: 520px;
@@ -498,7 +498,7 @@
 .supportChatWindow {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -592,14 +592,16 @@
 
 .supportChatMessages {
   border: 1px solid rgba(186, 230, 253, 0.95);
-  border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff, #f8fafc);
-  padding: 10px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 0 0, rgba(14, 165, 233, 0.08), transparent 38%),
+    linear-gradient(180deg, #ffffff, #f8fafc);
+  padding: 16px;
   display: grid;
   align-content: start;
-  gap: 8px;
+  gap: 12px;
   flex: 1 1 auto;
-  min-height: 160px;
+  min-height: 240px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
@@ -607,21 +609,34 @@
 
 .supportChatComposer {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   flex: 0 0 auto;
   border: 1px solid rgba(203, 213, 225, 0.82);
-  border-radius: 14px;
+  border-radius: 18px;
   background: #ffffff;
-  padding: 10px;
+  padding: 12px;
   box-shadow: 0 -12px 26px rgba(15, 23, 42, 0.08);
 }
 
 .sofiaInputTextarea {
-  min-height: 76px;
-  max-height: 160px;
+  min-height: 104px;
+  max-height: 220px;
   resize: vertical;
   line-height: 1.4;
   background: linear-gradient(180deg, #ffffff, #f8fafc);
+}
+
+.sofiaComposerLabel {
+  display: grid;
+  gap: 7px;
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.sofiaComposerHint {
+  color: #64748b;
+  font-size: 0.72rem;
 }
 
 .chatScrollAnchor {
@@ -641,15 +656,18 @@
 
 .chatBubbleUser,
 .chatBubbleIa {
-  border-radius: 12px;
-  padding: 10px;
+  width: fit-content;
+  max-width: min(82%, 620px);
+  border-radius: 16px;
+  padding: 11px 13px;
   display: grid;
   gap: 4px;
 }
 
 .chatBubbleUser {
-  border: 1px solid rgba(148, 163, 184, 0.55);
-  background: #ffffff;
+  justify-self: end;
+  border: 1px solid rgba(14, 116, 144, 0.35);
+  background: linear-gradient(135deg, #0e7490, #0284c7);
 }
 
 .chatBubbleIa {
@@ -662,6 +680,12 @@
 .chatBubbleIa strong {
   color: #0f172a;
   font-size: 0.8rem;
+}
+
+.chatBubbleUser strong,
+.chatBubbleUser p,
+.chatBubbleUser .chatMetaLine {
+  color: #ffffff;
 }
 
 .chatBubbleUser p,
@@ -736,7 +760,7 @@
     max-width: 100%;
     min-width: 0;
     min-height: 0;
-    height: auto;
+    height: calc(100dvh - 20px);
     resize: none;
   }
 
@@ -750,12 +774,12 @@
   }
 
   .supportChatMessages {
-    min-height: 150px;
+    min-height: 0;
   }
 
   .sofiaInputTextarea {
-    min-height: 70px;
-    max-height: 130px;
+    min-height: 92px;
+    max-height: 150px;
     background: #ffffff;
     color: #0f172a;
     color-scheme: light;
@@ -1967,6 +1991,209 @@
   border: 1px solid rgba(14, 165, 233, 0.16);
   border-radius: 12px;
   padding: 9px;
+}
+
+.planEditorHead {
+  align-items: flex-start;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.planEditorEyebrow {
+  color: #0284c7;
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.planEditorStatus,
+.planEditorHint {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 999px;
+  color: #047857;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 7px 10px;
+}
+
+.planEditorHint {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.planPriceCard {
+  overflow: hidden;
+  position: relative;
+}
+
+.planPriceCard::before,
+.planLimitCard::before {
+  background: linear-gradient(90deg, #0ea5e9, #14b8a6);
+  content: "";
+  height: 3px;
+  inset: 0 0 auto;
+  position: absolute;
+}
+
+.planPriceCard:nth-child(4)::before,
+.planLimitCard:nth-child(4)::before {
+  background: linear-gradient(90deg, #7c3aed, #d946ef);
+}
+
+.planPriceCard > small,
+.planCardCaption {
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.planMoneyInput {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: auto 1fr auto;
+  margin-top: 3px;
+  padding: 3px 9px;
+}
+
+.planMoneyInput:focus-within {
+  background: #ffffff;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.13);
+}
+
+.planMoneyInput > span {
+  color: #475569;
+  font-size: 0.74rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.planMoneyInput input[type="number"] {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 900;
+  padding: 7px 2px;
+}
+
+.planLimitCard {
+  overflow: hidden;
+  position: relative;
+}
+
+.planLimitsSection .planAmountsGrid {
+  align-items: start;
+}
+
+.planLimitCard > input[type="number"] {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  min-height: 38px;
+}
+
+.planLimitCard > input[type="number"]:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.planLimitCard .inlineCheck {
+  min-height: 38px;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.planLimitCard .inlineCheck:has(input[type="number"]) {
+  align-items: stretch;
+  display: grid;
+  gap: 6px;
+}
+
+.planLimitCard .inlineCheck:has(input[type="number"]) span {
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.planLimitCard .inlineCheck input[type="number"] {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #0f172a;
+  font-weight: 800;
+  height: 38px;
+  padding: 7px 9px;
+  width: 100%;
+}
+
+.planLimitCard .inlineCheck:has(input[type="checkbox"]) {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.planLimitCard .inlineCheck:has(input[type="checkbox"]:checked)::after {
+  color: #0f766e;
+  content: "Incluido";
+  font-size: 0.62rem;
+  font-weight: 900;
+  margin-left: auto;
+  text-transform: uppercase;
+}
+
+.planLimitCard .inlineCheck:has(input[type="checkbox"]:not(:checked))::after {
+  color: #94a3b8;
+  content: "No incluido";
+  font-size: 0.6rem;
+  font-weight: 800;
+  margin-left: auto;
+  text-transform: uppercase;
+}
+
+.planAmountsBox .freePlanBoostQuickActions {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.planAmountsBox .freePlanBoostQuickActions span {
+  display: grid;
+  gap: 2px;
+}
+
+.planAmountsBox .freePlanBoostQuickActions small {
+  color: #64748b;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .planEditorHead,
+  .planAmountsBox .freePlanBoostQuickActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .planEditorStatus,
+  .planEditorHint,
+  .planAmountsBox .freePlanBoostQuickActions button {
+    width: 100%;
+  }
+
+  .planEditorStatus,
+  .planEditorHint {
+    text-align: center;
+  }
 }
 
 .simulatorBox {
