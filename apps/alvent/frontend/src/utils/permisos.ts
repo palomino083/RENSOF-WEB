@@ -12,7 +12,6 @@ export const permisosPorRol = {
     "/reportes",
     "/exportacion",
     "/empresa",
-    "/soporte",
   ],
   SUPERADMIN: [
     "/dashboard",
@@ -30,10 +29,10 @@ export const permisosPorRol = {
     "/soporte",
     "/finanzas",
   ],
-  CONTADOR: ["/dashboard", "/cajas", "/reportes", "/exportacion", "/empresa", "/soporte", "/configuracion"],
-  CAJERO: ["/dashboard", "/pos", "/ventas", "/clientes", "/empresa", "/soporte", "/configuracion"],
-  VENDEDOR: ["/dashboard", "/pos", "/ventas", "/clientes", "/empresa", "/soporte", "/configuracion"],
-  ALMACEN: ["/dashboard", "/productos", "/inventario", "/empresa", "/soporte", "/configuracion"],
+  CONTADOR: ["/dashboard", "/cajas", "/reportes", "/exportacion", "/empresa", "/configuracion"],
+  CAJERO: ["/dashboard", "/pos", "/ventas", "/clientes", "/empresa", "/configuracion"],
+  VENDEDOR: ["/dashboard", "/pos", "/ventas", "/clientes", "/empresa", "/configuracion"],
+  ALMACEN: ["/dashboard", "/productos", "/inventario", "/empresa", "/configuracion"],
 };
 
 function normalizarRol(rol: string) {
